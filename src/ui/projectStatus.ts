@@ -4,6 +4,7 @@ import CMakeProject from '@cmt/cmakeProject';
 import * as preset from '@cmt/presets/preset';
 import { runCommand } from '@cmt/util';
 import { OptionConfig, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent } from '@cmt/config';
+import { CMakeCache, CacheEntryType } from '@cmt/cache';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -16,12 +17,14 @@ const noWorkflowPresetSelected = localize('no.workflow.preset.selected', '[No Wo
 
 export let treeDataProvider: TreeDataProvider;
 
+const pinnedCacheVariablesKey = 'cmake.pinnedCacheVariables';
+
 export class ProjectStatus {
 
     protected disposables: vscode.Disposable[] = [];
 
-    constructor() {
-        treeDataProvider = new TreeDataProvider();
+    constructor(extensionContext?: vscode.ExtensionContext) {
+        treeDataProvider = new TreeDataProvider(extensionContext);
         this.disposables.push(...[
             // Commands for projectStatus items
             vscode.commands.registerCommand('cmake.projectStatus.stop', async (_node: Node) => {
@@ -119,6 +122,15 @@ export class ProjectStatus {
             }),
             vscode.commands.registerCommand('cmake.projectStatus.update', async () => {
                 await this.refresh();
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.pinCacheVariable', async () => {
+                await treeDataProvider.pinCacheVariable();
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.editPinnedCacheVariable', async (node: PinnedCacheVariableNode) => {
+                await treeDataProvider.editPinnedCacheVariable(node);
+            }),
+            vscode.commands.registerCommand('cmake.projectStatus.unpinCacheVariable', async (node: PinnedCacheVariableNode) => {
+                await treeDataProvider.unpinCacheVariable(node);
             })
         ]);
     }
@@ -186,12 +198,14 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private testNode: TestNode | undefined;
     private packageNode: PackageNode | undefined;
     private workflowNode: WorkflowNode | undefined;
+    private extensionContext?: vscode.ExtensionContext;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
     }
 
-    constructor() {
+    constructor(extensionContext?: vscode.ExtensionContext) {
+        this.extensionContext = extensionContext;
         this.treeView = vscode.window.createTreeView('cmake.projectStatus', { treeDataProvider: this });
     }
 
@@ -288,6 +302,13 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                     configNode.convertToStopCommand();
                 }
                 nodes.push(configNode);
+            }
+            // Add pinned cache variables between configure and build
+            const pinnedNames = this.getPinnedCacheVariableNames();
+            if (pinnedNames.length > 0) {
+                const pinnedNode = new PinnedCacheVariablesNode(pinnedNames);
+                await pinnedNode.initialize();
+                nodes.push(pinnedNode);
             }
             if (!this.isBuildButtonHidden) {
                 const buildNode = new BuildNode();
@@ -432,6 +453,92 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
             this.isBusy = isBusy;
             await this.refresh();
         }
+    }
+
+    // Pinned cache variable management
+    getPinnedCacheVariableNames(): string[] {
+        if (!this.extensionContext) {
+            return [];
+        }
+        return this.extensionContext.workspaceState.get<string[]>(pinnedCacheVariablesKey, []);
+    }
+
+    private async savePinnedCacheVariableNames(names: string[]): Promise<void> {
+        if (!this.extensionContext) {
+            return;
+        }
+        await this.extensionContext.workspaceState.update(pinnedCacheVariablesKey, names);
+    }
+
+    async pinCacheVariable(): Promise<void> {
+        if (!this.activeCMakeProject) {
+            return;
+        }
+        const cachePathStr = await this.activeCMakeProject.cachePath;
+        if (!cachePathStr) {
+            void vscode.window.showErrorMessage(localize('no.cache.available', 'No CMake cache available. Please configure the project first.'));
+            return;
+        }
+        const cache = await CMakeCache.fromPath(cachePathStr);
+        const entries = cache.allEntries.filter(e => e.type !== CacheEntryType.Internal && e.type !== CacheEntryType.Static);
+        const alreadyPinned = new Set(this.getPinnedCacheVariableNames());
+
+        const items = entries
+            .filter(e => !alreadyPinned.has(e.key))
+            .map(e => ({
+                label: e.key,
+                description: String(e.value),
+                detail: e.helpString
+            }));
+
+        if (items.length === 0) {
+            void vscode.window.showInformationMessage(localize('no.variables.to.pin', 'No cache variables available to pin.'));
+            return;
+        }
+
+        const chosen = await vscode.window.showQuickPick(items, {
+            placeHolder: localize('select.variable.to.pin', 'Select a cache variable to pin')
+        });
+
+        if (chosen) {
+            const names = this.getPinnedCacheVariableNames();
+            names.push(chosen.label);
+            await this.savePinnedCacheVariableNames(names);
+            await this.refresh();
+        }
+    }
+
+    async editPinnedCacheVariable(node: PinnedCacheVariableNode): Promise<void> {
+        if (!this.activeCMakeProject || !node.variableName) {
+            return;
+        }
+
+        const currentValue = node.variableValue ?? '';
+        const newValue = await vscode.window.showInputBox({
+            prompt: localize('enter.new.value', 'Enter new value for {0}', node.variableName),
+            value: currentValue
+        });
+
+        if (newValue !== undefined && newValue !== currentValue) {
+            // Update cmake.configureSettings with the new value
+            const configurationScope = vscode.workspace.workspaceFolders?.[0];
+            const config = vscode.workspace.getConfiguration('cmake', configurationScope);
+            const currentSettings = config.get<{ [key: string]: any }>('configureSettings') ?? {};
+            currentSettings[node.variableName] = newValue;
+            await config.update('configureSettings', currentSettings, vscode.ConfigurationTarget.WorkspaceFolder);
+
+            // configureOnEdit is handled automatically by the config onChange subscription
+            await this.refresh();
+        }
+    }
+
+    async unpinCacheVariable(node: PinnedCacheVariableNode): Promise<void> {
+        if (!node.variableName) {
+            return;
+        }
+        const names = this.getPinnedCacheVariableNames().filter(n => n !== node.variableName);
+        await this.savePinnedCacheVariableNames(names);
+        await this.refresh();
     }
 
 }
@@ -1140,5 +1247,68 @@ class Variant extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.activeVariantName || "Debug";
+    }
+}
+
+class PinnedCacheVariablesNode extends Node {
+
+    private pinnedNames: string[];
+    private childNodes: PinnedCacheVariableNode[] = [];
+
+    constructor(pinnedNames: string[]) {
+        super();
+        this.pinnedNames = pinnedNames;
+    }
+
+    async initialize(): Promise<void> {
+        this.label = localize('pinned.cache.variables', 'Pinned Cache Variables');
+        this.tooltip = this.label;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        this.contextValue = 'pinnedCacheVariables';
+        await this.initializeChildren();
+    }
+
+    private async initializeChildren(): Promise<void> {
+        this.childNodes = [];
+
+        let cache: CMakeCache | undefined;
+        if (treeDataProvider.cmakeProject) {
+            const cachePathStr = await treeDataProvider.cmakeProject.cachePath;
+            if (cachePathStr) {
+                cache = await CMakeCache.fromPath(cachePathStr);
+            }
+        }
+
+        for (const name of this.pinnedNames) {
+            const node = new PinnedCacheVariableNode(name);
+            const entry = cache?.get(name);
+            node.variableValue = entry ? String(entry.value) : undefined;
+            await node.initialize();
+            this.childNodes.push(node);
+        }
+    }
+
+    getChildren(): Node[] {
+        return this.childNodes;
+    }
+}
+
+export class PinnedCacheVariableNode extends Node {
+
+    public variableName: string;
+    public variableValue: string | undefined;
+
+    constructor(variableName: string) {
+        super();
+        this.variableName = variableName;
+    }
+
+    async initialize(): Promise<void> {
+        const displayValue = this.variableValue ?? localize('not.configured', '[Not configured]');
+        this.label = this.variableName;
+        this.description = displayValue;
+        this.tooltip = `${this.variableName}: ${displayValue}`;
+        this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        this.contextValue = 'pinnedCacheVariable';
     }
 }
