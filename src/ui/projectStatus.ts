@@ -521,7 +521,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
 
         if (newValue !== undefined && newValue !== currentValue) {
             // Update cmake.configureSettings with the new value
-            const configurationScope = vscode.workspace.workspaceFolders?.[0];
+            const configurationScope = this.activeCMakeProject.workspaceFolder;
             const config = vscode.workspace.getConfiguration('cmake', configurationScope);
             const currentSettings = config.get<{ [key: string]: any }>('configureSettings') ?? {};
             currentSettings[node.variableName] = newValue;

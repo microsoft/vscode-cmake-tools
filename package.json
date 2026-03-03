@@ -901,7 +901,7 @@
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.unpinCacheVariable.title%",
         "category": "CMake",
-        "icon": "$(pinned-dirty)"
+        "icon": "$(close)"
       },
       {
         "command": "cmake.pinnedCommands.add",
