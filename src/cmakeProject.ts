@@ -52,6 +52,7 @@ import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
+import { resolveTestVariables } from '@cmt/debugTestVars';
 
 import { CommandResult, ConfigurationType } from 'vscode-cmake-tools';
 
@@ -2519,6 +2520,18 @@ export class CMakeProject {
             return null;
         }
 
+        // Check if a specific launch configuration is requested via cmake.ctest.debugLaunchTarget
+        const ctestDebugLaunchTarget = this.workspaceContext.config.ctestDebugLaunchTarget;
+        if (ctestDebugLaunchTarget) {
+            const launchConfig = CMakeProject.findLaunchConfiguration(ctestDebugLaunchTarget, this.workspaceFolder);
+            if (launchConfig) {
+                const resolved = resolveTestVariables(launchConfig, testInfo);
+                await vscode.debug.startDebugging(this.workspaceFolder, resolved);
+                return vscode.debug.activeDebugSession!;
+            }
+            log.warning(localize('launch.config.not.found', 'Launch configuration "{0}" not found. Falling back to auto-generated configuration.', ctestDebugLaunchTarget));
+        }
+
         const target: ExecutableTarget = {
             name: testName,
             path: testInfo.program
@@ -2565,6 +2578,38 @@ export class CMakeProject {
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
         return vscode.debug.activeDebugSession!;
+    }
+
+    /**
+     * Get all launch configurations from both .vscode/launch.json and the workspace file.
+     * This ensures configurations from multi-root workspace files are not missed when
+     * .vscode/launch.json also exists.
+     */
+    static getAllLaunchConfigurations(workspaceFolder: vscode.WorkspaceFolder): vscode.DebugConfiguration[] {
+        const launchConfig = vscode.workspace.getConfiguration('launch', workspaceFolder.uri);
+        const inspected = launchConfig.inspect<vscode.DebugConfiguration[]>('configurations');
+
+        const configs: vscode.DebugConfiguration[] = [];
+
+        // Add workspace folder level configs (from .vscode/launch.json)
+        if (inspected?.workspaceFolderValue) {
+            configs.push(...inspected.workspaceFolderValue);
+        }
+
+        // Add workspace level configs (from .code-workspace file)
+        if (inspected?.workspaceValue) {
+            configs.push(...inspected.workspaceValue);
+        }
+
+        return configs;
+    }
+
+    /**
+     * Find a launch configuration by name from all available sources.
+     */
+    static findLaunchConfiguration(name: string, workspaceFolder: vscode.WorkspaceFolder): vscode.DebugConfiguration | undefined {
+        const configs = CMakeProject.getAllLaunchConfigurations(workspaceFolder);
+        return configs.find(c => c.name === name);
     }
 
     addTestExplorerRoot(folder: string) {
