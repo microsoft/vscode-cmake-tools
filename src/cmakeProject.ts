@@ -1644,6 +1644,14 @@ export class CMakeProject {
     }
 
     async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
+        // Explicitly refresh presets from disk so that explicit user commands
+        // (configure, clean-configure, etc.) always use up-to-date preset state,
+        // even if the asynchronous file watcher hasn't processed recent changes
+        // to included preset files yet. See issue #4777.
+        if (this.useCMakePresets) {
+            await this.presetsController.reapplyPresets();
+        }
+
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // Don't show a progress bar when the extension is using Cache for configuration.

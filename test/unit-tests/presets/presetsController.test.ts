@@ -239,22 +239,61 @@ suite('PresetsController file watcher protection', () => {
     });
 
     /**
-     * Test that create events are not debounced and always fire immediately.
-     * The FileWatcher treats create events differently from change events.
+     * Test that all filesystem events (change, create, delete) are debounced uniformly.
+     * After unifying the FileWatcher handler (fix for #4777), create events are
+     * debounced the same way as change and delete events to prevent race conditions
+     * when external tools regenerate included files via atomic write (delete + create).
      */
-    test('Create events are not debounced', () => {
-        let createCount = 0;
+    test('All events including create are debounced', () => {
+        let canRunChangeHandler = true;
+        let eventCount = 0;
+        const debounceMs = 100;
 
-        const createHandler = () => {
-            createCount++;
+        // Simulates the unified debounced handler used for all events
+        const handler = () => {
+            if (canRunChangeHandler) {
+                eventCount++;
+                canRunChangeHandler = false;
+                setTimeout(() => (canRunChangeHandler = true), debounceMs);
+            }
         };
 
-        // Multiple create events should all fire
-        createHandler();
-        createHandler();
-        createHandler();
+        // Rapid create events should be debounced (only first fires)
+        handler(); // create event
+        handler(); // another create event
+        handler(); // yet another create event
 
-        expect(createCount).to.equal(3);
+        expect(eventCount).to.equal(1);
+    });
+
+    /**
+     * Test that a delete followed by a create (atomic write pattern) is handled
+     * as a single reload. This simulates the scenario where an external tool like
+     * Conan regenerates an included preset file. See issue #4777.
+     */
+    test('Delete followed by create triggers single debounced reload', async () => {
+        let canRunChangeHandler = true;
+        let eventCount = 0;
+        const debounceMs = 100;
+
+        const handler = () => {
+            if (canRunChangeHandler) {
+                eventCount++;
+                canRunChangeHandler = false;
+                setTimeout(() => (canRunChangeHandler = true), debounceMs);
+            }
+        };
+
+        // Simulate atomic write: delete event immediately followed by create event
+        handler(); // delete event
+        handler(); // create event (should be debounced)
+
+        expect(eventCount).to.equal(1);
+
+        // After debounce period, another event should fire
+        await new Promise(resolve => setTimeout(resolve, debounceMs + 10));
+        handler();
+        expect(eventCount).to.equal(2);
     });
 
     /**
