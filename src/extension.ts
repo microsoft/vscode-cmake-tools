@@ -2509,11 +2509,24 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         if (what instanceof TargetNode) {
             return what;
         }
-        if (what instanceof BookmarkNode && what.bookmark.sourceNode instanceof TargetNode) {
-            return what.bookmark.sourceNode;
-        }
         if (what instanceof BookmarkNode) {
-            log.error(localize('bookmark.target.not.resolved', 'Bookmark "{0}" could not be resolved to a target. The project may need to be reconfigured.', what.bookmark.name));
+            const bookmark = what.bookmark;
+            // Fast path: the bookmark is already attached to a live TargetNode.
+            if (bookmark.sourceNode instanceof TargetNode) {
+                return bookmark.sourceNode;
+            }
+            // Fallback: try to resolve by stable id via the current project outline.
+            try {
+                const node = ext.getProjectOutline().findTargetNodeById(bookmark.id);
+                if (node) {
+                    // Cache the resolved node so future calls are fast.
+                    bookmark.sourceNode = node;
+                    return node;
+                }
+            } catch (e) {
+                log.error(localize('bookmark.target.resolve.error', 'Error while resolving bookmark "{0}" to a target: {1}', bookmark.name, util.errorToString(e)));
+            }
+            log.error(localize('bookmark.target.not.resolved', 'Bookmark "{0}" could not be resolved to a target. The project may need to be reconfigured.', bookmark.name));
         }
         return undefined;
     };
