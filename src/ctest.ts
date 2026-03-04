@@ -1462,7 +1462,7 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
-        // test name as parameters, which means one lauch config for each test. So replacing them here is a better way.
+        // test name as parameters, which means one launch config for each test. So replacing them here is a better way.
         chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
         chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
 
