@@ -2622,7 +2622,25 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         // vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
         // Notification of active project change (e.g. when cmake.sourceDirectory changes)
-        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange())
+        vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange()),
+        // Debug test with launch.json from test explorer context menu
+        vscode.commands.registerCommand('cmake.ctest.debugWithLaunchJson', async (testItem: vscode.TestItem) => {
+            if (!testItem || !extensionManager) {
+                return;
+            }
+            // Walk up to find root test item
+            let current = testItem;
+            while (current.parent !== undefined) {
+                current = current.parent;
+            }
+            const rootTestItemId = current.id;
+            // Find the right project and delegate to its CTestDriver
+            const projects = extensionManager.projectController.getAllCMakeProjects();
+            const project = projects.find(p => util.platformNormalizePath(p.sourceDir) === rootTestItemId);
+            if (project) {
+                await project.cTestController.debugSingleTestWithLaunchJson(testItem);
+            }
+        })
     ]);
 
     return { getApi: (version: api.Version) => {
