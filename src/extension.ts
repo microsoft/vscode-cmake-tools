@@ -361,7 +361,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * The project status view controller
      */
-    projectStatus = new ProjectStatus();
+    projectStatus = new ProjectStatus(this.extensionContext);
 
     // NOTE: (from sidebar) The project controller manages all the projects in the workspace
     public readonly projectController = new ProjectController(this.extensionContext, this.projectStatus, this.workspaceConfig);
