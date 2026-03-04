@@ -2143,7 +2143,7 @@
         {
           "command": "cmake.ctest.debugWithLaunchJson",
           "when": "controllerId == cmake-tools.CTest",
-          "group": "builtin@1"
+          "group": "builtin@12"
         }
       ],
       "editor/title/context": [

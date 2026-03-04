@@ -1703,7 +1703,7 @@ export class CTestDriver implements vscode.Disposable {
                         return this.debugTestHandler(request, cancellation);
                     }
                 },
-                false
+                true
             );
             testExplorer.createRunProfile(
                 localize('debug.tests.with.launch.json.profile', 'Debug Tests (launch.json)'),
