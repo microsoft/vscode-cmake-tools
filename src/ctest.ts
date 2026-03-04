@@ -1568,6 +1568,20 @@ export class CTestDriver implements vscode.Disposable {
         run.end();
     };
 
+    /**
+     * Debug a single test item using a launch.json configuration.
+     * This is invoked from the test explorer context menu command.
+     */
+    async debugSingleTestWithLaunchJson(testItem: vscode.TestItem): Promise<void> {
+        const cancellationSource = new vscode.CancellationTokenSource();
+        try {
+            const request = new vscode.TestRunRequest([testItem]);
+            await this.debugTestWithLaunchJsonHandler(request, cancellationSource.token);
+        } finally {
+            cancellationSource.dispose();
+        }
+    }
+
     private async debugTestHandler(request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) {
         // NOTE: We expect the testExplorer to be undefined when the cmake.ctest.testExplorerIntegrationEnabled is disabled.
         if (!testExplorer) {
