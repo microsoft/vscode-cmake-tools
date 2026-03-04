@@ -1702,10 +1702,11 @@ export class CTestDriver implements vscode.Disposable {
                     } catch (e) {
                         return this.debugTestHandler(request, cancellation);
                     }
-                }
+                },
+                false
             );
             testExplorer.createRunProfile(
-                localize('debug.tests.with.launch.json.profile', 'Debug with launch.json'),
+                localize('debug.tests.with.launch.json.profile', 'Debug Tests (launch.json)'),
                 vscode.TestRunProfileKind.Debug,
                 (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
                     if (request.include === undefined) {
