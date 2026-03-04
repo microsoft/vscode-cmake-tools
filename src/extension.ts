@@ -2628,15 +2628,15 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             if (!testItem || !extensionManager) {
                 return;
             }
-            // Walk up to find root folder
+            // Walk up to find root test item
             let current = testItem;
             while (current.parent !== undefined) {
                 current = current.parent;
             }
-            const rootFolder = current.id;
+            const rootTestItemId = current.id;
             // Find the right project and delegate to its CTestDriver
             const projects = extensionManager.projectController.getAllCMakeProjects();
-            const project = projects.find(p => util.platformNormalizePath(p.sourceDir) === rootFolder);
+            const project = projects.find(p => util.platformNormalizePath(p.sourceDir) === rootTestItemId);
             if (project) {
                 await project.cTestController.debugSingleTestWithLaunchJson(testItem);
             }
