@@ -30,6 +30,8 @@
 	"cmake.debug.name": "CMake 调试程序",
 	"select.a.cmake.project": "选择 cmake 项目",
 	"compilation information.not.found": "找不到此文件的编译信息",
+	"open.folder": "打开文件夹",
+	"no.folder.open.for.quickstart": "未打开任何文件夹。请打开文件夹以使用 CMake: 快速入门。",
 	"add.config.preset.in.test.mode": "正在测试模式下运行 CMakeTools。已禁用 addConfigurePreset。",
 	"add.build.preset.in.test.mode": "正在测试模式下运行 CMakeTools。已禁用 addBuildPreset。",
 	"add.test.preset.in.test.mode": "正在测试模式下运行 CMakeTools。已禁用 addTestPreset。",

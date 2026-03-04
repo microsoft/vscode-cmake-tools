@@ -21,6 +21,21 @@ export enum StateMessage {
  * in conjunction with `proc.execute`.
  */
 export class CMakeOutputConsumer extends CommandConsumer {
+    /**
+     * Matches CMake status lines that signal key configure/generate lifecycle
+     * milestones.  These are always logged at `info` so they remain visible at
+     * the default logging level.  All other stdout lines use `debug`, keeping
+     * the Output panel concise while still being one setting-change away.
+     *
+     * Matched patterns (all prefixed with `-- `):
+     *   Configuring done           / Configuring done (0.1s)
+     *   Configuring incomplete, errors occurred!
+     *   Generating done
+     *   Build files have been written to: <path>
+     */
+    private static readonly _milestoneRe =
+        /^-- +(Configuring (done|incomplete)|Generating done|Build files have been written to:)/;
+
     constructor(readonly sourceDir: string, readonly logger?: Logger) {
         super();
     }
@@ -46,12 +61,18 @@ export class CMakeOutputConsumer extends CommandConsumer {
     private readonly _stateMessages: StateMessage[] = [];
 
     /**
-     * Simply writes the line of output to the log
+     * Writes the line of output to the log at a tiered level:
+     * - Milestone lines (configure/generate done, build files written) → info
+     * - All other CMake stdout → debug
      * @param line Line of output
      */
     output(line: string) {
         if (this.logger) {
-            this.logger.info(line);
+            if (CMakeOutputConsumer._milestoneRe.test(line)) {
+                this.logger.info(line);
+            } else {
+                this.logger.debug(line);
+            }
         }
         super.output(line);
         this._parseDiags(line);
@@ -88,7 +109,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
     error(line: string) {
         // First, just log the line
         if (this.logger) {
-            this.logger.error(line);
+            this.logger.warning(line);
         }
         super.error(line);
         this._parseDiags(line);
@@ -106,10 +127,10 @@ export class CMakeOutputConsumer extends CommandConsumer {
         // Switch on the state to implement our crude FSM
         switch (this._errorState.state) {
             case 'init': {
-                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+) \((.*?)\):/;
+                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+)(?: \((.*?)\))?:/;
                 const result = re.exec(line);
                 if (result) {
-                    // We have encountered and error
+                    // We have encountered an error
                     const [full, level, filename, linestr, command] = result;
                     const lineno = oneLess(linestr);
                     const diagmap: { [k: string]: vscode.DiagnosticSeverity } = {
@@ -118,7 +139,8 @@ export class CMakeOutputConsumer extends CommandConsumer {
                         Error: vscode.DiagnosticSeverity.Error
                     };
                     const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), full, diagmap[level]);
-                    vsdiag.source = `CMake (${command})`;
+                    vsdiag.source = 'cmake';
+                    vsdiag.code = command ? command : undefined;
                     vsdiag.relatedInformation = [];
                     const filepath = util.resolvePath(filename, this.sourceDir);
                     this._errorState.diag = {

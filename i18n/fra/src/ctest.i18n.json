@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Génération de postRunCoverageTarget « {0} » pour le projet {1} une fois que les tests ont été exécutés avec la couverture.",
 	"test.postRunCoverageTargetFailure": "Échec de la génération de postRunCoverageTarget cible sur le projet dans {0}. Gestion des données de couverture ignorée.",
 	"test.skip.run.build.failure": "Tests non exécutés en raison d’un échec de build.",
-	"no.launch.config": "Configurations de lancement introuvables.",
-	"choose.launch.config": "Choisissez une configuration de lancement avec qui déboguer le test.",
 	"test.skip.debug.build.failure": "Tests non débogués en raison d’un échec de build.",
 	"build.failed": "Échec de la build",
 	"run.tests.profile": "Exécuter les tests",

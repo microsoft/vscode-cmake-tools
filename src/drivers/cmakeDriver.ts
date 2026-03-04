@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kits/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment, getVsKitPreferredGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -95,6 +95,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +128,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
@@ -376,7 +381,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
             return envs;
         } else {
-            return {};
+            let envs = this._kitEnvironmentVariables;
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.cpackEnvironment, envs)]);
+            envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
+            return envs;
         }
     }
 
@@ -515,7 +524,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
-        const exec_options = { ...options, environment };
+        // On Windows, command-type-specific detection (e.g. .cmd → cmd, .ps1 → powershell)
+        // must take precedence over config.shell to avoid routing commands through
+        // an incompatible shell (e.g. .cmd files through Git Bash).
+        const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
+        const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
+        const exec_options = { ...options, environment, shell };
         return proc.execute(command, args, consumer, exec_options);
     }
 
@@ -550,7 +564,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = undefined;
         }
         if (!existing) {
-            const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+            const shellPath = this.config.shell ?? (process.platform === 'win32' ? 'cmd.exe' : undefined);
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,
@@ -593,6 +607,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     async setConfigurePreset(configurePreset: preset.ConfigurePreset | null): Promise<void> {
         if (configurePreset) {
             log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
+
+            // Skip the full doSetConfigurePreset (which unconditionally sets
+            // _needsReconfigure = true) when the expanded preset hasn't changed
+            // and the CMake cache still exists on disk.
+            // This avoids unnecessary reconfigures when reapplyPresets() is called
+            // but preset files on disk are identical (see #4502).
+            if (this._configurePreset && lodash.isEqual(configurePreset, this._configurePreset) && await fs.exists(this.cachePath)) {
+                return;
+            }
 
             const newBinaryDir = configurePreset.binaryDir;
             const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
@@ -756,8 +779,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
         // Place a kit preferred generator at the front of the list
-        if (kit.preferredGenerator) {
-            preferredGenerators.unshift(kit.preferredGenerator);
+        // For VS kits that don't have preferredGenerator (e.g., scanned before a VS version was added),
+        // try to derive it from the VS installation.
+        let kitPreferredGenerator = kit.preferredGenerator;
+        if (!kitPreferredGenerator && kit.visualStudio) {
+            kitPreferredGenerator = await getVsKitPreferredGenerator(kit);
+        }
+        if (kitPreferredGenerator) {
+            preferredGenerators.unshift(kitPreferredGenerator);
         }
 
         // If no preferred generator is defined by the current kit or the user settings,
@@ -842,14 +871,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const opts = this.expansionOptions;
             opts.envOverride = await this.getConfigureEnvironment(configurePreset);
 
+            const installPrefix = this.config.installPrefix;
+            if (installPrefix) {
+                this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
+            }
+
             if (!this.useCMakePresets) {
                 const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
                 this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), opts));
-
-                const installPrefix = this.config.installPrefix;
-                if (installPrefix) {
-                    this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
-                }
             }
         });
     }
@@ -1360,7 +1389,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // since some compilers can output their version without a specific switch.
         let version;
         if (compiler?.versionOutputRegexp) {
-            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
+            version = await this.testCompilerVersion(compilerPath, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
         } else {
             version = "unknown";
         }
@@ -1372,6 +1401,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * The list of generators CMake supports as of 3.21
      */
     private readonly cmakeGenerators = [
+        "Visual Studio 18 2026",
         "Visual Studio 17 2022",
         "Visual Studio 16 2019",
         "Visual Studio 15 2017",
@@ -1440,7 +1470,28 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
-        return init_cache_flags.concat(preset.configureArgs(configPreset), await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()}))));
+        const expandedConfigureArgs = await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()})));
+        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset), expandedConfigureArgs);
+        const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
+        const config = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
+        const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
+        const presetCacheVariables = configPreset.cacheVariables ?? {};
+        const hasExportCompileCommands = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_EXPORT_COMPILE_COMMANDS')
+            || expandedArgs.some(arg => arg.startsWith('-DCMAKE_EXPORT_COMPILE_COMMANDS'));
+        if (!hasExportCompileCommands) {
+            const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
+            expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
+        }
+        // Only use the installPrefix config if the user didn't
+        // provide one via the preset or configureArgs
+        const hasInstallPrefix = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_INSTALL_PREFIX')
+            || expandedArgs.some(arg => arg.startsWith('-DCMAKE_INSTALL_PREFIX'));
+        if (!hasInstallPrefix && this.installDir) {
+            const installPrefixValue = util.cmakeify(this.installDir);
+            expandedArgs.push(`-DCMAKE_INSTALL_PREFIX:${installPrefixValue.type}=${installPrefixValue.value}`);
+        }
+        return expandedArgs;
     }
 
     public async generateConfigArgsFromSettings(extra_args: string[] = [], withoutCmakeSettings: boolean = false): Promise<string[]> {
@@ -1927,7 +1978,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs);
+        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs, this.config.numJobsForPreset);
         const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
         const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
         const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
@@ -2011,7 +2062,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
-            if (outputEnc === 'auto') {
+            const isAutoEncoding = outputEnc === 'auto';
+            if (isAutoEncoding) {
                 if (process.platform === 'win32') {
                     outputEnc = await codepages.getWindowsCodepage();
                 } else {
@@ -2028,7 +2080,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();

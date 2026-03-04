@@ -13,6 +13,7 @@
 	"edit.filter": "Изменить фильтр",
 	"open.file": "Открыть файл",
 	"references": "Ссылки",
+	"test.tooltip": "Тест: {0}",
 	"static.library": "Статическая библиотека",
 	"module.library": "Библиотека модулей",
 	"shared.library": "Общая библиотека",

@@ -43,6 +43,18 @@ export class DebugTrackerFactory implements vscode.DebugAdapterTrackerFactory {
                 if (message.command === "disconnect") {
                     await onDisconnected();
                 }
+            },
+            onWillReceiveMessage(message: any) {
+                // Fix for issue #4551: CMake's debugger sets evaluateName to the variable name,
+                // which causes "Copy Value" to copy the name instead of the value.
+                // We remove evaluateName from variables so VSCode falls back to copying the value.
+                if (message.type === 'response' && message.command === 'variables' && message.body?.variables) {
+                    for (const variable of message.body.variables) {
+                        if (variable.evaluateName) {
+                            delete variable.evaluateName;
+                        }
+                    }
+                }
             }
         };
     }

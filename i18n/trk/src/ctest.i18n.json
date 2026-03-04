@@ -27,8 +27,6 @@
 	"test.buildingPostRunCoverageTarget": "Testler kapsamla çalıştırıldıktan sonra {1} projesi için '{0}' postRunCoverageTarget oluşturuluyor.",
 	"test.postRunCoverageTargetFailure": "{0} içindeki proje üzerinde hedef postRunCoverageTarget oluşturma başarısız oldu. Kapsam verilerinin işlenmesi atlanıyor.",
 	"test.skip.run.build.failure": "Derleme hatası nedeniyle testler çalıştırılamıyor.",
-	"no.launch.config": "Başlatma yapılandırması bulunamadı.",
-	"choose.launch.config": "Testte hata ayıklamak için bir başlatma yapılandırması seçin.",
 	"test.skip.debug.build.failure": "Derleme hatası nedeniyle testlerde hata ayıklama gerçekleştirilemiyor.",
 	"build.failed": "Derleme başarısız",
 	"run.tests.profile": "Testleri Çalıştır",
