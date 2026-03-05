@@ -248,7 +248,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             // Only use it as a WorkspaceFolder if it's an object (not a number or null).
             const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
             let exitCodeResolve!: (exitCode: number | null) => void;
-            const exitCodePromise = new Promise<number | null>(resolve => { exitCodeResolve = resolve; });
+            const exitCodePromise = new Promise<number | null>(resolve => {
+                exitCodeResolve = resolve;
+            });
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
                     const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
