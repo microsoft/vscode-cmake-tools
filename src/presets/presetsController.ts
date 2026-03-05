@@ -28,6 +28,8 @@ export class PresetsController implements vscode.Disposable {
     private _presetsWatchers: FileWatcher | undefined;
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _isChangingPresets = false;
+    // Populated by reapplyPresets() with paths of all preset files (CMakePresets.json,
+    // CMakeUserPresets.json, and any files pulled in via "include").
     private _referencedFiles: string[] = [];
     private _presetsParser!: PresetsParser; // Using definite assigment (!) because we initialize it in the init method
     private _reapplyInProgress: Promise<void> = Promise.resolve();
@@ -195,7 +197,8 @@ export class PresetsController implements vscode.Disposable {
                 this.project.workspaceContext.config.allowUnsupportedPresetsVersions
             );
 
-            // reset all expanded presets storage.
+            // Collect the paths of all referenced preset files (main files + includes).
+            // resetPresetsFiles() populates the referencedFiles map as it parses each file.
             this._referencedFiles = Array.from(referencedFiles.keys());
 
             this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
