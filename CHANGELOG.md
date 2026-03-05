@@ -24,7 +24,7 @@ Improvements:
 - Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
 
 Bug Fixes:
-- Fix build task exit code not propagating when using `cmake.buildTask`, which caused debugging to proceed even after a failed build. [#3389](https://github.com/microsoft/vscode-cmake-tools/issues/3389)
+- Fix `cmake.buildTask` build failures not aborting debug launches. When `${command:cmake.launchTargetPath}` is used in `launch.json`, a failed build now correctly prevents the stale executable from being launched. [#3389](https://github.com/microsoft/vscode-cmake-tools/issues/3389)
 - Fix configure/build sometimes using stale preset values when unsaved changes to included preset files are auto-saved before configure. The extension now explicitly refreshes presets from disk after saving, instead of relying solely on the asynchronous file watcher. [#4502](https://github.com/microsoft/vscode-cmake-tools/issues/4502)
 - Reduce overly verbose logging when CMake configure or build fails. The Output panel no longer floods with duplicated output, and the channel is only revealed on error rather than unconditionally. [#4749](https://github.com/microsoft/vscode-cmake-tools/issues/4749)
 - Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)

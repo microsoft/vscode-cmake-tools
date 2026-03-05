@@ -32,17 +32,25 @@ export class CMakeBuildRunner {
         this.setBuildInProgress(true);
     }
 
-    public async setBuildProcessForTask(taskExecutor: vscode.TaskExecution): Promise<void> {
+    public async setBuildProcessForTask(taskExecutor: vscode.TaskExecution, exitCodePromise?: Promise<number | null>): Promise<void> {
         this.taskExecutor = taskExecutor;
-        this.currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
-            const disposable: vscode.Disposable = vscode.tasks.onDidEndTaskProcess((endEvent: vscode.TaskProcessEndEvent) => {
-                if (endEvent.execution === this.taskExecutor) {
-                    this.taskExecutor = undefined;
-                    disposable.dispose();
-                    resolve({ retc: endEvent.exitCode ?? null, stdout: '', stderr: '' });
-                }
-            });
-        })};
+        if (exitCodePromise) {
+            // Use the direct exit code promise from the CustomBuildTaskTerminal (most reliable).
+            this.currentBuildProcess = { child: undefined, result: exitCodePromise.then(exitCode => ({
+                retc: exitCode, stdout: '', stderr: ''
+            }))};
+        } else {
+            // Fallback: listen for task process end event.
+            this.currentBuildProcess =  { child: undefined, result: new Promise<proc.ExecutionResult>(resolve => {
+                const disposable: vscode.Disposable = vscode.tasks.onDidEndTaskProcess((endEvent: vscode.TaskProcessEndEvent) => {
+                    if (endEvent.execution === this.taskExecutor) {
+                        this.taskExecutor = undefined;
+                        disposable.dispose();
+                        resolve({ retc: endEvent.exitCode ?? null, stdout: '', stderr: '' });
+                    }
+                });
+            })};
+        }
         this.setBuildInProgress(true);
     }
 
