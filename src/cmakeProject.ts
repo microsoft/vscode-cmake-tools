@@ -1939,6 +1939,9 @@ export class CMakeProject {
         if (hadDirtyPresets) {
             await this.presetsController.reapplyPresets();
         }
+        // Resume normal file-watcher behavior now that the explicit reapply
+        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+        this.presetsController.suppressWatcherReapply = false;
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
                 await vscode.window.showErrorMessage(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake project'));
@@ -2039,12 +2042,10 @@ export class CMakeProject {
         // had unsaved changes that were just auto-saved.
         if (hadDirtyPresets && this.workspaceContext.config.configureOnEdit) {
             await this.presetsController.reapplyPresets();
-        } else if (hadDirtyPresets) {
-            // Presets were dirty but configureOnEdit is off — we won't reapply,
-            // so clear the suppression flag set by maybeAutoSaveAll so the
-            // watcher resumes normal operation.
-            this.presetsController.suppressWatcherReapply = false;
         }
+        // Resume normal file-watcher behavior now that the explicit reapply
+        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+        this.presetsController.suppressWatcherReapply = false;
         if (await this.needsReconfigure()) {
             return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
         } else {
@@ -3025,12 +3026,10 @@ export class CMakeProject {
         }
         if (hadDirtyPresets && this.workspaceContext.config.configureOnEdit) {
             await this.presetsController.reapplyPresets();
-        } else if (hadDirtyPresets) {
-            // Presets were dirty but configureOnEdit is off — we won't reapply,
-            // so clear the suppression flag set by maybeAutoSaveAll so the
-            // watcher resumes normal operation.
-            this.presetsController.suppressWatcherReapply = false;
         }
+        // Resume normal file-watcher behavior now that the explicit reapply
+        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+        this.presetsController.suppressWatcherReapply = false;
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
         // executable targets and may show an uneccessary prompt to the user
