@@ -2196,9 +2196,15 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir) : [];
-                        if (fileDiags) {
-                            populateCollection(collections.build, fileDiags);
+                        // When buildTask is enabled and this is a build command, diagnostics are
+                        // already populated by CustomBuildTaskTerminal. Calling populateCollection
+                        // here would clear them because the local consumer never received output.
+                        const usedBuildTask = drv!.config.buildTask && isBuildCommand === true;
+                        if (!usedBuildTask) {
+                            const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir) : [];
+                            if (fileDiags) {
+                                populateCollection(collections.build, fileDiags);
+                            }
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
