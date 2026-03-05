@@ -8,6 +8,7 @@ import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
+import * as shlex from '@cmt/shlex';
 import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
@@ -95,6 +96,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +129,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
@@ -519,7 +525,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
-        const exec_options = { ...options, environment };
+        // On Windows, command-type-specific detection (e.g. .cmd → cmd, .ps1 → powershell)
+        // must take precedence over config.shell to avoid routing commands through
+        // an incompatible shell (e.g. .cmd files through Git Bash).
+        const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
+        const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
+        const exec_options = { ...options, environment, shell };
         return proc.execute(command, args, consumer, exec_options);
     }
 
@@ -554,7 +565,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = undefined;
         }
         if (!existing) {
-            const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+            const shellPath = this.config.shell ?? (process.platform === 'win32' ? 'cmd.exe' : undefined);
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,
@@ -565,7 +576,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = term;
         }
         existing.show();
-        existing.sendText(cmd.command + '\r\n');
+        // Send the command and arguments individually to avoid terminal buffer truncation
+        // issues with long command lines (see https://github.com/microsoft/vscode/issues/233420).
+        // The arguments array is always populated by CompilationDatabase, either from the
+        // compile_commands.json or by parsing the command string.
+        const args = cmd.arguments;
+        if (args && args.length > 0) {
+            existing.sendText(shlex.quote(args[0]), false);
+            for (let i = 1; i < args.length; i++) {
+                existing.sendText(` ${shlex.quote(args[i])}`, false);
+            }
+            existing.sendText('', true); // Send newline to execute the command
+        } else {
+            // Fallback to original behavior if arguments not available
+            existing.sendText(cmd.command + '\r\n');
+        }
         return existing;
     }
 
