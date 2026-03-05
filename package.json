@@ -876,9 +876,9 @@
         "icon": "$(debug-alt)"
       },
       {
-        "command": "cmake.ctest.debugWithLaunchJson",
+        "command": "cmake.outline.debugTestWithLaunchJson",
         "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.ctest.debugWithLaunchJson.title%"
+        "title": "%cmake-tools.command.cmake.outline.debugTestWithLaunchJson.title%"
       },
       {
         "command": "cmake.projectStatus.update",
@@ -1590,7 +1590,7 @@
           "when": "never"
         },
         {
-          "command": "cmake.ctest.debugWithLaunchJson",
+          "command": "cmake.outline.debugTestWithLaunchJson",
           "when": "never"
         },
         {
@@ -1999,6 +1999,11 @@
           "group": "1_testActions@2"
         },
         {
+          "command": "cmake.outline.debugTestWithLaunchJson",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
+          "group": "1_testActions@3"
+        },
+        {
           "command": "cmake.outline.runTest",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
           "group": "inline@1"
@@ -2141,7 +2146,7 @@
       ],
       "testing/item/context": [
         {
-          "command": "cmake.ctest.debugWithLaunchJson",
+          "command": "cmake.outline.debugTestWithLaunchJson",
           "when": "controllerId == cmake-tools.CTest",
           "group": "builtin@12"
         }

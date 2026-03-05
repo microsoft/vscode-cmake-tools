@@ -2624,7 +2624,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         // Notification of active project change (e.g. when cmake.sourceDirectory changes)
         vscode.commands.registerCommand('cmake.statusbar.update', () => extensionManager?.updateStatusBarForActiveProjectChange()),
         // Debug test with launch.json from test explorer context menu
-        vscode.commands.registerCommand('cmake.ctest.debugWithLaunchJson', async (testItem: vscode.TestItem) => {
+        vscode.commands.registerCommand('cmake.outline.debugTestWithLaunchJson', async (testItem: vscode.TestItem) => {
             if (!testItem || !extensionManager) {
                 return;
             }
