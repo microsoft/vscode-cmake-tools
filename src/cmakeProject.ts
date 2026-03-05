@@ -1910,16 +1910,27 @@ export class CMakeProject {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         // Check for dirty preset files *before* auto-saving so we know whether
         // an explicit reapply is needed after the save completes.
-        const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
+        // Note: configureOnEdit is intentionally NOT checked here. doConfigure()
+        // is the explicit configure path — when the user manually triggers
+        // configure, we should always pick up just-saved preset changes
+        // regardless of configureOnEdit (which only controls *automatic*
+        // reconfigure on edit). See #4792.
+        const hadDirtyPresets = this.useCMakePresets && this.haveUnsavedPresetFileChanges();
+        // Suppress watcher-triggered reapply during save — the explicit
+        // reapplyPresets() below will read the latest state from disk.
+        if (hadDirtyPresets) {
+            this.presetsController.suppressWatcherReapply = true;
+        }
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
+            this.presetsController.suppressWatcherReapply = false;
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
         // After saving files, explicitly refresh presets from disk so that any
         // just-saved changes to preset files (including included files) are picked
         // up before configure runs.  Without this, the asynchronous file-watcher
         // may not have re-expanded the presets yet (see #4502).
-        // Only do this when configureOnEdit is enabled and preset files actually
-        // had unsaved changes that were just auto-saved.
+        // Only do this when preset files actually had unsaved changes that were
+        // just auto-saved.
         if (hadDirtyPresets) {
             await this.presetsController.reapplyPresets();
         }
@@ -2012,8 +2023,14 @@ export class CMakeProject {
         // Check for dirty preset files *before* auto-saving so we know whether
         // an explicit reapply is needed after the save completes.
         const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
+        // Suppress watcher-triggered reapply during save — the explicit
+        // reapplyPresets() below will read the latest state from disk.
+        if (hadDirtyPresets) {
+            this.presetsController.suppressWatcherReapply = true;
+        }
         // First, save open files
         if (!await this.maybeAutoSaveAll()) {
+            this.presetsController.suppressWatcherReapply = false;
             return { exitCode: -1 };
         }
         // After saving, explicitly refresh presets from disk so that the
@@ -3001,7 +3018,13 @@ export class CMakeProject {
         // Only do this when configureOnEdit is enabled and preset files actually
         // had unsaved changes that were just auto-saved.
         const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
+        // Suppress watcher-triggered reapply during save — the explicit
+        // reapplyPresets() below will read the latest state from disk.
+        if (hadDirtyPresets) {
+            this.presetsController.suppressWatcherReapply = true;
+        }
         if (!await this.maybeAutoSaveAll()) {
+            this.presetsController.suppressWatcherReapply = false;
             return null;
         }
         if (hadDirtyPresets) {
