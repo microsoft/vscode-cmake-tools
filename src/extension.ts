@@ -2516,7 +2516,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             }
             // Fallback: try to resolve by stable id via the current project outline.
             const node = ext.getProjectOutline().findTargetNodeById(what.bookmark.id);
-            if (node) {
+            if (node instanceof TargetNode) {
                 what.bookmark.sourceNode = node;
                 return node;
             }
