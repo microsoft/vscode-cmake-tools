@@ -252,7 +252,10 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
                     const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
-                    terminal.onDidClose((exitCode) => exitCodeResolve(exitCode));
+                    const listener = terminal.onDidClose((exitCode) => {
+                        listener.dispose();
+                        exitCodeResolve(exitCode);
+                    });
                     return terminal;
                 }), []);
             return { task: resolvedTask, exitCodePromise };
