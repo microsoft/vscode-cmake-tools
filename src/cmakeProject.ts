@@ -1888,11 +1888,29 @@ export class CMakeProject {
     }
 
     /**
+     * Returns true when at least one of the preset files tracked by the
+     * presets controller (including files pulled in via "include") is currently
+     * dirty (has unsaved changes) in VS Code.
+     */
+    private haveUnsavedPresetFileChanges(): boolean {
+        const dirtyPaths = new Set(
+            vscode.workspace.textDocuments
+                .filter(doc => doc.isDirty)
+                .map(doc => util.platformNormalizePath(doc.uri.fsPath))
+        );
+        return this.presetsController.referencedFiles
+            .some(f => dirtyPaths.has(util.platformNormalizePath(f)));
+    }
+
+    /**
      * Wraps pre/post configure logic around an actual configure function
      * @param cb The actual configure callback. Called to do the configure
      */
     private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
+        // Check for dirty preset files *before* auto-saving so we know whether
+        // an explicit reapply is needed after the save completes.
+        const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
@@ -1900,7 +1918,9 @@ export class CMakeProject {
         // just-saved changes to preset files (including included files) are picked
         // up before configure runs.  Without this, the asynchronous file-watcher
         // may not have re-expanded the presets yet (see #4502).
-        if (this.useCMakePresets) {
+        // Only do this when configureOnEdit is enabled and preset files actually
+        // had unsaved changes that were just auto-saved.
+        if (hadDirtyPresets) {
             await this.presetsController.reapplyPresets();
         }
         if (!this.useCMakePresets) {
@@ -1989,6 +2009,9 @@ export class CMakeProject {
         if (!drv) {
             return null;
         }
+        // Check for dirty preset files *before* auto-saving so we know whether
+        // an explicit reapply is needed after the save completes.
+        const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
         // First, save open files
         if (!await this.maybeAutoSaveAll()) {
             return { exitCode: -1 };
@@ -1998,7 +2021,9 @@ export class CMakeProject {
         // Without this, the async file-watcher's fire-and-forget reapplyPresets()
         // may not have completed yet, causing needsReconfigure() to return false
         // even though preset files just changed on disk (see #4502).
-        if (this.useCMakePresets) {
+        // Only do this when configureOnEdit is enabled and preset files actually
+        // had unsaved changes that were just auto-saved.
+        if (hadDirtyPresets) {
             await this.presetsController.reapplyPresets();
         }
         if (await this.needsReconfigure()) {
@@ -2973,10 +2998,13 @@ export class CMakeProject {
         // reconfiguration is needed.  This mirrors the logic in ensureConfigured()
         // and doConfigure() so that unsaved changes to included preset files are
         // picked up for debug/launch paths as well (see #4502).
+        // Only do this when configureOnEdit is enabled and preset files actually
+        // had unsaved changes that were just auto-saved.
+        const hadDirtyPresets = this.useCMakePresets && this.workspaceContext.config.configureOnEdit && this.haveUnsavedPresetFileChanges();
         if (!await this.maybeAutoSaveAll()) {
             return null;
         }
-        if (this.useCMakePresets) {
+        if (hadDirtyPresets) {
             await this.presetsController.reapplyPresets();
         }
 

@@ -133,6 +133,10 @@ export class PresetsController implements vscode.Disposable {
         return this._presetsParser.userPresetsPath;
     }
 
+    get referencedFiles(): readonly string[] {
+        return this._referencedFiles;
+    }
+
     get workspaceFolder() {
         return this.project.workspaceFolder;
     }
