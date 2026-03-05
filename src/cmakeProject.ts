@@ -28,7 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
+import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -2196,15 +2196,23 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        // When buildTask is enabled and this is a build command, diagnostics are
-                        // already populated by CustomBuildTaskTerminal. Calling populateCollection
-                        // here would clear them because the local consumer never received output.
-                        const usedBuildTask = drv!.config.buildTask && isBuildCommand === true;
-                        if (!usedBuildTask) {
-                            const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir) : [];
-                            if (fileDiags) {
+                        if (drv!.config.parseBuildDiagnostics) {
+                            const fileDiags = await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir);
+                            if (fileDiags.length > 0) {
+                                // Re-populate with fully resolved diagnostics (proper
+                                // path resolution and related information). This replaces
+                                // the incremental diagnostics added during the build.
                                 populateCollection(collections.build, fileDiags);
                             }
+                            // When empty: either the build succeeded (collection was
+                            // already cleared at build start), or the build ran through
+                            // the task path and diagnostics were populated by
+                            // CustomBuildTaskTerminal. In both cases leave the
+                            // collection as-is.
+                        } else {
+                            // Parsing disabled — clear any stale diagnostics that may
+                            // remain from a previous build that had parsing enabled.
+                            collections.build.clear();
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
