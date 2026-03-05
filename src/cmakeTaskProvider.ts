@@ -243,20 +243,29 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         return undefined;
     }
 
-    public static async resolveInternalTask(task: CMakeTask): Promise<CMakeTask | undefined> {
+    public static async resolveInternalTask(task: CMakeTask): Promise<{ task: CMakeTask; exitCodePromise?: Promise<number | null> } | undefined> {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
             // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
             // Only use it as a WorkspaceFolder if it's an object (not a number or null).
             const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+            let exitCodeResolve!: (exitCode: number | null) => void;
+            const exitCodePromise = new Promise<number | null>(resolve => {
+                exitCodeResolve = resolve;
+            });
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
-                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
-                ), []);
-            return resolvedTask;
+                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
+                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
+                    const listener = terminal.onDidClose((exitCode) => {
+                        listener.dispose();
+                        exitCodeResolve(exitCode);
+                    });
+                    return terminal;
+                }), []);
+            return { task: resolvedTask, exitCodePromise };
         }
-        return task;
+        return { task };
     }
 
     public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
