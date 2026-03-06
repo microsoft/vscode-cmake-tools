@@ -32,7 +32,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             testSuiteDelimiter: '',
             testSuiteDelimiterMaxOccurrence: 0,
             failurePatterns: [],
-            debugLaunchTarget: null
+            debugLaunchTarget: null,
+            neverDebugTestsWithALaunchConfiguration: false
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],

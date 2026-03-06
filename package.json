@@ -2551,6 +2551,12 @@
           "description": "%cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description%",
           "scope": "resource"
         },
+        "cmake.ctest.neverDebugTestsWithALaunchConfiguration": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.ctest.neverDebugTestsWithALaunchConfiguration.description%",
+          "scope": "resource"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,

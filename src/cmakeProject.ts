@@ -42,6 +42,7 @@ import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from '@cmt/ui/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
+import { resolveTestVariables } from '@cmt/debugTestVars';
 import * as preset from '@cmt/presets/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
@@ -2568,6 +2569,30 @@ export class CMakeProject {
             return null;
         }
 
+        // Check if we should use a launch configuration
+        const neverUseLaunchConfig = this.workspaceContext.config.neverDebugTestsWithALaunchConfiguration;
+        if (!neverUseLaunchConfig) {
+            const launchConfig = await this.pickTestLaunchConfiguration();
+            if (launchConfig === undefined) {
+                // User cancelled the quick pick
+                return null;
+            }
+            if (launchConfig !== null) {
+                // User selected a launch configuration - resolve test variables and start debugging
+                const resolvedConfig = resolveTestVariables(launchConfig, testInfo);
+                await vscode.debug.startDebugging(this.workspaceFolder, resolvedConfig);
+                return vscode.debug.activeDebugSession ?? null;
+            }
+            // launchConfig === null means debug without a launch configuration
+        }
+
+        return this.debugCTestWithoutLaunchConfig(drv, testName, testInfo);
+    }
+
+    /**
+     * Debug a test without a launch configuration, using the auto-generated debug config.
+     */
+    private async debugCTestWithoutLaunchConfig(drv: CMakeDriver, testName: string, testInfo: { program: string; args: string[]; workingDirectory: string }): Promise<vscode.DebugSession | null> {
         const target: ExecutableTarget = {
             name: testName,
             path: testInfo.program
@@ -2614,6 +2639,107 @@ export class CMakeProject {
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
         return vscode.debug.activeDebugSession!;
+    }
+
+    /**
+     * Get all launch configurations from the workspace.
+     */
+    private getAllLaunchConfigurations(): vscode.DebugConfiguration[] {
+        const launchConfig = vscode.workspace.getConfiguration('launch', this.workspaceFolder.uri);
+        const inspected = launchConfig.inspect<vscode.DebugConfiguration[]>('configurations');
+        const configs: vscode.DebugConfiguration[] = [];
+        if (inspected?.workspaceFolderValue) {
+            configs.push(...inspected.workspaceFolderValue);
+        } else if (inspected?.workspaceValue) {
+            configs.push(...inspected.workspaceValue);
+        }
+        return configs;
+    }
+
+    /**
+     * Show a quick pick to select a launch configuration for debugging tests.
+     * Returns the selected launch config object, null if "Debug without launch config" was chosen,
+     * or undefined if the user cancelled.
+     */
+    private async pickTestLaunchConfiguration(): Promise<vscode.DebugConfiguration | null | undefined> {
+        const allConfigs = this.getAllLaunchConfigurations();
+        const debugLaunchTarget = this.workspaceContext.config.ctestDebugLaunchTarget;
+
+        // If a specific launch target is configured, try to use it
+        if (debugLaunchTarget) {
+            const config = allConfigs.find(c => c.name === debugLaunchTarget);
+            if (config) {
+                return config;
+            }
+            // If the configured target doesn't exist, fall through to the quick pick
+        }
+
+        // If there are no launch configurations, debug without one
+        if (allConfigs.length === 0) {
+            return null;
+        }
+
+        // Show quick pick with launch configurations
+        const debugWithoutLaunchConfigLabel = localize('debug.without.launch.config', 'Debug without a launch configuration');
+
+        interface LaunchConfigItem extends vscode.QuickPickItem {
+            config: vscode.DebugConfiguration | null;
+        }
+
+        const items: LaunchConfigItem[] = [
+            {
+                label: debugWithoutLaunchConfigLabel,
+                description: localize('debug.without.launch.config.description', 'Use auto-generated debug configuration'),
+                config: null
+            },
+            ...allConfigs.map(c => ({
+                label: c.name,
+                description: c.type,
+                config: c
+            }))
+        ];
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: localize('select.debug.configuration', 'Select a debug configuration for testing')
+        });
+
+        if (!selected) {
+            return undefined; // User cancelled
+        }
+
+        if (selected.config === null) {
+            // User chose to debug without a launch configuration
+            await this.promptNeverDebugWithLaunchConfiguration();
+            return null;
+        }
+
+        return selected.config;
+    }
+
+    /**
+     * Show a notification asking if the user wants to always debug without a launch configuration.
+     */
+    private async promptNeverDebugWithLaunchConfiguration(): Promise<void> {
+        const alreadyPrompted = this.workspaceContext.state.getDebugTestsWithoutLaunchConfigPrompted(this.folderName, this.isMultiProjectFolder);
+        if (alreadyPrompted) {
+            return;
+        }
+
+        // Mark as prompted so we don't ask again
+        await this.workspaceContext.state.setDebugTestsWithoutLaunchConfigPrompted(this.folderName, true, this.isMultiProjectFolder);
+
+        const yes = localize('yes', 'Yes');
+        const no = localize('no', 'No');
+        const result = await vscode.window.showInformationMessage(
+            localize('never.debug.with.launch.config.prompt', 'Would you like to always debug tests without a launch configuration for this workspace?'),
+            yes,
+            no
+        );
+
+        if (result === yes) {
+            await vscode.workspace.getConfiguration('cmake.ctest', this.workspaceFolder.uri)
+                .update('neverDebugTestsWithALaunchConfiguration', true, vscode.ConfigurationTarget.Workspace);
+        }
     }
 
     addTestExplorerRoot(folder: string) {
