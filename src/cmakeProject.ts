@@ -2581,7 +2581,7 @@ export class CMakeProject {
                 // User selected a launch configuration - resolve test variables and start debugging
                 const resolvedConfig = resolveTestVariables(launchConfig, testInfo);
                 await vscode.debug.startDebugging(this.workspaceFolder, resolvedConfig);
-                return vscode.debug.activeDebugSession!;
+                return vscode.debug.activeDebugSession ?? null;
             }
             // launchConfig === null means debug without a launch configuration
         }
