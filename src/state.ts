@@ -156,6 +156,17 @@ export class StateManager {
     }
 
     /**
+     * Whether the user has been prompted about never debugging tests with a launch configuration.
+     */
+    getDebugTestsWithoutLaunchConfigPrompted(folderName: string, isMultiProject: boolean): boolean {
+        return this._get<boolean>('debugTestsWithoutLaunchConfigPrompted', folderName, isMultiProject) || false;
+    }
+
+    async setDebugTestsWithoutLaunchConfigPrompted(folderName: string, v: boolean, isMultiProject: boolean) {
+        await this._update('debugTestsWithoutLaunchConfigPrompted', v, folderName, isMultiProject);
+    }
+
+    /**
      * Rest all current workspace state. Mostly for troubleshooting
      */
     async reset(folderName: string, isMultiProject: boolean) {
