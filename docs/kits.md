@@ -110,7 +110,8 @@ CMake Tools automatically sets up the environment for working with Visual C++. I
     {
         "name": "A Visual Studio",
         "visualStudio": "Visual Studio Build Tools 2017",
-        "visualStudioArchitecture": "amd64"
+        "visualStudioArchitecture": "amd64",
+        "visualStudioArguments": ["uwp", "10.0.10240.0"]
     }
 ]
 ```
@@ -118,6 +119,7 @@ CMake Tools automatically sets up the environment for working with Visual C++. I
 Keys:
 > `visualStudio` : the name of a Visual Studio installation obtained by `VSWhere`.\
 > `visualStudioArchitecture`: the Visual Studio target architecture that would be passed to the `vcvarsall.bat` file when entering the VS dev environment.
+> `visualStudioArguments`: the extra arguments that would be passed to the `vcvarsall.bat` file when entering the VS dev environment, those arguments are `[platform_type] [winsdk_version] [-vcvars_ver=vc_version] [-vcvars_spectre_libs=spectre_mode]`
 
 > **Note:**
 > To use Visual C++, both `visualStudio` and `visualStudioArchitecture` must be specified. Omitting either one won't work.
