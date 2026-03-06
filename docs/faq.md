@@ -22,6 +22,8 @@ if(DEFINED ENV{VSCODE_CMAKE_TOOLS})
 endif()
 ```
 
+> **Note:** To see `message()` output from your CMakeLists.txt in the CMake Tools output channel, set [`cmake.loggingLevel`](cmake-settings.md) to `"debug"` in your VS Code settings.
+
 ## How do I learn about CMake?
 
 CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake.
