@@ -16,6 +16,9 @@ import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
 import { CommandResult } from 'vscode-cmake-tools';
+import { CompileOutputConsumer } from '@cmt/diagnostics/build';
+import collections from '@cmt/diagnostics/collections';
+import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -595,13 +598,61 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         }
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
+
+        // Create a compile output consumer to parse build diagnostics into the Problems pane
+        let compileConsumer: CompileOutputConsumer | undefined;
+        if (cmakeDriver.config.parseBuildDiagnostics) {
+            collections.build.clear();
+            compileConsumer = new CompileOutputConsumer(cmakeDriver.config);
+            compileConsumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                if (!cmakeDriver.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                    return;
+                }
+                const severity = diagnosticSeverity(rawDiag.severity);
+                if (severity === undefined) {
+                    return;
+                }
+                const filepath = util.resolvePath(rawDiag.file, cmakeDriver.binaryDir);
+                const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                diag.source = source;
+                if (rawDiag.code) {
+                    diag.code = rawDiag.code;
+                }
+                addDiagnosticToCollection(collections.build, { filepath, diag });
+            });
+        }
+
+        // Wrap the output consumer so build output is forwarded to both the terminal
+        // (for display) and the compile consumer (for diagnostic parsing).
+        const outputConsumer: proc.OutputConsumer = compileConsumer
+            ? {
+                output: (line: string) => {
+                    this.output(line);
+                    compileConsumer!.output(line);
+                },
+                error: (line: string) => {
+                    this.error(line);
+                    compileConsumer!.error(line);
+                }
+            }
+            : this;
+
         try {
             // On Windows, command-type-specific detection takes precedence over config.shell
             const commandShell = process.platform === 'win32' ? proc.determineShell(cmakePath) : false;
             const shell = (commandShell || undefined) ?? cmakeDriver.config.shell ?? undefined;
-            this._process = proc.execute(cmakePath, args, this, { ...this.options, shell });
+            this._process = proc.execute(cmakePath, args, outputConsumer, { ...this.options, shell });
             const result: proc.ExecutionResult = await this._process.result;
             this._process = undefined;
+
+            if (compileConsumer) {
+                const fileDiags = await compileConsumer.resolveDiagnostics(cmakeDriver.binaryDir, cmakeDriver.sourceDir);
+                if (fileDiags) {
+                    populateCollection(collections.build, fileDiags);
+                }
+                compileConsumer.dispose();
+            }
+
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr || (result.stdout && result.stdout.includes(": warning"))) {
@@ -614,6 +665,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             }
             return result.retc ?? 0;
         } catch {
+            if (compileConsumer) {
+                compileConsumer.dispose();
+            }
             this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             if (doCloseEmitter) {
                 this.closeEmitter.fire(-1);
