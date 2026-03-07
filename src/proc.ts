@@ -189,7 +189,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
-        shell: !!options.shell
+        shell: options.shell ?? false
     };
     if (options?.cwd !== undefined) {
         util.createDirIfNotExistsSync(options.cwd);
