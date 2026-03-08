@@ -25,6 +25,7 @@ Improvements:
 - Display info tooltip when hovering over CMake policy identifiers (e.g., `CMP0177`), showing the CMake version that introduced the policy, a short description, and a link to the official documentation. [#4544](https://github.com/microsoft/vscode-cmake-tools/issues/4544)
 - Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
+- Removed extension pack dependency on `ms-vscode.cpp-devtools`
 
 Bug Fixes:
 - Fix `cmake.buildTask` build failures not aborting debug launches. When `${command:cmake.launchTargetPath}` is used in `launch.json`, a failed build now correctly prevents the stale executable from being launched. [#3389](https://github.com/microsoft/vscode-cmake-tools/issues/3389)
