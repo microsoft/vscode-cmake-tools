@@ -635,7 +635,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             if (installCmd) {
                 this.writeEmitter.fire(proc.buildCmdStr(installCmd.command, installCmd.args) + endOfLine);
             }
-            const result: number | null = await cmakeDriver.install(this, false);
+            const result: number | null = await cmakeDriver.install(this, /* isBuildCommand */ false);
             if (result === null || result === undefined) {
                 this.writeEmitter.fire(localize('install.terminated', 'Install was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

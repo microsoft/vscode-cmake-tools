@@ -2,7 +2,9 @@ import { expect } from 'chai';
 
 /**
  * Mirror of the install command construction logic from CMakeDriver.getCMakeInstallCommand().
- * This tests the command construction independently from the vscode-dependent driver class.
+ * Backend tests cannot import modules that depend on 'vscode', so we mirror the pure
+ * command-construction logic here. If the driver implementation changes, update this mirror
+ * to match. See also: targetMap.test.ts and shell-propagation.test.ts for the same pattern.
  */
 interface BuildCommand {
     command: string;
