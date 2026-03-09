@@ -29,6 +29,10 @@ const magicKey = 'ctest.magic.key';
 // Used as magic value
 let sessionNum = 0;
 
+// Session-scoped set: tracks which workspaces (by settings.json identity) have already been prompted
+// about neverDebugTestsWithLaunchConfiguration. Each workspace gets prompted at most once per session.
+const promptedNeverDebugWithLaunchWorkspaces = new Set<string>();
+
 // Placeholder in the test explorer when test preset is not selected
 const testPresetRequired = '_test_preset_required_';
 
@@ -296,8 +300,6 @@ export class CTestDriver implements vscode.Disposable {
      * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
      */
     constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
-
-    private _promptedNeverDebugWithLaunchThisSession: boolean = false;
 
     private _testingEnabled: boolean = false;
     get testingEnabled(): boolean {
@@ -1404,8 +1406,13 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private promptNeverDebugWithLaunch(): void {
-        // Only prompt if the workspace setting is null (unset) and we haven't prompted this session
-        if (this._promptedNeverDebugWithLaunchThisSession) {
+        // Key by workspace identity: .code-workspace file for multi-root, or first folder for single-folder
+        const workspaceKey = vscode.workspace.workspaceFile?.toString()
+            ?? vscode.workspace.workspaceFolders?.[0]?.uri.toString()
+            ?? '';
+
+        // Only prompt if we haven't prompted for this workspace this session
+        if (promptedNeverDebugWithLaunchWorkspaces.has(workspaceKey)) {
             return;
         }
 
@@ -1417,7 +1424,7 @@ export class CTestDriver implements vscode.Disposable {
             return;
         }
 
-        this._promptedNeverDebugWithLaunchThisSession = true;
+        promptedNeverDebugWithLaunchWorkspaces.add(workspaceKey);
 
         const yes = localize('yes', 'Yes');
         const no = localize('no', 'No');
