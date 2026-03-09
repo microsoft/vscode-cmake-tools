@@ -1843,7 +1843,34 @@ export class CMakeProject {
      * Save all open files. "maybe" because the user may have disabled auto-saving
      * with `config.saveBeforeBuild`.
      */
-    async maybeAutoSaveAll(showCommandOnly?: boolean): Promise<boolean> {
+    /**
+     * Save all open files. "maybe" because the user may have disabled auto-saving
+     * with `config.saveBeforeBuild`.
+     *
+     * When preset files have unsaved changes, this method also:
+     * 1. Suppresses the file-watcher to avoid redundant reapplyPresets() calls
+     * 2. Saves all open editors
+     * 3. Conditionally reapplies presets from disk so the caller sees fresh state
+     * 4. Resumes the file-watcher
+     *
+     * @param showCommandOnly When true, skip the "saving files" log message
+     * @param requireConfigureOnEdit When true (default), dirty presets are only
+     *   reapplied if cmake.configureOnEdit is also enabled.  Pass false for
+     *   explicit-configure paths where the user expects presets to be refreshed
+     *   regardless of that setting (see #4792).
+     */
+    async maybeAutoSaveAll(showCommandOnly?: boolean, requireConfigureOnEdit: boolean = true): Promise<boolean> {
+        // Snapshot dirty preset state *before* saving so we can report it back.
+        // After saveAll() the dirty flags will be cleared.
+        const hadDirtyPresets = this.useCMakePresets && this.haveUnsavedPresetFileChanges();
+
+        // Suppress watcher-triggered reapply during save — we will explicitly
+        // await reapplyPresets() below when needed, so the file-watcher's
+        // fire-and-forget call would be redundant (see #4792).
+        if (hadDirtyPresets) {
+            this.presetsController.suppressWatcherReapply = true;
+        }
+
         // Save open files before we configure/build
         if (this.workspaceContext.config.saveBeforeBuild) {
             if (!showCommandOnly) {
@@ -1881,10 +1908,42 @@ export class CMakeProject {
                 if (chosen?.title === yesAndDoNotShowAgain) {
                     await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
                 }
-                return chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                if (!saved) {
+                    this.presetsController.suppressWatcherReapply = false;
+                    return false;
+                }
             }
         }
+
+        // After saving, explicitly refresh presets from disk so that any
+        // just-saved changes are picked up before configure/build runs.
+        // Without this, the async file-watcher may not have completed yet
+        // (see #4502).  The configureOnEdit gate is skipped for explicit-
+        // configure paths (requireConfigureOnEdit=false) — see #4792.
+        if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
+            await this.presetsController.reapplyPresets();
+        }
+        // Resume normal file-watcher behavior now that the explicit reapply
+        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+        this.presetsController.suppressWatcherReapply = false;
+
         return true;
+    }
+
+    /**
+     * Returns true when at least one of the preset files tracked by the
+     * presets controller (including files pulled in via "include") is currently
+     * dirty (has unsaved changes) in VS Code.
+     */
+    private haveUnsavedPresetFileChanges(): boolean {
+        const dirtyPaths = new Set(
+            vscode.workspace.textDocuments
+                .filter(doc => doc.isDirty)
+                .map(doc => util.platformNormalizePath(doc.uri.fsPath))
+        );
+        return this.presetsController.referencedFiles
+            .some(f => dirtyPaths.has(util.platformNormalizePath(f)));
     }
 
     /**
@@ -1893,15 +1952,13 @@ export class CMakeProject {
      */
     private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
-        if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
+        // configureOnEdit is intentionally NOT required here. doConfigure()
+        // is the explicit configure path — when the user manually triggers
+        // configure, we should always pick up just-saved preset changes
+        // regardless of configureOnEdit (which only controls *automatic*
+        // reconfigure on edit). See #4792.
+        if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly, false)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
-        }
-        // After saving files, explicitly refresh presets from disk so that any
-        // just-saved changes to preset files (including included files) are picked
-        // up before configure runs.  Without this, the asynchronous file-watcher
-        // may not have re-expanded the presets yet (see #4502).
-        if (this.useCMakePresets) {
-            await this.presetsController.reapplyPresets();
         }
         if (!this.useCMakePresets) {
             if (!this.activeKit) {
@@ -1989,17 +2046,9 @@ export class CMakeProject {
         if (!drv) {
             return null;
         }
-        // First, save open files
+        // First, save open files and conditionally reapply dirty presets
         if (!await this.maybeAutoSaveAll()) {
             return { exitCode: -1 };
-        }
-        // After saving, explicitly refresh presets from disk so that the
-        // needsReconfigure check below sees up-to-date preset state.
-        // Without this, the async file-watcher's fire-and-forget reapplyPresets()
-        // may not have completed yet, causing needsReconfigure() to return false
-        // even though preset files just changed on disk (see #4502).
-        if (this.useCMakePresets) {
-            await this.presetsController.reapplyPresets();
         }
         if (await this.needsReconfigure()) {
             return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal, undefined, cancellationToken);
@@ -2989,9 +3038,6 @@ export class CMakeProject {
         // picked up for debug/launch paths as well (see #4502).
         if (!await this.maybeAutoSaveAll()) {
             return null;
-        }
-        if (this.useCMakePresets) {
-            await this.presetsController.reapplyPresets();
         }
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
