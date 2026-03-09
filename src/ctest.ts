@@ -297,6 +297,8 @@ export class CTestDriver implements vscode.Disposable {
      */
     constructor(readonly ws: DirectoryContext, private readonly projectController?: ProjectController) {}
 
+    private _promptedNeverDebugWithLaunchThisSession: boolean = false;
+
     private _testingEnabled: boolean = false;
     get testingEnabled(): boolean {
         return this._testingEnabled;
@@ -1314,7 +1316,10 @@ export class CTestDriver implements vscode.Disposable {
             } else {
                 run.started(test);
 
-                if (useLaunchJson) {
+                // Re-check the setting each iteration so mid-run changes are honored
+                const shouldBypassQuickPick = !useLaunchJson || this.ws.config.ctestNeverDebugTestsWithLaunchConfiguration === true;
+
+                if (!shouldBypassQuickPick) {
                     // Determine the workspace folder for this test's project
                     const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(project.folderPath));
 
@@ -1365,37 +1370,13 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     } else {
                         // Path A: debug without launch configuration
-                        const session = await project.debugCTest(test.id);
-                        if (session) {
-                            await new Promise<void>(resolve => {
-                                const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
-                                    if (s.id === session.id) {
-                                        disposable.dispose();
-                                        resolve();
-                                    }
-                                });
-                                cancellation.onCancellationRequested(() => {
-                                    void vscode.debug.stopDebugging(session);
-                                });
-                            });
-                        }
+                        await this.debugWithoutLaunchConfig(project, test.id, cancellation);
+                        // Prompt to set the workspace setting if it hasn't been set yet
+                        this.promptNeverDebugWithLaunch();
                     }
                 } else {
-                    // Path A: debug without launch configuration (no quick pick)
-                    const session = await project.debugCTest(test.id);
-                    if (session) {
-                        await new Promise<void>(resolve => {
-                            const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
-                                if (s.id === session.id) {
-                                    disposable.dispose();
-                                    resolve();
-                                }
-                            });
-                            cancellation.onCancellationRequested(() => {
-                                void vscode.debug.stopDebugging(session);
-                            });
-                        });
-                    }
+                    // Path A: debug without launch configuration (bypassed quick pick)
+                    await this.debugWithoutLaunchConfig(project, test.id, cancellation);
                 }
 
                 // We have no way to get the result, so just mark it as skipped
@@ -1403,6 +1384,55 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
         return returnCode;
+    }
+
+    private async debugWithoutLaunchConfig(project: CMakeProject, testId: string, cancellation: vscode.CancellationToken): Promise<void> {
+        const session = await project.debugCTest(testId);
+        if (session) {
+            await new Promise<void>(resolve => {
+                const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
+                    if (s.id === session.id) {
+                        disposable.dispose();
+                        resolve();
+                    }
+                });
+                cancellation.onCancellationRequested(() => {
+                    void vscode.debug.stopDebugging(session);
+                });
+            });
+        }
+    }
+
+    private promptNeverDebugWithLaunch(): void {
+        // Only prompt if the workspace setting is null (unset) and we haven't prompted this session
+        if (this._promptedNeverDebugWithLaunchThisSession) {
+            return;
+        }
+
+        const inspection = vscode.workspace.getConfiguration('cmake.ctest', this.ws.folder?.uri).inspect<boolean>('neverDebugTestsWithLaunchConfiguration');
+        const workspaceValue = inspection?.workspaceValue ?? inspection?.workspaceFolderValue;
+
+        if (workspaceValue !== undefined) {
+            // Already explicitly set in workspace — don't prompt
+            return;
+        }
+
+        this._promptedNeverDebugWithLaunchThisSession = true;
+
+        const yes = localize('yes', 'Yes');
+        const no = localize('no', 'No');
+        void vscode.window.showInformationMessage(
+            localize('never.debug.with.launch.prompt', 'Would you like to always debug tests without a launch configuration in this workspace?'),
+            yes,
+            no
+        ).then(async (choice) => {
+            if (choice === yes) {
+                await vscode.workspace.getConfiguration('cmake.ctest', this.ws.folder?.uri).update('neverDebugTestsWithLaunchConfiguration', true, vscode.ConfigurationTarget.WorkspaceFolder);
+            } else if (choice === no) {
+                await vscode.workspace.getConfiguration('cmake.ctest', this.ws.folder?.uri).update('neverDebugTestsWithLaunchConfiguration', false, vscode.ConfigurationTarget.WorkspaceFolder);
+            }
+            // If dismissed, leave as null — don't prompt again this session
+        });
     }
 
     private testProgram(testName: string): string {
