@@ -283,6 +283,14 @@ interface TestAndParentSuite {
 
 type TestsType = "CTestInfo" | "LegacyCTest";
 
+interface ConfigItem extends vscode.QuickPickItem {
+    label: string;
+    config: vscode.DebugConfiguration;
+    detail: string;
+    // Undefined for workspace launch config
+    folder?: vscode.WorkspaceFolder;
+}
+
 export class CTestDriver implements vscode.Disposable {
     /**
      * @param projectController Required for test explorer to work properly. Setting as optional to avoid breaking tests.
@@ -1305,21 +1313,74 @@ export class CTestDriver implements vscode.Disposable {
                 }
             } else {
                 run.started(test);
-                const session = await project.debugCTest(test.id);
-                if (session) {
-                    // Wait for the debug session to terminate
-                    await new Promise<void>(resolve => {
-                        const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
-                            if (s.id === session.id) {
-                                disposable.dispose();
-                                resolve();
-                            }
+
+                // Determine the workspace folder for this test's project
+                const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(project.folderPath));
+
+                // Build the unified quick pick: "Debug without launch configuration" + any launch configs
+                const debugWithoutLaunchConfig: ConfigItem = {
+                    label: localize('debug.without.launch.config', 'Debug without launch configuration'),
+                    config: undefined as any,
+                    detail: '',
+                    picked: true
+                };
+
+                const launchConfigs = workspaceFolder ? this.getLaunchConfigs(workspaceFolder) : [];
+
+                let useLaunchConfig: ConfigItem | undefined;
+
+                if (launchConfigs.length === 0) {
+                    // No launch configs available — go directly to path A (debug without launch config)
+                    useLaunchConfig = undefined;
+                } else {
+                    // Check if cmake.ctest.debugLaunchTarget auto-selects a config
+                    if (this.ws.config.ctestDebugLaunchTarget) {
+                        const autoSelected = launchConfigs.find(x => x.label === this.ws.config.ctestDebugLaunchTarget);
+                        if (autoSelected) {
+                            useLaunchConfig = autoSelected;
+                        }
+                    }
+
+                    if (!useLaunchConfig) {
+                        const allItems: ConfigItem[] = [debugWithoutLaunchConfig, ...launchConfigs];
+                        const chosen = await vscode.window.showQuickPick(allItems, {
+                            placeHolder: localize('choose.debug.method', 'Choose how to debug the test.')
                         });
-                        cancellation.onCancellationRequested(() => {
-                            void vscode.debug.stopDebugging(session);
-                        });
-                    });
+                        if (!chosen) {
+                            // User cancelled — skip this test
+                            run.skipped(test);
+                            continue;
+                        }
+                        if (chosen !== debugWithoutLaunchConfig) {
+                            useLaunchConfig = chosen;
+                        }
+                    }
                 }
+
+                if (useLaunchConfig) {
+                    // Path B: debug with the selected launch configuration
+                    if (workspaceFolder) {
+                        await this.debugCTestImpl(workspaceFolder, test.id, cancellation, useLaunchConfig);
+                    }
+                } else {
+                    // Path A: debug without launch configuration
+                    const session = await project.debugCTest(test.id);
+                    if (session) {
+                        // Wait for the debug session to terminate
+                        await new Promise<void>(resolve => {
+                            const disposable = vscode.debug.onDidTerminateDebugSession((s: vscode.DebugSession) => {
+                                if (s.id === session.id) {
+                                    disposable.dispose();
+                                    resolve();
+                                }
+                            });
+                            cancellation.onCancellationRequested(() => {
+                                void vscode.debug.stopDebugging(session);
+                            });
+                        });
+                    }
+                }
+
                 // We have no way to get the result, so just mark it as skipped
                 run.skipped(test);
             }
@@ -1417,8 +1478,7 @@ export class CTestDriver implements vscode.Disposable {
         return orig;
     }
 
-    private async debugCTestImpl(workspaceFolder: vscode.WorkspaceFolder, testName: string, cancellation: vscode.CancellationToken): Promise<void> {
-        const magicValue = sessionNum++;
+    private getLaunchConfigs(workspaceFolder: vscode.WorkspaceFolder): ConfigItem[] {
         const launchConfig = vscode.workspace.getConfiguration(
             'launch',
             workspaceFolder.uri
@@ -1429,35 +1489,37 @@ export class CTestDriver implements vscode.Disposable {
         ) : undefined;
         const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations') ?? [];
         const workspaceConfigs = workspaceLaunchConfig?.get<vscode.DebugConfiguration[]>('configurations') ?? [];
-        if (configs.length === 0 && workspaceConfigs.length === 0) {
-            log.error(localize('no.launch.config', 'No launch configurations found.'));
-            return;
-        }
-
-        interface ConfigItem extends vscode.QuickPickItem {
-            label: string;
-            config: vscode.DebugConfiguration;
-            detail: string;
-            // Undefined for workspace launch config
-            folder?: vscode.WorkspaceFolder;
-        }
         let allConfigItems: ConfigItem[] = configs.map(config => ({ label: config.name, config, folder: workspaceFolder, detail: workspaceFolder.uri.fsPath }));
         allConfigItems = allConfigItems.concat(workspaceConfigs.map(config => ({ label: config.name, config, detail: vscode.workspace.workspaceFile!.fsPath })));
-        let chosenConfig: ConfigItem | undefined;
-        if (allConfigItems.length === 1) {
-            chosenConfig = allConfigItems[0];
-        }
-        if (!chosenConfig && this.ws.config.ctestDebugLaunchTarget) {
-            chosenConfig = allConfigItems.find(x => x.label === this.ws.config.ctestDebugLaunchTarget);
-        }
+        return allConfigItems;
+    }
+
+    private async debugCTestImpl(workspaceFolder: vscode.WorkspaceFolder, testName: string, cancellation: vscode.CancellationToken, preSelectedConfig?: ConfigItem): Promise<void> {
+        const magicValue = sessionNum++;
+        let chosenConfig: ConfigItem | undefined = preSelectedConfig;
 
         if (!chosenConfig) {
-            // TODO: we can remember the last choice once the CMake side panel work is done
-            const chosen = await vscode.window.showQuickPick(allConfigItems, { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
-            if (chosen) {
-                chosenConfig = chosen;
-            } else {
+            const allConfigItems = this.getLaunchConfigs(workspaceFolder);
+            if (allConfigItems.length === 0) {
+                log.error(localize('no.launch.config', 'No launch configurations found.'));
                 return;
+            }
+
+            if (allConfigItems.length === 1) {
+                chosenConfig = allConfigItems[0];
+            }
+            if (!chosenConfig && this.ws.config.ctestDebugLaunchTarget) {
+                chosenConfig = allConfigItems.find(x => x.label === this.ws.config.ctestDebugLaunchTarget);
+            }
+
+            if (!chosenConfig) {
+                // TODO: we can remember the last choice once the CMake side panel work is done
+                const chosen = await vscode.window.showQuickPick(allConfigItems, { placeHolder: localize('choose.launch.config', 'Choose a launch configuration to debug the test with.') });
+                if (chosen) {
+                    chosenConfig = chosen;
+                } else {
+                    return;
+                }
             }
         }
 
@@ -1705,25 +1767,7 @@ export class CTestDriver implements vscode.Disposable {
                 },
                 true
             );
-            testExplorer.createRunProfile(
-                localize('debug.tests.with.launch.json.profile', 'Debug Tests (launch.json)'),
-                vscode.TestRunProfileKind.Debug,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
-                    if (request.include === undefined) {
-                        return this.debugTestWithLaunchJsonHandler(request, cancellation);
-                    }
 
-                    // Try to find the specific test controller, if we hit any errors, fall back to the default handler.
-                    try {
-                        const testProject = this.projectController!.getAllCMakeProjects().filter(
-                            project => request.include![0].uri!.fsPath.includes(project.folderPath)
-                        );
-                        return testProject![0].cTestController.debugTestWithLaunchJsonHandler(request, cancellation);
-                    } catch (e) {
-                        return this.debugTestWithLaunchJsonHandler(request, cancellation);
-                    }
-                }
-            );
         }
         return testExplorer;
     }

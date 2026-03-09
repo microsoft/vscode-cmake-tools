@@ -2144,13 +2144,6 @@
           "group": "bookmarkActions@3"
         }
       ],
-      "testing/item/context": [
-        {
-          "command": "cmake.outline.debugTestWithLaunchJson",
-          "when": "controllerId == cmake-tools.CTest",
-          "group": "builtin@12"
-        }
-      ],
       "editor/title/context": [
         {
           "command": "cmake.compileFile",
