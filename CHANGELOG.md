@@ -28,7 +28,7 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
-- Restore launch.json-based test debugging in the Test Explorer alongside the auto-generated debug config added in #4721. Adds a "Debug Tests (launch.json)" run profile and a right-click context menu entry on each test item. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)
+- Enable debugging tests from the Test Explorer both with and without a launch configuration. A default debug profile uses auto-generated configs from the CMake cache, while a "Debug Tests (launch.json)" profile allows using custom launch configurations with `${cmake.testProgram}`, `${cmake.testArgs}`, and `${cmake.testWorkingDirectory}` variable substitution. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)
 - Fix `cmake.buildTask` build failures not aborting debug launches. When `${command:cmake.launchTargetPath}` is used in `launch.json`, a failed build now correctly prevents the stale executable from being launched. [#3389](https://github.com/microsoft/vscode-cmake-tools/issues/3389)
 - Fix bookmarked targets running a full build instead of building only the specific target when triggered from the Bookmarks view. [#4771](https://github.com/microsoft/vscode-cmake-tools/issues/4771)
 - Fix `cmake.compileFile` command truncating long compile commands at ~1024 characters on macOS. The command is now sent to the terminal in chunks to avoid VS Code terminal buffer limitations. [#4470](https://github.com/microsoft/vscode-cmake-tools/issues/4470)
