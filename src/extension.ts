@@ -31,7 +31,7 @@ import { StateManager } from './state';
 import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
-import { BookmarksProvider } from '@cmt/ui/bookmarks';
+import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
@@ -1346,10 +1346,10 @@ export class ExtensionManager implements vscode.Disposable {
             if (!projects || projects.length === 0) {
                 return activeProject;
             } else {
-                // Choose project by corresponding source directory
-                return projects.find(project => sourceDir && (path.normalize(sourceDir) === path.normalize(project.folderPath)))
+                // Choose project by corresponding source directory (use platformNormalizePath for case-insensitive matching on Windows)
+                return projects.find(project => sourceDir && (util.platformNormalizePath(sourceDir) === util.platformNormalizePath(project.folderPath)))
                     // Choose project by folder of active project
-                    ?? projects.find(project => activeProject?.folderPath === project.folderPath)
+                    ?? projects.find(project => activeProject && (util.platformNormalizePath(activeProject.folderPath) === util.platformNormalizePath(project.folderPath)))
                     // Fallback to first project
                     ?? projects[0];
             }
@@ -2504,6 +2504,27 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         context.subscriptions.push(vscode.commands.registerCommand('cmake.getSettingsChangePromise', () => getSettingsChangePromise()));
     }
 
+    // Helper to resolve a BookmarkNode to its underlying TargetNode
+    const resolveTargetNode = (what: TargetNode | BookmarkNode): TargetNode | undefined => {
+        if (what instanceof TargetNode) {
+            return what;
+        }
+        if (what instanceof BookmarkNode) {
+            // Fast path: the bookmark is already attached to a live TargetNode.
+            if (what.bookmark.sourceNode instanceof TargetNode) {
+                return what.bookmark.sourceNode;
+            }
+            // Fallback: try to resolve by stable id via the current project outline.
+            const node = ext.getProjectOutline().findTargetNodeById(what.bookmark.id);
+            if (node instanceof TargetNode) {
+                what.bookmark.sourceNode = node;
+                return node;
+            }
+            log.error(localize('bookmark.target.not.resolved', 'Bookmark "{0}" could not be resolved to a target. The project may need to be reconfigured.', what.bookmark.name));
+        }
+        return undefined;
+    };
+
     context.subscriptions.push(...[
         // Special commands that don't require logging or separate error handling
         vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
@@ -2609,10 +2630,30 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         }),
         vscode.commands.registerCommand('cmake.outline.build', (what: ProjectNode) => runCommand('build', what.folder, "all", what.sourceDirectory)),
         vscode.commands.registerCommand('cmake.outline.clean', (what: ProjectNode) => runCommand('build', what.folder, "clean", what.sourceDirectory)),
-        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode) => runCommand('build', what.folder, what.name, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode) => runCommand('debugTarget', what.folder, what.name, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.outline.launchTarget', (what: TargetNode) => runCommand('launchTarget', what.folder, what.name, what.sourceDir)),
+        vscode.commands.registerCommand('cmake.outline.buildTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('build', target.folder, target.name, target.sourceDir);
+            }
+        }),
+        vscode.commands.registerCommand('cmake.outline.runUtilityTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('build', target.folder, target.name, target.sourceDir);
+            }
+        }),
+        vscode.commands.registerCommand('cmake.outline.debugTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('debugTarget', target.folder, target.name, target.sourceDir);
+            }
+        }),
+        vscode.commands.registerCommand('cmake.outline.launchTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('launchTarget', target.folder, target.name, target.sourceDir);
+            }
+        }),
         vscode.commands.registerCommand('cmake.outline.setDefaultTarget', (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),

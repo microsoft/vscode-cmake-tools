@@ -520,7 +520,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): Environment {
         const cur_env = process.env;
         const kit_env = (this.config.ignoreKitEnv) ? EnvironmentUtils.create() : this._kitEnvironmentVariables;
-        return EnvironmentUtils.merge([cur_env, kit_env, opts?.environment]);
+        const cmakeToolsEnv = EnvironmentUtils.create({ VSCODE_CMAKE_TOOLS: "1" });
+        return EnvironmentUtils.merge([cur_env, kit_env, cmakeToolsEnv, opts?.environment]);
     }
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
@@ -2082,9 +2083,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (useBuildTask) {
                 const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
-                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
-                    if (resolvedTask) {
-                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
+                    const resolved = await CMakeTaskProvider.resolveInternalTask(task);
+                    if (resolved) {
+                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolved.task), resolved.exitCodePromise);
                     }
                 }
             } else {
