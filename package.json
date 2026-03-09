@@ -876,11 +876,6 @@
         "icon": "$(debug-alt)"
       },
       {
-        "command": "cmake.outline.debugTestWithLaunchJson",
-        "when": "cmake:enableFullFeatureSet",
-        "title": "%cmake-tools.command.cmake.outline.debugTestWithLaunchJson.title%"
-      },
-      {
         "command": "cmake.projectStatus.update",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.projectStatus.update.title%",
@@ -1590,10 +1585,6 @@
           "when": "never"
         },
         {
-          "command": "cmake.outline.debugTestWithLaunchJson",
-          "when": "never"
-        },
-        {
           "command": "cmake.projectStatus.update",
           "when": "never"
         },
@@ -1997,11 +1988,6 @@
           "command": "cmake.outline.debugTest",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
           "group": "1_testActions@2"
-        },
-        {
-          "command": "cmake.outline.debugTestWithLaunchJson",
-          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /nodeType=test/",
-          "group": "1_testActions@3"
         },
         {
           "command": "cmake.outline.runTest",
