@@ -164,12 +164,7 @@ suite('Debugger path shell detection', () => {
         // For .exe paths, determineShell returns false, so spawn runs directly
         // without a shell intermediary — avoiding PowerShell quoting issues.
         const debuggerPath = 'C:\\Program Files\\mingw64\\bin\\gdb.exe';
-        const shellResult = determineShell(debuggerPath);
-        expect(shellResult).to.eq(false);
-        // With shell: false, Node.js spawn uses CreateProcessW directly,
-        // which correctly handles paths with spaces.
-        const spawnShell = shellResult ?? false;
-        expect(spawnShell).to.eq(false);
+        expect(determineShell(debuggerPath)).to.eq(false);
     });
 
     test('lldb-mi debugger path returns false', () => {
