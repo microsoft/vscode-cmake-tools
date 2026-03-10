@@ -13,6 +13,7 @@ Features:
 - Add `cmake.setBuildTargetSameAsLaunchTarget` setting to automatically set the build target when the launch/debug target is changed. [#4519](https://github.com/microsoft/vscode-cmake-tools/pull/4519) [@nikita-karatun](https://github.com/nikita-karatun)
 - Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
 - Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
+- Complete Bookmarks context menu with "Set Build Target", "Set Launch/Debug Target", "Open CMakeLists.txt", and "Run Utility Target" actions to match the Project Outline. [#4788](https://github.com/microsoft/vscode-cmake-tools/issues/4788)
 
 Improvements:
 - Clicking on a CTest in the Project Outline now navigates to the test source file, matching the existing Test Explorer behavior. [#4773](https://github.com/microsoft/vscode-cmake-tools/issues/4773)
