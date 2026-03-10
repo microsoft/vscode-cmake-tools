@@ -1372,9 +1372,9 @@ export class CTestDriver implements vscode.Disposable {
                         }
                     } else {
                         // Path A: debug without launch configuration
-                        await this.debugWithoutLaunchConfig(project, test.id, cancellation);
-                        // Prompt to set the workspace setting if it hasn't been set yet
+                        // Prompt to set the workspace setting if it hasn't been set yet (fire concurrently with debug session)
                         this.promptNeverDebugWithLaunch();
+                        await this.debugWithoutLaunchConfig(project, test.id, cancellation);
                     }
                 } else {
                     // Path A: debug without launch configuration (bypassed quick pick)
