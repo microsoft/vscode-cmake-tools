@@ -24,6 +24,7 @@
 	"no.cl.toolset.version": "設定預設{0}: 沒有為 cl.exe 指定的工具組版本，預設使用最新的工具組版本",
 	"unknown.toolset.option": "將忽略無法識別的工具組選項: {0}",
 	"specified.vs.not.found": "設定預設 {0}: 找不到由 {1} 指定的 Visual Studio 執行個體，會回復預設執行個體查閱行為。",
+	"using.vendor.vs.version": "設定預設 {0}: 使用來自廠商設定的 Visual Studio 主要版本 {1}。",
 	"specified.cl.not.found": "設定預設 {0}: 找不到包含工具組 {2} 和架構 {3} 的編譯器 {1}，如果您的電腦具有此工具組，您可能需要執行「CMake: 掃描編譯器」。",
 	"vs.not.found": "設定預設 {0}: 找不到支援指定工具組 {1} 和結構 {2} 的 Visual Studio 安裝，若此工具組存在於您的電腦上，您可能需要執行「CMake: 掃描編譯器」命令。",
 	"using.vs.instance": "使用 Visual Studio 的開發人員環境 (執行個體 {0}，版本 {1}，安裝於 {2})",

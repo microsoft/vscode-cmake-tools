@@ -471,7 +471,7 @@ export class TargetNode extends BaseNode {
             }
             item.iconPath = new vscode.ThemeIcon(iconForTargetType(this._type));
             item.id = this.id;
-            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
+            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY';
             const canRun = this._type === 'UTILITY';
             item.contextValue = [
                 `nodeType=target`,
@@ -713,10 +713,6 @@ export class WorkspaceFolderNode extends BaseNode {
 
     private readonly _projects = new Map<string, Map<string, ProjectNode>>();
 
-    private getNode(cmakeProject: CMakeProject, modelProjectName: string) {
-        return this._projects.get(cmakeProject.folderPath)?.get(modelProjectName);
-    }
-
     private setNode(cmakeProject: CMakeProject, modelProjectName: string, node: ProjectNode) {
         let sub_map = this._projects.get(cmakeProject.folderPath);
         if (!sub_map) {
@@ -737,20 +733,37 @@ export class WorkspaceFolderNode extends BaseNode {
             return;
         }
 
-        if (model.configurations[0].projects.length === 0) {
+        const configuration = model.configurations[0];
+        if (configuration.projects.length === 0) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
             return;
         }
 
-        const projectOutlineModel = populateViewCodeModel(model);
-        const rootProject = projectOutlineModel.project;
-        let item = this.getNode(cmakeProject, rootProject.name);
-        if (!item) {
-            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
+        const outlineViewType = cmakeProject.workspaceContext.config.outlineViewType;
+
+        // Always remove existing nodes first to ensure clean state when
+        // switching between view types or when projects change.
+        this.removeNodes(cmakeProject);
+
+        if (outlineViewType === "tree") {
+            // Tree mode: create a separate ProjectNode for each CMake project,
+            // restoring the pre-1.15 hierarchical outline.
+            for (const project of configuration.projects) {
+                const item = new ProjectNode(project.name, this.wsFolder, project.sourceDirectory);
+                this.setNode(cmakeProject, project.name, item);
+                item.update(project, ctx);
+            }
+        } else {
+            // List mode (default): flatten all projects into a single node.
+            const projectOutlineModel = populateViewCodeModel(model);
+            const rootProject = projectOutlineModel.project;
+            const item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
+            item.update(rootProject, ctx);
         }
-        item.update(rootProject, ctx);
+
+        ctx.nodesToUpdate.push(this);
     }
 
     getChildren() {

@@ -16,5 +16,9 @@
 	"search": "Pesquisa",
 	"save": "Salvar",
 	"key": "Chave",
-	"value": "Valor"
+	"value": "Valor",
+	"source": "Fonte",
+	"not.set.in.presets": "Cache do CMake",
+	"differs.from.preset": "Alterado no cache",
+	"matches.preset": "Corresponde à predefinição"
 }

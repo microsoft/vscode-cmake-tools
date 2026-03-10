@@ -15,7 +15,11 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
+import { mergeBuildArgs } from '@cmt/taskArgs';
 import { CommandResult } from 'vscode-cmake-tools';
+import { CompileOutputConsumer } from '@cmt/diagnostics/build';
+import collections from '@cmt/diagnostics/collections';
+import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -23,12 +27,22 @@ const log = logging.createLogger('TaskProvider');
 
 const endOfLine: string = "\r\n";
 
+/**
+ * Whether the active project belongs to the task's workspace folder. Used to prefer the active
+ * project over a folder-based lookup, which would ignore the selected active folder (#4512).
+ */
+export function activeProjectBelongsToFolder(activeProject: CMakeProject | undefined, taskWorkspaceFolder: vscode.WorkspaceFolder): boolean {
+    return activeProject !== undefined &&
+        util.platformNormalizePath(activeProject.workspaceFolder.uri.fsPath) === util.platformNormalizePath(taskWorkspaceFolder.uri.fsPath);
+}
+
 export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
     command: string; // Command is either "build", "configure", "install", "test", "package" or "workflow".
     targets?: string[]; // only in "build" command
     preset?: string;
+    args?: string[]; // additional cmake --build arguments for build-based commands
     options?: { cwd?: string; environment?: Environment };
 }
 
@@ -217,7 +231,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const task = new vscode.Task(definition, workspaceFolder, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {})
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {}, resolvedDefinition.args)
             ), []);
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -233,7 +247,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, resolvedDefinition.args)
                 ), []);
             return resolvedTask;
         }
@@ -253,7 +267,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             });
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
-                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
+                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, resolvedDefinition.args);
                     const listener = terminal.onDidClose((exitCode) => {
                         listener.dispose();
                         exitCodeResolve(exitCode);
@@ -297,6 +311,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 command: task.definition.command,
                 targets: taskTargets || targets,
                 preset: task.definition.preset,
+                args: task.definition.args,
                 options: task.definition.options
             };
 
@@ -372,7 +387,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private args?: string[]) {
         super();
     }
 
@@ -493,8 +508,12 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
     private async getProject(): Promise<CMakeProject | undefined> {
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
-            this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.path + endOfLine));
-            project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.fsPath + endOfLine));
+            // Prefer the active project when it belongs to this folder; otherwise getProjectForFolder
+            // returns the folder's first project and ignores the selected active folder (#4512).
+            if (!activeProjectBelongsToFolder(project, this.workspaceFolder)) {
+                project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            }
         }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
@@ -560,6 +579,12 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             if (!this.options) {
                 this.options = {};
             }
+            // Default the working directory to the project so directory-based version managers
+            // (mise, asdf, vfox, ...) can resolve the cmake shim; otherwise the child inherits
+            // the extension host's process.cwd(), which may be outside the workspace.
+            if (this.options.cwd === undefined) {
+                this.options.cwd = cmakeDriver.sourceDir || cmakeDriver.binaryDir || this.workspaceFolder?.uri.fsPath;
+            }
             this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.build);
             if (this.preset) {
                 const buildPreset: preset.BuildPreset | undefined = await project?.expandBuildPresetbyName(this.preset);
@@ -593,15 +618,71 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             }
             return -1;
         }
+
+        // Merge task args into the generated command. Arguments before a task-provided `--` go to
+        // `cmake --build`; arguments after it go to the underlying build tool (issue #2554).
+        if (this.args && this.args.length > 0) {
+            const extraArgs: string[] = await expand.expandStrings(this.args, cmakeDriver.expansionOptions);
+            args = mergeBuildArgs(args, extraArgs);
+        }
+
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
+
+        // Create a compile output consumer to parse build diagnostics into the Problems pane
+        let compileConsumer: CompileOutputConsumer | undefined;
+        if (cmakeDriver.config.parseBuildDiagnostics) {
+            collections.build.clear();
+            compileConsumer = new CompileOutputConsumer(cmakeDriver.config);
+            compileConsumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                if (!cmakeDriver.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                    return;
+                }
+                const severity = diagnosticSeverity(rawDiag.severity);
+                if (severity === undefined) {
+                    return;
+                }
+                const filepath = util.resolvePath(rawDiag.file, cmakeDriver.binaryDir);
+                const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                diag.source = source;
+                if (rawDiag.code) {
+                    diag.code = rawDiag.code;
+                }
+                addDiagnosticToCollection(collections.build, { filepath, diag });
+            });
+        }
+
+        // Wrap the output consumer so build output is forwarded to both the terminal
+        // (for display) and the compile consumer (for diagnostic parsing).
+        const outputConsumer: proc.OutputConsumer = compileConsumer
+            ? {
+                output: (line: string) => {
+                    this.output(line);
+                    compileConsumer!.output(line);
+                },
+                error: (line: string) => {
+                    this.error(line);
+                    compileConsumer!.error(line);
+                }
+            }
+            : this;
+
         try {
             // On Windows, command-type-specific detection takes precedence over config.shell
             const commandShell = process.platform === 'win32' ? proc.determineShell(cmakePath) : false;
             const shell = (commandShell || undefined) ?? cmakeDriver.config.shell ?? undefined;
-            this._process = proc.execute(cmakePath, args, this, { ...this.options, shell });
+            this._process = proc.execute(cmakePath, args, outputConsumer, { ...this.options, shell });
             const result: proc.ExecutionResult = await this._process.result;
             this._process = undefined;
+
+            if (compileConsumer) {
+                const fileDiags = await compileConsumer.resolveDiagnostics(cmakeDriver.binaryDir, cmakeDriver.sourceDir);
+                if (fileDiags) {
+                    populateCollection(collections.build, fileDiags);
+                }
+                compileConsumer.dispose();
+            }
+
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr || (result.stdout && result.stdout.includes(": warning"))) {
@@ -614,6 +695,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             }
             return result.retc ?? 0;
         } catch {
+            if (compileConsumer) {
+                compileConsumer.dispose();
+            }
             this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             if (doCloseEmitter) {
                 this.closeEmitter.fire(-1);

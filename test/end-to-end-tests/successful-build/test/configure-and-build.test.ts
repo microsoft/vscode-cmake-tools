@@ -11,6 +11,7 @@ import {
     getMatchingProjectKit
 } from '@test/util';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 const workername: string = process.platform;
 
@@ -154,4 +155,93 @@ suite('Build', () => {
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
     }).timeout(100000);
+
+    // Regression test for #4062: pointing cmake.copyCompileCommands at a directory used to fail
+    // with "EISDIR: illegal operation on a directory". The file should instead be copied into the
+    // directory as compile_commands.json.
+    test('Copy compile_commands.json into a directory destination (#4062)', async () => {
+        const destDir = path.join(testEnv.projectFolder.location, 'compdb_dest_dir');
+        const destFile = path.join(destDir, 'compile_commands.json');
+        try {
+            await fs.mkdir_p(destDir);
+            const newSettings: Partial<ExtensionConfigurationSettings> = {};
+            if (process.platform === 'win32') {
+                newSettings.generator = 'Ninja'; // VS generators don't create compile_commands.json
+            }
+            newSettings.copyCompileCommands = destDir;
+            testEnv.config.updatePartial(newSettings);
+            const retc = (await cmakeProject.cleanConfigure(ConfigureTrigger.runTests)).exitCode;
+            expect(retc).to.eq(0);
+            expect(await fs.exists(destFile), 'compile_commands.json was not copied into the directory').to.be.true;
+        } finally {
+            if (await fs.exists(destFile)) {
+                await fs.unlink(destFile);
+            }
+            if (await fs.exists(destDir)) {
+                await fs.rmdir(destDir);
+            }
+        }
+    }).timeout(100000);
+
+    // Regression test for #4794: clicking Run Test / Build with an unsaved CMakeLists.txt used to
+    // fail with "Configuration is already in progress". Saving the file (either by the command's own
+    // maybeAutoSaveAll() or by VS Code's testing.saveBeforeStart) fires the save-watcher, which
+    // started a redundant automatic reconfigure that raced the command's own configure. The watcher
+    // reconfigure is now (a) suppressed outright during a command-initiated save, (b) debounced so
+    // an imminent build/test/configure command can take ownership before it runs, and (c) cancelled
+    // outright the moment any command-initiated configure begins.
+    test('automatic reconfigure after a CMake file save yields to command-initiated configures (#4794)', async () => {
+        testEnv.config.updatePartial({ configureOnEdit: true });
+        // Ensure the project is configured so a driver (and its cmakeFiles list) exists.
+        expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
+
+        const cmakeListsUri = vscode.Uri.file(path.join(testEnv.projectFolder.location, 'CMakeLists.txt'));
+        // Comfortably longer than the 500ms automatic-reconfigure debounce.
+        const waitPastDebounce = () => new Promise<void>(resolve => setTimeout(resolve, 2000));
+
+        let reconfigures = 0;
+        const sub = cmakeProject.onReconfigured(() => {
+            reconfigures++;
+        });
+        try {
+            // A command-initiated save (flag set by maybeAutoSaveAll) must not auto-reconfigure at all.
+            (cmakeProject as any)._suppressCMakeFileReconfigure = true;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
+            await waitPastDebounce();
+            expect(reconfigures).to.eq(0, 'a command-initiated save must not trigger the watcher reconfigure');
+
+            // If a command takes ownership after a normal save has already scheduled the debounced
+            // reconfigure, the scheduled reconfigure must be skipped when its timer fires.
+            (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri); // schedules the debounced reconfigure
+            (cmakeProject as any)._suppressCMakeFileReconfigure = true;     // command now owns the configure
+            await waitPastDebounce();
+            expect(reconfigures).to.eq(0, 'a scheduled reconfigure must yield once a command owns the configure');
+
+            // A command-initiated configure must cancel a pending (already scheduled) automatic
+            // reconfigure. This is what makes the Test Explorer flow deterministic rather than a timing
+            // bet: VS Code's testing.saveBeforeStart schedules the reconfigure, then the test's configure
+            // runs and cancels it — regardless of how long the debounce is (#4794).
+            (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri); // schedules the debounced reconfigure
+            expect((cmakeProject as any).automaticReconfigureTimer, 'a normal save should schedule the debounced reconfigure').to.not.be.undefined;
+            expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
+            expect((cmakeProject as any).automaticReconfigureTimer, 'a command-initiated configure must cancel the pending automatic reconfigure').to.be.undefined;
+            await waitPastDebounce();
+
+            // A plain user save (no command in flight) still auto-reconfigures after the debounce.
+            const reconfiguresBeforePlainSave = reconfigures;
+            const reconfigured = new Promise<void>(resolve => {
+                const once = cmakeProject.onReconfigured(() => {
+                    once.dispose();
+                    resolve();
+                });
+            });
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
+            await reconfigured;
+            expect(reconfigures).to.be.greaterThan(reconfiguresBeforePlainSave, 'a normal user save should still trigger an automatic reconfigure');
+        } finally {
+            sub.dispose();
+        }
+    }).timeout(120000);
 });

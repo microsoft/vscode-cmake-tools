@@ -38,6 +38,19 @@ export class Parser extends RawDiagnosticParser {
         this.pending_column = null;
     }
 
+    protected doFinish(): RawDiagnostic | FeedLineResult {
+        // The output ended while a diagnostic was fully parsed but still buffered
+        // waiting for a possible follow-up message line. Emit it so the last
+        // diagnostic of a build is not dropped.
+        if (this.state === ParserState.pending_message && this.pending_diagnostic) {
+            const diagnostic = this.pending_diagnostic;
+            diagnostic.message = diagnostic.message.trim();
+            this.reset();
+            return diagnostic;
+        }
+        return FeedLineResult.NotMine;
+    }
+
     doHandleLine(line: string) {
         switch (this.state) {
             case ParserState.init: {

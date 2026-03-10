@@ -144,6 +144,32 @@ export abstract class RawDiagnosticParser {
     }
 
     /**
+     * Flush any diagnostic still buffered once the output stream has ended.
+     *
+     * Some parsers only emit a completed diagnostic when a *following* line
+     * arrives (e.g. IAR waits for the line after the message). Without a flush
+     * at end-of-output, the final diagnostic of a build would be silently
+     * dropped. Returns `true` if a pending diagnostic was produced. Idempotent:
+     * calling it again after it has flushed produces nothing.
+     */
+    finish(): boolean {
+        const result = this.doFinish();
+        if (result === FeedLineResult.Ok || result === FeedLineResult.NotMine) {
+            return false;
+        }
+        this._diagnostics.push(result);
+        return true;
+    }
+
+    /**
+     * Implement in derived classes that buffer a pending diagnostic to emit it
+     * when the output stream ends. Defaults to producing nothing.
+     */
+    protected doFinish(): RawDiagnostic | FeedLineResult {
+        return FeedLineResult.NotMine;
+    }
+
+    /**
      * Implement in derived classes to parse a line. Returns a new diagnostic, or
      * `undefined` if the give line does not complete a diagnostic
      * @param line The line to process

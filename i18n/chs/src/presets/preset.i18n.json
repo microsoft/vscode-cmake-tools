@@ -24,6 +24,7 @@
 	"no.cl.toolset.version": "配置预设 {0}: 没有为 cl.exe 指定工具集版本，默认情况下使用最新版本",
 	"unknown.toolset.option": "将忽略未识别的工具集选项: {0}",
 	"specified.vs.not.found": "配置预设 {0}: 未找到由 {1} 指定的 Visual Studio 实例，正在回退默认实例查找行为。",
+	"using.vendor.vs.version": "配置预设 {0}: 使用供应商设置中的 Visual Studio 主版本 {1}。",
 	"specified.cl.not.found": "配置预设 {0}: 未找到具有工具集 {2} 和体系结构 {3} 的编译器 {1}，如果计算机上存在此工具集，则可能需要运行“CMake: 扫描编译器”命令。",
 	"vs.not.found": "配置预设 {0}: 找不到支持指定工具集 {1} 和体系结构 {2} 的 Visual Studio 安装，如果计算机上存在此工具集，则可能需要运行 ‘CMake: Scan for Compilers’ 命令。",
 	"using.vs.instance": "使用来自 Visual Studio 的开发人员环境(实例 {0}，版本 {1}，安装在 {2})",

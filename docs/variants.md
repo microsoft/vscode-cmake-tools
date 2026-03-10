@@ -72,7 +72,7 @@ A choice may specify any of the following options, but must include the `short` 
 |`long (Optional)` | A lengthier human-readable string describing the option. |
 |`buildType (Optional)` |  An optional string to set for `CMAKE_BUILD_TYPE` when the option is active. |
 |`linkage (Optional)` |  Either `static` or `shared`. Sets the value of `CMAKE_BUILD_SHARED_LIBS`. |
-|`settings (Optional)` | A map of arbitrary CMake cache options to pass via the CMake command line with `-D`. Similar to the `cmake.configureSettings` in `settings.json`. |
+|`settings (Optional)` | A map of arbitrary CMake cache options to pass via the CMake command line with `-D`. Similar to the `cmake.configureSettings` in `settings.json` — string values are passed through verbatim, so `;` keeps its natural CMake list-separator meaning (use array notation, e.g. `["a", "b"]`, for a declarative list, or pre-escape as `\;` for a literal semicolon inside a single element). |
 |`env (Optional)` | A map of key-value string pairs specifying additional environment variables to set during CMake _configure_ (not build). These environment variables take precedence over environment variables from `settings.json`, the current [CMake kit](kits.md), and environment variables set by the system. |
 
 The options above are only valid under entries in the `choices` map.

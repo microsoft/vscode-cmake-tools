@@ -4,7 +4,6 @@ const fs = require("fs-extra");
 const cp = require("child_process");
 const Octokit = require('@octokit/rest')
 const path = require('path');
-const parseGitConfig = require('parse-git-config');
 
 const branchName = 'localization';
 const mergeTo = 'main';
@@ -68,6 +67,86 @@ function hasAnyChanges() {
     return anyChanges;
 }
 
+// Decide whether this import actually advances localization. We compare each changed i18n file
+// against its committed (HEAD/main) version key-by-key and classify the semantic change:
+//   - a value that is byte-identical across many locales AND carries real translatable words is
+//     almost certainly untranslated English (OneLocBuild returns the English source for a string
+//     that has not been translated yet), and
+//   - a file whose bytes changed but whose keys/values are unchanged is a pure reorder/reformat.
+// If every semantic change is untranslated (or the only change is reordering) the import makes no
+// real localization progress and we should not open a pull request for it. Uses the pure helpers in
+// tools/translation-verifier.js so the classification is unit-tested.
+function assessLocalizationProgress() {
+    const verifier = require('./tools/translation-verifier.js');
+    const jsonc = require('jsonc-parser');
+    const repoRoot = __dirname;
+    const parse = (text) => {
+        if (!text) {
+            return {};
+        }
+        const errors = [];
+        const parsed = jsonc.parse(text, errors, { allowTrailingComma: true });
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    };
+
+    const statusOut = cp.execSync('git status --porcelain', { encoding: 'utf8' });
+    const changedEntries = [];
+    let physicalI18nChange = false;
+    for (const rawLine of statusOut.split('\n')) {
+        const line = rawLine.replace(/\r$/, '');
+        if (!line) {
+            continue;
+        }
+        // Porcelain lines are "XY <path>"; nothing is staged at this point so <path> starts at col 3.
+        const filePath = line.slice(3).trim();
+        if (!filePath.startsWith('i18n/') || !filePath.endsWith('.i18n.json')) {
+            continue;
+        }
+        physicalI18nChange = true;
+        const parts = filePath.split('/');
+        if (parts.length < 3) {
+            continue;
+        }
+        const locale = parts[1];
+        const relFile = parts.slice(2).join('/');
+        let baseText = '';
+        try {
+            baseText = cp.execSync(`git show HEAD:${filePath}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+        } catch (e) {
+            baseText = ''; // new file: no committed version.
+        }
+        let headText = '';
+        try {
+            headText = fs.readFileSync(path.join(repoRoot, ...filePath.split('/')), 'utf8');
+        } catch (e) {
+            headText = ''; // deleted file.
+        }
+        const base = parse(baseText);
+        const head = parse(headText);
+        for (const key of new Set([...Object.keys(base), ...Object.keys(head)])) {
+            const inBase = typeof base[key] === 'string';
+            const inHead = typeof head[key] === 'string';
+            if (inHead && !inBase) {
+                changedEntries.push({ file: relFile, key, locale, base: undefined, head: head[key], changeType: 'add' });
+            } else if (inBase && !inHead) {
+                changedEntries.push({ file: relFile, key, locale, base: base[key], head: undefined, changeType: 'delete' });
+            } else if (inBase && inHead && base[key] !== head[key]) {
+                changedEntries.push({ file: relFile, key, locale, base: base[key], head: head[key], changeType: 'update' });
+            }
+        }
+    }
+
+    if (!physicalI18nChange) {
+        return { block: false, reason: '' };
+    }
+    if (changedEntries.length === 0) {
+        // The i18n files changed on disk but no key was added, removed, or changed in value.
+        return { block: true, reason: 'no-semantic-change' };
+    }
+    const flaggedValues = new Map(verifier.reportUntranslated(repoRoot).map((f) => [`${f.file}\u0000${f.key}`, f.value]));
+    return verifier.assessImportProgress(changedEntries, flaggedValues);
+}
+
 // When invoked on build server, we should already be in a repo freshly synced to the mergeTo branch
 
 if (hasAnyChanges()) {
@@ -94,9 +173,39 @@ directories.forEach(languageId => {
 console.log("Import translations into i18n directory");
 cp.execSync("npm run translations-import");
 
+// Restore any human-reviewed translation fixes that this import reverted (see
+// jobs/loc/translation-fixes.json and tools/translation-verifier.js). Use --ledger-only so a
+// genuinely new placeholder/variable break does not abort publishing the PR; that residual case is
+// surfaced on the pull request by the Localization Readiness workflow instead. Running this before
+// the change check below means a PR whose only change was a reverted fix collapses to no change.
+console.log("Restore human-reviewed translations reverted by the import (ledger)");
+try {
+    cp.execSync("node ./tools/translation-verifier.js --restore --ledger-only", { stdio: "inherit" });
+} catch (e) {
+    console.log("Localization restore reported residual issues; continuing so the pull request still surfaces for review.");
+}
+
 if (!hasAnyChanges()) {
     console.log("No changes detected");
     return;
+}
+
+// Do not open a pull request for an import that makes no real localization progress: either the
+// only changes are untranslated English strings (a newly added source string OneLocBuild returned in
+// English because it is not translated yet) or a pure key reorder/reformat. This mirrors the no-op
+// guard above but inspects the semantic content of the change. Any failure fails open (we still
+// publish) so a genuine translation update is never dropped.
+try {
+    const assessment = assessLocalizationProgress();
+    if (assessment && assessment.block) {
+        const detail = assessment.reason === 'no-semantic-change'
+            ? 'it only reorders or reformats localization files'
+            : 'every changed string is still the untranslated English source';
+        console.log(`No real localization progress (${assessment.reason}); not opening a pull request because ${detail}.`);
+        return;
+    }
+} catch (e) {
+    console.log(`Localization progress assessment failed (${e && e.message}); continuing to publish so real translations are not dropped.`);
 }
 
 console.log("Changes detected");
@@ -129,12 +238,17 @@ if (!hasAnyChanges()) {
 // Save existing user name and email, in case already set.
 var existingUserName;
 var existingUserEmail;
-var gitConfigPath = path.resolve(process.cwd(), './.git/config');
-var config = parseGitConfig.sync({ path: gitConfigPath });
 
-if (typeof config === 'object' && config.hasOwnProperty('user')) {
-    existingUserName = config.user.name;
-    existingUserEmail = config.user.email;
+// Use git config commands directly to ensure we are getting and setting the local config
+try {
+    existingUserName = cp.execSync('git config --local user.name', { encoding: 'utf8' }).trim();
+} catch (e) {
+    existingUserName = undefined;
+}
+try {
+    existingUserEmail = cp.execSync('git config --local user.email', { encoding: 'utf8' }).trim();
+} catch (e) {
+    existingUserEmail = undefined;
 }
 if (existingUserName === undefined) {
     console.log(`Existing user name: undefined`);

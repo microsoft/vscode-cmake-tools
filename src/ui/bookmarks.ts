@@ -46,7 +46,24 @@ export class BookmarkNode extends BaseNode {
             this.bookmark.projectName || localize('not.available', 'N/A'),
             this.bookmark.type,
             this.bookmark.folderName);
-        item.contextValue = `nodeType=bookmark;type=${this.bookmark.type};bookmarked=true`;
+
+        // Build contextValue. For TARGET bookmarks with a live source node, propagate
+        // target metadata (canBuild, canRun, isDefault, isLaunch, specific type) so
+        // that the same context-menu actions available in the outline also appear here.
+        if (this.bookmark.type === 'TARGET' && this.bookmark.sourceNode instanceof TargetNode) {
+            const sourceItem = this.bookmark.sourceNode.getTreeItem();
+            const sourceContext = sourceItem.contextValue || '';
+            item.contextValue = sourceContext
+                .replace(/nodeType=target/, 'nodeType=bookmark')
+                + ',bookmarked=true';
+        } else if (this.bookmark.type === 'TARGET') {
+            // Unresolved target bookmark — include default flags so the contextValue
+            // structure is consistent but no actions that require a live node will match.
+            item.contextValue = 'nodeType=bookmark,type=TARGET,bookmarked=true,canBuild=false,canRun=false,isDefault=false,isLaunch=false';
+        } else {
+            item.contextValue = `nodeType=bookmark,type=${this.bookmark.type},bookmarked=true`;
+        }
+
         item.iconPath = new vscode.ThemeIcon("bookmark");
         return item;
     }

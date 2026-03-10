@@ -222,7 +222,10 @@ export type OsName = "Windows" | "Linux" | "macOS";
 
 export type VendorVsSettings = {
     'microsoft.com/VisualStudioSettings/CMake/1.0': {
-        hostOS: OsName | OsName[];
+        hostOS?: OsName | OsName[];
+        intelliSenseMode?: string;
+        sourceDir?: string;
+        vsInstanceVersion?: number;
         [key: string]: any;
     };
     [key: string]: any;
@@ -231,6 +234,7 @@ export type VendorVsSettings = {
 export interface ConfigurePreset extends PresetPrivate, api.ConfigurePreset {
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
+    __vsDevEnvInstallationPath?: string; // Private field: install path of the VS instance pinned via the vsInstanceVersion vendor field, used to prefer that instance's bundled CMake.
 }
 
 export interface InheritsConfigurePreset extends api.InheritsConfigurePreset, PresetPrivate {}
@@ -861,6 +865,11 @@ export interface VsDevEnvOptions {
     compilerName?: string; // Only will have a value when `useVsDeveloperEnvironmentMode` is "auto"
 }
 
+export interface VsDevEnvAutoDetectionInfo {
+    compilerName?: string;
+    generatorIsNinja: boolean;
+}
+
 /**
  * @param opts Options to control the behavior of obtaining the VS developer environment.
  * @returns Either the VS developer environment or undefined if it could not be obtained.
@@ -901,6 +910,20 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     }
 
+    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, check the vendor field
+    // for a preferred VS major version (e.g., 17 for VS2022, 18 for VS2026).
+    // This allows users to pin a specific VS version for the dev environment in Ninja presets.
+    let vendorVsVersion: number | undefined;
+    if (!vsInstall) {
+        const vendorSettings = (opts.preset.vendor as VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0'];
+        if (vendorSettings?.vsInstanceVersion) {
+            vendorVsVersion = vendorSettings.vsInstanceVersion;
+            log.info(localize('using.vendor.vs.version',
+                "Configure preset {0}: Using Visual Studio major version {1} from vendor settings.",
+                opts.preset.name, vendorVsVersion));
+        }
+    }
+
     // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
     // that supports the specified toolset.
     if (!vsInstall) {
@@ -926,6 +949,12 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
                         vsInstall = vs;
                         break;
                     }
+                } else if (vendorVsVersion) {
+                    // If a VS major version is specified via vendor settings, match against it.
+                    if (vs.installationVersion.startsWith(vendorVsVersion.toString())) {
+                        vsInstall = vs;
+                        break;
+                    }
                 } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
                     // If no toolset version specified then choose the latest VS instance for the given generator
                     vsInstall = vs;
@@ -946,6 +975,15 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     } else {
         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+
+        // When the VS instance was pinned via the vsInstanceVersion vendor field, remember its
+        // installation path so cmake discovery can prefer the CMake bundled with that same instance
+        // (see CMakeProject.getCMakePathofProject). Only do this for the vendor-pinned case so the
+        // default "latest VS" cmake behavior is preserved for every other preset.
+        if (vendorVsVersion && vsInstall.installationVersion.startsWith(vendorVsVersion.toString())) {
+            opts.preset.__vsDevEnvInstallationPath = vsInstall.installationPath;
+        }
+
         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
         const compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
@@ -959,6 +997,23 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
 
         return compilerEnv;
     }
+}
+
+export function getVsDevEnvAutoDetectionInfo(preset: ConfigurePreset): VsDevEnvAutoDetectionInfo {
+    const cxxCompilerValue = getStringValueFromCacheVar(preset.cacheVariables?.['CMAKE_CXX_COMPILER']);
+    const cCompilerValue = getStringValueFromCacheVar(preset.cacheVariables?.['CMAKE_C_COMPILER']);
+    const cxxCompiler = cxxCompilerValue?.toLowerCase();
+    const cCompiler = cCompilerValue?.toLowerCase();
+    const explicitCompilerName = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+    const hasExplicitCompiler = cxxCompilerValue !== null || cCompilerValue !== null;
+    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja") ?? false;
+
+    return {
+        // For a Ninja preset with no explicit compiler, probe for cl so auto mode can
+        // bootstrap the VS developer environment on Windows.
+        compilerName: explicitCompilerName || (!hasExplicitCompiler && generatorIsNinja ? 'cl' : undefined),
+        generatorIsNinja
+    };
 }
 
 /**
@@ -979,12 +1034,8 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
     // [Windows Only] We only support VS Dev Env on Windows.
     if (!preset.__parentEnvironment && process.platform === "win32") {
         if (useVsDeveloperEnvironmentMode === "auto") {
-            if (preset.cacheVariables) {
-                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                // The env variables for the supported compilers are the same.
-                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
-
+            const { compilerName, generatorIsNinja } = getVsDevEnvAutoDetectionInfo(preset);
+            if (compilerName || generatorIsNinja) {
                 // find where.exe using process.env since we're on windows.
                 let whereExecutable;
                 // assume in this call that it exists
@@ -1004,7 +1055,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                     }
                 }
 
-                if (compilerName && whereExecutable) {
+                if (whereExecutable) {
                     // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
                     // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
                     const env = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
@@ -1019,25 +1070,24 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                         }
                     }
 
-                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                    const compilerLocation = compilerName ? await execute(whereExecutable, [compilerName], null, {
                         environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
                         shell: true
-                    }).result;
+                    }).result : undefined;
 
                     // if ninja isn't on path, try to look for it in a VS install
-                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                    const ninjaLoc = generatorIsNinja ? await execute(whereExecutable, ['ninja'], null, {
                         environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
                         shell: true
-                    }).result;
+                    }).result : undefined;
 
-                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
-                    const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
+                    const shouldInterrogateForNinja = generatorIsNinja && !ninjaLoc?.stdout;
 
-                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
+                    if ((compilerName && !compilerLocation?.stdout) || shouldInterrogateForNinja) {
                         developerEnvironment = await getVsDevEnv({
                             preset,
                             shouldInterrogateForNinja,
@@ -1900,9 +1950,12 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     refs.add(preset.name);
 
-    // Init env to empty if not specified to avoid null checks later
+    // Init env and variables to empty if not specified to avoid null checks later
     if (!preset.environment) {
         preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    if (!preset.variables) {
+        preset.variables = {};
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
     let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
@@ -1918,6 +1971,14 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
+                // Inherit variables
+                if (parent.variables) {
+                    for (const name in parent.variables) {
+                        if (preset.variables[name] === undefined) {
+                            preset.variables[name] = parent.variables[name];
+                        }
+                    }
+                }
                 // Inherit other fields
                 let key: keyof PackagePreset;
                 for (key in parent) {
@@ -2136,7 +2197,7 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
     return preset;
 }
 
-export function configureArgs(preset: ConfigurePreset): string[] {
+export function configureArgs(preset: ConfigurePreset, cmakeVersion?: util.Version): string[] {
     const result: string[] = [];
 
     // CacheVariables
@@ -2167,21 +2228,21 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     // Warnings
     if (preset.warnings) {
         if (preset.warnings.dev !== undefined) {
-            result.push(preset.warnings.dev ? '-Wdev' : '-Wno-dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.warnings.dev ? '-Wdev' : '-Wno-dev', cmakeVersion));
         }
         if (preset.warnings.deprecated !== undefined) {
             result.push(preset.warnings.deprecated ? '-Wdeprecated' : '-Wno-deprecated');
         }
 
-        preset.warnings.uninitialized && result.push('--warn-uninitialized');
-        preset.warnings.unusedCli === false && result.push('--no-warn-unused-cli');
+        preset.warnings.uninitialized && result.push(util.modernizeCMakeDiagnosticFlag('--warn-uninitialized', cmakeVersion));
+        preset.warnings.unusedCli === false && result.push(util.modernizeCMakeDiagnosticFlag('--no-warn-unused-cli', cmakeVersion));
         preset.warnings.systemVars && result.push('--check-system-vars');
     }
 
     // Errors
     if (preset.errors) {
         if (preset.errors.dev !== undefined) {
-            result.push(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev', cmakeVersion));
         }
         if (preset.errors.deprecated !== undefined) {
             result.push(preset.errors.deprecated ? '-Werror=deprecated' : '-Wno-error=deprecated');
@@ -2297,7 +2358,16 @@ export function testArgs(preset: TestPreset): string[] {
     if (preset.execution) {
         preset.execution.stopOnFailure && result.push('--stop-on-failure');
         preset.execution.enableFailover && result.push('-F');
-        (preset.execution.jobs !== undefined) && result.push('--parallel', preset.execution.jobs.toString());
+        if (preset.execution.jobs !== undefined) {
+            // v11+: jobs can be an empty string meaning --parallel with no value (auto-detect).
+            // The API type currently declares jobs as number; will be updated to number | string.
+            const jobs = preset.execution.jobs as number | string;
+            if (jobs === '') {
+                result.push('--parallel');
+            } else {
+                result.push('--parallel', jobs.toString());
+            }
+        }
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
         preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
         preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);

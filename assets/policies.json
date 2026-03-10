@@ -1089,5 +1089,35 @@
     "name": "CMP0204",
     "description": "A character set is always defined when targeting the MSVC ABI.",
     "introduced_version": "4.2"
+  },
+  "CMP0205": {
+    "name": "CMP0205",
+    "description": "file with COPY_ON_ERROR copies directory content.",
+    "introduced_version": "4.3"
+  },
+  "CMP0206": {
+    "name": "CMP0206",
+    "description": "The CPack Archive Generator defaults to UID 0 and GID 0.",
+    "introduced_version": "4.3"
+  },
+  "CMP0207": {
+    "name": "CMP0207",
+    "description": "file normalizes paths before matching.",
+    "introduced_version": "4.3"
+  },
+  "CMP0208": {
+    "name": "CMP0208",
+    "description": "export does not allow empty arguments.",
+    "introduced_version": "4.3"
+  },
+  "CMP0209": {
+    "name": "CMP0209",
+    "description": "Verify interface header sets checks executables without exports.",
+    "introduced_version": "4.3"
+  },
+  "CMP0210": {
+    "name": "CMP0210",
+    "description": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types.",
+    "introduced_version": "4.3"
   }
 }
