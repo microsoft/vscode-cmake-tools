@@ -149,3 +149,25 @@ suite('determineShell command-type detection', () => {
         expect(resolved).to.eq(undefined);
     });
 });
+
+suite('Debugger path shell detection', () => {
+    test('Debugger .exe path returns false (no shell needed)', () => {
+        expect(determineShell('d:/Pro gramFiles/mingw64/bin/gdb.exe')).to.eq(false);
+    });
+
+    test('Bare debugger name returns false (no shell needed)', () => {
+        expect(determineShell('gdb')).to.eq(false);
+    });
+
+    test('Debugger path with spaces should not use shell', () => {
+        // When shell is undefined, proc.execute calls determineShell on Windows.
+        // For .exe paths, determineShell returns false, so spawn runs directly
+        // without a shell intermediary — avoiding PowerShell quoting issues.
+        const debuggerPath = 'C:\\Program Files\\mingw64\\bin\\gdb.exe';
+        expect(determineShell(debuggerPath)).to.eq(false);
+    });
+
+    test('lldb-mi debugger path returns false', () => {
+        expect(determineShell('/usr/bin/lldb-mi')).to.eq(false);
+    });
+});
