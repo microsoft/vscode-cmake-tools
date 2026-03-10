@@ -8,6 +8,7 @@ import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
+import * as shlex from '@cmt/shlex';
 import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
@@ -95,6 +96,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +129,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
@@ -514,7 +520,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): Environment {
         const cur_env = process.env;
         const kit_env = (this.config.ignoreKitEnv) ? EnvironmentUtils.create() : this._kitEnvironmentVariables;
-        return EnvironmentUtils.merge([cur_env, kit_env, opts?.environment]);
+        const cmakeToolsEnv = EnvironmentUtils.create({ VSCODE_CMAKE_TOOLS: "1" });
+        return EnvironmentUtils.merge([cur_env, kit_env, cmakeToolsEnv, opts?.environment]);
     }
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
@@ -570,7 +577,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
             existing = term;
         }
         existing.show();
-        existing.sendText(cmd.command + '\r\n');
+        // Send the command and arguments individually to avoid terminal buffer truncation
+        // issues with long command lines (see https://github.com/microsoft/vscode/issues/233420).
+        // The arguments array is always populated by CompilationDatabase, either from the
+        // compile_commands.json or by parsing the command string.
+        const args = cmd.arguments;
+        if (args && args.length > 0) {
+            existing.sendText(shlex.quote(args[0]), false);
+            for (let i = 1; i < args.length; i++) {
+                existing.sendText(` ${shlex.quote(args[i])}`, false);
+            }
+            existing.sendText('', true); // Send newline to execute the command
+        } else {
+            // Fallback to original behavior if arguments not available
+            existing.sendText(cmd.command + '\r\n');
+        }
         return existing;
     }
 
@@ -2062,9 +2083,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (useBuildTask) {
                 const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
-                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
-                    if (resolvedTask) {
-                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
+                    const resolved = await CMakeTaskProvider.resolveInternalTask(task);
+                    if (resolved) {
+                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolved.task), resolved.exitCodePromise);
                     }
                 }
             } else {
