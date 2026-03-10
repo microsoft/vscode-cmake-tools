@@ -168,6 +168,7 @@
         "message": "The match group index of the expected test output. Defaults to undefined."
     },
 	"cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description": "Target name from launch.json to start when debugging a test with CTest. By default and in case of a non-existing target, this will show a picker with all available targets.",
+	"cmake-tools.configuration.cmake.ctest.neverDebugTestsWithLaunchConfiguration.description": "When set to true, always debug tests without a launch configuration, bypassing the quick pick menu. Default is false.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
         "message": "Output parsers to use. Supported parsers `cmake`, `gcc`, `gnuld` for GNULD-style linker output, `msvc` for Microsoft Visual C++, `ghs` for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, `diab` for the Wind River Diab compiler, and `iwyu` for include-what-you-use diagnostics.",
