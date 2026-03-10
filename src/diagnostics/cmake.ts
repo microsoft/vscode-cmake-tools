@@ -22,19 +22,18 @@ export enum StateMessage {
  */
 export class CMakeOutputConsumer extends CommandConsumer {
     /**
-     * Matches CMake status lines that signal key configure/generate lifecycle
-     * milestones.  These are always logged at `info` so they remain visible at
-     * the default logging level.  All other stdout lines use `debug`, keeping
-     * the Output panel concise while still being one setting-change away.
+     * Matches CMake stdout lines that originate from CMake's own built-in
+     * modules (compiler detection, ABI probing, feature enumeration, etc.).
+     * These are logged at `debug` so they stay hidden at the default logging
+     * level — keeping the Output panel concise — while remaining one
+     * setting-change away.
      *
-     * Matched patterns (all prefixed with `-- `):
-     *   Configuring done           / Configuring done (0.1s)
-     *   Configuring incomplete, errors occurred!
-     *   Generating done
-     *   Build files have been written to: <path>
+     * Everything else (user `message(STATUS "…")` calls, lifecycle milestones
+     * such as "Configuring done" / "Generating done", etc.) is logged at
+     * `info` so it is always visible.
      */
-    private static readonly _milestoneRe =
-        /^-- +(Configuring (done|incomplete)|Generating done|Build files have been written to:)/;
+    private static readonly _cmakeInternalNoiseRe =
+        /^-- +(?:The \w+ compiler identification is |Check for working \w+ compiler[: ]|Detecting \w+ compiler ABI info|Detecting \w+ compile features)/;
 
     constructor(readonly sourceDir: string, readonly logger?: Logger) {
         super();
@@ -62,16 +61,16 @@ export class CMakeOutputConsumer extends CommandConsumer {
 
     /**
      * Writes the line of output to the log at a tiered level:
-     * - Milestone lines (configure/generate done, build files written) → info
-     * - All other CMake stdout → debug
+     * - CMake internal noise (compiler detection, ABI probing, etc.) → debug
+     * - All other CMake stdout (user STATUS messages, milestones, etc.) → info
      * @param line Line of output
      */
     output(line: string) {
         if (this.logger) {
-            if (CMakeOutputConsumer._milestoneRe.test(line)) {
-                this.logger.info(line);
-            } else {
+            if (CMakeOutputConsumer._cmakeInternalNoiseRe.test(line)) {
                 this.logger.debug(line);
+            } else {
+                this.logger.info(line);
             }
         }
         super.output(line);

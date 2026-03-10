@@ -186,7 +186,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null; neverDebugTestsWithLaunchConfiguration: boolean | null };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -237,6 +237,7 @@ export interface ExtensionConfigurationSettings {
     useFolderPropertyInBuildTargetDropdown: boolean;
     setBuildTargetSameAsLaunchTarget: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
+    shell: string | null;
 }
 
 type EmittersOf<T> = {
@@ -416,6 +417,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get ctestDebugLaunchTarget(): string | null {
         return this.configData.ctest.debugLaunchTarget;
+    }
+    get ctestNeverDebugTestsWithLaunchConfiguration(): boolean | null {
+        return this.configData.ctest.neverDebugTestsWithLaunchConfiguration;
     }
     get parseBuildDiagnostics(): boolean {
         return !!this.configData.parseBuildDiagnostics;
@@ -628,6 +632,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.useFolderPropertyInBuildTargetDropdown;
     }
 
+    get shell(): string | null {
+        return this.configData.shell;
+    }
+
     get setBuildTargetSameAsLaunchTarget(): boolean {
         return this.configData.setBuildTargetSameAsLaunchTarget;
     }
@@ -655,7 +663,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null; neverDebugTestsWithLaunchConfiguration: boolean | null }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
@@ -703,8 +711,9 @@ export class ConfigurationReader implements vscode.Disposable {
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
-        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>()
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
+        shell: new vscode.EventEmitter<string | null>(),
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
     };
 
     /**
