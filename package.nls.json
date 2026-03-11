@@ -121,6 +121,7 @@
     "cmake-tools.configuration.cmake.generator.description": "The CMake generator to use.",
     "cmake-tools.configuration.cmake.toolset.description": "The CMake toolset to use when configuring.",
     "cmake-tools.configuration.cmake.platform.description": "The CMake platform to use when configuring.",
+    "cmake-tools.configuration.cmake.shell.description": "Path to a shell executable to use when running CMake, CTest, and CPack commands (e.g., Git Bash or MSYS2). When set, all subprocess invocations are routed through this shell. Useful for embedded toolchains that require POSIX path translation. When null, the default system shell behavior is used.",
     "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active configure preset.",
     "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset.",
     "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset to invoke the build tool.",
@@ -167,6 +168,7 @@
         "message": "The match group index of the expected test output. Defaults to undefined."
     },
 	"cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description": "Target name from launch.json to start when debugging a test with CTest. By default and in case of a non-existing target, this will show a picker with all available targets.",
+	"cmake-tools.configuration.cmake.ctest.neverDebugTestsWithLaunchConfiguration.description": "When set to true, always debug tests without a launch configuration, bypassing the quick pick menu. Default is false.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
         "message": "Output parsers to use. Supported parsers `cmake`, `gcc`, `gnuld` for GNULD-style linker output, `msvc` for Microsoft Visual C++, `ghs` for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, `diab` for the Wind River Diab compiler, and `iwyu` for include-what-you-use diagnostics.",
