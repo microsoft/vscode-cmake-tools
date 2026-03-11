@@ -2669,6 +2669,9 @@ export class CMakeProject {
 
     /**
      * Find a launch configuration by name from all available sources.
+     * When duplicate names exist across scopes, folder-level configs
+     * (from .vscode/launch.json) take precedence over workspace-level
+     * configs (from .code-workspace file).
      */
     static findLaunchConfiguration(name: string, workspaceFolder: vscode.WorkspaceFolder): vscode.DebugConfiguration | undefined {
         const configs = CMakeProject.getAllLaunchConfigurations(workspaceFolder);
