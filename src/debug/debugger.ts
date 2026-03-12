@@ -288,6 +288,6 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 }
 
 export async function checkDebugger(debuggerPath: string): Promise<boolean> {
-    const res = await proc.execute(debuggerPath, ['--version'], null, { shell: true }).result;
+    const res = await proc.execute(debuggerPath, ['--version'], null, {}).result;
     return res.retc === 0;
 }
