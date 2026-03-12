@@ -60,7 +60,7 @@ Identify the affected layer(s) from the architecture table above. Read the relev
 
 ### Always handle both operating modes
 
-Check `CMakeProject.useCMakePresets`. If a code path only works in one mode, it is a bug waiting to happen.
+When a code path touches shared logic (configure, build, test, targets, environment), check `CMakeProject.useCMakePresets` and ensure it works correctly in both presets mode and kits/variants mode. Omitting the check for one mode in shared code is a bug waiting to happen. Features that are inherently mode-specific (e.g., kit scanning, preset expansion) are fine to scope to one mode.
 
 ### Always handle both generator types
 
@@ -88,7 +88,7 @@ const log = logging.createLogger('my-module');
 
 ### `async`/`await` — never swallow errors
 
-Avoid raw `.then()` chains and empty `catch` blocks. Wrap top-level event handlers in `rollbar.invokeAsync()`.
+Prefer `async`/`await` over `.then()` chains and never use empty `catch` blocks. Wrap top-level event handlers in `rollbar.invokeAsync()`. Exception: fire-and-forget UI calls (e.g., `vscode.window.showInformationMessage(...).then(...)`) where `.then()` is idiomatic.
 
 ### Paths — always `path.join()` / `path.normalize()`
 
@@ -104,7 +104,7 @@ One entry under the current version in `CHANGELOG.md`, in the appropriate sectio
 
 ## Testing checklist
 
-- [ ] `yarn test:unit` passes
+- [ ] `yarn unitTests` passes
 - [ ] If `src/diagnostics/`, `src/presets/`, or `src/expand.ts` changed — affected unit tests updated
 - [ ] If `src/kits/` changed — update `test/unit-tests/kitmanager.test.ts`
 - [ ] Behavior verified in **presets mode** and **kits/variants mode**
