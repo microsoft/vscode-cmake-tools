@@ -170,7 +170,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
 
-    const stackTrace = new Error().stack;
+    const stackTrace = new Error().stack ?? '';
 
     const cmdstr = buildCmdStr(command, args);
     if (options && options.silent !== true) {
