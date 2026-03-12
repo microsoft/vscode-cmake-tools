@@ -1533,18 +1533,27 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     private getLaunchConfigs(workspaceFolder: vscode.WorkspaceFolder): ConfigItem[] {
-        const launchConfig = vscode.workspace.getConfiguration(
-            'launch',
-            workspaceFolder.uri
-        );
-        const workspaceLaunchConfig = vscode.workspace.workspaceFile ? vscode.workspace.getConfiguration(
-            'launch',
-            vscode.workspace.workspaceFile
-        ) : undefined;
-        const configs = launchConfig.get<vscode.DebugConfiguration[]>('configurations') ?? [];
-        const workspaceConfigs = workspaceLaunchConfig?.get<vscode.DebugConfiguration[]>('configurations') ?? [];
-        let allConfigItems: ConfigItem[] = configs.map(config => ({ label: config.name, config, folder: workspaceFolder, detail: workspaceFolder.uri.fsPath }));
-        allConfigItems = allConfigItems.concat(workspaceConfigs.map(config => ({ label: config.name, config, detail: vscode.workspace.workspaceFile!.fsPath })));
+        // Use inspect() to read configs from each scope separately, avoiding the
+        // duplicates that get() produces when it merges all scopes together.
+        const launchConfig = vscode.workspace.getConfiguration('launch', workspaceFolder.uri);
+        const inspected = launchConfig.inspect<vscode.DebugConfiguration[]>('configurations');
+
+        let allConfigItems: ConfigItem[] = [];
+
+        // Folder-level configs (from .vscode/launch.json)
+        if (inspected?.workspaceFolderValue) {
+            allConfigItems = inspected.workspaceFolderValue.map(config => ({
+                label: config.name, config, folder: workspaceFolder, detail: workspaceFolder.uri.fsPath
+            }));
+        }
+
+        // Workspace-level configs (from .code-workspace file)
+        if (inspected?.workspaceValue && vscode.workspace.workspaceFile) {
+            allConfigItems = allConfigItems.concat(inspected.workspaceValue.map(config => ({
+                label: config.name, config, detail: vscode.workspace.workspaceFile!.fsPath
+            })));
+        }
+
         return allConfigItems;
     }
 
