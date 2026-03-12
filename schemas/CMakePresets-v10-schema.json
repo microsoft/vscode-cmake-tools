@@ -111,28 +111,7 @@
                                     },
                                     "intelliSenseMode": {
                                         "type": "string",
-                                        "description": "An optional key that indicates the preferred IntelliSense mode. Mode used for computing IntelliSense information in Visual Studio and Visual Studio Code.",
-                                        "enum": [
-                                            "windows-msvc-x86",
-                                            "windows-msvc-x64",
-                                            "windows-msvc-arm",
-                                            "windows-msvc-arm64",
-                                            "android-clang-x86",
-                                            "android-clang-x64",
-                                            "android-clang-arm",
-                                            "android-clang-arm64",
-                                            "ios-clang-x86",
-                                            "ios-clang-x64",
-                                            "ios-clang-arm",
-                                            "ios-clang-arm64",
-                                            "windows-clang-x86",
-                                            "windows-clang-x64",
-                                            "windows-clang-arm",
-                                            "windows-clang-arm64",
-                                            "linux-gcc-x86",
-                                            "linux-gcc-x64",
-                                            "linux-gcc-arm"
-                                        ]
+                                        "description": "An optional key that indicates the preferred IntelliSense mode. Mode used for computing IntelliSense information in Visual Studio and Visual Studio Code."
                                     },
                                     "intelliSenseOptions": {
                                         "type": "object",
