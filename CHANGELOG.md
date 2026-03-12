@@ -15,6 +15,7 @@ Features:
 - Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
 
 Improvements:
+- Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
 - Clicking on a CTest in the Project Outline now navigates to the test source file, matching the existing Test Explorer behavior. [#4773](https://github.com/microsoft/vscode-cmake-tools/issues/4773)
 - Clicking on a CTest unit test in the Test Explorer now navigates to the test source file by matching the test executable to its CMake target's source files. [#4449](https://github.com/microsoft/vscode-cmake-tools/issues/4449)
 - Make "CMake: Add ... Preset" commands available in the command palette when `cmake.useCMakePresets` is set to `auto`, even before a CMakePresets.json file exists. [#4401](https://github.com/microsoft/vscode-cmake-tools/issues/4401)
@@ -61,6 +62,7 @@ Bug Fixes:
 - Fix how `jobs` is handled in build presets. Also update how `cmake.parallelJobs` is handled as a fallback when a build preset does not define `jobs`. [#4176](https://github.com/microsoft/vscode-cmake-tools/issues/4176)
 - Fix diagnostics to handle when there isn't a command in the error output. [PR #4765](https://github.com/microsoft/vscode-cmake-tools/pull/4765)
 - Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
+- Fix issue with hover provider not checking for undefined. [#4812](https://github.com/microsoft/vscode-cmake-tools/issues/4812)
 
 ## 1.22.28
 
