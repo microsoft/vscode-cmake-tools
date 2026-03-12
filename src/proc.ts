@@ -170,6 +170,8 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
 
+    const stackTrace = new Error().stack;
+
     const cmdstr = buildCmdStr(command, args);
     if (options && options.silent !== true) {
         log.info(// We do simple quoting of arguments with spaces.
@@ -252,6 +254,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         let stderr_line_acc = '';
         child?.on('error', err => {
             log.warning(localize({key: 'process.error', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} failed with error: {1}', `${cmdstr}`, `${err}`));
+            log.debug(stackTrace);
         });
         child?.on('exit', (code, signal) => {
             if (code !== 0) {
@@ -260,6 +263,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 } else {
                     log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1}', `${cmdstr}`, `${code}`));
                 }
+                log.debug(stackTrace);
                 if (options?.showOutputOnError) {
                     if (stdout_acc) {
                         const output = stdout_acc.trimEnd().replace(/\n/g, '\n\t');
