@@ -2649,8 +2649,61 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.install`
      */
-    install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        return this.build(['install'], false, false, cancellationToken);
+    async install(cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        log.info(localize('run.install', 'Installing folder: {0}', await this.binaryDir || this.folderName));
+
+        const configResult = await this.ensureConfigured(cancellationToken);
+        if (configResult === null) {
+            throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
+        } else if (configResult.exitCode !== 0) {
+            return {
+                exitCode: configResult.exitCode,
+                stdout: configResult.stdout,
+                stderr: configResult.stderr
+            };
+        }
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
+        }
+
+        const isBuildingKey = 'cmake:isBuilding';
+        try {
+            this.statusMessage.set(localize('installing.status', 'Installing'));
+            this.isBusy.set(true);
+
+            return await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Window,
+                    title: localize('installing', 'Installing'),
+                    cancellable: true
+                },
+                async (_progress, cancel) => {
+                    const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                    combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                    log.showChannel();
+                    buildLogger.info(localize('starting.install', 'Starting install'));
+                    await setContextAndStore(isBuildingKey, true);
+                    const rc = await drv!.install(undefined, false);
+                    await setContextAndStore(isBuildingKey, false);
+                    if (rc !== 0) {
+                        log.showChannel(true);
+                    }
+                    if (rc === null) {
+                        buildLogger.info(localize('install.was.terminated', 'Install was terminated'));
+                    } else {
+                        buildLogger.info(localize('install.finished.with.code', 'Install finished with exit code {0}', rc));
+                    }
+                    return {
+                        exitCode: rc === null ? -1 : rc
+                    };
+                }
+            );
+        } finally {
+            await setContextAndStore(isBuildingKey, false);
+            this.statusMessage.set(localize('ready.status', 'Ready'));
+            this.isBusy.set(false);
+        }
     }
 
     /**
