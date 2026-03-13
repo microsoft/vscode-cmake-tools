@@ -2116,18 +2116,38 @@
         },
         {
           "command": "cmake.outline.buildTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
-          "group": "bookmarkActions@1"
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /canBuild=true/",
+          "group": "1_targetActions@1"
+        },
+        {
+          "command": "cmake.outline.runUtilityTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /canRun=true/",
+          "group": "1_targetActions@2"
         },
         {
           "command": "cmake.outline.debugTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
-          "group": "bookmarkActions@2"
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /type=EXECUTABLE/",
+          "group": "1_targetActions@3"
         },
         {
           "command": "cmake.outline.launchTarget",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
-          "group": "bookmarkActions@3"
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /type=EXECUTABLE/",
+          "group": "1_targetActions@4"
+        },
+        {
+          "command": "cmake.outline.revealInCMakeLists",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /isDefault=/",
+          "group": "1_targetActions@5"
+        },
+        {
+          "command": "cmake.outline.setDefaultTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/",
+          "group": "2_targetState@1"
+        },
+        {
+          "command": "cmake.outline.setLaunchTarget",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /type=EXECUTABLE/ && viewItem =~ /isLaunch=false/",
+          "group": "2_targetState@2"
         }
       ],
       "editor/title/context": [
