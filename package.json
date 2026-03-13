@@ -883,6 +883,27 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "cmake.projectStatus.pinCacheVariable",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.projectStatus.pinCacheVariable.title%",
+        "category": "CMake",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "cmake.projectStatus.editPinnedCacheVariable",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.projectStatus.editPinnedCacheVariable.title%",
+        "category": "CMake",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "cmake.projectStatus.unpinCacheVariable",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.projectStatus.unpinCacheVariable.title%",
+        "category": "CMake",
+        "icon": "$(close)"
+      },
+      {
         "command": "cmake.pinnedCommands.add",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.pinnedCommands.add.title%",
@@ -1589,6 +1610,18 @@
           "when": "never"
         },
         {
+          "command": "cmake.projectStatus.pinCacheVariable",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.editPinnedCacheVariable",
+          "when": "never"
+        },
+        {
+          "command": "cmake.projectStatus.unpinCacheVariable",
+          "when": "never"
+        },
+        {
           "command": "cmake.pinnedCommands.add",
           "when": "never"
         },
@@ -1734,6 +1767,11 @@
           "command": "cmake.projectStatus.openSettings",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
           "group": "navigation@4"
+        },
+        {
+          "command": "cmake.projectStatus.pinCacheVariable",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet",
+          "group": "navigation@5"
         },
         {
           "command": "cmake.outline.configureAll",
@@ -1932,6 +1970,21 @@
         {
           "command": "cmake.projectStatus.selectActiveProject",
           "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'activeProject'",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.projectStatus.editPinnedCacheVariable",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'pinnedCacheVariable'",
+          "group": "inline@1"
+        },
+        {
+          "command": "cmake.projectStatus.unpinCacheVariable",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'pinnedCacheVariable'",
+          "group": "inline@2"
+        },
+        {
+          "command": "cmake.projectStatus.pinCacheVariable",
+          "when": "view == cmake.projectStatus && cmake:enableFullFeatureSet && viewItem == 'pinnedCacheVariables'",
           "group": "inline"
         },
         {
