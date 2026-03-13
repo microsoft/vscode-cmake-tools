@@ -28,6 +28,7 @@ Improvements:
 - Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
 - Set the `VSCODE_CMAKE_TOOLS` environment variable for all spawned subprocesses so that `CMakeLists.txt` can detect when CMake is run from VS Code. [#4233](https://github.com/microsoft/vscode-cmake-tools/issues/4233)
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
+- Removed extension pack dependency on `ms-vscode.cpp-devtools`
 
 Bug Fixes:
 - Fix duplicate launch configurations in the ctest debug picker when both `.vscode/launch.json` and a `.code-workspace` file exist. [#4586](https://github.com/microsoft/vscode-cmake-tools/issues/4586)
