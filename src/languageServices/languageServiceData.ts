@@ -180,14 +180,12 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         }
 
         const hoverSuggestions = this.commands[value] || this.variables[value] || this.modules[value] || this.modules[`Find${value}`];
-
-        const markdown: vscode.MarkdownString = new vscode.MarkdownString();
-        markdown.appendMarkdown(hoverSuggestions.description);
-        hoverSuggestions.syntax_examples?.forEach((example) => {
-            markdown.appendCodeblock(`\t${example}`, "cmake");
-        });
-
         if (hoverSuggestions) {
+            const markdown: vscode.MarkdownString = new vscode.MarkdownString();
+            markdown.appendMarkdown(hoverSuggestions.description);
+            hoverSuggestions.syntax_examples?.forEach((example) => {
+                markdown.appendCodeblock(`\t${example}`, "cmake");
+            });
             return new vscode.Hover(markdown);
         }
 
