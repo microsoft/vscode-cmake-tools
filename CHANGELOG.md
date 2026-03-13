@@ -30,6 +30,7 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+- Fix duplicate launch configurations in the ctest debug picker when both `.vscode/launch.json` and a `.code-workspace` file exist. [#4586](https://github.com/microsoft/vscode-cmake-tools/issues/4586)
 - Users can now debug with or without launch configurations from the test explorer. `cmake.ctest.neverDebugTestsWithLaunchConfiguration` can be set to `true` to bypass the quick pick menu where the launch configuration is selected. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)
 - Fix `cmake.buildTask` build failures not aborting debug launches. When `${command:cmake.launchTargetPath}` is used in `launch.json`, a failed build now correctly prevents the stale executable from being launched. [#3389](https://github.com/microsoft/vscode-cmake-tools/issues/3389)
 - Fix bookmarked targets running a full build instead of building only the specific target when triggered from the Bookmarks view. [#4771](https://github.com/microsoft/vscode-cmake-tools/issues/4771)
