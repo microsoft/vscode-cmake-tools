@@ -13,6 +13,7 @@ Features:
 - Add `cmake.setBuildTargetSameAsLaunchTarget` setting to automatically set the build target when the launch/debug target is changed. [#4519](https://github.com/microsoft/vscode-cmake-tools/pull/4519) [@nikita-karatun](https://github.com/nikita-karatun)
 - Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
 - Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
+- Relax `intelliSenseMode` validation in CMake Presets. [#4815](https://github.com/microsoft/vscode-cmake-tools/issues/4815) [@halflifefan](https://github.com/halflifefan)
 
 Improvements:
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
