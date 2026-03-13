@@ -263,7 +263,6 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                 } else {
                     log.warning(localize({key: 'process.exit', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} exited with code: {1}', `${cmdstr}`, `${code}`));
                 }
-                log.debug(stackTrace);
                 if (options?.showOutputOnError) {
                     if (stdout_acc) {
                         const output = stdout_acc.trimEnd().replace(/\n/g, '\n\t');
@@ -274,6 +273,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
                         log.warning(localize('process.exit.stderr', 'Command output on standard error: {0}', `${output}`));
                     }
                 }
+                log.debug(stackTrace);
             }
         });
         child?.stdout?.on('data', (data: Uint8Array) => {
