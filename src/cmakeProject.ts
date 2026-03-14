@@ -2592,6 +2592,7 @@ export class CMakeProject {
         if (userConfig?.type) {
             // User specified a custom debug adapter type — skip auto-detection
             // and build a minimal base config from the target.
+            const { program: _program, ...userConfigRest } = userConfig;
             debugConfig = {
                 type: userConfig.type,
                 name: `Debug ${testName}`,
@@ -2600,9 +2601,7 @@ export class CMakeProject {
                 cwd: path.dirname(testInfo.program),
                 args: [] as string[]
             };
-            Object.assign(debugConfig, userConfig);
-            // Ensure program is always set from the target
-            debugConfig.program = testInfo.program;
+            Object.assign(debugConfig, userConfigRest);
         } else {
             try {
                 const cache = await CMakeCache.fromPath(drv.cachePath);
@@ -3203,6 +3202,7 @@ export class CMakeProject {
         if (userConfig?.type) {
             // User specified a custom debug adapter type — skip auto-detection
             // and build a minimal base config from the target.
+            const { program: _program, ...userConfigRest } = userConfig;
             debugConfig = {
                 type: userConfig.type,
                 name: `Debug ${targetExecutable.name}`,
@@ -3211,9 +3211,7 @@ export class CMakeProject {
                 cwd: targetExecutable.debuggerWorkingDirectory || path.dirname(targetExecutable.path),
                 args: [] as string[]
             };
-            Object.assign(debugConfig, userConfig);
-            // Ensure program is always set from the target
-            debugConfig.program = targetExecutable.path;
+            Object.assign(debugConfig, userConfigRest);
             log.debug(localize('debug.configuration.from.settings', 'Debug configuration from user settings: {0}', JSON.stringify(debugConfig)));
         } else {
             try {
