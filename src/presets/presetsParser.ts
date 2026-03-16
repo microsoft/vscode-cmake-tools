@@ -644,6 +644,9 @@ export class PresetsParser {
                     util.errorToString(e)
                 )
             );
+            if (e instanceof Error && e.stack) {
+                log.debug(e.stack);
+            }
             return undefined;
         }
         return presetsFile;

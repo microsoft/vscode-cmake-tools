@@ -1793,6 +1793,9 @@ class FileWatcher implements vscode.Disposable {
                 this.watchers.push(watcher);
             } catch (error) {
                 log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', filePath, util.errorToString(error)));
+                if (error instanceof Error && error.stack) {
+                    log.debug(error.stack);
+                }
             }
         }
     }
