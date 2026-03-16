@@ -1102,10 +1102,10 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
-     * Returns the executable path, arguments, and working directory for a given test name.
+     * Returns the executable path, arguments, working directory, and environment for a given test name.
      * Used by cmakeProject to auto-generate debug configurations without requiring launch.json.
      */
-    getTestInfo(testName: string): { program: string; args: string[]; workingDirectory: string } | undefined {
+    getTestInfo(testName: string): { program: string; args: string[]; workingDirectory: string; environment: { [key: string]: string } } | undefined {
         const program = this.testProgram(testName);
         if (!program) {
             return undefined;
@@ -1113,7 +1113,8 @@ export class CTestDriver implements vscode.Disposable {
         return {
             program,
             args: this.testArgs(testName),
-            workingDirectory: this.testWorkingDirectory(testName)
+            workingDirectory: this.testWorkingDirectory(testName),
+            environment: this.testEnvironment(testName)
         };
     }
 
@@ -1481,6 +1482,29 @@ export class CTestDriver implements vscode.Disposable {
         return [];
     }
 
+    /**
+     * Returns the ENVIRONMENT property from the CTest test properties for the given test.
+     * CTest stores environment as `["KEY=VALUE", ...]`; this returns `{ KEY: "VALUE", ... }`.
+     */
+    private testEnvironment(testName: string): { [key: string]: string } {
+        const env: { [key: string]: string } = {};
+        const property = this.tests?.tests
+            .find(test => test.name === testName)?.properties
+            .find(prop => prop.name === 'ENVIRONMENT');
+
+        if (property && Array.isArray(property.value)) {
+            for (const entry of property.value) {
+                const eqIndex = entry.indexOf('=');
+                if (eqIndex !== -1) {
+                    const name = entry.substring(0, eqIndex);
+                    const value = entry.substring(eqIndex + 1);
+                    env[name] = value;
+                }
+            }
+        }
+        return env;
+    }
+
     private replaceAllInObject<T>(obj: any, str: string, replace: string): T {
         const regex = new RegExp(util.escapeStringForRegex(str), 'g');
         if (util.isString(obj)) {
@@ -1530,6 +1554,25 @@ export class CTestDriver implements vscode.Disposable {
             return replace;
         }
         return orig;
+    }
+
+    /**
+     * Recursively replaces a string value that exactly matches `str` with an arbitrary replacement value.
+     * Used for replacing placeholders like `${cmake.testEnvironment}` with an array of objects.
+     */
+    private replaceValueInObject<T>(obj: any, str: string, replace: any): T {
+        if (util.isString(obj) && obj === str) {
+            return replace;
+        } else if (util.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+                obj[i] = this.replaceValueInObject(obj[i], str, replace);
+            }
+        } else if (typeof obj === 'object' && obj !== null) {
+            for (const key of Object.keys(obj)) {
+                obj[key] = this.replaceValueInObject(obj[key], str, replace);
+            }
+        }
+        return obj;
     }
 
     private getLaunchConfigs(workspaceFolder: vscode.WorkspaceFolder): ConfigItem[] {
@@ -1594,6 +1637,11 @@ export class CTestDriver implements vscode.Disposable {
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to replace the quotes as well.
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+
+        // Replace cmake.testEnvironment with the test's ENVIRONMENT property as an array of { name, value } objects.
+        const testEnv = this.testEnvironment(testName);
+        const testEnvArray = Object.entries(testEnv).map(([name, value]) => ({ name, value }));
+        chosenConfig.config = this.replaceValueInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testEnvironment}', testEnvArray);
 
         // Identify the session we started
         chosenConfig.config[magicKey] = magicValue;
