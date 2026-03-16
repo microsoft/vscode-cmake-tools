@@ -1040,8 +1040,9 @@ export class PresetsController implements vscode.Disposable {
                 (_preset) =>
                     this.checkCompatibility(
                         this.project.configurePreset,
+                        this.project.buildPreset,
                         _preset
-                    ).buildPresetCompatible &&
+                    ).testPresetCompatible &&
                     preset.evaluatePresetCondition(_preset, allPresets)
             );
             for (const testPreset of testPresets) {
@@ -1232,6 +1233,11 @@ export class PresetsController implements vscode.Disposable {
             },
             () => this.project.setBuildPreset(presetName)
         );
+
+        // Auto-select a compatible test preset if none is currently set
+        if (!this.project.testPreset) {
+            await this.guessTestPreset();
+        }
 
         if (checkChangingPreset) {
             this._isChangingPresets = false;
