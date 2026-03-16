@@ -446,15 +446,14 @@ export function versionToString(ver: Version): string {
 }
 
 /**
- * Converts an error object to a string.
- * If the error has a stack trace, it includes the stack trace in the string.
+ * Converts an error object to a human-readable string.
+ * Only includes the error message, not the stack trace.
  * @param e The error object to convert.
- * @returns A string representation of the error.
+ * @returns A string representation of the error message.
  */
 export function errorToString(e: any): string {
-    if (e.stack) {
-        // e.stack has both the message and the stack in it.
-        return `\n\t${e.stack}`;
+    if (e.message) {
+        return `\n\t${e.message}`;
     }
     return `\n\t${e.toString()}`;
 }
