@@ -2136,7 +2136,7 @@
         },
         {
           "command": "cmake.outline.revealInCMakeLists",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /isDefault=/",
+          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet && viewItem =~ /isDefault=/ && viewItem =~ /canBuild=true|canRun=true/",
           "group": "1_targetActions@5"
         },
         {
