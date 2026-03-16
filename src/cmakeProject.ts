@@ -204,7 +204,7 @@ export class CMakeProject {
      * saves (build, test, etc.) don't race with the watcher-triggered
      * reconfigure (see #4794).
      */
-    private _suppressCMakeListsReconfigure = false;
+    private _suppressCMakeFileReconfigure = false;
     get useCMakePresets(): boolean {
         return this._useCMakePresets;
     }
@@ -1887,10 +1887,11 @@ export class CMakeProject {
             }
 
             // Suppress the automatic configure-on-edit that would otherwise be
-            // triggered by the save event for CMakeLists.txt files.  The caller
-            // (build, test, etc.) will perform its own configure if needed, so
-            // the watcher-triggered configure would be redundant and racy (#4794).
-            this._suppressCMakeListsReconfigure = true;
+            // triggered by the save event for CMake files (CMakeLists.txt and
+            // included .cmake files).  The caller (build, test, etc.) will
+            // perform its own configure if needed, so the watcher-triggered
+            // configure would be redundant and racy (#4794).
+            this._suppressCMakeFileReconfigure = true;
 
             const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
             const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
@@ -1926,14 +1927,14 @@ export class CMakeProject {
                 const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
                 if (!saved) {
                     this.presetsController.suppressWatcherReapply = false;
-                    this._suppressCMakeListsReconfigure = false;
+                    this._suppressCMakeFileReconfigure = false;
                     return false;
                 }
             }
 
-            // Resume normal CMakeLists.txt watcher behavior now that the
+            // Resume normal CMake file watcher behavior now that the
             // command-initiated save is complete.
-            this._suppressCMakeListsReconfigure = false;
+            this._suppressCMakeFileReconfigure = false;
         }
 
         // After saving, explicitly refresh presets from disk so that any
@@ -2108,12 +2109,12 @@ export class CMakeProject {
             // CMakeLists.txt change event: its creation or deletion are relevant,
             // so update full/partial feature set view for this folder.
             await updateFullFeatureSet();
-            if (this._suppressCMakeListsReconfigure) {
+            if (this._suppressCMakeFileReconfigure) {
                 // A command-initiated save (build, test, etc.) is in progress.
                 // Skip the automatic reconfigure — the calling command will
                 // configure if needed, avoiding the "Configuration is already
                 // in progress" race condition (see #4794).
-                log.debug(localize('cmakelists.save.suppressed', "CMakeLists.txt saved by command-initiated save; skipping automatic reconfigure."));
+                log.debug(localize('cmake.file.save.suppressed', "CMake file saved by command-initiated save; skipping automatic reconfigure."));
             } else if (driver && !driver.configOrBuildInProgress()) {
                 if (driver.config.configureOnEdit) {
                     log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
