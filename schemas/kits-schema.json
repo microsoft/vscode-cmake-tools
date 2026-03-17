@@ -82,7 +82,7 @@
                                 "items": {
                                     "type": "string"
                                 },
-                                "description": "Values to join with semicolons to form a CMake list (no escaping)"
+                                "description": "Values joined with semicolons to form a CMake list without escaping."
                             }
                         ]
                     }
