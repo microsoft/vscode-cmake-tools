@@ -72,7 +72,19 @@
                 "type": "object",
                 "patternProperties": {
                     ".*": {
-                        "description": "Value for the CMake Setting"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "Value for the CMake Setting. Semicolons in strings are escaped."
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Values to join with semicolons to form a CMake list (no escaping)"
+                            }
+                        ]
                     }
                 }
             },

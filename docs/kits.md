@@ -151,6 +151,14 @@ The following additional options may be specified:
 
 > This setting is most useful when the toolchain file respects additional options that can be passed as cache variables.
 
+> Values can be strings or string arrays. String values have semicolons escaped (`;` → `\;`). To pass CMake lists without escaping, use array notation:
+>
+> ```jsonc
+> "cmakeSettings": {
+>     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]  // Produces: -DLLVM_ENABLE_PROJECTS=clang;lld
+> }
+> ```
+
 `environmentVariables`
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.

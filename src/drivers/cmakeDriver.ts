@@ -1817,7 +1817,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         if (this._kit.cmakeSettings) {
             util.objectPairs(this._kit.cmakeSettings)
-                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
         }
 
         return util.objectPairs(settingMap).map(([key, value]) => {
