@@ -1082,19 +1082,21 @@ export class ExtensionManager implements vscode.Disposable {
      * Get the current additional compiler search directories, like MinGW directories
      */
     private async getAdditionalCompilerDirs(): Promise<string[]> {
+        const workspaceFolderPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
         const optsVars: KitContextVars = {
             userHome: paths.userHome,
 
             // This is called during scanning for kits, which is an operation that happens
-            // outside the scope of a project folder, so it doesn't need the below variables.
+            // outside the scope of a project folder, so it doesn't need most of the below variables.
+            // workspaceFolder is populated so that ${workspaceFolder} can be used in additionalCompilerSearchDirs.
             buildKit: "",
             buildType: "",
             generator: "",
-            workspaceFolder: "",
-            workspaceFolderBasename: "",
-            workspaceHash: "",
-            workspaceRoot: "",
-            workspaceRootFolderName: "",
+            workspaceFolder: workspaceFolderPath,
+            workspaceFolderBasename: workspaceFolderPath ? path.basename(workspaceFolderPath) : "",
+            workspaceHash: workspaceFolderPath ? util.makeHashString(workspaceFolderPath) : "",
+            workspaceRoot: workspaceFolderPath,
+            workspaceRootFolderName: workspaceFolderPath ? path.basename(workspaceFolderPath) : "",
             buildKitVendor: "",
             buildKitTriple: "",
             buildKitVersion: "",
