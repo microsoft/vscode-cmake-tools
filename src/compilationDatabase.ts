@@ -50,6 +50,9 @@ export class CompilationDatabase {
                 database.push(...content);
             } catch (e) {
                 log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database {0}: {1}', `"${path}"`, util.errorToString(e)));
+                if (e instanceof Error && e.stack) {
+                    log.debug(e.stack);
+                }
                 return null;
             }
         }
