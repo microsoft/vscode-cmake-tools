@@ -1407,6 +1407,16 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll)).exitCode, undefined, true);
     }
 
+    fullCleanConfigure(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("deleteBuildDirAndReconfigure");
+        return this.runCMakeCommand(async cmakeProject => (await cmakeProject.fullCleanConfigure(ConfigureTrigger.commandFullCleanConfigure)).exitCode, folder, undefined, true);
+    }
+
+    fullCleanConfigureAll() {
+        telemetry.logEvent("deleteBuildDirAndReconfigure");
+        return this.runCMakeCommandForAll(async cmakeProject => (await cmakeProject.fullCleanConfigure(ConfigureTrigger.commandFullCleanConfigureAll)).exitCode, undefined, true);
+    }
+
     cleanConfigureAllWithDebugger(trigger?: ConfigureTrigger) {
         return vscode.debug.startDebugging(undefined, {
             name: localize("cmake.debug.name", "CMake Debugger"),
@@ -1574,6 +1584,16 @@ export class ExtensionManager implements vscode.Disposable {
     cleanConfigureAndBuildAll() {
         telemetry.logEvent("deleteCacheReconfigureAndBuild", { all: "true"});
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.cleanConfigureAndBuild(ConfigureTrigger.commandCleanConfigureAll), this.ensureActiveBuildPreset, true);
+    }
+
+    fullCleanConfigureAndBuild(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("deleteBuildDirReconfigureAndBuild", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.fullCleanConfigureAndBuild(ConfigureTrigger.commandFullCleanConfigure), folder, this.ensureActiveBuildPreset, true);
+    }
+
+    fullCleanConfigureAndBuildAll() {
+        telemetry.logEvent("deleteBuildDirReconfigureAndBuild", { all: "true"});
+        return this.runCMakeCommandForAll(cmakeProject => cmakeProject.fullCleanConfigureAndBuild(ConfigureTrigger.commandFullCleanConfigureAll), this.ensureActiveBuildPreset, true);
     }
 
     async buildWithTarget(target?: string) {
@@ -2432,10 +2452,14 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'cleanConfigureWithDebugger',
         'cleanConfigureAll',
         'cleanConfigureAllWithDebugger',
+        'fullCleanConfigure',
+        'fullCleanConfigureAll',
         'cleanRebuild',
         'cleanRebuildAll',
         'cleanConfigureAndBuild',
         'cleanConfigureAndBuildAll',
+        'fullCleanConfigureAndBuild',
+        'fullCleanConfigureAndBuildAll',
         'configure',
         'configureWithDebugger',
         'showConfigureCommand',
@@ -2614,9 +2638,11 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAllWithDebugger', () => runCommand('cleanConfigureAllWithDebugger', ConfigureTrigger.projectOutlineCleanConfigureAllWithDebugger)),
+        vscode.commands.registerCommand('cmake.outline.fullCleanConfigureAll', () => runCommand('fullCleanConfigureAll')),
         vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
         vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
         vscode.commands.registerCommand('cmake.outline.cleanConfigureAndBuildAll', () => runCommand('cleanConfigureAndBuildAll')),
+        vscode.commands.registerCommand('cmake.outline.fullCleanConfigureAndBuildAll', () => runCommand('fullCleanConfigureAndBuildAll')),
         // Commands for outline items
         vscode.commands.registerCommand('cmake.outline.configure', async (what: ProjectNode|SourceFileNode) => {
             if (what instanceof ProjectNode) {
