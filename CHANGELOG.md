@@ -31,7 +31,11 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+<<<<<<< copilot/fix-error-selecting-active-config
 - Fix `${command:cmake.selectConfigurePreset}` (and other preset/kit selection commands) failing with "command did not return a result of type string" when used in `tasks.json` as a command variable. The commands now return the selected preset or kit name instead of a boolean. [#4239](https://github.com/microsoft/vscode-cmake-tools/issues/4239)
+=======
+- Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
+>>>>>>> main
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
 - Fix duplicate launch configurations in the ctest debug picker when both `.vscode/launch.json` and a `.code-workspace` file exist. [#4586](https://github.com/microsoft/vscode-cmake-tools/issues/4586)
 - Users can now debug with or without launch configurations from the test explorer. `cmake.ctest.neverDebugTestsWithLaunchConfiguration` can be set to `true` to bypass the quick pick menu where the launch configuration is selected. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)
