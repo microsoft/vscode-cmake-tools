@@ -2110,11 +2110,6 @@
           "group": "1_fileActions@5"
         },
         {
-          "command": "cmake.outline.fullCleanConfigureAll",
-          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
-          "group": "1_fileActions@5"
-        },
-        {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "cmake:enableFullFeatureSet && view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "1_fileActions@6"
@@ -2132,7 +2127,7 @@
         {
           "command": "cmake.outline.fullCleanConfigureAndBuildAll",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
-          "group": "1_fileActions@8"
+          "group": "1_fileActions@9"
         },
         {
           "command": "cmake.outline.compileFile",
