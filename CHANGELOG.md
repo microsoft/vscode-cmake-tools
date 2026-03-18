@@ -13,6 +13,7 @@ Features:
 - Add `cmake.setBuildTargetSameAsLaunchTarget` setting to automatically set the build target when the launch/debug target is changed. [#4519](https://github.com/microsoft/vscode-cmake-tools/pull/4519) [@nikita-karatun](https://github.com/nikita-karatun)
 - Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
 - Support `targetName` argument for launch-target command substitutions (`cmake.launchTargetPath`, etc.) via `${input:...}` variables, enabling build-before-run for non-active executable targets without changing the active launch target. [#4656](https://github.com/microsoft/vscode-cmake-tools/issues/4656)
+- Complete Bookmarks context menu with "Set Build Target", "Set Launch/Debug Target", "Open CMakeLists.txt", and "Run Utility Target" actions to match the Project Outline. [#4788](https://github.com/microsoft/vscode-cmake-tools/issues/4788)
 - Relax `intelliSenseMode` validation in CMake Presets. [#4815](https://github.com/microsoft/vscode-cmake-tools/issues/4815) [@halflifefan](https://github.com/halflifefan)
 
 Improvements:
@@ -31,6 +32,7 @@ Improvements:
 
 Bug Fixes:
 - Fix `${workspaceFolder}` expansion in `cmake.additionalCompilerSearchDirs` for single-root workspaces. Previously only the multi-root `${workspaceFolder:name}` syntax worked. [#4571](https://github.com/microsoft/vscode-cmake-tools/issues/4571)
+- Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
 - Fix duplicate launch configurations in the ctest debug picker when both `.vscode/launch.json` and a `.code-workspace` file exist. [#4586](https://github.com/microsoft/vscode-cmake-tools/issues/4586)
 - Users can now debug with or without launch configurations from the test explorer. `cmake.ctest.neverDebugTestsWithLaunchConfiguration` can be set to `true` to bypass the quick pick menu where the launch configuration is selected. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)

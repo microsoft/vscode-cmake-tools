@@ -747,6 +747,9 @@ export class WorkspaceFolderNode extends BaseNode {
         const rootProject = projectOutlineModel.project;
         let item = this.getNode(cmakeProject, rootProject.name);
         if (!item) {
+            // Remove stale entries for this cmakeProject so that a renamed
+            // project replaces the old node instead of appearing alongside it.
+            this.removeNodes(cmakeProject);
             item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
         }

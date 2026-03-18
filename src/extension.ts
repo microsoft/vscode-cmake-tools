@@ -2656,9 +2656,24 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
                 return runCommand('launchTarget', target.folder, target.name, target.sourceDir);
             }
         }),
-        vscode.commands.registerCommand('cmake.outline.setDefaultTarget', (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode) => what.openInCMakeLists()),
+        vscode.commands.registerCommand('cmake.outline.setDefaultTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('setDefaultTarget', target.folder, target.name, target.sourceDir);
+            }
+        }),
+        vscode.commands.registerCommand('cmake.outline.setLaunchTarget', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return runCommand('selectLaunchTarget', target.folder, target.name, target.sourceDir);
+            }
+        }),
+        vscode.commands.registerCommand('cmake.outline.revealInCMakeLists', (what: TargetNode | BookmarkNode) => {
+            const target = resolveTargetNode(what);
+            if (target) {
+                return target.openInCMakeLists();
+            }
+        }),
         vscode.commands.registerCommand('cmake.outline.runTest', (what: CTestTestNode) => runCommand('runTest', what.folder, what.testName, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.debugTest', (what: CTestTestNode) => runCommand('debugCTest', what.folder, what.testName, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
