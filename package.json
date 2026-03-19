@@ -4162,7 +4162,7 @@
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "~0.0.30",
     "@types/lodash": "4.14.202",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.14.2",
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
@@ -4171,15 +4171,15 @@
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@types/uuid": "~8.3.3",
-    "@typescript-eslint/eslint-plugin": "^5.25.0",
-    "@typescript-eslint/eslint-plugin-tslint": "^5.25.0",
-    "@typescript-eslint/parser": "^5.25.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/eslint-plugin-tslint": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
     "@vscode/test-electron": "^2.3.8",
     "@vscode/vsce": "^3.1.0",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
-    "eslint": "^8.15.0",
+    "eslint": "^8.42.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.2.8",
     "event-stream": "^4.0.1",
@@ -4188,12 +4188,12 @@
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-filter": "^6.0.0",
-    "gulp-mocha": "^8.0.0",
+    "gulp-mocha": "^10.0.1",
     "gulp-sourcemaps": "^3.0.0",
     "gulp-typescript": "^5.0.1",
     "husky": "^4.3.8",
     "jsonc-parser": "^3.0.0",
-    "mocha": "^8.3.2",
+    "mocha": "^11.7.5",
     "module-alias": "^2.2.2",
     "node-loader": "^1.0.2",
     "parse-git-config": "^3.0.0",
@@ -4206,7 +4206,7 @@
     "vscode-cmake-tools": "^1.5.0",
     "vscode-nls-dev": "^3.3.2",
     "webpack": "^5.104.1",
-    "webpack-cli": "^4.5.0"
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "@friedemannsommer/lcov-parser": "^5.0.0",
@@ -4244,7 +4244,8 @@
     "**/braces": "^3.0.3",
     "js-yaml": "^4.1.1",
     "tmp": "^0.2.4",
-    "jws": "^4.0.1"
+    "jws": "^4.0.1",
+    "serialize-javascript": "^7.0.4"
   },
   "packageManager": "yarn@1.22.19"
 }
