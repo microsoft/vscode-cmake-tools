@@ -283,6 +283,9 @@ export class VariantManager implements vscode.Disposable {
                 }
             } catch (e) {
                 log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, util.errorToString(e)));
+                if (e instanceof Error && e.stack) {
+                    log.debug(e.stack);
+                }
             }
         }
 

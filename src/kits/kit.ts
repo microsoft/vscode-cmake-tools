@@ -518,6 +518,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
         log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
+        if (e.stack) {
+            log.debug(e.stack);
+        }
         if (e.code === 'ENOENT') {
             return [];
         }
@@ -562,6 +565,9 @@ export async function scanDirForCompilerKits(dir: string, isTrusted: boolean = t
         } catch (ce) {
             const e = ce as NodeJS.ErrnoException;
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
+            if (e.stack) {
+                log.debug(e.stack);
+            }
             if (e.code === 'EACCES') {
                 // The binary may not be executable by this user...
                 return null;
@@ -1408,6 +1414,9 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         kits_raw = json5.parse(content_str.toLocaleString());
     } catch (e) {
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
+        if (e instanceof Error && e.stack) {
+            log.debug(e.stack);
+        }
         return [];
     }
     const validator = await loadSchema('./schemas/kits-schema.json');
