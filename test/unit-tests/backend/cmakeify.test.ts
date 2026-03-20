@@ -1,66 +1,17 @@
 import { expect } from 'chai';
+import { cmakeify, CMakeValue } from '@cmt/cmakeValue';
 
 /**
- * Mirrored CMakeValue interface for standalone testing without vscode dependency.
- * This matches the interface from @cmt/util.
+ * Tests for the cmakeify function that converts values to CMake cache variable format.
+ *
+ * This tests the REAL implementation from @cmt/cmakeValue (not a mirrored copy).
+ * The cmakeValue module is pure TypeScript with no vscode dependencies, making it
+ * safe to import in backend tests.
+ *
+ * Key behavior tested:
+ * - String values have semicolons ESCAPED (`;` → `\;`) to prevent CMake list interpretation
+ * - Array values are joined with semicolons WITHOUT escaping to form CMake lists
  */
-interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');
-    value: string;
-}
-
-/**
- * Escape a string so it can be used as a regular expression
- */
-function escapeStringForRegex(str: string): string {
-    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
-}
-
-/**
- * Replace all occurrences of `needle` in `str` with `what`
- */
-function replaceAll(str: string, needle: string, what: string) {
-    const pattern = escapeStringForRegex(needle);
-    const re = new RegExp(pattern, 'g');
-    return str.replace(re, what);
-}
-
-/**
- * Check if a value is a string
- */
-function isString(value: unknown): value is string {
-    return typeof value === 'string';
-}
-
-/**
- * Mirrored cmakeify function for standalone testing.
- * This matches the logic from src/util.ts cmakeify() function.
- */
-function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
-    const ret: CMakeValue = {
-        type: 'UNKNOWN',
-        value: ''
-    };
-    if (value === true || value === false) {
-        ret.type = 'BOOL';
-        ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (isString(value)) {
-        ret.type = 'STRING';
-        ret.value = replaceAll(value, ';', '\\;');
-    } else if (typeof value === 'number') {
-        ret.type = 'STRING';
-        ret.value = value.toString();
-    } else if (value instanceof Array) {
-        ret.type = 'STRING';
-        ret.value = value.join(';');
-    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
-        ret.type = value.type;
-        ret.value = value.value;
-    } else {
-        throw new Error(`Invalid value to convert to cmake value: ${JSON.stringify(value)}`);
-    }
-    return ret;
-}
 
 suite('[cmakeify]', () => {
 

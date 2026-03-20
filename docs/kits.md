@@ -151,11 +151,29 @@ The following additional options may be specified:
 
 > This setting is most useful when the toolchain file respects additional options that can be passed as cache variables.
 
-> Values can be strings or string arrays. String values have semicolons escaped (`;` → `\;`). To pass CMake lists without escaping, use array notation:
+> **Semicolon Handling:**
 >
+> CMake uses semicolons as list separators. The type of value you use determines how semicolons are handled:
+>
+> - **String values**: Semicolons are **escaped** (`;` → `\;`) to prevent CMake from treating them as list separators. Use this for single values that happen to contain semicolons.
+>
+> - **Array values**: Elements are joined with semicolons **without escaping**, producing a proper CMake list. Use this when you intentionally want to pass a CMake list.
+>
+> **Example - Passing a CMake list (use array notation):**
 > ```jsonc
 > "cmakeSettings": {
->     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]  // Produces: -DLLVM_ENABLE_PROJECTS=clang;lld
+>     // Array notation → semicolons NOT escaped → creates CMake list
+>     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]
+>     // Produces: -DLLVM_ENABLE_PROJECTS:STRING=clang;lld
+> }
+> ```
+>
+> **Example - String with semicolons escaped:**
+> ```jsonc
+> "cmakeSettings": {
+>     // String notation → semicolons ARE escaped → treated as single value
+>     "MY_VAR": "value;with;semicolons"
+>     // Produces: -DMY_VAR:STRING=value\;with\;semicolons
 > }
 > ```
 
