@@ -8,7 +8,7 @@ Options that support substitution, in the table below, allow variable references
 
 | Setting  | Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
-| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | `[]` | no |
+| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | `[]` | yes |
 | `cmake.additionalKits` | Array of paths to custom kit files. These are in addition to the default kit files. | `[]` | no |
 | `cmake.allowCommentsInPresetsFile` | Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON. | `false` | no |
 | `cmake.allowUnsupportedPresetsVersions` | Enables the use of presets files that are using features from the versions that Cmake Tools extension doesn't currently support. Unknown properties and macros will be ignored. | `false` | no |
