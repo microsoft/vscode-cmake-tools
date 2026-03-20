@@ -31,6 +31,7 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+- Fix `cmake.additionalCompilerSearchDirs` ignoring per-folder overrides in multiroot workspaces. The setting is now read from each folder's scoped configuration with `${workspaceFolder}` expanded per-folder, and the results are unioned. Also fix `cmake.cmakePath` resolution during kit scanning to try all workspace folders instead of only the first.
 - Fix `${workspaceFolder}` expansion in `cmake.additionalCompilerSearchDirs` for single-root workspaces. Previously only the multi-root `${workspaceFolder:name}` syntax worked. [#4571](https://github.com/microsoft/vscode-cmake-tools/issues/4571)
 - Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
