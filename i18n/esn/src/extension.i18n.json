@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "Finalizó {0} (se devolvió un valor no serializable)",
 	"loading.extension.commands": "Cargando los comandos de la extensión",
 	"register.command": "Registrar el comando de la extensión CMakeTools {0}",
+	"bookmark.target.not.resolved": "Bookmark \"{0}\" could not be resolved to a target. The project may need to be reconfigured.",
 	"search.project.outline": "Escriba un término de búsqueda para filtrar el esquema del proyecto",
 	"added.to": "agregado a",
 	"removed.from": "quitado de",
