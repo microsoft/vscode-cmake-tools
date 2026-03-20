@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "Ponowne uruchamianie sterownika narzędzia CMake po zmianie generatora.",
 	"preferredGenerator.changed.restart.driver": "Ponowne uruchamianie sterownika narzędzia CMake po zmianie ustawienia preferredGenerators.",
 	"bad.executable": "Nieprawidłowy plik wykonywalny narzędzia CMake: {0}. Sprawdź, czy jest zainstalowany lub czy wartość ustawienia {1} zawiera poprawną ścieżkę",
+	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
 	"targests.in.preset": "[Wartości docelowe w ustawieniach wstępnych]",
 	"constructing.cmakeproject": "Konstruowanie nowego wystąpienia CMakeProject",
 	"disposing.driver": "Usuwanie sterownika CMake",
