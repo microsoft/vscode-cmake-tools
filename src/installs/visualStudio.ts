@@ -258,6 +258,7 @@ const msvcEnvVars = [
     'FrameworkVersion',
     'FrameworkVersion32',
     'FrameworkVersion64',
+    'EXTERNAL_INCLUDE',
     'INCLUDE',
     'LIB',
     'LIBPATH',
