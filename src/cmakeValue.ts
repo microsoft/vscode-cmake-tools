@@ -90,6 +90,9 @@ export function cmakeify(value: (string | boolean | number | string[] | CMakeVal
         ret.type = value.type;
         ret.value = value.value;
     } else {
+        // Note: This error message is not localized because this module must remain
+        // free of vscode-nls dependencies to support import in backend unit tests.
+        // This error is rare (only occurs with malformed input) and primarily aids debugging.
         throw new Error(`Invalid value to convert to cmake value: ${JSON.stringify(value)}`);
     }
     return ret;
