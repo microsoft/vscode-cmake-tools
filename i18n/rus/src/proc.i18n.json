@@ -6,11 +6,11 @@
 {
 	"executing.command": "Выполнение команды: {0}",
 	"execution.environment": "  со средой: {0}",
-	"process.error": "Команда {0} завершилась сбоем с ошибкой {1} стек: {2}",
-	"process.exit.with.signal": "Выполнен выход из команды {0} с кодом {1} и сигналом {2} стек: {3}",
-	"process.exit": "Выход из команды {0} с кодом {1} стек: {2}",
-	"process.exit.stdout": "Вывод команды при стандартных выходных данных: {0}, стек: {1}",
-	"process.exit.stderr": "Вывод команды при стандартной ошибке: {0}, стек: {1}",
+	"process.error": "The command: {0} failed with error: {1}",
+	"process.exit.with.signal": "The command: {0} exited with code: {1} and signal: {2}",
+	"process.exit": "The command: {0} exited with code: {1}",
+	"process.exit.stdout": "Command output on standard out: {0}",
+	"process.exit.stderr": "Command output on standard error: {0}",
 	"processing.data.event.stdout": "Обработка события {0} из стандартного потока вывода процесса",
 	"processing.data.event.stderr": "Обработка события {0} из стандартного потока ошибок процесса",
 	"resolving.close.event": "Разрешение процесса на событии {0}"
