@@ -1121,15 +1121,15 @@ export class ExtensionManager implements vscode.Disposable {
     /**
     * Show UI to allow the user to select an active kit
     */
-    async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectKit(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
-            return false;
+            return '';
         }
 
         const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
         if (!cmakeProject) {
-            return false;
+            return '';
         }
 
         const activeProject = this.getActiveProject();
@@ -1159,11 +1159,7 @@ export class ExtensionManager implements vscode.Disposable {
             telemetry.logEvent('kitSelection', telemetryProperties);
         }
 
-        if (kitSelected) {
-            return true;
-        }
-
-        return false;
+        return kitSelected ? activeKit?.name ?? '' : '';
     }
 
     /**
@@ -2166,20 +2162,20 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active configure preset
      */
-    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
-            return false;
+            return '';
         }
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
-            return false;
+            return '';
         }
 
         if (!project.useCMakePresets) {
             log.info(localize('skip.set.configure.preset', 'Using kits, skip selecting configure preset'));
-            return false;
+            return '';
         }
 
         const presetSelected = await project.presetsController.selectConfigurePreset();
@@ -2191,7 +2187,7 @@ export class ExtensionManager implements vscode.Disposable {
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-        return presetSelected;
+        return presetSelected ? configurePreset?.name ?? '' : '';
     }
 
     viewConfigureSettings(): void {
@@ -2201,26 +2197,26 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active build preset
      */
-    async selectBuildPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectBuildPreset(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.build.preset.in.test.mode', 'Running CMakeTools in test mode. selectBuildPreset is disabled.'));
-            return false;
+            return '';
         }
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
-            return false;
+            return '';
         }
 
         if (!project.useCMakePresets) {
             log.info(localize('skip.set.build.preset', 'Using kits, skip selecting build preset'));
-            return false;
+            return '';
         }
 
         const presetSelected = await project.presetsController.selectBuildPreset();
         const buildPreset = project.buildPreset;
         this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        return presetSelected;
+        return presetSelected ? buildPreset?.name ?? '' : '';
     }
 
     viewBuildSettings(): void {
@@ -2230,26 +2226,26 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active test preset
      */
-    async selectTestPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectTestPreset(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.test.preset.in.test.mode', 'Running CMakeTools in test mode. selectTestPreset is disabled.'));
-            return false;
+            return '';
         }
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
-            return false;
+            return '';
         }
 
         if (!project.useCMakePresets) {
             log.info(localize('skip.set.test.preset', 'Using kits, skip selecting test preset'));
-            return false;
+            return '';
         }
 
         const presetSelected = await project.presetsController.selectTestPreset();
         const testPreset = project.testPreset;
         this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-        return presetSelected;
+        return presetSelected ? testPreset?.name ?? '' : '';
     }
 
     viewTestSettings(): void {
@@ -2259,51 +2255,51 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active package preset
      */
-    async selectPackagePreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectPackagePreset(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.package.preset.in.test.mode', 'Running CMakeTools in test mode. selectPackagePreset is disabled.'));
-            return false;
+            return '';
         }
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
-            return false;
+            return '';
         }
 
         if (!project.useCMakePresets) {
             log.info(localize('skip.set.package.preset', 'Using kits, skip selecting package preset'));
-            return false;
+            return '';
         }
 
         const presetSelected = await project.presetsController.selectPackagePreset();
         const packagePreset = project.packagePreset;
         this.statusBar.setPackagePresetName(packagePreset?.displayName || packagePreset?.name || '');
-        return presetSelected;
+        return presetSelected ? packagePreset?.name ?? '' : '';
     }
 
     /**
      * Show UI to allow the user to select an active workflow preset
      */
-    async selectWorkflowPreset(folder?: vscode.WorkspaceFolder): Promise<boolean> {
+    async selectWorkflowPreset(folder?: vscode.WorkspaceFolder): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.workflow.preset.in.test.mode', 'Running CMakeTools in test mode. selectWorkflowPreset is disabled.'));
-            return false;
+            return '';
         }
 
         const project = this.getProjectFromFolder(folder);
         if (!project) {
-            return false;
+            return '';
         }
 
         if (!project.useCMakePresets) {
             log.info(localize('skip.set.workflow.preset', 'Using kits, skip selecting workflow preset'));
-            return false;
+            return '';
         }
 
         const presetSelected = await project.presetsController.selectWorkflowPreset();
         const workflowPreset = project.workflowPreset;
         this.statusBar.setWorkflowPresetName(workflowPreset?.displayName || workflowPreset?.name || '');
-        return presetSelected;
+        return presetSelected ? workflowPreset?.name ?? '' : '';
     }
 
     public api: CMakeToolsApiImpl;
