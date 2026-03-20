@@ -4206,7 +4206,7 @@
     "fs-extra": "^9.1.0",
     "glob": "^7.1.6",
     "gulp": "^4.0.2",
-    "gulp-eslint": "^6.0.0",
+    "gulp-eslint-new": "^1.9.1",
     "gulp-filter": "^6.0.0",
     "gulp-mocha": "^10.0.1",
     "gulp-sourcemaps": "^3.0.0",
