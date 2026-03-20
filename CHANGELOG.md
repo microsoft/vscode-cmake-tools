@@ -32,6 +32,7 @@ Improvements:
 
 Bug Fixes:
 - Fix test presets not automatically switching when the build preset changes in multi-config generator setups (e.g., Ninja Multi-Config). The extension now auto-selects a compatible test preset after a build preset change, and properly considers build type when guessing the test preset. [#4395](https://github.com/microsoft/vscode-cmake-tools/issues/4395)
+- Fix `cmake.revealLog` set to `"focus"` not revealing the output panel or stealing focus. The output channel now correctly appears and takes focus on both configure success and failure when this setting is used. [#4471](https://github.com/microsoft/vscode-cmake-tools/issues/4471)
 - Fix `${command:cmake.selectConfigurePreset}` (and other preset/kit selection commands) failing with "command did not return a result of type string" when used in `tasks.json` as a command variable. The commands now return the selected preset or kit name instead of a boolean. [#4239](https://github.com/microsoft/vscode-cmake-tools/issues/4239)
 - Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
