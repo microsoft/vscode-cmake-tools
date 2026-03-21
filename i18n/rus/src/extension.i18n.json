@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} завершено (возвращено несериализуемое значение).",
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
+	"bookmark.target.not.resolved": "Bookmark \"{0}\" could not be resolved to a target. The project may need to be reconfigured.",
 	"search.project.outline": "Введите поисковый термин, чтобы отфильтровать контур проекта",
 	"added.to": "добавлено в",
 	"removed.from": "удалено из",

@@ -6,11 +6,11 @@
 {
 	"executing.command": "Wykonywanie polecenia: {0}",
 	"execution.environment": "  ze środowiskiem: {0}",
-	"process.error": "Polecenie: {0} nie powiodło się z powodu błędu: {1} stos: {2}",
-	"process.exit.with.signal": "Polecenie: {0} zakończono z kodem: {1} i sygnałem: {2} stos: {3}",
-	"process.exit": "Polecenie: {0} zakończono z kodem: {1} stos: {2}",
-	"process.exit.stdout": "Dane wyjściowe polecenia na standardowym wyjściu: {0} stos: {1}",
-	"process.exit.stderr": "Dane wyjściowe polecenia dotyczące błędu standardowego: {0} stos: {1}",
+	"process.error": "The command: {0} failed with error: {1}",
+	"process.exit.with.signal": "The command: {0} exited with code: {1} and signal: {2}",
+	"process.exit": "The command: {0} exited with code: {1}",
+	"process.exit.stdout": "Command output on standard out: {0}",
+	"process.exit.stderr": "Command output on standard error: {0}",
 	"processing.data.event.stdout": "Przetwarzanie zdarzenia {0} z właściwości proc stdout",
 	"processing.data.event.stderr": "Przetwarzanie zdarzenia {0} z właściwości proc stderr",
 	"resolving.close.event": "Rozpoznawanie procesu w zdarzeniu {0}"

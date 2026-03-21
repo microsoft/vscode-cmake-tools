@@ -1040,8 +1040,9 @@ export class PresetsController implements vscode.Disposable {
                 (_preset) =>
                     this.checkCompatibility(
                         this.project.configurePreset,
+                        this.project.buildPreset,
                         _preset
-                    ).buildPresetCompatible &&
+                    ).testPresetCompatible &&
                     preset.evaluatePresetCondition(_preset, allPresets)
             );
             for (const testPreset of testPresets) {
@@ -1193,11 +1194,11 @@ export class PresetsController implements vscode.Disposable {
             this._isChangingPresets = true;
         }
 
-        if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
+        if (presetName !== preset.defaultBuildPreset.name) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
             const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderPath), presetName);
             const compatibility = this.checkCompatibility(this.project.configurePreset, _preset, this.project.testPreset, this.project.packagePreset, this.project.workflowPreset);
-            if (!compatibility.buildPresetCompatible) {
+            if (needToCheckConfigurePreset && !compatibility.buildPresetCompatible) {
                 log.warning(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the active configure preset', presetName));
                 await vscode.window.withProgress(
                     {
@@ -1221,7 +1222,6 @@ export class PresetsController implements vscode.Disposable {
                     },
                     () => this.project.setTestPreset(null)
                 );
-                // Not sure we need to do the same for package/workflow build
             }
         }
         // Load the build preset into the backend
@@ -1232,6 +1232,11 @@ export class PresetsController implements vscode.Disposable {
             },
             () => this.project.setBuildPreset(presetName)
         );
+
+        // Auto-select a compatible test preset if none is currently set
+        if (!this.project.testPreset) {
+            await this.guessTestPreset();
+        }
 
         if (checkChangingPreset) {
             this._isChangingPresets = false;
@@ -1793,6 +1798,9 @@ class FileWatcher implements vscode.Disposable {
                 this.watchers.push(watcher);
             } catch (error) {
                 log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', filePath, util.errorToString(error)));
+                if (error instanceof Error && error.stack) {
+                    log.debug(error.stack);
+                }
             }
         }
     }

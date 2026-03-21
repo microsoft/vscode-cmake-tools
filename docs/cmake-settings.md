@@ -8,7 +8,7 @@ Options that support substitution, in the table below, allow variable references
 
 | Setting  | Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
-| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | `[]` | no |
+| `cmake.additionalCompilerSearchDirs`| List of paths to search for additional compilers, like a MinGW installation. This means that GCC does not need to be on your `$PATH` for it to be found via kit scanning. For example: `["C:\\MinGW\\bin"]` (Search in C:\MinGW\bin for a MinGW installation) | `[]` | yes |
 | `cmake.additionalKits` | Array of paths to custom kit files. These are in addition to the default kit files. | `[]` | no |
 | `cmake.allowCommentsInPresetsFile` | Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON. | `false` | no |
 | `cmake.allowUnsupportedPresetsVersions` | Enables the use of presets files that are using features from the versions that Cmake Tools extension doesn't currently support. Unknown properties and macros will be ignored. | `false` | no |
@@ -74,7 +74,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.postRunCoverageTarget` | Target to build after running tests with coverage using the test explorer. | `null` | no |
 | `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | `[]` | no |
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
-| `cmake.revealLog` | Controls when the CMake output log should be revealed. | `always` | no |
+| `cmake.revealLog` | Controls when the CMake output log should be revealed. Possible values: `focus` (show the log and move focus to the output channel), `always` (show the log but do not move focus), `never` (do not show the log), `error` (show the log only when an error occurs). | `always` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
