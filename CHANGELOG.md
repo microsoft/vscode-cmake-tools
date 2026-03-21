@@ -3,7 +3,7 @@
 ## 1.23
 
 Features:
-- Add `${cmake.testEnvironment}` placeholder for launch.json that resolves to the CTest `ENVIRONMENT` test property, and automatically include CTest environment variables when debugging tests without a launch configuration. [#4572](https://github.com/microsoft/vscode-cmake-tools/issues/4572)
+- Add `${cmake.testEnvironment}` placeholder for launch.json that resolves to the CTest `ENVIRONMENT` test property, and automatically include CTest environment variables when debugging tests without a launch configuration. [#4572](https://github.com/microsoft/vscode-cmake-tools/issues/4572) [#4821](https://github.com/microsoft/vscode-cmake-tools/pull/4821)
 - Add `cmake.shell` setting to route CMake/CTest/CPack subprocess invocations through a custom shell (e.g., Git Bash, MSYS2), enabling embedded toolchains that require POSIX path translation on Windows. [#1750](https://github.com/microsoft/vscode-cmake-tools/issues/1750)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
@@ -31,6 +31,7 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+- Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
 - Fix duplicate launch configurations in the ctest debug picker when both `.vscode/launch.json` and a `.code-workspace` file exist. [#4586](https://github.com/microsoft/vscode-cmake-tools/issues/4586)
 - Users can now debug with or without launch configurations from the test explorer. `cmake.ctest.neverDebugTestsWithLaunchConfiguration` can be set to `true` to bypass the quick pick menu where the launch configuration is selected. [#4790](https://github.com/microsoft/vscode-cmake-tools/issues/4790)
