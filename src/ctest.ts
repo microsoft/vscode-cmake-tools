@@ -1492,8 +1492,9 @@ export class CTestDriver implements vscode.Disposable {
             .find(test => test.name === testName)?.properties
             .find(prop => prop.name === 'ENVIRONMENT');
 
-        if (property && Array.isArray(property.value)) {
-            for (const entry of property.value) {
+        if (property) {
+            const entries = Array.isArray(property.value) ? property.value : [property.value];
+            for (const entry of entries) {
                 const eqIndex = entry.indexOf('=');
                 if (eqIndex !== -1) {
                     const name = entry.substring(0, eqIndex);

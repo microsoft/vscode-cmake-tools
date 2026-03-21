@@ -2,11 +2,13 @@ import { expect } from 'chai';
 
 /**
  * Mirror of the pure parsing logic from CTestDriver.testEnvironment().
- * Parses CTest ENVIRONMENT property values (["KEY=VALUE", ...]) into a { KEY: VALUE } map.
+ * Parses CTest ENVIRONMENT property values (string or string[]) into a { KEY: VALUE } map.
+ * CTest JSON v1 stores a single environment variable as a plain string, multiple as an array.
  */
-function parseTestEnvironment(envEntries: string[]): { [key: string]: string } {
+function parseTestEnvironment(envEntries: string | string[]): { [key: string]: string } {
     const env: { [key: string]: string } = {};
-    for (const entry of envEntries) {
+    const entries = Array.isArray(envEntries) ? envEntries : [envEntries];
+    for (const entry of entries) {
         const eqIndex = entry.indexOf('=');
         if (eqIndex !== -1) {
             const name = entry.substring(0, eqIndex);
@@ -73,6 +75,11 @@ suite('[CTest test environment parsing]', () => {
     test('Handle entry with empty key', () => {
         const result = parseTestEnvironment(['=value']);
         expect(result).to.deep.equal({ '': 'value' });
+    });
+
+    test('Parse single string value (CTest JSON v1 single-entry format)', () => {
+        const result = parseTestEnvironment('MY_VAR=hello_world');
+        expect(result).to.deep.equal({ MY_VAR: 'hello_world' });
     });
 });
 
