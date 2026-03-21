@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "생성자 변경 후 CMake 드라이버를 다시 시작하는 중입니다.",
 	"preferredGenerator.changed.restart.driver": "preferredGenerators 변경 후 CMake 드라이버를 다시 시작하는 중입니다.",
 	"bad.executable": "잘못된 CMake 실행 파일: {0}. 설치되어 있는지 또는 {1} 설정 값에 올바른 경로가 포함되어 있는지 확인합니다.",
+	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
 	"targests.in.preset": "[미리 설정된 대상]",
 	"constructing.cmakeproject": "새 CMakeProject 인스턴스 생성",
 	"disposing.driver": "CMake 드라이버를 삭제하는 중",
