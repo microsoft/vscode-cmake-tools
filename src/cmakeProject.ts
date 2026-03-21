@@ -2591,8 +2591,8 @@ export class CMakeProject {
         const userConfig = this.workspaceContext.config.debugConfig;
         if (userConfig?.type) {
             // User specified a custom debug adapter type — skip auto-detection
-            // and build a minimal base config from the target.
-            const { program: _program, ...userConfigRest } = userConfig;
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
             debugConfig = {
                 type: userConfig.type,
                 name: `Debug ${testName}`,
@@ -2601,7 +2601,7 @@ export class CMakeProject {
                 cwd: path.dirname(testInfo.program),
                 args: [] as string[]
             };
-            Object.assign(debugConfig, userConfigRest);
+            Object.assign(debugConfig, userConfig);
         } else {
             try {
                 const cache = await CMakeCache.fromPath(drv.cachePath);
@@ -3201,8 +3201,8 @@ export class CMakeProject {
         const userConfig = this.workspaceContext.config.debugConfig;
         if (userConfig?.type) {
             // User specified a custom debug adapter type — skip auto-detection
-            // and build a minimal base config from the target.
-            const { program: _program, ...userConfigRest } = userConfig;
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
             debugConfig = {
                 type: userConfig.type,
                 name: `Debug ${targetExecutable.name}`,
@@ -3211,7 +3211,7 @@ export class CMakeProject {
                 cwd: targetExecutable.debuggerWorkingDirectory || path.dirname(targetExecutable.path),
                 args: [] as string[]
             };
-            Object.assign(debugConfig, userConfigRest);
+            Object.assign(debugConfig, userConfig);
             log.debug(localize('debug.configuration.from.settings', 'Debug configuration from user settings: {0}', JSON.stringify(debugConfig)));
         } else {
             try {
