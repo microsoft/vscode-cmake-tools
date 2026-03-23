@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "Reiniciando o driver do CMake após uma alteração de gerador.",
 	"preferredGenerator.changed.restart.driver": "Reiniciando o driver do CMake após uma alteração de preferredGenerators.",
 	"bad.executable": "Executável incorreto do CMake: {0}. Verifique se ele está instalado ou se o valor da configuração {1} contém o caminho correto",
+	"shell.changed.restart.driver": "Reiniciando o driver do CMake após uma alteração de shell.",
 	"targests.in.preset": "[Alvos em Predefinição]",
 	"constructing.cmakeproject": "Construindo a nova instância CMakeProject",
 	"disposing.driver": "Descartando o driver do CMake",

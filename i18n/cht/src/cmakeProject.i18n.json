@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "在產生器變更後重新啟動 CMake 驅動程式。",
 	"preferredGenerator.changed.restart.driver": "在 preferredGenerators 變更後重新啟動 CMake 驅動程式。",
 	"bad.executable": "錯誤的 CMake 可執行檔: {0}。請檢查以確定已安裝，或 {1} 設定的值包含正確的路徑",
+	"shell.changed.restart.driver": "在殼層變更後重新啟動 CMake 驅動程式。",
 	"targests.in.preset": "[預設的目標]",
 	"constructing.cmakeproject": "建構新的 CMakeProject 執行個體",
 	"disposing.driver": "處置 CMake 驅動程式",

@@ -547,12 +547,23 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get additionalCompilerSearchDirs(): string[] {
+        return ConfigurationReader.getAdditionalCompilerSearchDirsFromConfig(this.configData);
+    }
+
+    /**
+     * Extract additionalCompilerSearchDirs from raw config data, applying the
+     * mingwSearchDirs deprecation fallback.  This is intentionally static so
+     * callers that only have an `ExtensionConfigurationSettings` object (e.g.
+     * the multiroot aggregation in extension.ts) can reuse the logic without
+     * constructing a full ConfigurationReader.
+     */
+    static getAdditionalCompilerSearchDirsFromConfig(configData: ExtensionConfigurationSettings): string[] {
         // mingwSearchDirs is deprecated, but we still use it if additionalCompilerSearchDirs is not set for backwards compatibility
-        if (this.configData.additionalCompilerSearchDirs.length === 0 && this.configData.mingwSearchDirs.length > 0) {
+        if (configData.additionalCompilerSearchDirs.length === 0 && configData.mingwSearchDirs.length > 0) {
             log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"mingwSearchDirs"', '"additionalCompilerSearchDirs"'));
-            return this.configData.mingwSearchDirs;
+            return configData.mingwSearchDirs;
         }
-        return this.configData.additionalCompilerSearchDirs;
+        return configData.additionalCompilerSearchDirs;
     }
     get additionalKits(): string[] {
         return this.configData.additionalKits;

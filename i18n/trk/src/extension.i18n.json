@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} tamamlandı (seri hale getirilemeyen bir değer döndürüldü)",
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
+	"bookmark.target.not.resolved": "“{0}” yer imi bir hedefe çözümlenemedi. Projenin yeniden yapılandırılması gerekebilir.",
 	"search.project.outline": "Proje Taslağını filtrelemek için bir arama terimi girin",
 	"added.to": "şuraya eklendi:",
 	"removed.from": "şuradan kaldırıldı:",

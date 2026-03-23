@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "Dokončeno: {0} (vrácena neserializovatelná hodnota)",
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
+	"bookmark.target.not.resolved": "Záložku {0} nelze přeložit na cíl. Možná bude nutné projekt znovu nakonfigurovat.",
 	"search.project.outline": "Zadejte hledaný termín pro filtrování osnovy projektu",
 	"added.to": "přidáno do",
 	"removed.from": "odebráno z",

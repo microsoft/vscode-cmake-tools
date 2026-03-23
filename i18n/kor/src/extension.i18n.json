@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} 완료(직렬화할 수 없는 값이 반환됨)",
 	"loading.extension.commands": "확장 명령을 로드하는 중",
 	"register.command": "CMakeTools 확장 명령 {0} 등록",
+	"bookmark.target.not.resolved": "책갈피 \"{0}\"를 대상에 연결할 수 없습니다. 프로젝트를 다시 구성해야 할 수 있습니다.",
 	"search.project.outline": "프로젝트 개요를 필터링할 검색 용어 입력",
 	"added.to": "다음에 추가됨",
 	"removed.from": "다음에서 제거됨",

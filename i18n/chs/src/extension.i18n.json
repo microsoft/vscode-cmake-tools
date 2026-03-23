@@ -49,6 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} 已完成(已返回不可序列化的值)",
 	"loading.extension.commands": "正在加载扩展命令",
 	"register.command": "注册 CMakeTools 扩展命令 {0}",
+	"bookmark.target.not.resolved": "书签“{0}”无法解析为目标。可能需要重新配置项目。",
 	"search.project.outline": "输入搜索词以筛选项目大纲",
 	"added.to": "已添加到",
 	"removed.from": "已移除自",

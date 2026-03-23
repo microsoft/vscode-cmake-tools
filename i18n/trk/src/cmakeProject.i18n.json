@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "Oluşturucu değişikliğinden sonra CMake sürücüsü yeniden başlatılıyor.",
 	"preferredGenerator.changed.restart.driver": "PreferredGenerators değişikliğinden sonra CMake sürücüsü yeniden başlatılıyor.",
 	"bad.executable": "Hatalı CMake yürütülebilir dosyası: {0}. Yüklü olduğundan veya {1} ayarının değerinin doğru yolu içerdiğinden emin olmak için kontrol edin.",
+	"shell.changed.restart.driver": "Kabuk değişikliğinden sonra CMake sürücüsü yeniden başlatılıyor.",
 	"targests.in.preset": "[Önceden Ayarlanmış Hedefler]",
 	"constructing.cmakeproject": "Yeni CMakeProject örneği oluşturuluyor",
 	"disposing.driver": "CMake sürücüsü atılıyor",

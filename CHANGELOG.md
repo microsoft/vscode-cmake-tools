@@ -32,6 +32,11 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+- Import the `EXTERNAL_INCLUDE` environment variable from the VS developer environment so that MSVC's external-header diagnostic suppression works correctly. [#4217](https://github.com/microsoft/vscode-cmake-tools/issues/4217)
+- Fix test presets not automatically switching when the build preset changes in multi-config generator setups (e.g., Ninja Multi-Config). The extension now auto-selects a compatible test preset after a build preset change, and properly considers build type when guessing the test preset. [#4395](https://github.com/microsoft/vscode-cmake-tools/issues/4395)
+- Fix `cmake.additionalCompilerSearchDirs` ignoring per-folder overrides in multiroot workspaces. The setting is now read from each folder's scoped configuration with `${workspaceFolder}` expanded per-folder, and the results are unioned. Also fix `cmake.cmakePath` resolution during kit scanning to try all workspace folders instead of only the first.
+- Fix `${workspaceFolder}` expansion in `cmake.additionalCompilerSearchDirs` for single-root workspaces. Previously only the multi-root `${workspaceFolder:name}` syntax worked. [#4571](https://github.com/microsoft/vscode-cmake-tools/issues/4571)
+- Fix `cmake.revealLog` set to `"focus"` not revealing the output panel or stealing focus. The output channel now correctly appears and takes focus on both configure success and failure when this setting is used. [#4471](https://github.com/microsoft/vscode-cmake-tools/issues/4471)
 - Fix `${command:cmake.selectConfigurePreset}` (and other preset/kit selection commands) failing with "command did not return a result of type string" when used in `tasks.json` as a command variable. The commands now return the selected preset or kit name instead of a boolean. [#4239](https://github.com/microsoft/vscode-cmake-tools/issues/4239)
 - Fix renaming a CMake project creating a duplicate node in the Project Outline instead of replacing the existing one. [#4343](https://github.com/microsoft/vscode-cmake-tools/issues/4343)
 - Remove internal stack traces from the Output pane when a subprocess fails. Error messages now show only human-readable information; stack traces are still available in debug-level logging. [#4807](https://github.com/microsoft/vscode-cmake-tools/issues/4807)
@@ -69,6 +74,7 @@ Bug Fixes:
 - Fix diagnostics to handle when there isn't a command in the error output. [PR #4765](https://github.com/microsoft/vscode-cmake-tools/pull/4765)
 - Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
 - Fix issue with hover provider not checking for undefined. [#4812](https://github.com/microsoft/vscode-cmake-tools/issues/4812)
+- Fix bug in which CTest is unable to run large amount of tests in parallel due to regex exceeding command line length limits [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829) [@theuke](https://github.com/theuke)
 
 ## 1.22.28
 

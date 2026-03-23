@@ -9,6 +9,7 @@
 	"generator.changed.restart.driver": "Ovladač CMake se restartuje po změně generátoru.",
 	"preferredGenerator.changed.restart.driver": "Ovladač CMake se restartuje po změně hodnoty preferredGenerators.",
 	"bad.executable": "Chybný spustitelný soubor CMake: {0} Zkontrolujte, zda je nainstalovaný nebo zda hodnota nastavení {1} obsahuje správnou cestu.",
+	"shell.changed.restart.driver": "Po změně prostředí se restartuje ovladač CMake.",
 	"targests.in.preset": "[Cíle v předvolbách]",
 	"constructing.cmakeproject": "Vytváří se nová instance CMakeProject",
 	"disposing.driver": "Ruší se ovladač CMake.",

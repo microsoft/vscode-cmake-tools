@@ -1061,8 +1061,19 @@ export class ExtensionManager implements vscode.Disposable {
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length < 1) {
             return;
         }
-        const workspaceContext = DirectoryContext.createForDirectory(vscode.workspace.workspaceFolders[0], new StateManager(this.extensionContext, vscode.workspace.workspaceFolders[0]));
-        const cmakePath: string = await workspaceContext.getCMakePath() || '';
+
+        // Resolve the cmake path from workspace folders.  In a multiroot workspace different
+        // folders may configure different cmake.cmakePath values; try each folder and use the
+        // first one that resolves to a non-empty path.
+        let cmakePath = '';
+        for (const folder of vscode.workspace.workspaceFolders) {
+            const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
+            cmakePath = await workspaceContext.getCMakePath() || '';
+            if (cmakePath) {
+                break;
+            }
+        }
+
         const duplicateRemoved = await KitsController.scanForKits(cmakePath);
         if (duplicateRemoved) {
             // Check each project. If there is an active kit set and if it is of the old definition, unset the kit.
@@ -1079,38 +1090,60 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
-     * Get the current additional compiler search directories, like MinGW directories
+     * Get the current additional compiler search directories, like MinGW directories.
+     * In multiroot workspaces, reads the setting from each folder's scoped configuration
+     * and expands ${workspaceFolder} per-folder, returning the union of all directories.
      */
     private async getAdditionalCompilerDirs(): Promise<string[]> {
-        const optsVars: KitContextVars = {
-            userHome: paths.userHome,
-
-            // This is called during scanning for kits, which is an operation that happens
-            // outside the scope of a project folder, so it doesn't need the below variables.
-            buildKit: "",
-            buildType: "",
-            generator: "",
-            workspaceFolder: "",
-            workspaceFolderBasename: "",
-            workspaceHash: "",
-            workspaceRoot: "",
-            workspaceRootFolderName: "",
-            buildKitVendor: "",
-            buildKitTriple: "",
-            buildKitVersion: "",
-            buildKitHostOs: "",
-            buildKitTargetOs: "",
-            buildKitTargetArch: "",
-            buildKitVersionMajor: "",
-            buildKitVersionMinor: "",
-            projectName: "",
-            sourceDir: ""
-        };
         const result = new Set<string>();
-        for (const dir of this.workspaceConfig.additionalCompilerSearchDirs) {
-            const expandedDir: string = util.lightNormalizePath(await expandString(dir, { vars: optsVars }));
-            result.add(expandedDir);
+        const folders = vscode.workspace.workspaceFolders ?? [];
+
+        // Collect (folder, dirs) pairs from all workspace folders.
+        // Each folder may have its own cmake.additionalCompilerSearchDirs override.
+        const folderDirPairs: { folderPath: string; dirs: string[] }[] = [];
+        if (folders.length === 0) {
+            // No workspace folders — fall back to the extension-level config
+            folderDirPairs.push({ folderPath: '', dirs: this.workspaceConfig.additionalCompilerSearchDirs });
+        } else {
+            for (const folder of folders) {
+                const folderConfig = ConfigurationReader.loadConfig(folder);
+                const dirs = ConfigurationReader.getAdditionalCompilerSearchDirsFromConfig(folderConfig);
+                folderDirPairs.push({ folderPath: folder.uri.fsPath, dirs });
+            }
         }
+
+        for (const { folderPath, dirs } of folderDirPairs) {
+            const optsVars: KitContextVars = {
+                userHome: paths.userHome,
+
+                // This is called during scanning for kits, which is an operation that happens
+                // outside the scope of a project folder, so it doesn't need most of the below variables.
+                // workspaceFolder is populated so that ${workspaceFolder} can be used in additionalCompilerSearchDirs.
+                buildKit: "",
+                buildType: "",
+                generator: "",
+                workspaceFolder: folderPath,
+                workspaceFolderBasename: folderPath ? path.basename(folderPath) : "",
+                workspaceHash: folderPath ? util.makeHashString(folderPath) : "",
+                workspaceRoot: folderPath,
+                workspaceRootFolderName: folderPath ? path.basename(folderPath) : "",
+                buildKitVendor: "",
+                buildKitTriple: "",
+                buildKitVersion: "",
+                buildKitHostOs: "",
+                buildKitTargetOs: "",
+                buildKitTargetArch: "",
+                buildKitVersionMajor: "",
+                buildKitVersionMinor: "",
+                projectName: "",
+                sourceDir: ""
+            };
+            for (const dir of dirs) {
+                const expandedDir: string = util.lightNormalizePath(await expandString(dir, { vars: optsVars }));
+                result.add(expandedDir);
+            }
+        }
+
         return Array.from(result);
     }
 
