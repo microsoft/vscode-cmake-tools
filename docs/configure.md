@@ -56,6 +56,12 @@ A clean configure is required for certain build system changes, such as when the
 
 CMake Tools will do a clean configure automatically if you change the active kit.
 
+## Full clean configure
+
+To get CMake Tools to do a full clean configure, run **CMake: Delete Build Directory and Reconfigure** from the command palette in VS Code.
+
+A full clean configure deletes the entire build directory before reconfiguring. This goes beyond the standard clean configure by removing all build artifacts, not just CMake's cache and internal files. This is useful when CMake reuses stale build artifacts that cause unexpected errors, or when third-party tools write extra files into the build directory.
+
 ## Configure with CMake Debugger
 
 In order to investigate errors with Configuring your CMake project, you can add breakpoints in your CMakeLists.txt and .cmake files and run **CMake: Configure with CMake Debugger** from the command palette in VS Code.

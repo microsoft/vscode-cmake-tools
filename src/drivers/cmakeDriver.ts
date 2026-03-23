@@ -617,6 +617,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
+     * Remove the entire build directory.
+     */
+    protected async _cleanBuildDirectory() {
+        const build_dir = this.binaryDir;
+        if (await fs.exists(build_dir)) {
+            log.info(localize('removing', 'Removing {0}', encodeURI(build_dir)));
+            await fs.rmdir(build_dir);
+        }
+    }
+
+    /**
      * Change the current configure preset. This lets the driver reload, if necessary.
      * @param configurePreset The new configure preset
      */
@@ -1129,6 +1140,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.isConfigInProgress = false;
 
         return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
+    }
+
+    /**
+     * Perform a full clean configure. Deletes the entire build directory before running the config.
+     * @param consumer The output consumer
+     */
+    public async fullCleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation): Promise<ConfigureResult> {
+        if (this.isConfigInProgress) {
+            await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ForcedCancel };
+        }
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
+            await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
+        }
+        this.isConfigInProgress = true;
+        await this._cleanBuildDirectory();
+        this.isConfigInProgress = false;
+
+        return this.configure(trigger, extra_args, consumer, cancelInformation);
     }
 
     async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
