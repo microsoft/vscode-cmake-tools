@@ -1,0 +1,9 @@
+{
+    "servers": {
+        "cmake-tools-onboarding": {
+            "type": "stdio",
+            "command": "node",
+            "args": ["${workspaceFolder}/tools/onboarding-mcp/dist/index.js"]
+        }
+    }
+}
