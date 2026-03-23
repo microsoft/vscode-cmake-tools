@@ -49,7 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} a pris fin (valeur non sérialisable retournée)",
 	"loading.extension.commands": "Chargement des commandes d'extension",
 	"register.command": "Inscrire la commande d'extension CMakeTools {0}",
-	"bookmark.target.not.resolved": "Bookmark \"{0}\" could not be resolved to a target. The project may need to be reconfigured.",
+	"bookmark.target.not.resolved": "Nous n’avons pas pu résoudre le signet « {0} » en une cible. Vous devez peut-être reconfigurer le projet.",
 	"search.project.outline": "Entrez un terme de recherche pour filtrer le plan du projet",
 	"added.to": "ajouté à",
 	"removed.from": "retiré de",
