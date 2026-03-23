@@ -9,7 +9,7 @@
 	"generator.changed.restart.driver": "在生成器更改后重启 CMake 驱动程序。",
 	"preferredGenerator.changed.restart.driver": "在 preferredGenerators 更改后重启 CMake 驱动程序。",
 	"bad.executable": "CMake 可执行文件错误: {0}。请检查以确保它已安装，或者 {1} 设置的值包含正确的路径",
-	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
+	"shell.changed.restart.driver": "在 shell 更改后重启 CMake 驱动程序。",
 	"targests.in.preset": "[预设中的目标]",
 	"constructing.cmakeproject": "构造新的 CMakeProject 实例",
 	"disposing.driver": "正在释放 CMake 驱动程序",
