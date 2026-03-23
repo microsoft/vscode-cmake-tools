@@ -9,7 +9,7 @@
 	"generator.changed.restart.driver": "Redémarrage du pilote de CMake après un changement de générateur.",
 	"preferredGenerator.changed.restart.driver": "Redémarrage du pilote de CMake après un changement de preferredGenerators.",
 	"bad.executable": "Exécutable CMake incorrect : {0}. Vérifiez qu’il est installé ou que la valeur du paramètre {1} contient le chemin d’accès approprié",
-	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
+	"shell.changed.restart.driver": "Redémarrage du pilote CMake après un changement d’interpréteur de commandes.",
 	"targests.in.preset": "[Cibles dans la présélection]",
 	"constructing.cmakeproject": "Construction d'une instance de CMakeProject",
 	"disposing.driver": "Suppression du pilote CMake",

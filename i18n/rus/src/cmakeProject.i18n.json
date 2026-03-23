@@ -9,7 +9,7 @@
 	"generator.changed.restart.driver": "Перезапуск драйвера CMake после изменения генератора.",
 	"preferredGenerator.changed.restart.driver": "Перезапуск драйвера CMake после изменения preferredGenerators (предпочитаемых генераторов).",
 	"bad.executable": "Неверный исполняемый файл CMake: {0}. Убедитесь, что он установлен или что значение параметра {1} содержит правильный путь",
-	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
+	"shell.changed.restart.driver": "Перезапуск драйвера CMake после изменения оболочки.",
 	"targests.in.preset": "[Целевые значения в предустановке]",
 	"constructing.cmakeproject": "Создание нового экземпляра CMakeProject",
 	"disposing.driver": "Удаление драйвера CMake",
