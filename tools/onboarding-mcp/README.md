@@ -43,7 +43,17 @@ npm start
 
 ## Available tools
 
-| Tool | Description |
-| --- | --- |
-| **`get_setup_guide`** | Returns an ordered list of setup steps for new contributors to build and run the extension locally. No inputs required. Each step includes a number, title, optional shell command, and optional notes. |
-| **`check_pr_readiness`** | Given a free-text description of changes (`{ "changes": "..." }`), returns a checklist of PR requirements from CONTRIBUTING.md. Each item includes the rule, a status (`"pass"`, `"warn"`, or `"manual_check_required"`), and a helpful hint. Items are flagged as `"warn"` when the description suggests a potential issue (e.g. mentioning `package.json` changes). |
+### Phase 1 — Setup & PR
+
+| Tool | Input | Description |
+| --- | --- | --- |
+| **`get_setup_guide`** | _(none)_ | Returns an ordered list of setup steps for new contributors to build and run the extension locally. Each step includes a number, title, optional shell command, and optional notes. |
+| **`check_pr_readiness`** | `{ "changes": "..." }` | Given a free-text description of changes, returns a checklist of PR requirements from CONTRIBUTING.md. Each item includes the rule, a status (`"pass"`, `"warn"`, or `"manual_check_required"`), and a helpful hint. Items are flagged as `"warn"` when the description suggests a potential issue (e.g. mentioning `package.json` changes). |
+
+### Phase 2 — Codebase Knowledge
+
+| Tool | Input | Description |
+| --- | --- | --- |
+| **`explain_concept`** | `{ "concept": "..." }` | Explains a CMake Tools concept (e.g. `kit`, `preset`, `driver`, `ctest`, `build`, `configure`, `debug`, `settings`). Returns a summary, detailed explanation, related concepts, relevant source files, and a link to the docs page. If the concept is unknown, lists all known concepts. |
+| **`find_source_file`** | `{ "feature": "..." }` | Given a natural-language description (e.g. `"kit scanning"`, `"build logic"`, `"test runner"`), returns matching source files with GitHub links, descriptions, and relevance notes. Useful for quickly navigating to the right file. |
+| **`get_docs_page`** | `{ "topic": "..." }` | Given a topic (e.g. `presets`, `kits`, `debugging`, `troubleshooting`, `faq`), returns the matching documentation page with file path, GitHub URL, summary, and key section headings. |
