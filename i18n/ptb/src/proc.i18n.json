@@ -6,11 +6,11 @@
 {
 	"executing.command": "Executando o comando: {0}",
 	"execution.environment": "  com ambiente: {0}",
-	"process.error": "The command: {0} failed with error: {1}",
-	"process.exit.with.signal": "The command: {0} exited with code: {1} and signal: {2}",
-	"process.exit": "The command: {0} exited with code: {1}",
-	"process.exit.stdout": "Command output on standard out: {0}",
-	"process.exit.stderr": "Command output on standard error: {0}",
+	"process.error": "O comando: {0} falhou com erro: {1}",
+	"process.exit.with.signal": "O comando: {0} saiu com o código: {1} e sinal: {2}",
+	"process.exit": "O comando: {0} saiu com o código: {1}",
+	"process.exit.stdout": "Saída do comando na saída padrão: {0}",
+	"process.exit.stderr": "Saída de comando no erro padrão: {0}",
 	"processing.data.event.stdout": "Processando o evento {0} do proc stdout",
 	"processing.data.event.stderr": "Processando o evento {0} de proc stderr",
 	"resolving.close.event": "Resolvendo o processo no evento {0}"

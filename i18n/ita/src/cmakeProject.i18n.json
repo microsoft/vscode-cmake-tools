@@ -9,7 +9,7 @@
 	"generator.changed.restart.driver": "Riavvio del driver di CMake dopo una modifica del generatore.",
 	"preferredGenerator.changed.restart.driver": "Riavvio del driver di CMake dopo una modifica di preferredGenerators.",
 	"bad.executable": "Eseguibile CMake non valido: {0}. Verificare che sia installato o che il valore dell'impostazione {1} contenga il percorso corretto",
-	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
+	"shell.changed.restart.driver": "Riavvio del driver di CMake dopo una modifica della shell.",
 	"targests.in.preset": "[Targets In Preset]",
 	"constructing.cmakeproject": "Costruzione di una nuova istanza di CMakeProject in corso",
 	"disposing.driver": "Eliminazione unità CMake",
