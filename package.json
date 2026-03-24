@@ -2753,7 +2753,12 @@
         "cmake.debugConfig": {
           "type": "object",
           "description": "%cmake-tools.configuration.cmake.debugConfig.description%",
+          "additionalProperties": true,
           "properties": {
+            "type": {
+              "type": "string",
+              "markdownDescription": "%cmake-tools.configuration.cmake.debugConfig.type.description%"
+            },
             "symbolSearchPath": {
               "type": "string",
               "description": "%cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description%"

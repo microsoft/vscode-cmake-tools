@@ -2611,29 +2611,48 @@ export class CMakeProject {
         };
 
         let debugConfig;
-        try {
-            const cache = await CMakeCache.fromPath(drv.cachePath);
-            debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, target, process.platform,
-                this.workspaceContext.config.debugConfig?.MIMode,
-                this.workspaceContext.config.debugConfig?.miDebuggerPath);
-        } catch (error: any) {
-            void vscode.window
-                .showErrorMessage(error.message, {
-                    title: localize('debugging.documentation.button', 'Debugging documentation'),
-                    isLearnMore: true
-                })
-                .then(item => {
-                    if (item && item.isLearnMore) {
-                        open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
-                    }
-                });
-            return null;
-        }
+        const userConfig = this.workspaceContext.config.debugConfig;
+        if (userConfig?.type) {
+            // User specified a custom debug adapter type — skip auto-detection
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
+            debugConfig = {
+                type: userConfig.type,
+                name: `Debug ${testName}`,
+                request: 'launch',
+                program: testInfo.program,
+                cwd: path.dirname(testInfo.program),
+                args: [] as string[]
+            };
+            Object.assign(debugConfig, userConfig);
+        } else {
+            try {
+                const cache = await CMakeCache.fromPath(drv.cachePath);
+                debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, target, process.platform,
+                    userConfig?.MIMode,
+                    userConfig?.miDebuggerPath);
+            } catch (error: any) {
+                void vscode.window
+                    .showErrorMessage(error.message, {
+                        title: localize('debugging.documentation.button', 'Debugging documentation'),
+                        isLearnMore: true
+                    })
+                    .then(item => {
+                        if (item && item.isLearnMore) {
+                            open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+                        }
+                    });
+                return null;
+            }
 
-        if (debugConfig === null) {
-            log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
-            void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
-            return null;
+            if (debugConfig === null) {
+                log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
+                void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
+                return null;
+            }
+
+            // Add debug configuration from settings
+            Object.assign(debugConfig, userConfig);
         }
 
         // Add test arguments and working directory
@@ -2641,10 +2660,6 @@ export class CMakeProject {
         if (testInfo.workingDirectory) {
             debugConfig.cwd = testInfo.workingDirectory;
         }
-
-        // Add debug configuration from settings
-        const userConfig = this.workspaceContext.config.debugConfig;
-        Object.assign(debugConfig, userConfig);
 
         // Merge CTest ENVIRONMENT properties into the debug environment
         const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
@@ -3209,36 +3224,52 @@ export class CMakeProject {
         }
 
         let debugConfig;
-        try {
-            const cache = await CMakeCache.fromPath(drv.cachePath);
-            debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
-                this.workspaceContext.config.debugConfig?.MIMode,
-                this.workspaceContext.config.debugConfig?.miDebuggerPath);
-            log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debugConfig)));
-        } catch (error: any) {
-            void vscode.window
-                .showErrorMessage(error.message, {
-                    title: localize('debugging.documentation.button', 'Debugging documentation'),
-                    isLearnMore: true
-                })
-                .then(item => {
-                    if (item && item.isLearnMore) {
-                        open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
-                    }
-                });
-            log.debug(localize('problem.getting.debug', 'Problem getting debug configuration from cache.'), error);
-            return null;
-        }
-
-        if (debugConfig === null) {
-            log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
-            void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
-            return null;
-        }
-
-        // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
-        Object.assign(debugConfig, userConfig);
+        if (userConfig?.type) {
+            // User specified a custom debug adapter type — skip auto-detection
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
+            debugConfig = {
+                type: userConfig.type,
+                name: `Debug ${targetExecutable.name}`,
+                request: 'launch',
+                program: targetExecutable.path,
+                cwd: targetExecutable.debuggerWorkingDirectory || path.dirname(targetExecutable.path),
+                args: [] as string[]
+            };
+            Object.assign(debugConfig, userConfig);
+            log.debug(localize('debug.configuration.from.settings', 'Debug configuration from user settings: {0}', JSON.stringify(debugConfig)));
+        } else {
+            try {
+                const cache = await CMakeCache.fromPath(drv.cachePath);
+                debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
+                    userConfig?.MIMode,
+                    userConfig?.miDebuggerPath);
+                log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debugConfig)));
+            } catch (error: any) {
+                void vscode.window
+                    .showErrorMessage(error.message, {
+                        title: localize('debugging.documentation.button', 'Debugging documentation'),
+                        isLearnMore: true
+                    })
+                    .then(item => {
+                        if (item && item.isLearnMore) {
+                            open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+                        }
+                    });
+                log.debug(localize('problem.getting.debug', 'Problem getting debug configuration from cache.'), error);
+                return null;
+            }
+
+            if (debugConfig === null) {
+                log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
+                void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
+                return null;
+            }
+
+            // Add debug configuration from settings.
+            Object.assign(debugConfig, userConfig);
+        }
 
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);

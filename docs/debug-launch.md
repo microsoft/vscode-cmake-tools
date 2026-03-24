@@ -30,7 +30,7 @@ From there, you can press the play button by the `Launch` node to run it in term
 CMake Tools lets you start a debugger on a target without creating a `launch.json`.
 
 > **Note:**
-> Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
+> By default, quick-debugging auto-detects the debugger from the CMake cache and uses Microsoft's `vscode-ms-vscode.cpptools` debug adapters (`cppdbg` / `cppvsdbg`). To use a different debug adapter, see [Customize the debug adapter](#customize-the-debug-adapter) below.
 
 Start a debugging session on the active target by running the *CMake: Debug* command from the VS Code command palette, by selecting the Debug button in the status bar or CMake Tools sidebar Project Status View, or by pressing the keyboard shortcut (the default is **Shift+F5**).
 
@@ -38,6 +38,26 @@ Start a debugging session on the active target by running the *CMake: Debug* com
 
 > **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
+
+## Customize the debug adapter
+
+You can use any debug adapter with CMake Tools quick-debugging by setting the `type` property in the `cmake.debugConfig` setting. When `type` is specified, CMake Tools skips automatic debugger detection and builds a minimal launch configuration from the selected target, then merges in all properties from `cmake.debugConfig`. This lets you use adapters like `lldb`, `codelldb`, or any other installed debug extension without creating a `launch.json`.
+
+Add the following to your `.vscode/settings.json`:
+
+```jsonc
+{
+    "cmake.debugConfig": {
+        "type": "lldb",          // any installed debug adapter type
+        "request": "launch",
+        "stopOnEntry": false
+    }
+}
+```
+
+Then run **CMake: Debug Target** from the command palette. CMake Tools will automatically fill in `program`, `cwd`, and `name` from the selected target, and apply your settings on top. Any property recognized by the debug adapter can be added to `cmake.debugConfig`.
+
+If you omit `type`, CMake Tools falls back to the original behavior: auto-detecting `cppdbg` or `cppvsdbg` from the CMake cache.
 
 ## Debug using a launch.json file
 

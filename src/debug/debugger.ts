@@ -29,6 +29,7 @@ export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
  * interface that maps to cmake.debugConfig.
  */
 export interface CppDebugConfiguration {
+    type?: string;
     symbolSearchPath?: string;
     additionalSOLibSearchPath?: string;
     externalConsole?: boolean;
@@ -46,6 +47,7 @@ export interface CppDebugConfiguration {
     launchCompleteCommand?: string;
     dumpPath?: string;
     coreDumpPath?: string;
+    [key: string]: any;
 }
 
 export interface DebuggerLogging {

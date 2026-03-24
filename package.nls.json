@@ -217,7 +217,8 @@
         ]
     },
     "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.code": "The capture group index for an optional diagnostic code.",
-    "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target.",
+    "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target. When `type` is specified, the auto-detected debugger configuration is skipped and only a minimal base configuration (program, cwd, name) is generated from the target. All other properties are applied from this setting, allowing full control over the debug launch configuration for any debug adapter.",
+    "cmake-tools.configuration.cmake.debugConfig.type.description": "The debug adapter type to use (e.g., `cppdbg`, `cppvsdbg`, `lldb`, `codelldb`). When set, skips the automatic debugger detection from the CMake cache and uses this type directly. Any additional properties required by the debug adapter can be added to `#cmake.debugConfig#`.",
     "cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio debugger symbol search paths.",
     "cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Paths for GDB or LLDB to search for .so files.",
     "cmake-tools.configuration.cmake.debugConfig.externalConsole.description": "Launch an external console for the program.",
