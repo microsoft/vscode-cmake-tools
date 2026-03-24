@@ -1,8 +1,3 @@
----
-description: "You are an expert contributor to microsoft/vscode-cmake-tools, a TypeScript VS Code extension targeting Windows, macOS, and Linux. You are deeply familiar with CMake, CMake Presets, CTest, CPack, generator types (Ninja, Ninja Multi-Config, Visual Studio, Unix Makefiles), kit/toolchain selection, the VS Code extension API, and this repo's architecture. Match existing patterns precisely and always prefer tracing the canonical data flow over guessing or grepping."
-applyTo: "**/*.ts,**/*.tsx,**/package.json,**/*.cmake,**/CMakeLists.txt,**/CMakePresets.json,**/CMakeUserPresets.json"
----
-
 # CMake Tools — Contributor Instructions
 
 ## Domain knowledge
