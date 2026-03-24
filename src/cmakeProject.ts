@@ -2646,7 +2646,10 @@ export class CMakeProject {
         const userConfig = this.workspaceContext.config.debugConfig;
         Object.assign(debugConfig, userConfig);
 
-        const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
+        // Merge CTest ENVIRONMENT properties into the debug environment
+        const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
+        const combinedEnvVars = [...testEnvVars, ...(debugConfig.environment ?? [])];
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, combinedEnvVars);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);

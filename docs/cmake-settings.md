@@ -152,6 +152,17 @@ Supported commands for substitution:
 |`cmake.activeBuildPresetName`|The name of the active build preset.|
 |`cmake.activeTestPresetName`|The name of the active test preset.|
 
+### Test debug placeholders
+
+The following placeholders are available in launch.json debug configurations used to debug CTest tests from the Test Explorer. See [Debugging tests](debug-launch.md#debugging-tests) for full examples.
+
+|Placeholder|Expansion|
+|-----------|---------|
+|`${cmake.testProgram}`|The full path to the test executable.|
+|`${cmake.testArgs}`|The command-line arguments for the test.|
+|`${cmake.testWorkingDirectory}`|The working directory for the test.|
+|`${cmake.testEnvironment}`|The environment variables set via the CTest `ENVIRONMENT` test property (e.g., from `set_tests_properties(... PROPERTIES ENVIRONMENT "A=B;C=D")`). Replaced with an array of `{ "name": "...", "value": "..." }` objects suitable for launch.json.|
+
 ## Additional build problem matchers
 
 The `cmake.additionalBuildProblemMatchers` setting lets you define custom problem matchers that are applied to build output. This is useful when you integrate tools like **clang-tidy**, **PCLint Plus**, **cppcheck**, or custom scripts into your CMake build via `add_custom_command` or `add_custom_target`. Diagnostics from these tools will appear in the VS Code **Problems** pane alongside the standard compiler errors.
