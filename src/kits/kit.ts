@@ -105,9 +105,11 @@ export interface Kit extends KitDetect {
     preferredGenerator?: CMakeGenerator;
 
     /**
-     * Additional settings to pass to CMake
+     * Additional settings to pass to CMake.
+     * Values can be strings or string arrays. String arrays are joined with
+     * semicolons to form CMake lists (without escaping).
      */
-    cmakeSettings?: { [key: string]: string };
+    cmakeSettings?: { [key: string]: string | string[] };
 
     /**
      * Additional environment variables for the kit
