@@ -166,6 +166,96 @@ export function searchOutputForFailures(patterns: FailurePatternsConfig, output:
     return messages;
 }
 
+/**
+ * Finds the minimal regex fragments to match targets from the superset.
+ * If a target is a prefix of a forbidden string, it returns an exact match.
+ * Otherwise, it returns a minimal prefix.
+ *
+ * @param superset : the list of all individual test names (individual and or group names)
+ * @param targets : the list of test names (individual and or group names) we want to match.
+ * @returns : the list of regex fragments to match the targets without matching any other test from the superset
+ */
+export function getMinimalRegexFragments(superset: string[], targets: string[]): string[] {
+    interface TrieNode {
+        children: Map<string, TrieNode>;
+        forbiddenCount: number;
+    }
+
+    const targetSet = new Set(targets);
+    const forbidden = superset.filter(s => !targetSet.has(s));
+
+    if (targets.length === 0) {
+        return [];
+    }
+    if (forbidden.length === 0) {
+        return ["^."];
+    }
+
+    const root: TrieNode = { children: new Map(), forbiddenCount: 0 };
+
+    // 1. Build Trie with forbidden strings
+    for (const s of forbidden) {
+        let current = root;
+        for (const char of s) {
+            if (!current.children.has(char)) {
+                current.children.set(char, { children: new Map(), forbiddenCount: 0 });
+            }
+            current = current.children.get(char)!;
+            current.forbiddenCount++;
+        }
+    }
+
+    const fragmentSet = new Set<string>();
+
+    // 2. Identify the optimal regex fragment for each target
+    for (const target of targets) {
+        let current = root;
+        let prefix = "";
+        let foundUnique = false;
+
+        for (const char of target) {
+            prefix += char;
+            const next = current.children.get(char);
+
+            if (!next || next.forbiddenCount === 0) {
+                // Safe unique prefix found
+                fragmentSet.add(`^${util.escapeStringForRegex(prefix)}`);
+                foundUnique = true;
+                break;
+            }
+            current = next;
+        }
+
+        // 3. The "Swallowed" Target Case
+        // Target is a prefix of a forbidden string (e.g., "Test" vs "Test.1")
+        if (!foundUnique) {
+            fragmentSet.add(`^${util.escapeStringForRegex(target)}$`);
+        }
+    }
+
+    // 4. Remove redundant fragments
+    // Sort by length: "Test\." (length 6) comes before "Test\.x\.1" (length 10)
+    const sorted = Array.from(fragmentSet).sort((a, b) => a.length - b.length);
+    const minimalFragments: string[] = [];
+
+    for (const fragment of sorted) {
+        // If we already have a prefix that covers this fragment, skip it.
+        // Note: 'existing' only matches 'fragment' if it's a true prefix (no $ anchor)
+        const isRedundant = minimalFragments.some(existing => {
+            if (existing.endsWith('$')) {
+                return false; // Exact matches can't cover other things
+            }
+            return fragment.startsWith(existing);
+        });
+
+        if (!isRedundant) {
+            minimalFragments.push(fragment);
+        }
+    }
+
+    return minimalFragments;
+}
+
 function matchToTestMessage(pat: FailurePattern, match: RegExpMatchArray): vscode.TestMessage {
     const file = match[pat.file as number];
     const line = pat.line ? parseLineMatch(match[pat.line]) : 0;
@@ -442,7 +532,8 @@ export class CTestDriver implements vscode.Disposable {
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
         if (testsToRun && testsToRun.length > 0) {
             ctestArgs.push("-R");
-            const testsNamesRegex = testsToRun.map(t => `^${util.escapeStringForRegex(t)}\$`).join('|');
+            const superset = this.getTestNames() || [];
+            const testsNamesRegex = getMinimalRegexFragments(superset, testsToRun).join('|');
             ctestArgs.push(testsNamesRegex);
         }
 
@@ -613,7 +704,8 @@ export class CTestDriver implements vscode.Disposable {
 
                     run.started(test);
 
-                    const _ctestArgs = driver.ctestArgs.concat('-R', `^${util.escapeStringForRegex(test.id)}\$`);
+                    const superset = this.getTestNames() || [];
+                    const _ctestArgs = driver.ctestArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
 
                     const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, cancellation, customizedTask, consumer);
 
@@ -651,21 +743,21 @@ export class CTestDriver implements vscode.Disposable {
                 // then there may be a scenario when the user requested only a subset of tests to be ran.
                 // In this case, we should specifically use the -R flag to select the exact tests.
                 // Otherwise, we can leave it to the -T flag to run all tests.
+                let targetTests: vscode.TestItem[] | undefined;
                 if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
-                    uniqueCtestArgs.push("-R");
-                    const testsNamesRegex = driver.tests.map(t => {
-                        run.started(t);
-                        return `^${util.escapeStringForRegex(t.id)}\$`;
-                    }).join('|');
-                    uniqueCtestArgs.push(testsNamesRegex);
+                    targetTests = driver.tests;
                 } else if (testsToRun && testsToRun.length > 0) {
+                    targetTests = driver.tests.filter(t => testsToRun.includes(t.id));
+                }
+
+                if (targetTests) {
                     uniqueCtestArgs.push("-R");
-                    const tests = driver.tests.filter(t => testsToRun.includes(t.id));
-                    const testsNamesRegex = tests.map(t => {
+                    const superset = this.getTestNames() || [];
+                    const targets = targetTests.map(t => {
                         run.started(t);
-                        return `^${util.escapeStringForRegex(t.id)}\$`;
-                    }).join('|');
-                    uniqueCtestArgs.push(testsNamesRegex);
+                        return t.id;
+                    });
+                    uniqueCtestArgs.push(getMinimalRegexFragments(superset, targets).join('|'));
                 }
 
                 const testResults = await this.runCTestImpl(uniqueDriver, uniqueCtestPath, uniqueCtestArgs, cancellation, customizedTask, consumer);
@@ -1102,10 +1194,10 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
-     * Returns the executable path, arguments, and working directory for a given test name.
+     * Returns the executable path, arguments, working directory, and environment for a given test name.
      * Used by cmakeProject to auto-generate debug configurations without requiring launch.json.
      */
-    getTestInfo(testName: string): { program: string; args: string[]; workingDirectory: string } | undefined {
+    getTestInfo(testName: string): { program: string; args: string[]; workingDirectory: string; environment: { [key: string]: string } } | undefined {
         const program = this.testProgram(testName);
         if (!program) {
             return undefined;
@@ -1113,7 +1205,8 @@ export class CTestDriver implements vscode.Disposable {
         return {
             program,
             args: this.testArgs(testName),
-            workingDirectory: this.testWorkingDirectory(testName)
+            workingDirectory: this.testWorkingDirectory(testName),
+            environment: this.testEnvironment(testName)
         };
     }
 
@@ -1481,6 +1574,30 @@ export class CTestDriver implements vscode.Disposable {
         return [];
     }
 
+    /**
+     * Returns the ENVIRONMENT property from the CTest test properties for the given test.
+     * CTest stores environment as `["KEY=VALUE", ...]`; this returns `{ KEY: "VALUE", ... }`.
+     */
+    private testEnvironment(testName: string): { [key: string]: string } {
+        const env: { [key: string]: string } = {};
+        const property = this.tests?.tests
+            .find(test => test.name === testName)?.properties
+            .find(prop => prop.name === 'ENVIRONMENT');
+
+        if (property) {
+            const entries = Array.isArray(property.value) ? property.value : [property.value];
+            for (const entry of entries) {
+                const eqIndex = entry.indexOf('=');
+                if (eqIndex !== -1) {
+                    const name = entry.substring(0, eqIndex);
+                    const value = entry.substring(eqIndex + 1);
+                    env[name] = value;
+                }
+            }
+        }
+        return env;
+    }
+
     private replaceAllInObject<T>(obj: any, str: string, replace: string): T {
         const regex = new RegExp(util.escapeStringForRegex(str), 'g');
         if (util.isString(obj)) {
@@ -1530,6 +1647,25 @@ export class CTestDriver implements vscode.Disposable {
             return replace;
         }
         return orig;
+    }
+
+    /**
+     * Recursively replaces a string value that exactly matches `str` with an arbitrary replacement value.
+     * Used for replacing placeholders like `${cmake.testEnvironment}` with an array of objects.
+     */
+    private replaceValueInObject<T>(obj: any, str: string, replace: any): T {
+        if (util.isString(obj) && obj === str) {
+            return replace;
+        } else if (util.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+                obj[i] = this.replaceValueInObject(obj[i], str, replace);
+            }
+        } else if (typeof obj === 'object' && obj !== null) {
+            for (const key of Object.keys(obj)) {
+                obj[key] = this.replaceValueInObject(obj[key], str, replace);
+            }
+        }
+        return obj;
     }
 
     private getLaunchConfigs(workspaceFolder: vscode.WorkspaceFolder): ConfigItem[] {
@@ -1594,6 +1730,11 @@ export class CTestDriver implements vscode.Disposable {
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to replace the quotes as well.
         chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+
+        // Replace cmake.testEnvironment with the test's ENVIRONMENT property as an array of { name, value } objects.
+        const testEnv = this.testEnvironment(testName);
+        const testEnvArray = Object.entries(testEnv).map(([name, value]) => ({ name, value }));
+        chosenConfig.config = this.replaceValueInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testEnvironment}', testEnvArray);
 
         // Identify the session we started
         chosenConfig.config[magicKey] = magicValue;

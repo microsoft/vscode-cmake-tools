@@ -288,7 +288,9 @@ You can also construct launch.json configurations that allow you to debug tests 
 > These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
 
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
-the `args` field, and `cmake.testWorkingDirectory` for the `cwd` field.
+the `args` field, `cmake.testWorkingDirectory` for the `cwd` field, and `cmake.testEnvironment` for the `environment` field.
+
+`cmake.testEnvironment` resolves to the environment variables set via the CTest `ENVIRONMENT` test property (e.g., from `set_tests_properties(... PROPERTIES ENVIRONMENT "A=B;C=D")`). It is replaced with an array of `{ "name": "...", "value": "..." }` objects suitable for launch.json.
 
 A couple of examples:
 
@@ -303,6 +305,7 @@ A couple of examples:
     "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
+    "environment": "${cmake.testEnvironment}",
 }
 ```
 ### msvc
@@ -315,6 +318,7 @@ A couple of examples:
     // Resolved by CMake Tools:
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
+    "environment": "${cmake.testEnvironment}",
 }
 ```
 

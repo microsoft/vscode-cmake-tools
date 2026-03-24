@@ -70,7 +70,8 @@ export enum ConfigureType {
     Cache,
     ShowCommandOnly,
     NormalWithDebugger,
-    CleanWithDebugger
+    CleanWithDebugger,
+    FullClean
 }
 
 export enum ConfigureTrigger {
@@ -100,6 +101,8 @@ export enum ConfigureTrigger {
     commandCleanConfigureAll = "commandCleanConfigureAll",
     commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     projectOutlineCleanConfigureAllWithDebugger = "projectOutlineCleanConfigureAllWithDebugger",
+    commandFullCleanConfigure = "commandFullCleanConfigure",
+    commandFullCleanConfigureAll = "commandFullCleanConfigureAll",
     configureFailedConfigureWithDebuggerButton = "configureFailedConfigureWithDebuggerButton",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
@@ -1740,6 +1743,9 @@ export class CMakeProject {
                                         case ConfigureType.ShowCommandOnly:
                                             result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, undefined, false, true);
                                             break;
+                                        case ConfigureType.FullClean:
+                                            result = await drv.fullCleanConfigure(trigger, extraArgs, consumer, cancelInformation);
+                                            break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
                                             result = await this.configureInternal(trigger, extraArgs, ConfigureType.Normal);
@@ -1838,6 +1844,14 @@ export class CMakeProject {
      */
     cleanConfigureWithDebugger(trigger: ConfigureTrigger = ConfigureTrigger.api, debuggerInformation?: DebuggerInformation) {
         return this.configureInternal(trigger, [], ConfigureType.CleanWithDebugger, debuggerInformation);
+    }
+
+    /**
+     * Implementation of `cmake.fullCleanConfigure()`
+     * Removes the entire build directory contents before reconfiguring.
+     */
+    fullCleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api, cancellationToken?: vscode.CancellationToken) {
+        return this.configureInternal(trigger, [], ConfigureType.FullClean, undefined, cancellationToken);
     }
 
     /**
@@ -2507,6 +2521,14 @@ export class CMakeProject {
         return (await this.build()).exitCode;
     }
 
+    async fullCleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
+        const configureResult = (await this.fullCleanConfigure(trigger)).exitCode;
+        if (configureResult !== 0) {
+            return configureResult;
+        }
+        return (await this.build()).exitCode;
+    }
+
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
@@ -2639,7 +2661,10 @@ export class CMakeProject {
             debugConfig.cwd = testInfo.workingDirectory;
         }
 
-        const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
+        // Merge CTest ENVIRONMENT properties into the debug environment
+        const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
+        const combinedEnvVars = [...testEnvVars, ...(debugConfig.environment ?? [])];
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, combinedEnvVars);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);

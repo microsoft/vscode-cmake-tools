@@ -9,7 +9,7 @@
 	"generator.changed.restart.driver": "Der CMake-Treiber wird nach einer Generatoränderung neu gestartet.",
 	"preferredGenerator.changed.restart.driver": "Der CMake-Treiber wird nach einer preferredGenerators-Änderung neu gestartet.",
 	"bad.executable": "Ungültige ausführbare CMake-Datei: {0}. Stellen Sie sicher, dass sie installiert ist oder dass der Wert der {1}-Einstellung den richtigen Pfad enthält.",
-	"shell.changed.restart.driver": "Restarting the CMake driver after a shell change.",
+	"shell.changed.restart.driver": "Der CMake-Treiber wird nach einer Änderung der Shell neu gestartet.",
 	"targests.in.preset": "[Ziele in Voreinstellung]",
 	"constructing.cmakeproject": "Erstellen einer neuen CMakeProject-Instanz",
 	"disposing.driver": "CMake-Treiber wird verworfen",

@@ -49,7 +49,7 @@
 	"cmake.finished.returned.unserializable": "{0} 已完成 (傳回無法序列化的值)",
 	"loading.extension.commands": "正在載入延伸模組命令",
 	"register.command": "註冊 CMakeTools 延伸模組命令 {0}",
-	"bookmark.target.not.resolved": "Bookmark \"{0}\" could not be resolved to a target. The project may need to be reconfigured.",
+	"bookmark.target.not.resolved": "書籤「{0}」無法解析為目標。專案可能需要重新配置。",
 	"search.project.outline": "輸入搜尋字詞以篩選專案大綱",
 	"added.to": "已新增至",
 	"removed.from": "已移除自",

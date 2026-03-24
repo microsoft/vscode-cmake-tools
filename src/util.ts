@@ -280,43 +280,9 @@ export function product<T>(arrays: T[][]): T[][] {
         [[]] as T[][]);
 }
 
-export interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');  // There are more types, but we don't care ATM
-    value: string;
-}
-
-/**
- * Converts a given value to a CMake-compatible value.
- * The function determines the type of the input value and converts it to a corresponding CMakeValue object.
- * @param value The value to convert. It can be a string, boolean, number, string array, or CMakeValue.
- * @returns A CMakeValue object with the appropriate type and value.
- * @throws An error if the input value is invalid or cannot be converted to a CMakeValue.
- */
-export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
-    const ret: CMakeValue = {
-        type: 'UNKNOWN',
-        value: ''
-    };
-    if (value === true || value === false) {
-        ret.type = 'BOOL';
-        ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (isString(value)) {
-        ret.type = 'STRING';
-        ret.value = replaceAll(value, ';', '\\;');
-    } else if (typeof value === 'number') {
-        ret.type = 'STRING';
-        ret.value = value.toString();
-    } else if (value instanceof Array) {
-        ret.type = 'STRING';
-        ret.value = value.join(';');
-    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
-        ret.type = value.type;
-        ret.value = value.value;
-    } else {
-        throw new Error(localize('invalid.value', 'Invalid value to convert to cmake value: {0}', JSON.stringify(value)));
-    }
-    return ret;
-}
+// Re-export CMakeValue types and function from the pure module (no vscode dependency)
+// This allows backward compatibility for existing imports from @cmt/util
+export { CMakeValue, cmakeify } from '@cmt/cmakeValue';
 
 /**
  * Terminates a child process and its descendant processes.
