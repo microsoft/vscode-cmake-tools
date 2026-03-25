@@ -10,8 +10,8 @@ To set it up, build it once:
 
 ```bash
 cd tools/onboarding-mcp
-npm install
-npm run build
+yarn install
+yarn build
 ```
 
 Then open **Copilot Chat** in VS Code (`Ctrl+Shift+I`), switch to **Agent mode**, and ask anything — for example *"How do I set up this repo?"* or *"What's a good first issue?"*

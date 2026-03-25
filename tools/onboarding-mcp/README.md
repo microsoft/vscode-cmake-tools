@@ -6,8 +6,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that h
 
 ```bash
 cd tools/onboarding-mcp
-npm install   # or: yarn install
-npm run build # or: yarn build
+yarn install
+yarn build
 ```
 
 ## Wire it up in VS Code
@@ -29,7 +29,7 @@ Add the following to your **`.vscode/mcp.json`** at the workspace root:
 }
 ```
 
-The `GITHUB_TOKEN` env var is **optional** but recommended. Without it, GitHub API calls (used by Phase 3 tools) are limited to 60 requests/hour. With a token, the limit is 5,000/hour. You can create a personal access token at https://github.com/settings/tokens — no scopes are needed for public repos.
+The `GITHUB_TOKEN` env var is **optional** but recommended. Without it, GitHub API calls are limited to 60 requests/hour. With a token, the limit is 5,000/hour. You can create a personal access token at https://github.com/settings/tokens — no scopes are needed for public repos.
 
 Once configured, the MCP server is available to Copilot agent mode (and any other MCP client) in VS Code.
 
@@ -39,8 +39,8 @@ The MCP server works **inside GitHub Copilot Chat** in VS Code. There's nothing 
 
 ```bash
 cd tools/onboarding-mcp
-npm install
-npm run build
+yarn install
+yarn build
 ```
 
 Then open a **Copilot Chat** panel (press `Ctrl+Shift+I` or click the Copilot icon in the sidebar) and switch to **Agent mode** (the dropdown at the top of the chat panel). VS Code may show a notification asking you to start the MCP server — click **Start**.
@@ -79,13 +79,13 @@ Once it's running, just ask questions in natural language. Copilot will automati
 
 ```bash
 # Run the server in dev mode (uses tsx, no build step needed):
-npm run dev
+yarn dev
 
 # Build for production:
-npm run build
+yarn build
 
 # Run the production build:
-npm start
+yarn start
 ```
 
 ## Available tools
