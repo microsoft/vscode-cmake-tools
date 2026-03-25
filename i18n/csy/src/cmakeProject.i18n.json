@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "U starší verze ovladače už není podporované ladění cíle.",
 	"learn.more.button": "Další informace",
 	"failed.to.prepare.target": "Nepovedlo se připravit cíl spustitelného souboru s názvem {0}.",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "Ladit konfiguraci z mezipaměti: {0}",
 	"problem.getting.debug": "Došlo k problému při načítání konfigurace ladění z mezipaměti.",
 	"starting.debugger.with": "Spouští se ladicí program s následující konfigurací.",

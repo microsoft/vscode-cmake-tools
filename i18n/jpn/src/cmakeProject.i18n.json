@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "ターゲットのデバッグは、レガシ ドライバーではサポートされなくなりました",
 	"learn.more.button": "詳細情報",
 	"failed.to.prepare.target": "{0} という名前の実行可能ファイルのターゲットを準備できませんでした",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "キャッシュから構成をデバッグする: {0}",
 	"problem.getting.debug": "キャッシュからのデバッグ構成の取得で問題が発生しました。",
 	"starting.debugger.with": "次の構成でデバッガーを開始しています。",

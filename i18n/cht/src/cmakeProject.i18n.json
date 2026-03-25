@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "舊版驅動程式已不再支援目標偵錯",
 	"learn.more.button": "深入了解",
 	"failed.to.prepare.target": "無法準備名稱為 {0} 的可執行目標",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "快取中的偵錯組態: {0}",
 	"problem.getting.debug": "取得快取中的偵錯組態時發生問題。",
 	"starting.debugger.with": "正在使用下列組態啟動偵錯工具。",

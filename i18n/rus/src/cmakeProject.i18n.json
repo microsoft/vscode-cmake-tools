@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "Отладка целевых объектов с устаревшим драйвером больше не поддерживается.",
 	"learn.more.button": "Дополнительные сведения",
 	"failed.to.prepare.target": "Не удалось подготовить исполняемый целевой объект с именем {0}",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "Конфигурация отладки из кэша: {0}",
 	"problem.getting.debug": "Возникла проблема при получении конфигурации отладки из кэша.",
 	"starting.debugger.with": "Запуск отладчика со следующей конфигурацией.",
