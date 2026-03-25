@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "Debugowanie elementu docelowego nie jest już obsługiwane w przypadku starszego sterownika",
 	"learn.more.button": "Dowiedz się więcej",
 	"failed.to.prepare.target": "Nie można przygotować docelowego pliku wykonywalnego o nazwie {0}",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "Debuguj konfigurację z pamięci podręcznej: {0}",
 	"problem.getting.debug": "Wystąpił problem podczas pobierania konfiguracji debugowania z pamięci podręcznej.",
 	"starting.debugger.with": "Uruchamianie debugera z następującą konfiguracją.",

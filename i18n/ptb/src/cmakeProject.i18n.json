@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "Não há mais suporte para depuração de destino com o driver herdado",
 	"learn.more.button": "Saiba mais",
 	"failed.to.prepare.target": "Falha ao preparar o destino executável com o nome {0}",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "Depurar configuração do cache: {0}",
 	"problem.getting.debug": "Problema ao obter a configuração de depuração do cache.",
 	"starting.debugger.with": "Iniciando o depurador com a configuração a seguir.",

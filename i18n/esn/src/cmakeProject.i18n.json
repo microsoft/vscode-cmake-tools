@@ -168,6 +168,7 @@
 	"target.debugging.unsupported": "La depuración de destino ya no se admite con el controlador heredado.",
 	"learn.more.button": "Más información",
 	"failed.to.prepare.target": "No se pudo preparar el destino ejecutable con el nombre {0}.",
+	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
 	"debug.configuration.from.cache": "Configuración de depuración de la memoria caché: {0}",
 	"problem.getting.debug": "Problema al obtener la configuración de depuración de la memoria caché.",
 	"starting.debugger.with": "Iniciando el depurador con la configuración siguiente.",
