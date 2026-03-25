@@ -2,6 +2,22 @@
 
 This article is for developers who want to contribute to the CMake Tools open source project.
 
+## New here? Try the onboarding assistant
+
+This repo includes an MCP server that gives GitHub Copilot structured knowledge about the codebase. It can walk you through setup, explain concepts like kits and presets, point you to the right source files, and help you find issues to work on.
+
+To set it up, build it once:
+
+```bash
+cd tools/onboarding-mcp
+npm install
+npm run build
+```
+
+Then open **Copilot Chat** in VS Code (`Ctrl+Shift+I`), switch to **Agent mode**, and ask anything — for example *"How do I set up this repo?"* or *"What's a good first issue?"*
+
+See [`tools/onboarding-mcp/README.md`](tools/onboarding-mcp/README.md) for full details and example prompts.
+
 ## Build the CMake Tools extension
 
 As with most VS Code extensions, you'll need [Node.JS](https://nodejs.org/en/) installed. We use yarn to compile the code (run `npm install -g yarn` to install it).

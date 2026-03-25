@@ -33,6 +33,48 @@ The `GITHUB_TOKEN` env var is **optional** but recommended. Without it, GitHub A
 
 Once configured, the MCP server is available to Copilot agent mode (and any other MCP client) in VS Code.
 
+## Usage
+
+The MCP server works **inside GitHub Copilot Chat** in VS Code. There's nothing extra to install — the `.vscode/mcp.json` in this repo already registers the server. Just build it and go:
+
+```bash
+cd tools/onboarding-mcp
+npm install
+npm run build
+```
+
+Then open a **Copilot Chat** panel (press `Ctrl+Shift+I` or click the Copilot icon in the sidebar) and switch to **Agent mode** (the dropdown at the top of the chat panel). VS Code may show a notification asking you to start the MCP server — click **Start**.
+
+Once it's running, just ask questions in natural language. Copilot will automatically call the right tools. Here are some things you can try:
+
+### Getting started
+- *"How do I set up this repo for local development?"*
+- *"Walk me through building and running the extension."*
+
+### Understanding the codebase
+- *"What is a kit? How is it different from a preset?"*
+- *"Explain how the CMake driver works."*
+- *"Where is the code that handles CTest?"*
+- *"Which source file should I look at for build logic?"*
+
+### Finding documentation
+- *"Show me the docs page about CMake Presets."*
+- *"Where can I find troubleshooting info?"*
+
+### Exploring issues to work on
+- *"What are some good issues for a new contributor?"*
+- *"Show me recent open issues labeled 'enhancement'."*
+
+### Understanding recent activity
+- *"What areas of the codebase have changed recently?"*
+- *"Show me the last 5 commits to main."*
+
+### Preparing a PR
+- *"I changed the preset loading logic and added a new setting. Is my PR ready?"*
+- *"What do I need to check before submitting a PR?"*
+
+> **Tip:** You don't need to name the tools or remember their inputs. Just describe what you need and Copilot will figure out which tool to call.
+
 ## Development
 
 ```bash
