@@ -225,3 +225,71 @@ export function findSourceEntries(feature: string): Array<SourceEntry & { matchC
 
     return scored;
 }
+
+/**
+ * Given a text string (e.g. a commit message), return the area names that match.
+ * An "area" is derived from the first keyword of each SourceEntry.
+ * Returns deduplicated area names, or ["general"] if nothing matched.
+ *
+ * Uses stricter matching than the interactive `findSourceEntries`:
+ * - Multi-word keywords (e.g. "file api", "cmake driver") match as exact substrings.
+ * - Single-word keywords only match if they appear as whole words (word-boundary match)
+ *   AND are specific enough (> 4 chars) to avoid false positives from common English words
+ *   like "build", "test", "debug" that appear in most commit messages.
+ * - File-path-like patterns (e.g. "ctest.ts", "kitsController") are always high-signal.
+ */
+export function matchAreas(text: string): string[] {
+    const lower = text.toLowerCase();
+
+    // Very short common keywords that cause false positives in commit messages.
+    // These only match when they appear near a file path or as a standalone technical term.
+    const overlyGeneric = new Set([
+        "build", "compile", "test", "debug", "launch", "log", "error",
+        "warning", "status", "state", "config", "setting", "settings",
+        "configure", "configuration", "package", "query", "reply", "ui"
+    ]);
+
+    const matched = new Set<string>();
+    for (const entry of sourceMap) {
+        const areaName = entry.keywords[0];
+        let found = false;
+
+        for (const keyword of entry.keywords) {
+            const kw = keyword.toLowerCase();
+
+            if (kw.includes(" ")) {
+                // Multi-word keyword: exact substring match — high confidence
+                if (lower.includes(kw)) {
+                    found = true;
+                    break;
+                }
+            } else if (!overlyGeneric.has(kw)) {
+                // Specific single-word keyword: word-boundary match
+                const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+                if (re.test(lower)) {
+                    found = true;
+                    break;
+                }
+            }
+            // overlyGeneric single-word keywords are skipped unless they're part
+            // of a multi-word keyword that matched above.
+        }
+
+        // Also check if any file paths from this entry appear in the text
+        if (!found) {
+            for (const file of entry.files) {
+                const filename = file.path.split("/").pop()?.toLowerCase() ?? "";
+                if (filename && lower.includes(filename)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (found) {
+            matched.add(areaName);
+        }
+    }
+
+    return matched.size > 0 ? [...matched] : ["general"];
+}

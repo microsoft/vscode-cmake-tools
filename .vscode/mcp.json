@@ -3,7 +3,10 @@
         "cmake-tools-onboarding": {
             "type": "stdio",
             "command": "node",
-            "args": ["${workspaceFolder}/tools/onboarding-mcp/dist/index.js"]
+            "args": ["${workspaceFolder}/tools/onboarding-mcp/dist/index.js"],
+            "env": {
+                "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+            }
         }
     }
 }
