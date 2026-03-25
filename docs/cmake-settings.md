@@ -34,7 +34,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.cpackArgs` | An array of additional arguments to pass to cpack. | `[]` | yes |
 | `cmake.cpackEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when running cpack. | `{}` | yes |
 | `cmake.cpackPath` | Path to cpack executable. | `null` | no |
-| `cmake.ctest.allowParallelJobs` | If `true`, allow running test jobs in parallel. | `false` | no |
+| `cmake.ctest.allowParallelJobs` | If `true`, allow running test jobs in parallel. When `false`, tests run sequentially in alphabetical order, matching the Test Explorer display order. | `false` | no |
 | `cmake.ctest.debugLaunchTarget` | Target to debug during CTest execution. | `null` | no |
 | `cmake.ctest.parallelJobs` | Specify the number of jobs to run in parallel for ctest. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable test parallelism. | `0` | no |
 | `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. | `true` | no |
