@@ -12,7 +12,7 @@ yarn build
 
 ## Wire it up in VS Code
 
-Add the following to your **`.vscode/mcp.json`** at the workspace root:
+Create (or add to) **`.vscode/mcp.json`** at the workspace root:
 
 ```json
 {
@@ -35,7 +35,7 @@ Once configured, the MCP server is available to Copilot agent mode (and any othe
 
 ## Usage
 
-The MCP server works **inside GitHub Copilot Chat** in VS Code. There's nothing extra to install — the `.vscode/mcp.json` in this repo already registers the server. Just build it and go:
+The MCP server works **inside GitHub Copilot Chat** in VS Code. After building and wiring it up (see [above](#wire-it-up-in-vs-code)), just open Copilot Chat and go:
 
 ```bash
 cd tools/onboarding-mcp
