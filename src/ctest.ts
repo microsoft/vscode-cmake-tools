@@ -696,6 +696,8 @@ export class CTestDriver implements vscode.Disposable {
 
         if (!this.ws.config.ctestAllowParallelJobs) {
             for (const driver of driverMap.values()) {
+                // Sort tests alphabetically by label to match the Test Explorer display order.
+                driver.tests.sort((a, b) => (a.label).localeCompare(b.label));
                 for (const test of driver.tests) {
                     if (cancellation && cancellation.isCancellationRequested) {
                         run.skipped(test);
