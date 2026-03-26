@@ -553,6 +553,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // shell intermediary — args are passed as an array straight to child_process.spawn.
         const writeEmitter = new vscode.EventEmitter<string>();
         const closeEmitter = new vscode.EventEmitter<number>();
+        let activeProcess: proc.Subprocess | undefined;
 
         const pty: vscode.Pseudoterminal = {
             onDidWrite: writeEmitter.event,
@@ -561,11 +562,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 const executable = args[0];
                 const execArgs = args.slice(1);
                 writeEmitter.fire(proc.buildCmdStr(executable, execArgs) + '\r\n');
-                const subprocess = proc.execute(executable, execArgs, {
+                activeProcess = proc.execute(executable, execArgs, {
                     output: (line: string) => writeEmitter.fire(line + '\r\n'),
                     error: (line: string) => writeEmitter.fire(line + '\r\n')
                 }, { cwd: cmd.directory, environment: env });
-                subprocess.result.then(result => {
+                activeProcess.result.then(result => {
+                    activeProcess = undefined;
                     const retc = result.retc ?? 0;
                     if (retc !== 0) {
                         writeEmitter.fire(localize('compile.finished.with.error',
@@ -576,11 +578,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                     closeEmitter.fire(retc);
                 }, (e: any) => {
+                    activeProcess = undefined;
                     writeEmitter.fire((e?.message ?? String(e)) + '\r\n');
                     closeEmitter.fire(-1);
                 });
             },
-            close: () => { /* no-op: proc.execute result is already awaited */ }
+            close: () => {
+                // Terminate the compiler process if the user closes the terminal
+                // while compilation is still running, to avoid orphaned processes.
+                if (activeProcess?.child) {
+                    void util.termProc(activeProcess.child);
+                    activeProcess = undefined;
+                }
+            }
         };
 
         const term = vscode.window.createTerminal({
