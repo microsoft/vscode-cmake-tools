@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Add support for CMake Presets version 11 (added in CMake 4.3). In test presets, the `execution.jobs` field can now be an empty string, equivalent to passing `--parallel` with no value.
 - Allow specifying a custom debug adapter type in `cmake.debugConfig` via the `type` property. When set, automatic debugger detection is skipped and any debug adapter (e.g., `codelldb`, `lldb`) can be used with arbitrary configuration properties. [#4818](https://github.com/microsoft/vscode-cmake-tools/pull/4818)
 - Add `${cmake.testEnvironment}` placeholder for launch.json that resolves to the CTest `ENVIRONMENT` test property, and automatically include CTest environment variables when debugging tests without a launch configuration. [#4572](https://github.com/microsoft/vscode-cmake-tools/issues/4572) [#4821](https://github.com/microsoft/vscode-cmake-tools/pull/4821)
 - Add "Delete Build Directory and Reconfigure" command that removes the entire build directory before reconfiguring, ensuring a completely clean state. [#4826](https://github.com/microsoft/vscode-cmake-tools/pull/4826)
