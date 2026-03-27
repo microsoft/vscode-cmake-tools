@@ -148,6 +148,26 @@ You can specify the name of a compiler on your `PATH` instance or an environment
 
 When you build with the Visual C++ toolset, CMake Tools automatically sources the environment from the latest version of the Visual Studio Build Tools installed on your system. You can specify a compiler version with the `toolset` option in `CMakePresets.json`. For more information, see [Configure Presets and Toolset Selection](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html).
 
+CMake Tools can detect the need for the VS Developer Environment from several signals in your preset. You do **not** need to explicitly set `CMAKE_CXX_COMPILER` to `cl` if any of the following are true:
+
+- Your preset uses a **Visual Studio generator** (e.g. `"generator": "Visual Studio 17 2022"`)
+- Your preset specifies `"toolset": { "strategy": "external" }` (which means the IDE should set up the environment)
+- Your preset specifies `"architecture": { "strategy": "external" }`
+
+For example, a Ninja preset that relies on MSVC can use `strategy: "external"` without setting compilers explicitly:
+
+```json
+"generator": "Ninja",
+"architecture": {
+   "value": "x64",
+   "strategy": "external"
+},
+"toolset": {
+   "value": "v143",
+   "strategy": "external"
+}
+```
+
 A preset that builds for 64-bit Windows with `cl.exe` and a Visual Studio Generator might set compilers like this:
 
 ```json
