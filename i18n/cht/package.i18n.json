@@ -120,7 +120,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可執行檔的路徑。若為 null，將會從 cmake.cmakePath 推斷 (建議保留 null)。",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack 可執行檔的路徑。如果為 null，將從 cmake.cmakePath 推斷 (建議保留 null)。當使用套件而不是預設時，將被略過。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "平行測試工作的數量。使用零以使用 `#cmake.parallelJobs#` 的值。這僅適用於 `#cmake.ctest.allowParallelJobs#` 設定為 `true` 的情况。",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "允許 ctest 平行執行，但結果輸出可能因此而出現亂碼，且測試總管可能無法精確反映測試進度。",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress. When disabled, tests run sequentially in alphabetical order, matching the Test Explorer display order.",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "是否已啟用與測試總管的整合。如果您偏好使用不同的延伸模組進行測試整合，這有助於停用。",
 	"cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription": "選擇性分隔符號，用來在測試總管中以階層方式分隔測試套件名稱和群組測試。此字串用於規則運算式，因此某些分隔符號可能需要逸出。範例：`-` (一個分隔符號：`-`)、`\\.|::` (兩個分隔符號：`.` 或 `::`。請注意，`.` 必須逸出。)",
 	"cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription": "分隔符號可用來分割測試名稱的次數上限。`0` 表示沒有限制。",

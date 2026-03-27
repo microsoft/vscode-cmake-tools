@@ -168,7 +168,7 @@
 	"target.debugging.unsupported": "旧驱动程序不再支持目标调试",
 	"learn.more.button": "了解详细信息",
 	"failed.to.prepare.target": "无法准备名称为 {0} 的可执行目标",
-	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
+	"debug.configuration.from.settings": "从用户设置中调试配置: {0}",
 	"debug.configuration.from.cache": "从缓存调试配置: {0}",
 	"problem.getting.debug": "从缓存获取调试配置时出现问题。",
 	"starting.debugger.with": "正在使用以下配置启动调试程序。",

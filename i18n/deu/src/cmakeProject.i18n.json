@@ -168,7 +168,7 @@
 	"target.debugging.unsupported": "Das Zieldebuggen wird mit dem Legacytreiber nicht mehr unterstützt.",
 	"learn.more.button": "Weitere Informationen",
 	"failed.to.prepare.target": "Fehler beim Vorbereiten des ausführbaren Ziels namens {0}",
-	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
+	"debug.configuration.from.settings": "Debuggen der Konfiguration über Benutzereinstellungen: {0}",
 	"debug.configuration.from.cache": "Konfiguration aus Cache debuggen: {0}",
 	"problem.getting.debug": "Problem beim Abrufen der Debugkonfiguration aus dem Cache.",
 	"starting.debugger.with": "Der Debugger wird mit der folgenden Konfiguration gestartet.",
