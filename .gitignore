@@ -21,6 +21,7 @@ test.txt
 *.log
 *.vsix
 **/.vscode/CMakeTools
+.vscode/mcp.json
 **/nls.*.json
 **/*.nls.json
 **/*.nls.*.json
