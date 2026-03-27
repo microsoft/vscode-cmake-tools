@@ -154,7 +154,7 @@ export class PresetsParser {
             )
         );
         let schemaFile;
-        const maxSupportedVersion = 10;
+        const maxSupportedVersion = 11;
         const validationErrorsAreWarnings =
             presetsFile.version > maxSupportedVersion &&
             allowUnsupportedPresetsVersions;
@@ -176,8 +176,11 @@ export class PresetsParser {
         } else if (presetsFile.version === 8 || presetsFile.version === 9) {
             // This can be used for v9 as well, there is no schema difference.
             schemaFile = "./schemas/CMakePresets-v8-schema.json";
-        } else {
+        } else if (presetsFile.version === 10) {
             schemaFile = "./schemas/CMakePresets-v10-schema.json";
+        } else {
+            // v11+
+            schemaFile = "./schemas/CMakePresets-v11-schema.json";
         }
 
         const validator = await loadSchema(schemaFile);
