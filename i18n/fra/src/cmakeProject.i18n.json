@@ -168,7 +168,7 @@
 	"target.debugging.unsupported": "Le débogage cible n'est plus pris en charge avec le pilote hérité",
 	"learn.more.button": "En savoir plus",
 	"failed.to.prepare.target": "Échec de la préparation de la cible exécutable nommée {0}",
-	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
+	"debug.configuration.from.settings": "Configuration de débogage depuis les paramètres utilisateur : {0}",
 	"debug.configuration.from.cache": "Configuration Debug du cache : {0}",
 	"problem.getting.debug": "Problème durant l'obtention de la configuration Debug à partir du cache.",
 	"starting.debugger.with": "Démarrage du débogueur avec la configuration suivante.",
