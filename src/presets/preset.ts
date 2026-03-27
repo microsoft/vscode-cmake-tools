@@ -256,7 +256,15 @@ export interface TestPresetPrivate {
     __generator?: string; // Getting this from the config preset
 }
 
-export interface TestPreset extends api.TestPreset, TestPresetPrivate, PresetPrivate {}
+// v11+: execution.jobs can be an empty string (--parallel with no value).
+// Widen the type from the API's number to number | string.
+export interface TestExecutionOptions extends Omit<api.ExecutionOptions, 'jobs'> {
+    jobs?: number | string;
+}
+
+export interface TestPreset extends Omit<api.TestPreset, 'execution'>, TestPresetPrivate, PresetPrivate {
+    execution?: TestExecutionOptions;
+}
 
 export interface PackagePresetPrivate {
     __binaryDir?: string; // Getting this from the config preset
@@ -2299,12 +2307,10 @@ export function testArgs(preset: TestPreset): string[] {
         preset.execution.enableFailover && result.push('-F');
         if (preset.execution.jobs !== undefined) {
             // v11+: jobs can be an empty string meaning --parallel with no value (auto-detect).
-            // The API type says number, but JSON parsing may produce a string at runtime.
-            const jobsValue = preset.execution.jobs as number | string;
-            if (typeof jobsValue === 'string' && jobsValue.length === 0) {
+            if (preset.execution.jobs === '') {
                 result.push('--parallel');
             } else {
-                result.push('--parallel', jobsValue.toString());
+                result.push('--parallel', preset.execution.jobs.toString());
             }
         }
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
