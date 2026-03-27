@@ -4225,11 +4225,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       }
     ]
   },
