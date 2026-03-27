@@ -21,6 +21,7 @@ Features:
 - Support string arrays in kit `cmakeSettings` to pass CMake lists without escaping semicolons (e.g., `"LLVM_ENABLE_PROJECTS": ["clang", "lld"]`). [#4503](https://github.com/microsoft/vscode-cmake-tools/issues/4503)
 
 Improvements:
+- Add `cmake.outlineViewType` setting to control the Project Outline View layout. Set to `list` (default) for the existing flat view grouped by the CMake `FOLDER` property, or `tree` for a hierarchical view based on source directory structure. [#3799](https://github.com/microsoft/vscode-cmake-tools/issues/3799)
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
 - Clicking on a CTest in the Project Outline now navigates to the test source file, matching the existing Test Explorer behavior. [#4773](https://github.com/microsoft/vscode-cmake-tools/issues/4773)
