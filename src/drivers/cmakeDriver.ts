@@ -8,7 +8,6 @@ import * as lodash from "lodash";
 
 import { CMakeExecutable } from '@cmt/cmakeExecutable';
 import * as codepages from '@cmt/codePageTable';
-import * as shlex from '@cmt/shlex';
 import { ConfigureCancelInformation, ConfigureTrigger, DiagnosticsConfiguration } from "@cmt/cmakeProject";
 import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
@@ -240,17 +239,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         private readonly usingFileApi: boolean = false
     ) {
         this.sourceDir = this.sourceDirUnexpanded;
-        // We have a cache of file-compilation terminals. Wipe them out when the
-        // user closes those terminals.
-        vscode.window.onDidCloseTerminal(closed => {
-            for (const [key, term] of this._compileTerms) {
-                if (term === closed) {
-                    log.debug(localize('user.closed.file.compilation.terminal', 'User closed a file compilation terminal'));
-                    this._compileTerms.delete(key);
-                    break;
-                }
-            }
-        });
     }
 
     /**
@@ -275,9 +263,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     dispose() {
         log.debug(localize('disposing.base.cmakedriver', 'Disposing base CMakeDriver'));
-        for (const term of this._compileTerms.values()) {
-            term.dispose();
-        }
         for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._packArgsSub, this._generalEnvSub]) {
             sub.dispose();
         }
@@ -536,18 +521,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
-     * File compilation terminals. This is a map, rather than a single terminal
-     * instance for two reasons:
-     *
-     * 1. Different compile commands may require different environment variables.
-     * 2. Different compile commands may require different working directories.
-     *
-     * The key of each terminal is generated deterministically in `runCompileCommand()`
-     * based on the CWD and environment of the compile command.
-     */
-    private readonly _compileTerms = new Map<string, vscode.Terminal>();
-
-    /**
      * Launch the given compilation command in an embedded terminal.
      * @param cmd The compilation command from a compilation database to run
      */
@@ -555,44 +528,77 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const env = await this.getCMakeBuildCommandEnvironment();
 
         if (this.useCMakePresets && this._buildPreset && checkBuildOverridesPresent(this.config)) {
-            log.info(localize('compile.with.overrides', 'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.', this._buildPreset.displayName ?? this._buildPreset.name));
+            log.info(localize('compile.with.overrides',
+                'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.',
+                this._buildPreset.displayName ?? this._buildPreset.name));
         }
 
-        const key = `${cmd.directory}${JSON.stringify(env)}`;
-        let existing = this._compileTerms.get(key);
-        if (existing && this.config.clearOutputBeforeBuild) {
-            this._compileTerms.delete(key);
-            existing.dispose();
-            existing = undefined;
-        }
-        if (!existing) {
-            const shellPath = this.config.shell ?? (process.platform === 'win32' ? 'cmd.exe' : undefined);
+        const args = cmd.arguments;
+        if (!args || args.length === 0) {
+            // Fallback: no structured args available — send the raw command string via terminal.
+            // This path should never be reached because CompilationDatabase always populates arguments.
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,
-                env,
-                shellPath
+                env
             });
-            this._compileTerms.set(key, term);
-            existing = term;
+            term.show();
+            term.sendText(cmd.command, true);
+            return term;
         }
-        existing.show();
-        // Send the command and arguments individually to avoid terminal buffer truncation
-        // issues with long command lines (see https://github.com/microsoft/vscode/issues/233420).
-        // The arguments array is always populated by CompilationDatabase, either from the
-        // compile_commands.json or by parsing the command string.
-        const args = cmd.arguments;
-        if (args && args.length > 0) {
-            existing.sendText(shlex.quote(args[0]), false);
-            for (let i = 1; i < args.length; i++) {
-                existing.sendText(` ${shlex.quote(args[i])}`, false);
+
+        // Spawn the compiler directly via proc.execute() to avoid the PTY 4096-byte
+        // input-buffer truncation bug (https://github.com/microsoft/vscode-cmake-tools/issues/4836).
+        // We open a Pseudoterminal so output appears in the Terminal panel without any
+        // shell intermediary — args are passed as an array straight to child_process.spawn.
+        const writeEmitter = new vscode.EventEmitter<string>();
+        const closeEmitter = new vscode.EventEmitter<number>();
+        let activeProcess: proc.Subprocess | undefined;
+
+        const pty: vscode.Pseudoterminal = {
+            onDidWrite: writeEmitter.event,
+            onDidClose: closeEmitter.event,
+            open: () => {
+                const executable = args[0];
+                const execArgs = args.slice(1);
+                writeEmitter.fire(proc.buildCmdStr(executable, execArgs) + '\r\n');
+                activeProcess = proc.execute(executable, execArgs, {
+                    output: (line: string) => writeEmitter.fire(line + '\r\n'),
+                    error: (line: string) => writeEmitter.fire(line + '\r\n')
+                }, { cwd: cmd.directory, environment: env });
+                activeProcess.result.then(result => {
+                    activeProcess = undefined;
+                    const retc = result.retc ?? 0;
+                    if (retc !== 0) {
+                        writeEmitter.fire(localize('compile.finished.with.error',
+                            'Compilation finished with error(s).') + '\r\n');
+                    } else {
+                        writeEmitter.fire(localize('compile.finished.successfully',
+                            'Compilation finished successfully.') + '\r\n');
+                    }
+                    closeEmitter.fire(retc);
+                }, (e: any) => {
+                    activeProcess = undefined;
+                    writeEmitter.fire((e?.message ?? String(e)) + '\r\n');
+                    closeEmitter.fire(-1);
+                });
+            },
+            close: () => {
+                // Terminate the compiler process if the user closes the terminal
+                // while compilation is still running, to avoid orphaned processes.
+                if (activeProcess?.child) {
+                    void util.termProc(activeProcess.child);
+                    activeProcess = undefined;
+                }
             }
-            existing.sendText('', true); // Send newline to execute the command
-        } else {
-            // Fallback to original behavior if arguments not available
-            existing.sendText(cmd.command + '\r\n');
-        }
-        return existing;
+        };
+
+        const term = vscode.window.createTerminal({
+            name: localize('file.compilation', 'File Compilation'),
+            pty
+        });
+        term.show();
+        return term;
     }
 
     /**
