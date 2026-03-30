@@ -120,7 +120,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可执行文件的路径。如果为 null，则从 cmake.cmakePath 推理(建议保留为 null)。",
 	"cmake-tools.configuration.cmake.cpackPath.description": "CPack 可执行文件的路径。如果为 null，则将根据 cmake.cmakePath 推断(建议保留为 null)。当使用工具包而不是预设时，将会忽略。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.markdownDescription": "并行测试作业的数量。使用零可以使用 `#cmake.parallelJobs#` 的值。这仅适用于 `#cmake.ctest.allowParallelJobs#` 设置为 `true` 的情况。",
-	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress. When disabled, tests run sequentially in alphabetical order, matching the Test Explorer display order.",
+	"cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "允许并行运行 ctest，但结果输出可能会因此而乱码，并且测试资源管理器可能无法准确地反映测试进度。禁用后，测试将按字母顺序依次运行，与测试资源管理器的显示顺序相匹配。",
 	"cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "是否启用与测试资源管理器的集成。如果希望使用其他扩展进行测试集成，这有助于禁用。",
 	"cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription": "可选分隔符，用于在测试资源管理器中以分层方式分隔测试套件名称和组合测试。此字符串用于正则表达式，因此某些分隔符可能需要转义。示例: `-` (一个分隔符: `-`)，`\\.|::` (两个分隔符: `.` 或 `::`。请注意，需要对 `.` 进行转义。)",
 	"cmake-tools.configuration.cmake.ctest.testSuiteDelimiterMaxOccurrence.markdownDescription": "分隔符可用于拆分测试名称的最大次数。`0` 表示无限制。",

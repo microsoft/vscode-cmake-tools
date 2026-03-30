@@ -168,7 +168,7 @@
 	"target.debugging.unsupported": "Hedef hata ayıklama artık eski sürücüyle desteklenmiyor",
 	"learn.more.button": "Daha fazla bilgi",
 	"failed.to.prepare.target": "{0} adlı yürütülebilir hedef hazırlanamadı",
-	"debug.configuration.from.settings": "Debug configuration from user settings: {0}",
+	"debug.configuration.from.settings": "Kullanıcı ayarlarından hata ayıklama yapılandırması: {0}",
 	"debug.configuration.from.cache": "Önbellekteki yapılandırmada hata ayıkla: {0}",
 	"problem.getting.debug": "Önbellekten hata ayıklama yapılandırması alınırken sorun oluştu.",
 	"starting.debugger.with": "Hata ayıklayıcı şu yapılandırmayla başlatılıyor.",
