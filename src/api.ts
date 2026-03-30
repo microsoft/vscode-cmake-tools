@@ -98,9 +98,7 @@ class CMakeProjectWrapper implements api.Project {
 
     get testPreset() {
         logApiTelemetry('getTestPreset');
-        // Cast: internal TestPreset widens execution.jobs to number | string (v11+),
-        // but the external API still exposes the narrower number type.
-        return this.project.testPreset as api.TestPreset | null ?? undefined;
+        return this.project.testPreset ?? undefined;
     }
 
     get packagePreset() {
