@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 // @ts-check
-import { readFileSync } from 'fs';
-import { execSync } from 'child_process';
-import { relative, resolve } from 'path';
+import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { execSync, spawnSync } from 'child_process';
+import { relative, resolve, join } from 'path';
+import { tmpdir } from 'os';
 
 const THRESHOLD = Number(process.env.THRESHOLD ?? 60);
 const SUMMARY_PATH = 'coverage/coverage-summary.json';
 const REPO = process.env.GITHUB_REPOSITORY;     // e.g. "microsoft/vscode-cmake-tools"
+
+if (!REPO) {
+    console.error('GITHUB_REPOSITORY is not set — are you running outside GitHub Actions?');
+    process.exit(1);
+}
+
 const RUN_URL = `https://github.com/${REPO}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 
 // ── 1. Read Istanbul JSON summary ────────────────────────────────────────────
@@ -53,15 +60,12 @@ if (belowThreshold.length === 0 && totalLines >= THRESHOLD) {
 }
 
 // ── 3. Check for existing open coverage issue (avoid duplicates) ─────────────
+let existingIssueNumber = null;
 try {
-    const existing = execSync(
+    existingIssueNumber = execSync(
         `gh issue list --repo ${REPO} --label test-coverage --state open --json number --jq '.[0].number'`,
         { encoding: 'utf8' }
-    ).trim();
-    if (existing) {
-        console.log(`\n⏭️  Open coverage issue already exists: #${existing} — skipping.`);
-        process.exit(0);
-    }
+    ).trim() || null;
 } catch {
     // gh CLI may fail if label doesn't exist yet — continue to create
 }
@@ -78,6 +82,11 @@ const fileList = belowThreshold
     .slice(0, 20)
     .map(f => `- \`${f.file}\` — ${f.linePct}% line coverage`)
     .join('\n');
+
+const remainingCount = belowThreshold.length - Math.min(belowThreshold.length, 20);
+const remainingNote = remainingCount > 0
+    ? `\n\n> **${remainingCount} additional files** are also below threshold. They will appear here once the files above improve.`
+    : '';
 
 const issueBody = `\
 ## Coverage below ${THRESHOLD}% threshold
@@ -108,14 +117,13 @@ ${fileList}
 For each file:
 1. Read the source file fully before writing any test
 2. Identify the module's exported API surface
-3. Write tests in \`test/unit-tests/\` that cover the uncovered branches
+3. Write tests in \`test/unit-tests/backend/\` that cover the uncovered branches
 4. Run the self-audit steps from \`copilot-test-coverage.md\`
 5. Only open the PR after every self-audit step passes
 
 ### Self-audit checklist (must be checked before opening PR)
 
 - [ ] \`yarn backendTests\` passes with no new failures
-- [ ] \`yarn unitTests\` passes with no new failures
 - [ ] Each file listed above improved by ≥ 10 percentage points OR reached ≥ ${THRESHOLD}% line coverage
 - [ ] No test uses \`assert.ok(true)\` or is an empty stub
 - [ ] Test names describe behavior: \`'expandString handles undefined variable'\` not \`'test 1'\`
@@ -125,9 +133,20 @@ For each file:
 - [ ] \`yarn lint\` passes
 - [ ] \`CHANGELOG.md\` has an entry under \`Improvements:\`
 
+### Scope and testability
+
+Coverage is collected only from \`yarn backendTests\` (\`test/unit-tests/backend/\`).
+New tests **must** go in \`test/unit-tests/backend/\` and run in plain Node.js (no VS Code host).
+
+- If a \`src/\` file can be imported directly (no \`vscode\` dependency at import time), write backend tests for it.
+- If a file deeply depends on \`vscode\` APIs (e.g., \`extension.ts\`, \`projectController.ts\`, UI modules), **skip it** — add a comment in the PR noting it needs integration-test coverage instead.
+- Pure logic modules (\`expand.ts\`, \`shlex.ts\`, \`cache.ts\`, \`diagnostics/\`, \`preset.ts\`) are ideal targets.
+${remainingNote}
+
 ### Constraints
 
-- Tests go in \`test/unit-tests/\` — use Mocha \`suite\`/\`test\` with \`assert\`
+- Tests go in \`test/unit-tests/backend/\` — use Mocha \`suite\`/\`test\` with \`assert\`
+- Validate with \`yarn backendTests\`, not \`yarn unitTests\` (which requires a VS Code host)
 - Import source under test via the \`@cmt/\` path alias
 - Do **not** open the PR as a draft if the self-audit fails — fix it first
 - Do **not** touch source files outside \`test/\`
@@ -135,24 +154,43 @@ For each file:
 
 // ── 5. Ensure the test-coverage label exists ─────────────────────────────────
 try {
-    execSync(
-        `gh label create test-coverage --repo ${REPO} --color 0075ca --description "Opened by the coverage agent" --force`,
-        { stdio: 'inherit' }
-    );
+    spawnSync('gh', [
+        'label', 'create', 'test-coverage',
+        '--repo', REPO,
+        '--color', '0075ca',
+        '--description', 'Opened by the coverage agent',
+        '--force'
+    ], { stdio: 'inherit' });
 } catch {
     // --force handles existing labels; ignore unexpected errors
 }
 
-// ── 6. Open the issue via gh CLI ──────────────────────────────────────────────
-const title = `chore: improve test coverage -- ${belowThreshold.length} files below ${THRESHOLD}% (run ${new Date().toISOString().slice(0, 10)})`;
+// ── 6. Create or update the coverage issue ───────────────────────────────────
+const title = `Test coverage below ${THRESHOLD}% threshold — ${belowThreshold.length} files need tests (${new Date().toISOString().slice(0, 10)})`;
 
-const cmd = [
-    'gh', 'issue', 'create',
-    '--repo', REPO,
-    '--title', JSON.stringify(title),
-    '--body',  JSON.stringify(issueBody),
-    '--label', 'test-coverage',
-].join(' ');
+// Write body to a temp file to avoid shell injection via file paths in the body
+const bodyFile = join(tmpdir(), `coverage-issue-body-${Date.now()}.md`);
+writeFileSync(bodyFile, issueBody, 'utf8');
 
-console.log(`\nOpening issue: ${title}`);
-execSync(cmd, { stdio: 'inherit' });
+try {
+    if (existingIssueNumber) {
+        console.log(`\nUpdating existing issue #${existingIssueNumber}`);
+        spawnSync('gh', [
+            'issue', 'edit', existingIssueNumber,
+            '--repo', REPO,
+            '--title', title,
+            '--body-file', bodyFile
+        ], { stdio: 'inherit' });
+    } else {
+        console.log(`\nOpening issue: ${title}`);
+        spawnSync('gh', [
+            'issue', 'create',
+            '--repo', REPO,
+            '--title', title,
+            '--body-file', bodyFile,
+            '--label', 'test-coverage'
+        ], { stdio: 'inherit' });
+    }
+} finally {
+    try { unlinkSync(bodyFile); } catch { /* cleanup best-effort */ }
+}
