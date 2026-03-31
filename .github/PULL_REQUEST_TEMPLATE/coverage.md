@@ -17,7 +17,6 @@ about: PR opened by the Copilot coverage agent
 ### Self-audit results
 
 - [ ] `yarn backendTests` passes
-- [ ] `yarn unitTests` passes
 - [ ] Every file listed in the issue improved by ≥ 10 percentage points OR reached ≥ 60% line coverage
 - [ ] No test uses `assert.ok(true)` or is an empty stub
 - [ ] Test names describe behavior, not implementation
@@ -26,6 +25,7 @@ about: PR opened by the Copilot coverage agent
 - [ ] Single-config and multi-config generator paths both tested where relevant
 - [ ] `yarn lint` passes
 - [ ] `CHANGELOG.md` has an entry under `Improvements:`
+- [ ] Tests are in `test/unit-tests/backend/` (runnable without VS Code host)
 
 ### Coverage delta (paste `c8` text report here)
 ```

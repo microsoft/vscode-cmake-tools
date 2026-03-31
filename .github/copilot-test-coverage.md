@@ -1,6 +1,6 @@
 ---
 description: "Instructions for the Copilot coding agent when working on test-coverage issues."
-applyTo: "test/unit-tests/**/*.ts"
+applyTo: "test/unit-tests/**/*.ts,src/**/*.ts"
 ---
 
 # Test Coverage Agent — Self-Audit Protocol
@@ -11,9 +11,10 @@ This file contains mandatory protocol. Read all of it before writing code.
 ## Step 1 — Orient before writing
 
 - Read every source file you will test in full
-- Read existing tests for that module (if any) in `test/unit-tests/`
+- Read existing tests for that module (if any) in `test/unit-tests/backend/`
 - Identify every exported function, class, and branch condition
 - Do **not** write tests for private implementation details — test the public API
+- If a source file deeply depends on `vscode` APIs, skip it — note in the PR that it needs integration-test coverage
 
 ## Step 2 — Write real tests, not stubs
 
@@ -33,14 +34,11 @@ npx tsc -p test.tsconfig.json --noEmit
 # 2. Lint
 yarn lint
 
-# 3. Run backend tests (fast — no xvfb needed)
+# 3. Run backend tests (this is the primary validation step)
 yarn backendTests
 
-# 4. Run unit tests
-yarn unitTests
-
-# 5. Confirm coverage improved for the specific file
-npx c8 --reporter=text --src=src \
+# 4. Confirm coverage improved for the specific file
+npx c8 --all --reporter=text --src=src \
   node ./node_modules/mocha/bin/_mocha \
     -u tdd --timeout 999999 --colors \
     -r ts-node/register \
@@ -48,7 +46,11 @@ npx c8 --reporter=text --src=src \
     "./test/unit-tests/backend/**/*.test.ts"
 ```
 
-All five steps must pass. If any fail, fix the failures before opening the PR.
+All steps must pass. If any fail, fix the failures before opening the PR.
+
+> **Note:** `yarn unitTests` requires a VS Code extension host and a display server.
+> It cannot be run in headless agent environments. The CI workflow validates those
+> separately — you only need to run `yarn backendTests` and `yarn lint` locally.
 
 ## Step 4 — Coverage bar
 
