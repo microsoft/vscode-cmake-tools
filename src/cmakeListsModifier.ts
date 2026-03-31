@@ -1,5 +1,7 @@
 import CMakeProject from "@cmt/cmakeProject";
+import { ModifyListsSettings } from '@cmt/config';
 import * as codeModel from '@cmt/drivers/codeModel';
+import * as logging from '@cmt/logging';
 import * as vscode from 'vscode';
 import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, platformNormalizeUri, platformPathEquivalent, quickPick, splitPath } from "@cmt/util";
 import path = require("path");
@@ -11,6 +13,7 @@ import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+const log = logging.createLogger('cmakeListsModifier');
 
 const LIST_KEYWORDS = ['APPEND', 'PREPEND', 'INSERT'];
 
@@ -73,63 +76,6 @@ interface RemoveCandidatesResult {
 }
 
 /**
- * Virtual document provider for showing diff previews
- */
-class CMakeEditPreviewProvider implements vscode.TextDocumentContentProvider {
-    private static instance: CMakeEditPreviewProvider;
-    private pendingEdits = new Map<string, CandidateEdit[]>();
-    private onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
-
-    public static readonly scheme = 'cmake-edit-preview';
-
-    public readonly onDidChange = this.onDidChangeEmitter.event;
-
-    public static getInstance(): CMakeEditPreviewProvider {
-        if (!this.instance) {
-            this.instance = new CMakeEditPreviewProvider();
-        }
-        return this.instance;
-    }
-
-    public setEdits(originalUri: vscode.Uri, edits: CandidateEdit[]): vscode.Uri {
-        const key = originalUri.toString();
-        this.pendingEdits.set(key, edits);
-        const previewUri = vscode.Uri.parse(`${CMakeEditPreviewProvider.scheme}:${originalUri.path}?${encodeURIComponent(key)}`);
-        this.onDidChangeEmitter.fire(previewUri);
-        return previewUri;
-    }
-
-    public clearEdits(originalUri: vscode.Uri): void {
-        this.pendingEdits.delete(originalUri.toString());
-    }
-
-    public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
-        const key = decodeURIComponent(uri.query);
-        const edits = this.pendingEdits.get(key);
-        if (!edits?.length) {
-            return '';
-        }
-
-        // Get the original document
-        const originalUri = vscode.Uri.parse(key);
-        const originalDoc = await vscode.workspace.openTextDocument(originalUri);
-        let content = originalDoc.getText();
-
-        // Apply edits in reverse order (from end to start) to maintain offsets
-        const sortedEdits = [...edits].sort((a, b) =>
-            b.range.start.compareTo(a.range.start));
-
-        for (const edit of sortedEdits) {
-            const startOffset = originalDoc.offsetAt(edit.range.start);
-            const endOffset = originalDoc.offsetAt(edit.range.end);
-            content = content.slice(0, startOffset) + edit.newText + content.slice(endOffset);
-        }
-
-        return content;
-    }
-}
-
-/**
  * The order of identifiers in the following identifier lists affect sort order
  * in QuickPicks. Lower indices get sorted earlier.
  */
@@ -188,11 +134,9 @@ const LANGUAGE_EXTENSIONS: {[name: string]: {source: string[]; cxxModule?: strin
 };
 
 export class CMakeListsModifier implements vscode.Disposable {
-    private project?: CMakeProject;
+    private projects = new Map<string, CMakeProject>();
     private documentSelector: vscode.DocumentFilter[] = [];
     private codeModelDisposables: vscode.Disposable[] = [];
-    private previewProvider: CMakeEditPreviewProvider;
-    private previewProviderRegistration?: vscode.Disposable;
 
     // Known source file extensions for path-based filtering (used for deleted files)
     private knownExtensions = new Set<string>();
@@ -209,11 +153,10 @@ export class CMakeListsModifier implements vscode.Disposable {
     private deleteDebounceTimer?: NodeJS.Timeout;
 
     constructor() {
-        this.previewProvider = CMakeEditPreviewProvider.getInstance();
     }
 
     updateCodeModel(project: CMakeProject, cache: CMakeCache) {
-        this.project = project;
+        this.projects.set(project.sourceDir, project);
         this.codeModelDirty = false;
         const model = project.codeModelContent;
         const languages = new Set<string>();
@@ -250,16 +193,24 @@ export class CMakeListsModifier implements vscode.Disposable {
         this.documentSelector = extensionGlobs.map(glob => ({ scheme: 'file', pattern: glob }));
         this.knownExtensions = extensions;
 
-        // Register the preview provider if not already registered
-        if (!this.previewProviderRegistration) {
-            this.previewProviderRegistration = vscode.workspace.registerTextDocumentContentProvider(
-                CMakeEditPreviewProvider.scheme,
-                this.previewProvider
-            );
-        }
-
         vscode.workspace.onDidCreateFiles(this.filesCreated, this, this.codeModelDisposables);
         vscode.workspace.onDidDeleteFiles(this.filesDeleted, this, this.codeModelDisposables);
+    }
+
+    /**
+     * Find the project whose source directory contains the given URI.
+     * When multiple projects match, the most specific (longest path) wins.
+     */
+    private projectForUri(uri: vscode.Uri): CMakeProject | undefined {
+        let best: CMakeProject | undefined;
+        let bestLen = -1;
+        for (const [sourceDir, proj] of this.projects) {
+            if (isFileInsideFolder(uri, sourceDir) && sourceDir.length > bestLen) {
+                best = proj;
+                bestLen = sourceDir.length;
+            }
+        }
+        return best;
     }
 
     private filesCreated(e: vscode.FileCreateEvent) {
@@ -289,10 +240,11 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         if (files.length === 1) {
-            await this.addSourceFileToCMakeLists(files[0], this.project, false);
+            const project = this.projectForUri(files[0]);
+            await this.addSourceFileToCMakeLists(files[0], project, false);
         } else {
             // Batch processing for multiple files
-            await this.addMultipleSourceFilesToCMakeLists(files, this.project);
+            await this.addMultipleSourceFilesToCMakeLists(files);
         }
     }
 
@@ -325,10 +277,11 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         if (files.length === 1) {
-            await this.removeSourceFileFromCMakeLists(files[0], this.project, false);
+            const project = this.projectForUri(files[0]);
+            await this.removeSourceFileFromCMakeLists(files[0], project, false);
         } else {
             // Batch processing for multiple files
-            await this.removeMultipleSourceFilesFromCMakeLists(files, this.project);
+            await this.removeMultipleSourceFilesFromCMakeLists(files);
         }
     }
 
@@ -344,7 +297,7 @@ export class CMakeListsModifier implements vscode.Disposable {
     private async collectAddCandidates(
         newSourceUri: vscode.Uri,
         project: CMakeProject,
-        settings: vscode.WorkspaceConfiguration
+        settings: ModifyListsSettings
     ): Promise<AddCandidatesResult> {
         const model = project.codeModelContent;
         if (!model) {
@@ -501,7 +454,7 @@ export class CMakeListsModifier implements vscode.Disposable {
     private async collectRemoveCandidates(
         deletedUri: vscode.Uri,
         project: CMakeProject,
-        settings: vscode.WorkspaceConfiguration
+        settings: ModifyListsSettings
     ): Promise<RemoveCandidatesResult> {
         const model = project.codeModelContent;
         if (!model) {
@@ -605,7 +558,7 @@ export class CMakeListsModifier implements vscode.Disposable {
      */
     private async pickAddCandidate(
         candidates: CandidateEdit[],
-        settings: vscode.WorkspaceConfiguration,
+        settings: ModifyListsSettings,
         newSourceFileName: string,
         isVariableCandidate: boolean
     ): Promise<CandidateEdit | null> {
@@ -616,8 +569,8 @@ export class CMakeListsModifier implements vscode.Disposable {
         // Determine selection mode based on candidate source
         // Variable candidates obey variableSelection, target candidates obey targetSelection
         const selectionMode = isVariableCandidate
-            ? settings.variableSelection as string
-            : settings.targetSelection as string;
+            ? settings.variableSelection
+            : settings.targetSelection;
 
         if (candidates.length === 1) {
             return candidates[0];
@@ -698,11 +651,11 @@ export class CMakeListsModifier implements vscode.Disposable {
     }
 
     /**
-     * Review and apply edits with diff-based preview.
+     * Review and apply edits. In 'ask' mode, shows a simple confirmation.
      */
     private async reviewAndApply(
         edits: CandidateEdit[],
-        settings: vscode.WorkspaceConfiguration,
+        settings: ModifyListsSettings,
         reviewMode: 'add' | 'remove'
     ): Promise<boolean> {
         if (edits.length === 0) {
@@ -718,55 +671,21 @@ export class CMakeListsModifier implements vscode.Disposable {
             return this.applyEdits(edits);
         }
 
-        // Group edits by document
-        const editsByDoc = new Map<string, CandidateEdit[]>();
-        for (const edit of edits) {
-            const key = edit.uri.toString();
-            if (!editsByDoc.has(key)) {
-                editsByDoc.set(key, []);
-            }
-            editsByDoc.get(key)!.push(edit);
-        }
-
-        // For single add edit, show a simple confirmation instead of a full diff
-        if (edits.length === 1 && !edits[0].isDeletion) {
+        // For single edits, show a simple confirmation
+        if (edits.length === 1) {
             const edit = edits[0];
             const apply = localize('apply', 'Apply');
-            const openDiff = localize('review.diff', 'Review Diff');
             const discard = localize('discard', 'Discard');
 
             const sourceFileName = path.basename(edit.sourceUri.fsPath);
             const targetFileName = path.basename(edit.uri.fsPath);
 
-            const result = await vscode.window.showInformationMessage(
-                localize('confirm.add.source',
-                    'Add {0} to {1} in {2}:{3}?',
-                    sourceFileName,
-                    edit.description || edit.label,
-                    targetFileName,
-                    edit.range.start.line + 1
-                ),
-                apply,
-                openDiff,
-                discard
-            );
+            const summary = edit.isDeletion
+                ? localize('confirm.remove.source', 'Remove {0} from {1} in {2}:{3}?', sourceFileName, edit.description || edit.label, targetFileName, edit.range.start.line + 1)
+                : localize('confirm.add.source', 'Add {0} to {1} in {2}:{3}?', sourceFileName, edit.description || edit.label, targetFileName, edit.range.start.line + 1);
 
+            const result = await vscode.window.showInformationMessage(summary, apply, discard);
             if (result === apply) {
-                return this.applyEdits([edit]);
-            } else if (result === openDiff) {
-                const confirmed = await this.showDiffAndConfirm(edit.uri, [edit]);
-                if (confirmed) {
-                    return this.applyEdits([edit]);
-                }
-            }
-            return false;
-        }
-
-        // For single delete edit, show diff and confirm
-        if (edits.length === 1) {
-            const edit = edits[0];
-            const confirmed = await this.showDiffAndConfirm(edit.uri, [edit]);
-            if (confirmed) {
                 return this.applyEdits([edit]);
             }
             return false;
@@ -777,60 +696,16 @@ export class CMakeListsModifier implements vscode.Disposable {
             return this.reviewRemoveEdits(edits);
         }
 
-        // For multiple add edits, review each file
-        for (const [uriStr, docEdits] of editsByDoc) {
-            const uri = vscode.Uri.parse(uriStr);
-            const confirmed = await this.showDiffAndConfirm(uri, docEdits);
-            if (!confirmed) {
-                return false;
-            }
+        // For multiple add edits, confirm then apply
+        const apply = localize('apply', 'Apply');
+        const discard = localize('discard', 'Discard');
+        const result = await vscode.window.showInformationMessage(
+            localize('confirm.cmake.edits', 'Apply {0} CMake edit(s)?', edits.length),
+            apply, discard);
+        if (result === apply) {
+            return this.applyEdits(edits);
         }
-
-        return this.applyEdits(edits);
-    }
-
-    /**
-     * Show diff view and prompt for confirmation
-     */
-    private async showDiffAndConfirm(
-        originalUri: vscode.Uri,
-        edits: CandidateEdit[]
-    ): Promise<boolean> {
-        const previewUri = this.previewProvider.setEdits(originalUri, edits);
-
-        try {
-            // Open diff view
-            await vscode.commands.executeCommand('vscode.diff',
-                originalUri,
-                previewUri,
-                localize('cmake.edit.preview.title', 'CMake Edit Preview: {0}', path.basename(originalUri.fsPath)),
-                { preview: true }
-            );
-
-            // Show modal confirmation
-            const apply = localize('apply', 'Apply');
-            const discard = localize('discard', 'Discard');
-
-            const editSummary = edits.length === 1
-                ? edits[0].isDeletion
-                    ? localize('remove.summary', 'Remove {0}', edits[0].label)
-                    : localize('add.summary', 'Add to {0}', edits[0].label)
-                : localize('edit.count.summary', '{0} edits', edits.length);
-
-            const result = await vscode.window.showInformationMessage(
-                localize('confirm.cmake.edit', 'Confirm CMake edit: {0}', editSummary),
-                { modal: true },
-                apply,
-                discard
-            );
-
-            return result === apply;
-        } finally {
-            // Clean up the preview provider state
-            // Note: We don't close the diff editor automatically - let the user close it
-            // Forcibly closing could close the wrong editor if user clicked around
-            this.previewProvider.clearEdits(originalUri);
-        }
+        return false;
     }
 
     /**
@@ -857,40 +732,6 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         const selectedEdits = selected.map(item => item.edit);
-
-        // Show diffs for affected files if user wants to review
-        const review = localize('review', 'Review Diffs');
-        const applyNow = localize('apply.now', 'Apply Now');
-
-        const reviewChoice = await vscode.window.showInformationMessage(
-            localize('apply.removals', 'Apply {0} removal(s)?', selectedEdits.length),
-            { modal: false },
-            review,
-            applyNow
-        );
-
-        if (reviewChoice === review) {
-            // Show diffs for each affected file
-            const editsByDoc = new Map<string, CandidateEdit[]>();
-            for (const edit of selectedEdits) {
-                const key = edit.uri.toString();
-                if (!editsByDoc.has(key)) {
-                    editsByDoc.set(key, []);
-                }
-                editsByDoc.get(key)!.push(edit);
-            }
-
-            for (const [uriStr, docEdits] of editsByDoc) {
-                const uri = vscode.Uri.parse(uriStr);
-                const confirmed = await this.showDiffAndConfirm(uri, docEdits);
-                if (!confirmed) {
-                    return false;
-                }
-            }
-        } else if (reviewChoice !== applyNow) {
-            return false;
-        }
-
         return this.applyEdits(selectedEdits);
     }
 
@@ -1009,27 +850,34 @@ export class CMakeListsModifier implements vscode.Disposable {
             await vscode.workspace.applyEdit(workspaceEdit);
             await Promise.all(Array.from(editedDocs).map(doc => doc.save()));
             this.codeModelDirty = true;
+            log.info(localize('edits.applied.successfully', 'Successfully applied {0} CMake list edit(s).', edits.length));
             return true;
         } catch (e) {
+            log.error(localize('edits.apply.failed', 'Failed to apply CMake list edits: {0}', String(e)));
             void vscode.window.showErrorMessage(`${e}`);
             return false;
         }
     }
 
     async addSourceFileToCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always = true) {
-        const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
-        if (settings.addNewSourceFiles === 'no' && !always) {
+        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
+        project = project ?? (uri ? this.projectForUri(uri) : undefined);
+
+        if (!project) {
+            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
             return;
         }
 
-        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
-        project = project ?? this.project;
+        const settings = project.workspaceContext.config.modifyLists;
+        if (settings.addNewSourceFiles === 'no' && !always) {
+            return;
+        }
 
         if (uri?.scheme !== 'file') {
             void vscode.window.showErrorMessage(localize('not.local.file.add', '{0} is not a local file. Not adding to CMake lists.', uri?.toString()));
             return;
         }
-        if (!project || !project.codeModelContent) {
+        if (!project.codeModelContent) {
             void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
             return;
         }
@@ -1115,102 +963,112 @@ export class CMakeListsModifier implements vscode.Disposable {
     /**
      * Add multiple source files to CMake lists (batch operation)
      */
-    private async addMultipleSourceFilesToCMakeLists(uris: vscode.Uri[], project?: CMakeProject) {
-        const settings = vscode.workspace.getConfiguration('cmake.modifyLists');
-        if (settings.addNewSourceFiles === 'no') {
-            return;
-        }
-
-        project = project ?? this.project;
-        if (!project || !project.codeModelContent) {
-            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding files without a valid code model'));
-            return;
-        }
-
-        // For 'ask' mode, show a non-blocking notification first
-        // (this method is only called from the auto-triggered flow)
-        let userPreConsented = false;
-        if (settings.addNewSourceFiles === 'ask') {
-            const fileNames = uris.map(u => path.basename(u.fsPath)).join(', ');
-            const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
-            const result = await vscode.window.showInformationMessage(
-                localize('new.source.files.detected', 'New source files detected: {0}', fileNames),
-                addAction
-            );
-            if (result !== addAction) {
-                return;
-            }
-            userPreConsented = true;
-        }
-
-        // Check if user settings require interactive selection
-        // If so, fall back to per-file flow to respect user preferences
-        const variableSelection = settings.variableSelection as string;
-        const targetSelection = settings.targetSelection as string;
-        const needsInteractiveSelection = variableSelection !== 'auto' || targetSelection !== 'auto';
-
-        if (needsInteractiveSelection) {
-            // Fall back to processing files one at a time so user can pick for each.
-            // Pass always=true since user already consented via the notification.
-            for (const uri of uris) {
-                await this.addSourceFileToCMakeLists(uri, project, true);
-            }
-            return;
-        }
-
-        // Process files one at a time. Each successful edit shifts line
-        // numbers in CMakeLists.txt, so subsequent files must re-parse from
-        // disk to get correct offsets. Collecting all candidates upfront
-        // would use stale ASTs/backtrace data for files after the first.
-        const errors: string[] = [];
-        let anyApplied = false;
-
+    private async addMultipleSourceFilesToCMakeLists(uris: vscode.Uri[]) {
+        // Group files by project
+        const filesByProject = new Map<CMakeProject, vscode.Uri[]>();
         for (const uri of uris) {
-            if (uri.scheme !== 'file') {
+            const project = this.projectForUri(uri);
+            if (!project || !project.codeModelContent) {
                 continue;
             }
-
-            const result = await this.collectAddCandidates(uri, project, settings);
-            if (result.error) {
-                errors.push(result.error);
-                continue;
-            }
-            if (result.candidates.length === 0) {
-                continue;
-            }
-
-            const best = result.candidates[0];
-            if (userPreConsented) {
-                if (await this.applyEdits([best])) {
-                    anyApplied = true;
-                }
-            } else {
-                if (await this.reviewAndApply([best], settings, 'add')) {
-                    anyApplied = true;
-                }
-            }
+            const existing = filesByProject.get(project) ?? [];
+            existing.push(uri);
+            filesByProject.set(project, existing);
         }
 
-        if (!anyApplied && errors.length > 0) {
-            void vscode.window.showErrorMessage(errors[0]);
+        for (const [project, projectUris] of filesByProject) {
+            const settings = project.workspaceContext.config.modifyLists;
+            if (settings.addNewSourceFiles === 'no') {
+                continue;
+            }
+
+            // For 'ask' mode, show a non-blocking notification first
+            // (this method is only called from the auto-triggered flow)
+            let userPreConsented = false;
+            if (settings.addNewSourceFiles === 'ask') {
+                const fileNames = projectUris.map(u => path.basename(u.fsPath)).join(', ');
+                const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
+                const result = await vscode.window.showInformationMessage(
+                    localize('new.source.files.detected', 'New source files detected: {0}', fileNames),
+                    addAction
+                );
+                if (result !== addAction) {
+                    continue;
+                }
+                userPreConsented = true;
+            }
+
+            // Check if user settings require interactive selection
+            // If so, fall back to per-file flow to respect user preferences
+            const needsInteractiveSelection = settings.variableSelection !== 'auto' || settings.targetSelection !== 'auto';
+
+            if (needsInteractiveSelection) {
+                // Fall back to processing files one at a time so user can pick for each.
+                // Pass always=true since user already consented via the notification.
+                for (const uri of projectUris) {
+                    await this.addSourceFileToCMakeLists(uri, project, true);
+                }
+                continue;
+            }
+
+            // Process files one at a time. Each successful edit shifts line
+            // numbers in CMakeLists.txt, so subsequent files must re-parse from
+            // disk to get correct offsets.
+            const errors: string[] = [];
+            let anyApplied = false;
+
+            for (const uri of projectUris) {
+                if (uri.scheme !== 'file') {
+                    continue;
+                }
+
+                const result = await this.collectAddCandidates(uri, project, settings);
+                if (result.error) {
+                    errors.push(result.error);
+                    continue;
+                }
+                if (result.candidates.length === 0) {
+                    continue;
+                }
+
+                const best = result.candidates[0];
+                if (userPreConsented) {
+                    if (await this.applyEdits([best])) {
+                        anyApplied = true;
+                    }
+                } else {
+                    if (await this.reviewAndApply([best], settings, 'add')) {
+                        anyApplied = true;
+                    }
+                }
+            }
+
+            if (!anyApplied && errors.length > 0) {
+                void vscode.window.showErrorMessage(errors[0]);
+            }
         }
     }
 
     async removeSourceFileFromCMakeLists(uri?: vscode.Uri, project?: CMakeProject, always = true) {
-        const settings = vscode.workspace.getConfiguration('cmake.modifyLists', uri);
-        if (settings.removeDeletedSourceFiles === 'no' && !always) {
+        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
+        project = project ?? (uri ? this.projectForUri(uri) : undefined);
+
+        if (!project) {
+            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
             return;
         }
 
-        uri = uri ?? vscode.window.activeTextEditor?.document.uri;
-        project = project ?? this.project;
+        const settings = project.workspaceContext.config.modifyLists;
+        if (settings.removeDeletedSourceFiles === 'no' && !always) {
+            return;
+        }
 
         if (uri?.scheme !== 'file') {
             void vscode.window.showErrorMessage(localize('not.local.file.remove', '{0} is not a local file. Not removing from CMake lists.', uri?.toString()));
             return;
         }
 
-        if (!project || !project.codeModelContent) {
+        if (!project.codeModelContent) {
             void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
             return;
         }
@@ -1228,8 +1086,8 @@ export class CMakeListsModifier implements vscode.Disposable {
                 try {
                     const doc = await vscode.workspace.openTextDocument(error.fileUri);
                     await vscode.window.showTextDocument(doc);
-                } catch {
-                    // Ignore if we can't open the file
+                } catch (e) {
+                    log.debug(localize('could.not.open.file', 'Could not open file {0}: {1}', error.fileUri.fsPath, String(e)));
                 }
             }
         }
@@ -1248,43 +1106,50 @@ export class CMakeListsModifier implements vscode.Disposable {
     /**
      * Remove multiple source files from CMake lists (batch operation)
      */
-    private async removeMultipleSourceFilesFromCMakeLists(uris: vscode.Uri[], project?: CMakeProject) {
-        const settings = vscode.workspace.getConfiguration('cmake.modifyLists');
-        if (settings.removeDeletedSourceFiles === 'no') {
-            return;
-        }
-
-        project = project ?? this.project;
-        if (!project || !project.codeModelContent) {
-            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting files without a valid code model'));
-            return;
-        }
-
-        const allCandidates: CandidateEdit[] = [];
-        const allErrors: EditError[] = [];
-
+    private async removeMultipleSourceFilesFromCMakeLists(uris: vscode.Uri[]) {
+        // Group files by project
+        const filesByProject = new Map<CMakeProject, vscode.Uri[]>();
         for (const uri of uris) {
             if (uri.scheme !== 'file') {
                 continue;
             }
-
-            const result = await this.collectRemoveCandidates(uri, project, settings);
-            allCandidates.push(...result.candidates);
-            allErrors.push(...result.errors);
+            const project = this.projectForUri(uri);
+            if (!project || !project.codeModelContent) {
+                continue;
+            }
+            const existing = filesByProject.get(project) ?? [];
+            existing.push(uri);
+            filesByProject.set(project, existing);
         }
 
-        // Report first error if no candidates
-        if (allCandidates.length === 0 && allErrors.length > 0) {
-            void vscode.window.showErrorMessage(allErrors[0].message);
-            return;
-        }
+        for (const [project, projectUris] of filesByProject) {
+            const settings = project.workspaceContext.config.modifyLists;
+            if (settings.removeDeletedSourceFiles === 'no') {
+                continue;
+            }
 
-        if (allCandidates.length === 0) {
-            return;
-        }
+            const allCandidates: CandidateEdit[] = [];
+            const allErrors: EditError[] = [];
 
-        // Review and apply all at once
-        await this.reviewAndApply(allCandidates, settings, 'remove');
+            for (const uri of projectUris) {
+                const result = await this.collectRemoveCandidates(uri, project, settings);
+                allCandidates.push(...result.candidates);
+                allErrors.push(...result.errors);
+            }
+
+            // Report first error if no candidates
+            if (allCandidates.length === 0 && allErrors.length > 0) {
+                void vscode.window.showErrorMessage(allErrors[0].message);
+                continue;
+            }
+
+            if (allCandidates.length === 0) {
+                continue;
+            }
+
+            // Review and apply all at once
+            await this.reviewAndApply(allCandidates, settings, 'remove');
+        }
     }
 
     private async workAroundSaveAsFocusBug(uri: vscode.Uri) {
@@ -1294,7 +1159,6 @@ export class CMakeListsModifier implements vscode.Disposable {
 
     dispose() {
         this.codeModelDispose();
-        this.previewProviderRegistration?.dispose();
 
         if (this.addDebounceTimer) {
             clearTimeout(this.addDebounceTimer);
@@ -1419,7 +1283,9 @@ async function findCMakeLists(project: CMakeProject, newSourceUri: vscode.Uri) {
             } catch (e) {
                 void vscode.window.showWarningMessage(localize('parse.error.examining.cmake.lists', 'Parse error while examining CMakeLists.txt files. Details: {0}', String(e)));
             }
-        } catch (e) {}
+        } catch (e) {
+            log.debug(localize('could.not.open.cmake.lists', 'Could not open {0}: {1}', cmlUri.fsPath, String(e)));
+        }
         cmlUri = vscode.Uri.joinPath(cmlUri, '..', '..', 'CMakeLists.txt');
     }
     return cmakeListsASTs;
@@ -1428,9 +1294,9 @@ async function findCMakeLists(project: CMakeProject, newSourceUri: vscode.Uri) {
 function variableSourceLists(
     cmakeListsASTs: CMakeAST[],
     project: CMakeProject,
-    settings: vscode.WorkspaceConfiguration
+    settings: ModifyListsSettings
 ): SourceList[] {
-    const sourceVariables = settings.sourceVariables as string[];
+    const sourceVariables = settings.sourceVariables;
     if (!sourceVariables.length) {
         return [];
     }
@@ -1715,7 +1581,7 @@ function targetSourceListOptions(
     target: codeModel.CodeModelTarget,
     invocation: CommandInvocation,
     newSourceUri: vscode.Uri,
-    settings: vscode.WorkspaceConfiguration
+    settings: ModifyListsSettings
 ) {
     return SourceList.fromCommandInvocation(project, invocation, target, settings)
         .filter(sourceList => sourceList.canContain(newSourceUri));
@@ -1796,7 +1662,7 @@ abstract class SourceList {
         project: CMakeProject,
         invocation: CommandInvocation,
         target: codeModel.CodeModelTarget | undefined,
-        settings: vscode.WorkspaceConfiguration
+        settings: ModifyListsSettings
     ): SourceList[] {
         const { command, args } = invocation.ast;
 
@@ -1819,7 +1685,7 @@ abstract class SourceList {
         }
 
         let optionIndices;
-        const sourceListKeywords = settings.sourceListKeywords as string[];
+        const sourceListKeywords = settings.sourceListKeywords;
         if (sourceListKeywords?.length) {
             optionIndices = findIndices(args,
                 v => sourceListKeywords.some(pat => minimatch(v.value, pat)));
@@ -1842,7 +1708,7 @@ abstract class SourceList {
      * Just a wrapper to make the code clearer at the call site.
      */
     static fromVariableCommandInvocation(
-        project: CMakeProject, invocation: CommandInvocation, settings: vscode.WorkspaceConfiguration
+        project: CMakeProject, invocation: CommandInvocation, settings: ModifyListsSettings
     ): SourceList[] {
         return this.fromCommandInvocation(project, invocation, undefined, settings);
     }
@@ -2044,7 +1910,7 @@ abstract class VariableSourceList extends SourceList {
     constructor(
         invocation: CommandInvocation,
         protected projectDir: string,
-        settings: vscode.WorkspaceConfiguration,
+        settings: ModifyListsSettings,
         variableIndex: number,
         listIndex: number
     ) {
@@ -2080,7 +1946,7 @@ abstract class VariableSourceList extends SourceList {
 }
 
 class SetSourceList extends VariableSourceList {
-    constructor(invocation: CommandInvocation, projectDir: string, settings: vscode.WorkspaceConfiguration
+    constructor(invocation: CommandInvocation, projectDir: string, settings: ModifyListsSettings
     ) {
         super(invocation, projectDir, settings, 0, 1);
     }
@@ -2093,7 +1959,7 @@ class SetSourceList extends VariableSourceList {
 class ListAppendSourceList extends VariableSourceList {
     private readonly subcommand: string;
 
-    constructor(invocation: CommandInvocation, projectDir: string, settings: vscode.WorkspaceConfiguration
+    constructor(invocation: CommandInvocation, projectDir: string, settings: ModifyListsSettings
     ) {
         const subcommand = invocation.ast.args[0].value;
         super(invocation, projectDir, settings, 1, 2);
@@ -2265,6 +2131,7 @@ export function quoteArgument(s: string): string {
     if (!s.match(/[\s()#"\\]/)) {
         return s;
     }
+    s = s.replace(/\\/g, '\\\\');
     s = s.replace(/\t/g, '\\t');
     s = s.replace(/\r/g, '\\r');
     s = s.replace(/\n/g, '\\n');
