@@ -21,6 +21,7 @@ Features:
 - Support string arrays in kit `cmakeSettings` to pass CMake lists without escaping semicolons (e.g., `"LLVM_ENABLE_PROJECTS": ["clang", "lld"]`). [#4503](https://github.com/microsoft/vscode-cmake-tools/issues/4503)
 
 Improvements:
+- Add backend unit tests for expand.ts (`substituteAll`, `getParentEnvSubstitutions`, `errorHandlerHelper`), proc.ts (`buildCmdStr`), and contextKeyExpr.ts (Parser, evaluation, serialization, utility functions) to improve test coverage of critical pure-logic modules.
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
 - Clicking on a CTest in the Project Outline now navigates to the test source file, matching the existing Test Explorer behavior. [#4773](https://github.com/microsoft/vscode-cmake-tools/issues/4773)
