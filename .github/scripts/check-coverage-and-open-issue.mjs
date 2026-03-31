@@ -2,6 +2,7 @@
 // @ts-check
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { relative, resolve } from 'path';
 
 const THRESHOLD = Number(process.env.THRESHOLD ?? 60);
 const SUMMARY_PATH = 'coverage/coverage-summary.json';
@@ -19,17 +20,24 @@ try {
 
 // ── 2. Find files below threshold ────────────────────────────────────────────
 const belowThreshold = [];
+const repoRoot = resolve('.');
 
 for (const [file, metrics] of Object.entries(summary)) {
     if (file === 'total') continue;
-    if (!file.startsWith('src/')) continue;
+
+    // Normalize: c8/Istanbul may emit absolute paths or repo-relative paths
+    const relPath = file.startsWith('/') || /^[A-Za-z]:[/\\]/.test(file)
+        ? relative(repoRoot, file).replace(/\\/g, '/')
+        : file;
+
+    if (!relPath.startsWith('src/')) continue;
 
     const linePct   = metrics.lines.pct    ?? 0;
     const branchPct = metrics.branches.pct ?? 0;
     const fnPct     = metrics.functions.pct ?? 0;
 
     if (linePct < THRESHOLD || fnPct < THRESHOLD) {
-        belowThreshold.push({ file, linePct, branchPct, fnPct });
+        belowThreshold.push({ file: relPath, linePct, branchPct, fnPct });
     }
 }
 
@@ -44,7 +52,21 @@ if (belowThreshold.length === 0 && totalLines >= THRESHOLD) {
     process.exit(0);
 }
 
-// ── 3. Build the issue body (this is the Copilot agent's instruction set) ────
+// ── 3. Check for existing open coverage issue (avoid duplicates) ─────────────
+try {
+    const existing = execSync(
+        `gh issue list --repo ${REPO} --label test-coverage --state open --json number --jq '.[0].number'`,
+        { encoding: 'utf8' }
+    ).trim();
+    if (existing) {
+        console.log(`\n⏭️  Open coverage issue already exists: #${existing} — skipping.`);
+        process.exit(0);
+    }
+} catch {
+    // gh CLI may fail if label doesn't exist yet — continue to create
+}
+
+// ── 4. Build the issue body (this is the Copilot agent's instruction set) ────
 belowThreshold.sort((a, b) => a.linePct - b.linePct);  // worst files first
 
 const tableRows = belowThreshold
@@ -111,7 +133,17 @@ For each file:
 - Do **not** touch source files outside \`test/\`
 `;
 
-// ── 4. Open the issue via gh CLI ──────────────────────────────────────────────
+// ── 5. Ensure the test-coverage label exists ─────────────────────────────────
+try {
+    execSync(
+        `gh label create test-coverage --repo ${REPO} --color 0075ca --description "Opened by the coverage agent" --force`,
+        { stdio: 'inherit' }
+    );
+} catch {
+    // --force handles existing labels; ignore unexpected errors
+}
+
+// ── 6. Open the issue via gh CLI ──────────────────────────────────────────────
 const title = `chore: improve test coverage -- ${belowThreshold.length} files below ${THRESHOLD}% (run ${new Date().toISOString().slice(0, 10)})`;
 
 const cmd = [

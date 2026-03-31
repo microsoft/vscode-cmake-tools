@@ -27,7 +27,7 @@ about: PR opened by the Copilot coverage agent
 - [ ] `yarn lint` passes
 - [ ] `CHANGELOG.md` has an entry under `Improvements:`
 
-### Coverage delta (paste `nyc` text report here)
+### Coverage delta (paste `c8` text report here)
 ```
-(paste output of: npx nyc report --reporter=text)
+(paste output of: npx c8 report --reporter=text)
 ```
