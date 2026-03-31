@@ -17,7 +17,7 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       issues: write
 
     steps:
@@ -40,6 +40,7 @@ jobs:
       - name: Run backend tests with coverage
         run: |
           npx c8 \
+            --all \
             --reporter=json-summary \
             --reporter=text \
             --src=src \

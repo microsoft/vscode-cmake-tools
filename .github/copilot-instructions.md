@@ -188,6 +188,10 @@ The fastest feedback loop — runs via Mocha with no VS Code instance or display
 2. If the module **transitively imports `vscode`** and the mock is insufficient → **mirror the pure function logic inline** in the test file. This is the established pattern in `expand.test.ts`, `targetMap.test.ts`, `shell-propagation.test.ts`.
 3. **Heuristic:** Try `@cmt/*` import first. If it fails due to vscode dependency at runtime, fall back to mirroring.
 
+## Test coverage improvements
+
+When working on issues labeled `test-coverage`, read `.github/copilot-test-coverage.md` before starting — it contains the mandatory self-audit protocol, test quality rules, and scope constraints for coverage work.
+
 ## Where to start
 
 - **Configure/build/test behavior** → `src/cmakeProject.ts` + `src/drivers/`
