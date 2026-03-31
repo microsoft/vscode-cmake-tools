@@ -1,12 +1,8 @@
 name: Coverage Agent
 
 on:
-  push:
-    branches: [ main, 'release/**' ]
-  pull_request:
-    branches: [ main, 'release/**' ]
   schedule:
-    - cron: '0 3 * * 1'   # weekly Monday 03:00 UTC — keeps noise low
+    - cron: '0 3 * * 1'   # weekly Monday 03:00 UTC
   workflow_dispatch:
     inputs:
       threshold:
@@ -25,9 +21,9 @@ jobs:
       issues: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -40,43 +36,29 @@ jobs:
       - name: Build (test config)
         run: yarn pretest          # tsc -p test.tsconfig.json
 
-      # ── Coverage: backend tests (pure Mocha — nyc wraps directly) ──────────
+      # ── Coverage: backend tests (c8 uses V8 native coverage) ───────────
       - name: Run backend tests with coverage
         run: |
-          npx nyc \
-            --reporter=json \
+          npx c8 \
+            --reporter=json-summary \
             --reporter=text \
+            --src=src \
             --include='src/**/*.ts' \
             --exclude='src/**/*.d.ts' \
-            --temp-dir=.nyc_output \
+            -o coverage \
             node ./node_modules/mocha/bin/_mocha \
               -u tdd --timeout 999999 --colors \
               -r ts-node/register \
               -r tsconfig-paths/register \
               "./test/unit-tests/backend/**/*.test.ts"
 
-      # ── Coverage: unit tests (VS Code extension host — via xvfb) ──────────
-      - name: Run unit tests with coverage
+      # ── Unit tests (extension host — coverage not collected here) ──────
+      # c8/nyc cannot instrument the VS Code extension-host child process.
+      # This step validates tests pass; coverage comes from backend tests.
+      - name: Run unit tests
         uses: GabrielBB/xvfb-action@v1.6
         with:
-          run: |
-            npx nyc \
-              --reporter=json \
-              --include='src/**/*.ts' \
-              --exclude='src/**/*.d.ts' \
-              --temp-dir=.nyc_output \
-              node ./out/test/unit-tests/runTest.js
-        continue-on-error: true   # coverage report still matters even if some tests fail
-
-      # ── Merge all coverage runs and emit summary ──────────────────────────
-      - name: Merge coverage and generate summary
-        run: |
-          npx nyc merge .nyc_output coverage/coverage-combined.json
-          npx nyc report \
-            --reporter=json-summary \
-            --reporter=lcov \
-            --temp-dir=coverage \
-            -t .nyc_output
+          run: node ./out/test/unit-tests/runTest.js
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
