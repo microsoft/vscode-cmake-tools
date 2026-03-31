@@ -114,12 +114,14 @@ suite('[substituteAll]', () => {
         expect(result.didReplacement).to.be.true;
     });
 
-    test('Input with no matching variables is unchanged', () => {
+    test('didReplacement is true when subs map has non-identity entries even without text match', () => {
         const subs = new Map<string, string>();
         subs.set('${a}', 'A');
         const result = substituteAll('no match for ${b}', subs);
         expect(result.result).to.equal('no match for ${b}');
-        expect(result.didReplacement).to.be.true; // didReplacement is true because value !== key, even if no match
+        // didReplacement tracks whether any non-identity substitution was attempted,
+        // not whether the input text actually changed. This matches the source implementation.
+        expect(result.didReplacement).to.be.true;
     });
 
     test('Empty input string', () => {
