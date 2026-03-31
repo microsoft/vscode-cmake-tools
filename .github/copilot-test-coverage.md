@@ -40,7 +40,7 @@ yarn backendTests
 yarn unitTests
 
 # 5. Confirm coverage improved for the specific file
-npx nyc --reporter=text \
+npx c8 --reporter=text --src=src \
   node ./node_modules/mocha/bin/_mocha \
     -u tdd --timeout 999999 --colors \
     -r ts-node/register \
