@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @ts-check
 import { readFileSync, writeFileSync, unlinkSync } from 'fs';
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { relative, resolve, join } from 'path';
 import { tmpdir } from 'os';
 
@@ -62,10 +62,17 @@ if (belowThreshold.length === 0 && totalLines >= THRESHOLD) {
 // ── 3. Check for existing open coverage issue (avoid duplicates) ─────────────
 let existingIssueNumber = null;
 try {
-    existingIssueNumber = execSync(
-        `gh issue list --repo ${REPO} --label test-coverage --state open --json number --jq '.[0].number'`,
-        { encoding: 'utf8' }
-    ).trim() || null;
+    const result = spawnSync('gh', [
+        'issue', 'list',
+        '--repo', REPO,
+        '--label', 'test-coverage',
+        '--state', 'open',
+        '--json', 'number',
+        '--jq', '.[0].number'
+    ], { encoding: 'utf8' });
+    if (result.status === 0 && result.stdout.trim()) {
+        existingIssueNumber = result.stdout.trim();
+    }
 } catch {
     // gh CLI may fail if label doesn't exist yet — continue to create
 }
@@ -153,16 +160,18 @@ ${remainingNote}
 `;
 
 // ── 5. Ensure the test-coverage label exists ─────────────────────────────────
-try {
-    spawnSync('gh', [
+{
+    const result = spawnSync('gh', [
         'label', 'create', 'test-coverage',
         '--repo', REPO,
         '--color', '0075ca',
         '--description', 'Opened by the coverage agent',
         '--force'
     ], { stdio: 'inherit' });
-} catch {
-    // --force handles existing labels; ignore unexpected errors
+    // Non-zero is acceptable here — label may already exist without --force support
+    if (result.error) {
+        console.warn('Warning: could not ensure test-coverage label exists:', result.error.message);
+    }
 }
 
 // ── 6. Create or update the coverage issue ───────────────────────────────────
@@ -173,9 +182,10 @@ const bodyFile = join(tmpdir(), `coverage-issue-body-${Date.now()}.md`);
 writeFileSync(bodyFile, issueBody, 'utf8');
 
 try {
+    let result;
     if (existingIssueNumber) {
         console.log(`\nUpdating existing issue #${existingIssueNumber}`);
-        spawnSync('gh', [
+        result = spawnSync('gh', [
             'issue', 'edit', existingIssueNumber,
             '--repo', REPO,
             '--title', title,
@@ -183,13 +193,17 @@ try {
         ], { stdio: 'inherit' });
     } else {
         console.log(`\nOpening issue: ${title}`);
-        spawnSync('gh', [
+        result = spawnSync('gh', [
             'issue', 'create',
             '--repo', REPO,
             '--title', title,
             '--body-file', bodyFile,
             '--label', 'test-coverage'
         ], { stdio: 'inherit' });
+    }
+    if (result.status !== 0) {
+        console.error(`gh command failed with exit code ${result.status}`);
+        process.exit(result.status ?? 1);
     }
 } finally {
     try { unlinkSync(bodyFile); } catch { /* cleanup best-effort */ }
