@@ -58,6 +58,7 @@ Bug Fixes:
 - Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)
 - Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
 - Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
+- Fix workspace path displayed with a leading slash on Windows when running CMake build tasks. [#4438](https://github.com/microsoft/vscode-cmake-tools/issues/4438)
 - Fix CMakePresets.json discovery failing in multi-folder workspaces when the presets file is in a subdirectory specified by `cmake.sourceDirectory`. [#4727](https://github.com/microsoft/vscode-cmake-tools/issues/4727)
 - Fix initial kit scan ignoring `cmake.enableAutomaticKitScan: false` on first workspace open, and prevent redundant concurrent scans in multi-project workspaces. [#4726](https://github.com/microsoft/vscode-cmake-tools/issues/4726)
 - Fix `cmake.installPrefix` not being passed to CMake as `CMAKE_INSTALL_PREFIX` when using presets. [#4358](https://github.com/microsoft/vscode-cmake-tools/issues/4358)
