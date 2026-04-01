@@ -35,7 +35,7 @@ interface TokenType {
 
 const BRACKETED_RE = /\[(=*)\[.*\]\1\]/s;
 const SPACE: TokenType = { name: 'SPACE', re: /[ \t]+/ };
-const NEWLINE: TokenType = { name: 'NEWLINE', re: /\n/ };
+const NEWLINE: TokenType = { name: 'NEWLINE', re: /\r?\n/ };
 const IDENT: TokenType = { name: 'IDENT', re: /[A-Za-z_][A-Za-z0-9_]*/ };
 const LPAREN: TokenType = { name: 'LPAREN', re: /\(/ };
 const RPAREN: TokenType = { name: 'RPAREN', re: /\)/ };
@@ -43,7 +43,7 @@ const BRACKETED: TokenType = { name: 'BRACKETED', re: BRACKETED_RE };
 const QUOTED: TokenType = { name: 'QUOTED', re: /"(?:\\.|[^"])*"/s };
 const UNQUOTED: TokenType = { name: 'UNQUOTED', re: /(?:\\.|[^\s()#"\\'])+/s };
 // TODO: "legacy" identifiers with quotes in them
-const LINE_COMMENT: TokenType = { name: 'LINE_COMMENT', re: /#[^\n]*/ };
+const LINE_COMMENT: TokenType = { name: 'LINE_COMMENT', re: /#[^\r\n]*/ };
 const BRACKETED_COMMENT: TokenType = { name: 'BRACKETED_COMMENT', re: regexpPrepend('#', BRACKETED_RE) };
 const EOF: TokenType = { name: 'EOF', re: /$/ };
 const SPACE_TYPES: TokenType[] = [SPACE, NEWLINE];
