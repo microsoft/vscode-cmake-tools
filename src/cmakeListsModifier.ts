@@ -2083,7 +2083,6 @@ export function quoteArgument(s: string): string {
     if (!s.match(/[\s()#"\\]/)) {
         return s;
     }
-    s = s.replace(/\\/g, '\\\\');
     s = s.replace(/\t/g, '\\t');
     s = s.replace(/\r/g, '\\r');
     s = s.replace(/\n/g, '\\n');
