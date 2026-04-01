@@ -625,11 +625,74 @@ export class CMakeListsModifier implements vscode.Disposable {
             selectedCandidate = selected;
         }
 
-        // If multiple source lists within the selected target, ask which one
-        const targetCandidates = candidates.filter(c =>
-            (c.target?.name || c.sourceList?.destination) ===
-            (selectedCandidate.target?.name || selectedCandidate.sourceList?.destination));
+        // Filter candidates to the selected target
+        const targetName = selectedCandidate.target?.name || selectedCandidate.sourceList?.destination || '';
+        let targetCandidates = candidates.filter(c =>
+            (c.target?.name || c.sourceList?.destination || '') === targetName);
 
+        // Group by command invocation within the selected target
+        const invocationGroups = new Map<string, CandidateEdit[]>();
+        for (const c of targetCandidates) {
+            const inv = c.sourceList?.invocation;
+            const key = inv ? `${inv.document.fileName}:${inv.line}` : '';
+            if (!invocationGroups.has(key)) {
+                invocationGroups.set(key, []);
+            }
+            invocationGroups.get(key)!.push(c);
+        }
+
+        // If multiple command invocations, use targetCommandInvocationSelection
+        const invocationSelection = settings.targetCommandInvocationSelection;
+        if (invocationGroups.size > 1 && invocationSelection !== 'auto') {
+            let invocationEntries = Array.from(invocationGroups.entries());
+
+            // 'askFirstParentDir' restricts to invocations from the same file
+            // as the first (best-sorted) invocation
+            if (invocationSelection === 'askFirstParentDir' && invocationEntries.length > 0) {
+                const firstFile = invocationEntries[0][1][0].sourceList?.invocation?.document.fileName;
+                if (firstFile) {
+                    invocationEntries = invocationEntries.filter(([, cands]) =>
+                        platformPathEquivalent(
+                            cands[0].sourceList?.invocation?.document.fileName ?? '',
+                            firstFile));
+                }
+            }
+
+            if (invocationEntries.length > 1) {
+                const invItems = invocationEntries.map(([, cands]) => {
+                    const inv = cands[0].sourceList?.invocation;
+                    const lineText = inv ? inv.document.lineAt(inv.line).text.trim() : '';
+                    return {
+                        label: lineText,
+                        detail: inv ? `${path.relative(path.dirname(inv.document.fileName), inv.document.fileName)}:${inv.line + 1}` : '',
+                        description: inv && inv.command !== inv.builtin ? inv.builtin : '',
+                        payload: cands[0]
+                    };
+                });
+
+                const selectedInv = await quickPick(invItems, {
+                    title: localize('add.to.which.invocation',
+                        'CMake: Add {0} to which command invocation of {1}?',
+                        newSourceFileName, targetName),
+                    matchOnDescription: true,
+                    matchOnDetail: true
+                });
+                if (!selectedInv) {
+                    return null;
+                }
+                selectedCandidate = selectedInv;
+                // Restrict to candidates from the selected invocation
+                const selectedInvKey = selectedCandidate.sourceList?.invocation
+                    ? `${selectedCandidate.sourceList.invocation.document.fileName}:${selectedCandidate.sourceList.invocation.line}`
+                    : '';
+                targetCandidates = targetCandidates.filter(c => {
+                    const inv = c.sourceList?.invocation;
+                    return inv ? `${inv.document.fileName}:${inv.line}` === selectedInvKey : false;
+                });
+            }
+        }
+
+        // If multiple source lists within the selected invocation, ask which one
         if (targetCandidates.length > 1 && settings.scopeSelection !== 'auto') {
             const listItems = targetCandidates.map(c => ({
                 label: c.label,
@@ -651,94 +714,27 @@ export class CMakeListsModifier implements vscode.Disposable {
     }
 
     /**
-     * Review and apply edits. In 'ask' mode, shows a simple confirmation.
+     * Apply edits with the Refactor Preview when the corresponding setting
+     * is `'ask'`.  VS Code's native Refactor Preview shows a side-by-side
+     * diff and lets the user accept or reject each change — much more
+     * intuitive than a custom confirmation dialog.
      */
     private async reviewAndApply(
         edits: CandidateEdit[],
         settings: ModifyListsSettings,
         reviewMode: 'add' | 'remove'
     ): Promise<boolean> {
-        if (edits.length === 0) {
-            return false;
-        }
-
-        const askMode = reviewMode === 'add'
+        const askSetting = reviewMode === 'add'
             ? settings.addNewSourceFiles
             : settings.removeDeletedSourceFiles;
-
-        if (askMode !== 'ask') {
-            // Apply directly without review
-            return this.applyEdits(edits);
-        }
-
-        // For single edits, show a simple confirmation
-        if (edits.length === 1) {
-            const edit = edits[0];
-            const apply = localize('apply', 'Apply');
-            const discard = localize('discard', 'Discard');
-
-            const sourceFileName = path.basename(edit.sourceUri.fsPath);
-            const targetFileName = path.basename(edit.uri.fsPath);
-
-            const summary = edit.isDeletion
-                ? localize('confirm.remove.source', 'Remove {0} from {1} in {2}:{3}?', sourceFileName, edit.description || edit.label, targetFileName, edit.range.start.line + 1)
-                : localize('confirm.add.source', 'Add {0} to {1} in {2}:{3}?', sourceFileName, edit.description || edit.label, targetFileName, edit.range.start.line + 1);
-
-            const result = await vscode.window.showInformationMessage(summary, apply, discard);
-            if (result === apply) {
-                return this.applyEdits([edit]);
-            }
-            return false;
-        }
-
-        // For multiple edits (especially deletions), use multi-select QuickPick
-        if (reviewMode === 'remove') {
-            return this.reviewRemoveEdits(edits);
-        }
-
-        // For multiple add edits, confirm then apply
-        const apply = localize('apply', 'Apply');
-        const discard = localize('discard', 'Discard');
-        const result = await vscode.window.showInformationMessage(
-            localize('confirm.cmake.edits', 'Apply {0} CMake edit(s)?', edits.length),
-            apply, discard);
-        if (result === apply) {
-            return this.applyEdits(edits);
-        }
-        return false;
-    }
-
-    /**
-     * Review remove edits with multi-select QuickPick
-     */
-    private async reviewRemoveEdits(edits: CandidateEdit[]): Promise<boolean> {
-        // Group by file for display
-        const items: (vscode.QuickPickItem & { edit: CandidateEdit })[] = edits.map(edit => ({
-            label: edit.label,
-            description: edit.description,
-            detail: `${path.basename(edit.uri.fsPath)}:${edit.range.start.line + 1} - ${edit.previewSnippet}`,
-            picked: true, // Default all selected for deleted files
-            edit
-        }));
-
-        const selected = await vscode.window.showQuickPick(items, {
-            canPickMany: true,
-            title: localize('select.removals', 'CMake: Select file references to remove'),
-            placeHolder: localize('select.removals.placeholder', 'All references selected by default')
-        });
-
-        if (!selected || selected.length === 0) {
-            return false;
-        }
-
-        const selectedEdits = selected.map(item => item.edit);
-        return this.applyEdits(selectedEdits);
+        const needsConfirmation = askSetting === 'ask';
+        return this.applyEdits(edits, needsConfirmation);
     }
 
     /**
      * Apply the edits to the workspace
      */
-    private async applyEdits(edits: CandidateEdit[]): Promise<boolean> {
+    private async applyEdits(edits: CandidateEdit[], needsConfirmation: boolean = false): Promise<boolean> {
         if (edits.length === 0) {
             return false;
         }
@@ -830,12 +826,12 @@ export class CMakeListsModifier implements vscode.Disposable {
                 if (edit.isDeletion) {
                     workspaceEdit.delete(edit.uri, edit.range, {
                         label: localize('edit.label.remove.source.file', 'CMake: Remove deleted source file'),
-                        needsConfirmation: false
+                        needsConfirmation
                     });
                 } else {
                     workspaceEdit.insert(edit.uri, edit.range.start, edit.newText, {
                         label: localize('edit.label.add.source.file', 'CMake: Add new source file'),
-                        needsConfirmation: false
+                        needsConfirmation
                     });
                 }
             }
@@ -880,22 +876,6 @@ export class CMakeListsModifier implements vscode.Disposable {
         if (!project.codeModelContent) {
             void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
             return;
-        }
-
-        // For auto-triggered flow with 'ask' mode, show a non-blocking notification
-        // first so the user can decide whether to proceed before any QuickPicks appear
-        let userPreConsented = false;
-        if (!always && settings.addNewSourceFiles === 'ask') {
-            const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
-            const fileName = path.basename(uri.fsPath);
-            const result = await vscode.window.showInformationMessage(
-                localize('new.source.file.detected', 'New source file detected: {0}', fileName),
-                addAction
-            );
-            if (result !== addAction) {
-                return;
-            }
-            userPreConsented = true;
         }
 
         // Work around for focus race condition with Save As dialog closing.
@@ -950,14 +930,8 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
 
-        // Step 3: Apply the edit
-        // If user already consented via the notification, apply directly.
-        // Otherwise go through the normal review flow.
-        if (userPreConsented) {
-            await this.applyEdits([selectedCandidate]);
-        } else {
-            await this.reviewAndApply([selectedCandidate], settings, 'add');
-        }
+        // Step 3: Apply the edit (Refactor Preview shown when 'ask' mode is active)
+        await this.reviewAndApply([selectedCandidate], settings, 'add');
     }
 
     /**
@@ -980,22 +954,6 @@ export class CMakeListsModifier implements vscode.Disposable {
             const settings = project.workspaceContext.config.modifyLists;
             if (settings.addNewSourceFiles === 'no') {
                 continue;
-            }
-
-            // For 'ask' mode, show a non-blocking notification first
-            // (this method is only called from the auto-triggered flow)
-            let userPreConsented = false;
-            if (settings.addNewSourceFiles === 'ask') {
-                const fileNames = projectUris.map(u => path.basename(u.fsPath)).join(', ');
-                const addAction = localize('add.to.cmake.lists', 'Add to CMakeLists');
-                const result = await vscode.window.showInformationMessage(
-                    localize('new.source.files.detected', 'New source files detected: {0}', fileNames),
-                    addAction
-                );
-                if (result !== addAction) {
-                    continue;
-                }
-                userPreConsented = true;
             }
 
             // Check if user settings require interactive selection
@@ -1032,14 +990,8 @@ export class CMakeListsModifier implements vscode.Disposable {
                 }
 
                 const best = result.candidates[0];
-                if (userPreConsented) {
-                    if (await this.applyEdits([best])) {
-                        anyApplied = true;
-                    }
-                } else {
-                    if (await this.reviewAndApply([best], settings, 'add')) {
-                        anyApplied = true;
-                    }
+                if (await this.reviewAndApply([best], settings, 'add')) {
+                    anyApplied = true;
                 }
             }
 
