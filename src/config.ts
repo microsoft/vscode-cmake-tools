@@ -164,6 +164,24 @@ export interface FailurePattern {
 
 export type FailurePatternsConfig = (FailurePattern | string)[] | string;
 
+export type ModifyListsActionMode = 'no' | 'yes' | 'ask';
+export type ModifyListsVariableSelection = 'never' | 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsTargetSelection = 'auto' | 'askNearestSourceDir' | 'askParentSourceDirs';
+export type ModifyListsTargetCommandInvocationSelection = 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsScopeSelection = 'auto' | 'ask';
+
+export interface ModifyListsSettings {
+    addNewSourceFiles: ModifyListsActionMode;
+    removeDeletedSourceFiles: ModifyListsActionMode;
+    variableSelection: ModifyListsVariableSelection;
+    sourceVariables: string[];
+    targetSelection: ModifyListsTargetSelection;
+    targetCommandInvocationSelection: ModifyListsTargetCommandInvocationSelection;
+    targetSourceCommands: string[];
+    scopeSelection: ModifyListsScopeSelection;
+    sourceListKeywords: string[];
+}
+
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
@@ -238,6 +256,7 @@ export interface ExtensionConfigurationSettings {
     setBuildTargetSameAsLaunchTarget: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
     shell: string | null;
+    modifyLists: ModifyListsSettings;
 }
 
 type EmittersOf<T> = {
@@ -651,6 +670,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.setBuildTargetSameAsLaunchTarget;
     }
 
+    get modifyLists(): ModifyListsSettings {
+        return this.configData.modifyLists;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -724,7 +747,8 @@ export class ConfigurationReader implements vscode.Disposable {
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>(),
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        modifyLists: new vscode.EventEmitter<ModifyListsSettings>()
     };
 
     /**

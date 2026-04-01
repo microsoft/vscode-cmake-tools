@@ -89,7 +89,18 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         useFolderPropertyInBuildTargetDropdown: true,
         additionalBuildProblemMatchers: [],
         shell: null,
-        setBuildTargetSameAsLaunchTarget: false
+        setBuildTargetSameAsLaunchTarget: false,
+        modifyLists: {
+            addNewSourceFiles: 'ask',
+            removeDeletedSourceFiles: 'ask',
+            variableSelection: 'never',
+            sourceVariables: [],
+            targetSelection: 'askParentSourceDirs',
+            targetCommandInvocationSelection: 'askParentDirs',
+            targetSourceCommands: ['target_sources', 'add_executable', 'add_library'],
+            scopeSelection: 'ask',
+            sourceListKeywords: []
+        }
     });
     ret.updatePartial(conf);
     return ret;
