@@ -660,7 +660,7 @@ export class ProjectNode extends BaseNode {
             if (target.isGeneratorProvided) {
                 continue;
             }
-            
+
             if (this.config.outlineViewType === "tree") {
                 const srcdir = target.sourceDirectory || '';
                 const relpath = path.relative(pr.sourceDirectory, srcdir);
