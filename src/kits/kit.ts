@@ -105,9 +105,11 @@ export interface Kit extends KitDetect {
     preferredGenerator?: CMakeGenerator;
 
     /**
-     * Additional settings to pass to CMake
+     * Additional settings to pass to CMake.
+     * Values can be strings or string arrays. String arrays are joined with
+     * semicolons to form CMake lists (without escaping).
      */
-    cmakeSettings?: { [key: string]: string };
+    cmakeSettings?: { [key: string]: string | string[] };
 
     /**
      * Additional environment variables for the kit
@@ -518,6 +520,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
         log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
+        if (e.stack) {
+            log.debug(e.stack);
+        }
         if (e.code === 'ENOENT') {
             return [];
         }
@@ -562,6 +567,9 @@ export async function scanDirForCompilerKits(dir: string, isTrusted: boolean = t
         } catch (ce) {
             const e = ce as NodeJS.ErrnoException;
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
+            if (e.stack) {
+                log.debug(e.stack);
+            }
             if (e.code === 'EACCES') {
                 // The binary may not be executable by this user...
                 return null;
@@ -695,18 +703,24 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let script = '';
     let run_command = '';
 
-    let environmentSetupScript = kit.environmentSetupScript?.trim();
+    let environmentSetupScript = kit.environmentSetupScript!.trim();
     if (opts) {
-        environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
+        environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
+    }
+
+    // If the string doesn't start with a quote, assume it is a path to a script file, so we quote it in case there are spaces in the path.
+    // Otherwise, assume it is in form of `"script path" [arg ...]`, we will not add extra quotes, to avoid breaking the command.
+    if (!environmentSetupScript.startsWith('"')) {
+        environmentSetupScript = `"${environmentSetupScript}"`;
     }
 
     if (process.platform === 'win32') { // windows
-        script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
+        script += `call ${environmentSetupScript}\r\n`; // call the user batch script
         script += `set >> "${environment_path}"`; // write env vars to temp file
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
-        script += `source "${environmentSetupScript}"\n`; // run the user shell script
+        script += `source ${environmentSetupScript}\n`; // run the user shell script
         script += `printenv >> ${environment_path}`; // write env vars to temp file
         run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
     }
@@ -1402,6 +1416,9 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         kits_raw = json5.parse(content_str.toLocaleString());
     } catch (e) {
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
+        if (e instanceof Error && e.stack) {
+            log.debug(e.stack);
+        }
         return [];
     }
     const validator = await loadSchema('./schemas/kits-schema.json');
@@ -1410,7 +1427,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         const errors = validator.errors!;
         log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filePath), filePath));
         for (const err of errors) {
-            log.error(` >> ${err.dataPath}: ${err.message}`);
+            log.error(` >> ${err.instancePath}: ${err.message}`);
         }
         return [];
     }

@@ -361,7 +361,9 @@ export class CTestTestNode extends BaseNode {
         readonly targetId: string,
         readonly testName: string,
         readonly folder: vscode.WorkspaceFolder,
-        readonly sourceDir: string
+        readonly sourceDir: string,
+        readonly sourceFilePath?: string,
+        readonly sourceFileLine?: number
     ) {
         super(`${targetId}::test::${testName}`);
     }
@@ -384,6 +386,16 @@ export class CTestTestNode extends BaseNode {
         item.iconPath = new vscode.ThemeIcon('beaker');
         item.contextValue = 'nodeType=test';
         item.tooltip = localize('test.tooltip', 'Test: {0}', this.testName);
+        if (this.sourceFilePath) {
+            const uri = vscode.Uri.file(this.sourceFilePath);
+            const line = this.sourceFileLine ? this.sourceFileLine - 1 : 0;
+            const position = new vscode.Position(line, 0);
+            item.command = {
+                title: localize('open.file', 'Open file'),
+                command: 'vscode.open',
+                arguments: [uri, { selection: new vscode.Range(position, position) }]
+            };
+        }
         return item;
     }
 }
@@ -551,9 +563,9 @@ export class TargetNode extends BaseNode {
         }
     }
 
-    updateTests(testNames: string[]) {
-        this._testNodes = testNames.map(name =>
-            new CTestTestNode(this.id, name, this.folder, this.sourceDir)
+    updateTests(tests: { name: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        this._testNodes = tests.map(test =>
+            new CTestTestNode(this.id, test.name, this.folder, this.sourceDir, test.sourceFilePath, test.sourceFileLine)
         );
     }
 }
@@ -735,6 +747,9 @@ export class WorkspaceFolderNode extends BaseNode {
         const rootProject = projectOutlineModel.project;
         let item = this.getNode(cmakeProject, rootProject.name);
         if (!item) {
+            // Remove stale entries for this cmakeProject so that a renamed
+            // project replaces the old node instead of appearing alongside it.
+            this.removeNodes(cmakeProject);
             item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
         }
@@ -749,7 +764,7 @@ export class WorkspaceFolderNode extends BaseNode {
         return children.sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
     }
 
-    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string }[]) {
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
         const sub_map = this._projects.get(cmakeProject.folderPath);
         if (!sub_map) {
             return;
@@ -772,7 +787,7 @@ export class WorkspaceFolderNode extends BaseNode {
         }
 
         // Group tests by their executable path (matching to targets)
-        const testsByTarget = new Map<TargetNode, string[]>();
+        const testsByTarget = new Map<TargetNode, { name: string; sourceFilePath?: string; sourceFileLine?: number }[]>();
         for (const test of tests) {
             const normalizedExe = platformNormalizePath(test.executablePath);
             const target = targetsByPath.get(normalizedExe);
@@ -782,7 +797,7 @@ export class WorkspaceFolderNode extends BaseNode {
                     arr = [];
                     testsByTarget.set(target, arr);
                 }
-                arr.push(test.name);
+                arr.push({ name: test.name, sourceFilePath: test.sourceFilePath, sourceFileLine: test.sourceFileLine });
             }
         }
 
@@ -794,8 +809,8 @@ export class WorkspaceFolderNode extends BaseNode {
         }
 
         // Update each target with its tests
-        for (const [target, testNames] of testsByTarget) {
-            target.updateTests(testNames);
+        for (const [target, targetTests] of testsByTarget) {
+            target.updateTests(targetTests);
         }
     }
 }
@@ -928,7 +943,7 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         this._changeEvent.fire(null);
     }
 
-    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string }[]) {
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
         const folder = cmakeProject.workspaceContext.folder;
         const existing = this._folders.get(folder.uri.fsPath);
         if (!existing) {

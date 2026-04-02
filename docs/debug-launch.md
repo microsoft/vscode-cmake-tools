@@ -30,7 +30,7 @@ From there, you can press the play button by the `Launch` node to run it in term
 CMake Tools lets you start a debugger on a target without creating a `launch.json`.
 
 > **Note:**
-> Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
+> By default, quick-debugging auto-detects the debugger from the CMake cache and uses Microsoft's `vscode-ms-vscode.cpptools` debug adapters (`cppdbg` / `cppvsdbg`). To use a different debug adapter, see [Customize the debug adapter](#customize-the-debug-adapter) below.
 
 Start a debugging session on the active target by running the *CMake: Debug* command from the VS Code command palette, by selecting the Debug button in the status bar or CMake Tools sidebar Project Status View, or by pressing the keyboard shortcut (the default is **Shift+F5**).
 
@@ -38,6 +38,26 @@ Start a debugging session on the active target by running the *CMake: Debug* com
 
 > **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
+
+## Customize the debug adapter
+
+You can use any debug adapter with CMake Tools quick-debugging by setting the `type` property in the `cmake.debugConfig` setting. When `type` is specified, CMake Tools skips automatic debugger detection and builds a minimal launch configuration from the selected target, then merges in all properties from `cmake.debugConfig`. This lets you use adapters like `lldb`, `codelldb`, or any other installed debug extension without creating a `launch.json`.
+
+Add the following to your `.vscode/settings.json`:
+
+```jsonc
+{
+    "cmake.debugConfig": {
+        "type": "lldb",          // any installed debug adapter type
+        "request": "launch",
+        "stopOnEntry": false
+    }
+}
+```
+
+Then run **CMake: Debug Target** from the command palette. CMake Tools will automatically fill in `program`, `cwd`, and `name` from the selected target, and apply your settings on top. Any property recognized by the debug adapter can be added to `cmake.debugConfig`.
+
+If you omit `type`, CMake Tools falls back to the original behavior: auto-detecting `cppdbg` or `cppvsdbg` from the CMake cache.
 
 ## Debug using a launch.json file
 
@@ -186,6 +206,57 @@ Here are minimal examples of a `launch.json` file that uses `cmake.launchTargetP
 
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
+### Debugging a specific target (multi-executable projects)
+
+If your project defines multiple executables (for example, a `client` and a `server`), you can create stable per-target debug configurations using VS Code's [input variables](https://code.visualstudio.com/docs/editor/variables-reference#_input-variables). Pass the `targetName` argument to any launch-target command so that it resolves a specific executable **without changing the active launch target**. If `cmake.buildBeforeRun` is enabled, the named target is built automatically.
+
+```jsonc
+{
+    "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "serverPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_server" }
+        },
+        {
+            "id": "serverDir",
+            "type": "command",
+            "command": "cmake.getLaunchTargetDirectory",
+            "args": { "targetName": "my_server" }
+        },
+        {
+            "id": "clientPath",
+            "type": "command",
+            "command": "cmake.launchTargetPath",
+            "args": { "targetName": "my_client" }
+        }
+    ],
+    "configurations": [
+        {
+            "name": "Debug Server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${input:serverPath}",
+            "cwd": "${input:serverDir}"
+        },
+        {
+            "name": "Debug Client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${input:clientPath}",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
+```
+
+When multiple `${input:...}` variables reference the same target (for example, `serverPath` and `serverDir` above), the build is triggered only once — results are cached for 10 seconds to avoid redundant builds.
+
+> **Tip:**
+> For large projects, consider setting `cmake.buildBeforeRun` to `false` and using a `preLaunchTask` instead to keep launch times predictable.
+
 ### Cache variable substitution
 
 You can substitute the value of any variable in the CMake cache by adding a `command`-type input for the `cmake.cacheVariable` command to the `inputs` section of `launch.json` with `args.name` as the name of the cache variable. That input can then be used with input variable substitution of values in the `configuration` section of `launch.json`. The optional `args.default` can provide a default value if the named variable isn't found in the CMake cache.
@@ -217,7 +288,9 @@ You can also construct launch.json configurations that allow you to debug tests 
 > These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
 
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
-the `args` field, and `cmake.testWorkingDirectory` for the `cwd` field.
+the `args` field, `cmake.testWorkingDirectory` for the `cwd` field, and `cmake.testEnvironment` for the `environment` field.
+
+`cmake.testEnvironment` resolves to the environment variables set via the CTest `ENVIRONMENT` test property (e.g., from `set_tests_properties(... PROPERTIES ENVIRONMENT "A=B;C=D")`). It is replaced with an array of `{ "name": "...", "value": "..." }` objects suitable for launch.json.
 
 A couple of examples:
 
@@ -232,6 +305,7 @@ A couple of examples:
     "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
+    "environment": "${cmake.testEnvironment}",
 }
 ```
 ### msvc
@@ -244,6 +318,7 @@ A couple of examples:
     // Resolved by CMake Tools:
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],
+    "environment": "${cmake.testEnvironment}",
 }
 ```
 

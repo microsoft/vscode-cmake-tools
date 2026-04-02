@@ -283,6 +283,9 @@ export class VariantManager implements vscode.Disposable {
                 }
             } catch (e) {
                 log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, util.errorToString(e)));
+                if (e instanceof Error && e.stack) {
+                    log.debug(e.stack);
+                }
             }
         }
 
@@ -291,7 +294,7 @@ export class VariantManager implements vscode.Disposable {
             const errors = validate.errors as ajv.ErrorObject[];
             log.error(localize('invalid.variants', 'Invalid variants specified:'));
             for (const err of errors) {
-                log.error(` >> ${err.dataPath}: ${err.message}`);
+                log.error(` >> ${err.instancePath}: ${err.message}`);
             }
             new_variants = DEFAULT_VARIANTS;
             log.info(localize('loaded.default.variants', 'Loaded default variants'));

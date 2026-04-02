@@ -196,13 +196,13 @@ export class PresetsParser {
                 for (const err of errors) {
                     if (err.params && "additionalProperty" in err.params) {
                         logFunc(
-                            ` >> ${err.dataPath}: ${localize(
+                            ` >> ${err.instancePath}: ${localize(
                                 "no.additional.properties",
                                 "should NOT have additional properties"
                             )}: ${err.params.additionalProperty}`
                         );
                     } else {
-                        logFunc(` >> ${err.dataPath}: ${err.message}`);
+                        logFunc(` >> ${err.instancePath}: ${err.message}`);
                     }
                 }
             };
@@ -644,6 +644,9 @@ export class PresetsParser {
                     util.errorToString(e)
                 )
             );
+            if (e instanceof Error && e.stack) {
+                log.debug(e.stack);
+            }
             return undefined;
         }
         return presetsFile;
