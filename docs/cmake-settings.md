@@ -48,6 +48,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.deleteBuildDirOnCleanConfigure` | If `true`, delete build directory during clean configure. | `false` | no |
 | `cmake.emscriptenSearchDirs` | List of paths to search for Emscripten. | `[]` | no |
 | `cmake.enableAutomaticKitScan` | Enable automatic kit scanning. | `true` | no |
+| `cmake.removeStaleKitsOnScan` | If `true`, a full **Scan for Kits** run removes compiler-based kits from `cmake-tools-kits.json` when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions installed outside `PATH`. Set `"keep": true` in a kit entry to preserve it. This setting does not affect **Scan recursively for kits in specific directories**. | `false` | no |
 | `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab", "iwyu"]` | no |
 | `cmake.additionalBuildProblemMatchers` | Array of user-defined problem matchers for build output. Each entry has `name`, `regexp`, and optional capture group indices (`file`, `line`, `column`, `severity`, `message`, `code`). See [Additional Build Problem Matchers](#additional-build-problem-matchers) below. | `[]` | no |
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
