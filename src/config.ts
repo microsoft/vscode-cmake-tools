@@ -257,6 +257,7 @@ export interface ExtensionConfigurationSettings {
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
     shell: string | null;
     modifyLists: ModifyListsSettings;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
@@ -674,6 +675,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.modifyLists;
     }
 
+    get outlineViewType(): string {
+        return this.configData.outlineViewType;
+    }
+
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         defaultActiveFolder: new vscode.EventEmitter<string | null>(),
@@ -748,7 +753,8 @@ export class ConfigurationReader implements vscode.Disposable {
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>(),
         setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
-        modifyLists: new vscode.EventEmitter<ModifyListsSettings>()
+        modifyLists: new vscode.EventEmitter<ModifyListsSettings>(),
+        outlineViewType: new vscode.EventEmitter<string>()
     };
 
     /**
