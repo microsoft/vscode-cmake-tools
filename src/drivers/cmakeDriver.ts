@@ -2104,6 +2104,104 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     }
 
+    /**
+     * Whether this CMake version supports `cmake --install` (>= 3.15).
+     */
+    get supportsInstallCommand(): boolean {
+        return !!this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.15.0'));
+    }
+
+    /**
+     * Construct the command line for `cmake --install <dir>`.
+     * Returns null if cmake --install is not supported.
+     */
+    getCMakeInstallCommand(): proc.BuildCommand | null {
+        if (!this.supportsInstallCommand) {
+            return null;
+        }
+        const args: string[] = ['--install', this.binaryDir];
+
+        // Multi-config generators need --config
+        if (this.isMultiConfFast || this.isMultiConfig) {
+            args.push('--config', this.currentBuildType);
+        }
+
+        // Honor cmake.installPrefix for --prefix
+        if (this.installDir) {
+            args.push('--prefix', this.installDir);
+        }
+
+        return { command: this.cmake.path, args, build_env: {} };
+    }
+
+    /**
+     * Run cmake --install. Uses the build runner for concurrency gating and cancellation.
+     * Falls back to `cmake --build --target install` on CMake < 3.15.
+     */
+    async install(consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<number | null> {
+        log.debug(localize('start.install', 'Start install'));
+        if (this.isConfigInProgress) {
+            await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+            return -1;
+        }
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
+            await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+            return -1;
+        }
+
+        const installCmd = this.getCMakeInstallCommand();
+        if (!installCmd) {
+            // Fallback for CMake < 3.15: use cmake --build --target install
+            return this.build(['install'], consumer, isBuildCommand);
+        }
+
+        this.cmakeBuildRunner.setBuildInProgress(true);
+
+        const pre_build_ok = await this.doPreBuild();
+        if (!pre_build_ok) {
+            this.cmakeBuildRunner.setBuildInProgress(false);
+            return -1;
+        }
+
+        const timeStart: number = new Date().getTime();
+
+        let outputEnc = this.config.outputLogEncoding;
+        const isAutoEncoding = outputEnc === 'auto';
+        if (isAutoEncoding) {
+            if (process.platform === 'win32') {
+                outputEnc = await codepages.getWindowsCodepage();
+            } else {
+                outputEnc = 'utf8';
+            }
+        }
+        const exeOpt: proc.ExecutionOptions = { environment: installCmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
+        this.cmakeBuildRunner.setBuildProcess(this.executeCommand(installCmd.command, installCmd.args, consumer, exeOpt));
+
+        const child = await this.cmakeBuildRunner.getResult();
+
+        const timeEnd: number = new Date().getTime();
+        const duration: number = timeEnd - timeStart;
+        log.info(localize('install.duration', 'Install completed: {0}', util.msToString(duration)));
+        const telemetryMeasures: telemetry.Measures = { Duration: duration };
+
+        if (child) {
+            telemetry.logEvent('install', undefined, telemetryMeasures);
+        } else {
+            telemetryMeasures['ErrorCount'] = 1;
+            telemetry.logEvent('install', undefined, telemetryMeasures);
+            this.cmakeBuildRunner.setBuildInProgress(false);
+            return -1;
+        }
+
+        if (!this.m_stop_process) {
+            await this._refreshExpansions();
+        }
+
+        return (await child.result.finally(() => {
+            this.cmakeBuildRunner.setBuildInProgress(false);
+        })).retc;
+    }
+
     private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer, isBuildCommand?: boolean): Promise<proc.Subprocess | null> {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {

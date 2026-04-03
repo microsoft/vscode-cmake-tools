@@ -401,7 +401,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
                 await this.runBuildTask(CommandType.build);
                 break;
             case CommandType.install:
-                await this.runBuildTask(CommandType.install);
+                await this.runInstallTask();
                 break;
             case CommandType.test:
                 await this.runTestTask();
@@ -444,9 +444,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             this.writeEmitter.fire(localize("target.is.ignored", "The defined targets in this task are being ignored.") + endOfLine);
         }
 
-        if (commandType === CommandType.install) {
-            targets = ['install'];
-        } else if (commandType === CommandType.clean) {
+        if (commandType === CommandType.clean) {
             targets = ['clean'];
         } else if (!shouldIgnore && !targetIsDefined && !project.useCMakePresets) {
             targets = [await project.buildTargetName() || await project.allTargetName];
@@ -673,6 +671,39 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
                 this.closeEmitter.fire(-1);
             }
             return -1;
+        }
+    }
+
+    private async runInstallTask(): Promise<any> {
+        this.writeEmitter.fire(localize("install.started", "Install task started...") + endOfLine);
+
+        const project: CMakeProject | undefined = await this.getProject();
+        if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+            return;
+        }
+        telemetry.logEvent("task", { taskType: "install", useCMakePresets: String(project.useCMakePresets) });
+        const cmakeDriver: CMakeDriver | undefined = (await project?.getCMakeDriverInstance()) || undefined;
+
+        if (cmakeDriver) {
+            const installCmd = cmakeDriver.getCMakeInstallCommand();
+            if (installCmd) {
+                this.writeEmitter.fire(proc.buildCmdStr(installCmd.command, installCmd.args) + endOfLine);
+            }
+            const result: number | null = await cmakeDriver.install(this, /* isBuildCommand */ false);
+            if (result === null || result === undefined) {
+                this.writeEmitter.fire(localize('install.terminated', 'Install was terminated') + endOfLine);
+                this.closeEmitter.fire(-1);
+            } else if (result !== 0) {
+                this.writeEmitter.fire(localize("install.finished.with.error", "Install finished with error(s).") + endOfLine);
+                this.closeEmitter.fire(result);
+            } else {
+                this.writeEmitter.fire(localize('install.finished', 'Install finished successfully') + endOfLine);
+                this.closeEmitter.fire(0);
+            }
+        } else {
+            log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
+            this.writeEmitter.fire(localize("install.failed", "Install failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
         }
     }
 
