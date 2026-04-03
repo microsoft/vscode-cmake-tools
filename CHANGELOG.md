@@ -76,6 +76,7 @@ Bug Fixes:
 - Add support for Visual Studio 2026 generator. [#4637](https://github.com/microsoft/vscode-cmake-tools/issues/4637)
 - Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
+- Fix "Scan for Kits" failing to invoke `vcvarsall.bat` when Visual Studio is installed in a non-ASCII directory path, by forcing the generated batch script to use UTF-8 codepage. [#4623](https://github.com/microsoft/vscode-cmake-tools/issues/4623) [@Sp3EdeR](https://github.com/Sp3EdeR)
 - Fix how `jobs` is handled in build presets. Also update how `cmake.parallelJobs` is handled as a fallback when a build preset does not define `jobs`. [#4176](https://github.com/microsoft/vscode-cmake-tools/issues/4176)
 - Fix diagnostics to handle when there isn't a command in the error output. [PR #4765](https://github.com/microsoft/vscode-cmake-tools/pull/4765)
 - Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
