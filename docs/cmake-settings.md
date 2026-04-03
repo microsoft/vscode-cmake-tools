@@ -42,7 +42,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.ctestArgs` | An array of additional arguments to pass to CTest. | `[]` | yes |
 | `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. | `["-T", "test", "--output-on-failure"]` | no |
 | `cmake.ctestPath` | Path to CTest executable. | `null` | no |
-| `cmake.debugConfig`| The debug configuration to use when debugging a target. When `type` is specified, automatic debugger detection is skipped and a custom debug adapter can be used. Additional properties required by the debug adapter can be added freely. | `null` (no values) | yes |
+| `cmake.debugConfig`| The debug configuration to use when debugging a target. When `type` is specified, automatic debugger detection is skipped and a custom debug adapter can be used. Additional properties required by the debug adapter can be added freely. See [Debug and launch](debug-launch.md#customize-the-debug-adapter) for examples, including Natvis via `visualizerFile` without a `launch.json`. | `null` (no values) | yes |
 | `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when `cmake.autoSelectActiveFolder` is disabled). | `""` | no |
 | `cmake.defaultVariants` | Override the default set of variants that will be supplied when no variants file is present. See [CMake variants](variants.md). | See package.json | no |
 | `cmake.deleteBuildDirOnCleanConfigure` | If `true`, delete build directory during clean configure. | `false` | no |
