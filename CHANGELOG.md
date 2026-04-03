@@ -38,6 +38,7 @@ Improvements:
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 
 Bug Fixes:
+- Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
 - Import the `EXTERNAL_INCLUDE` environment variable from the VS developer environment so that MSVC's external-header diagnostic suppression works correctly. [#4217](https://github.com/microsoft/vscode-cmake-tools/issues/4217)
 - Fix test presets not automatically switching when the build preset changes in multi-config generator setups (e.g., Ninja Multi-Config). The extension now auto-selects a compatible test preset after a build preset change, and properly considers build type when guessing the test preset. [#4395](https://github.com/microsoft/vscode-cmake-tools/issues/4395)
 - Fix `cmake.additionalCompilerSearchDirs` ignoring per-folder overrides in multiroot workspaces. The setting is now read from each folder's scoped configuration with `${workspaceFolder}` expanded per-folder, and the results are unioned. Also fix `cmake.cmakePath` resolution during kit scanning to try all workspace folders instead of only the first.
