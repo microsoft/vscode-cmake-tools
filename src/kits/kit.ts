@@ -1341,7 +1341,9 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
 
         // action === 'scan'
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject(), {
+            removeStaleCompilerKits: project.workspaceContext.config.removeStaleKitsOnScan
+        });
         await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     } finally {

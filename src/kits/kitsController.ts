@@ -35,6 +35,24 @@ export enum KitsReadMode {
     allAvailable
 }
 
+export interface ScanForKitsControllerOptions {
+    directoriesToScan?: string[];
+    removeStaleCompilerKits?: boolean;
+}
+
+export function shouldKeepUserKitAfterScan(kit: Kit, discoveredKitNames: ReadonlySet<string>, removeStaleCompilerKits: boolean): boolean {
+    if (!removeStaleCompilerKits) {
+        return true;
+    }
+    if (!kit.compilers) {
+        return true;
+    }
+    if (kit.keep === true) {
+        return true;
+    }
+    return discoveredKitNames.has(kit.name);
+}
+
 // TODO: migrate all kit related things in extension.ts to this class.
 export class KitsController {
     static additionalCompilerSearchDirs: string[] | undefined;
@@ -229,7 +247,9 @@ export class KitsController {
         // We don't have any kits defined. Scan for kits
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
-            await KitsController.scanForKits(await this.project.getCMakePathofProject());
+            await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+            });
             KitsController.checkingHaveKits = false;
             return true;
         } else {
@@ -289,7 +309,6 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                await KitsController.scanForKits(await this.project.getCMakePathofProject());
                 return false;
             } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
                 await KitsController.scanForKitsInSpecificFolder(this.project);
@@ -507,8 +526,11 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakePath: string, directoriesToScan?: string[]) {
+    static async scanForKits(cmakePath: string, options?: ScanForKitsControllerOptions) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
+
+        const directoriesToScan = options?.directoriesToScan;
+        const removeStaleCompilerKits = options?.removeStaleCompilerKits === true && !directoriesToScan;
 
         // Do the scan:
         const discovered_kits = await scanForKits(cmakePath, !!directoriesToScan ? {
@@ -570,7 +592,15 @@ export class KitsController {
             old_kits_by_name
         );
 
-        const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
+        // Build the set of kit names found in this scan so we can drop stale entries.
+        const discovered_kit_names = new Set(discovered_kits.map(k => k.name));
+
+        // Optionally remove compiler-based kits that were not rediscovered in a
+        // full scan. Partial scans of specific directories never remove existing
+        // kits because they do not represent the full discovery set.
+        const new_kits = Object.keys(new_kits_by_name)
+            .map(k => new_kits_by_name[k])
+            .filter(kit => shouldKeepUserKitAfterScan(kit, discovered_kit_names, removeStaleCompilerKits));
         KitsController.userKits = new_kits;
         await KitsController._writeUserKitsFile(cmakePath, new_kits);
 
@@ -622,10 +652,9 @@ export class KitsController {
             }
         );
 
-        await KitsController.scanForKits(
-            await project.getCMakePathofProject(),
-            accumulatedDirs
-        );
+        await KitsController.scanForKits(await project.getCMakePathofProject(), {
+            directoriesToScan: accumulatedDirs
+        });
     }
 
     static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {
