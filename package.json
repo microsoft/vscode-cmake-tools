@@ -4112,6 +4112,12 @@
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
         },
+        "cmake.removeStaleKitsOnScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.removeStaleKitsOnScan.description%",
+          "scope": "window"
+        },
         "cmake.enableLanguageServices": {
           "type": "boolean",
           "default": true,
