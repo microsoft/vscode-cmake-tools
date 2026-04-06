@@ -18,8 +18,11 @@ applyTo: "**/*.ts,**/*.tsx,**/package.json,**/*.cmake,**/CMakeLists.txt,**/CMake
 
 ## Project conventions
 
-- **Path alias**: `@cmt/*` maps to `src/*` (see `tsconfig.json`). Always use `import foo from '@cmt/foo'` — never relative paths from outside `src/`.
-- **Error reporting**: Use `rollbar.invokeAsync()` / `rollbar.invoke()` for top-level error boundaries around event handlers, never bare `try/catch` that silently swallows.
+- **Path alias**: `@cmt/*` maps to `src/*` (see `tsconfig.json`). Always use `import foo from '@cmt/foo'` — never relative paths from outside `src/`. `@test/*` maps to `test/*` (defined in both `tsconfig.json` and `test.tsconfig.json`). Use `import ... from '@test/...'` in test files.
+- **Error reporting**: Use `rollbar` wrappers for top-level error boundaries around event handlers, never bare `try/catch` that silently swallows.
+  - `rollbar.invoke(what, fn)` — wraps synchronous code; catches, logs, and re-throws.
+  - `rollbar.invokeAsync(what, fn)` — wraps async function execution; catches promise rejections.
+  - `rollbar.takePromise(what, additional, thenable)` — attaches an error handler to an **already-created** Thenable (e.g., a return value from a VS Code API call). Use this when you have a promise but didn't create it via `invokeAsync`.
 - **Telemetry**: Use helpers in `src/telemetry.ts` (`logEvent`). Never call the VS Code telemetry API directly.
 
 ## Architecture
@@ -58,13 +61,40 @@ Identify the affected layer(s) from the architecture table above. Read the relev
 | Cache entries | `CMakeDriver.cmakeCacheEntries` |
 | Extension settings | `ConfigurationReader` (`src/config.ts`) — never `vscode.workspace.getConfiguration()` directly |
 
+### Reactive configuration subscriptions
+
+Use `ConfigurationReader.onChange()` for typed, per-setting change notifications:
+
+```typescript
+const disposable = config.onChange('settingName', (newValue) => {
+    // Respond to change
+});
+// Store disposable in a field or push to a disposables array for cleanup
+```
+
+Do **not** use `vscode.workspace.onDidChangeConfiguration` directly — the `onChange()` API is type-safe, fires only for the specific setting, and integrates with the extension's promise tracking.
+
 ### Always handle both operating modes
 
 When a code path touches shared logic (configure, build, test, targets, environment), check `CMakeProject.useCMakePresets` and ensure it works correctly in both presets mode and kits/variants mode. Omitting the check for one mode in shared code is a bug waiting to happen. Features that are inherently mode-specific (e.g., kit scanning, preset expansion) are fine to scope to one mode.
 
+### `SpecialKits` sentinel values
+
+Kit names may be sentinel values, not real compiler paths. Always check before treating `kit.name` as a file path:
+
+- `SpecialKits.Unspecified` (`'__unspec__'`) — no kit selected
+- `SpecialKits.ScanForKits` (`'__scanforkits__'`) — triggers kit scanning
+- `SpecialKits.ScanSpecificDir` (`'__scan_specific_dir__'`) — scan a specific directory
+
+### Kit trust model
+
+Kits have an `isTrusted: boolean` property. Auto-scanned kits from untrusted paths are filtered out before selection and use. This prevents untrusted kits from executing `environmentSetupScript`. Do not bypass this trust filtering when adding kit-related code.
+
 ### Always handle both generator types
 
 Single-config uses `CMAKE_BUILD_TYPE`; multi-config uses `--config` at build time. Check the active generator before any build-type logic.
+
+Call `util.isMultiConfGeneratorFast(generator)` before any build-type logic. Multi-config generators include Visual Studio, Xcode, and Ninja Multi-Config. Note: the `cmake.setBuildTypeOnMultiConfig` setting can override multi-config behavior — check it before assuming.
 
 ### Localize all user-visible strings
 
@@ -78,6 +108,14 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 // ✅ localize('my.message.key', 'Human-readable message')
 // ❌ bare strings in user-visible output
 ```
+
+### NLS key naming and `package.nls.json`
+
+Settings: `cmake-tools.configuration.cmake.<settingName>.description` (or `.markdownDescription`)
+Commands: `cmake-tools.command.cmake.<commandName>.title`
+
+- Update `package.nls.json` for English strings — **never** modify files under `i18n/` (translations are updated separately).
+- When a setting uses `markdownDescription` in `package.json`, the NLS key suffix must be `.markdownDescription`, not `.description`.
 
 ### Use the module-scoped logger — never `console.log`
 
@@ -98,9 +136,32 @@ Never concatenate path strings with `/` or `\\`. No exceptions.
 
 `package.json` (`contributes.configuration`), `src/config.ts` (`ConfigurationReader`), and `docs/cmake-settings.md`.
 
+### Setting `scope` in `package.json`
+
+Every setting in `contributes.configuration` must have an explicit `scope`:
+- `"resource"` — per-folder; use for anything CMake project-specific (paths, build args, generator, environment).
+- `"window"` — global; use for extension-wide UI/behavior settings.
+
+Examples: `cmake.buildDirectory` → `"resource"` (project-specific path), `cmake.autoSelectActiveFolder` → `"window"` (global UI behavior).
+
 ### Every PR needs a CHANGELOG entry
 
 One entry under the current version in `CHANGELOG.md`, in the appropriate section (`Features:`, `Improvements:`, or `Bug Fixes:`), describing user-visible behavior in the repo's existing tense and category style.
+
+### Adding a new diagnostic parser
+
+1. Create `src/diagnostics/<name>.ts` — extend `RawDiagnosticParser`, implement `handleLine()`
+2. Add an instance to the `Compilers` class in `src/diagnostics/build.ts`
+3. Add the parser name to `cmake.enabledOutputParsers` enum array **and** default array in `package.json`
+4. Add English strings to `package.nls.json` if descriptions change
+
+Currently registered: gcc, gnuld, ghs, diab, msvc, iar, iwyu. Default-enabled: cmake, gcc, gnuld, msvc, ghs, diab.
+
+### Copilot CI environment
+
+In the Copilot agent CI environment, `.npmrc` is renamed to `.npmrc.bak` and `yarn.lock` registry URLs are patched to use the public npm registry. These are environment artifacts:
+- **Never commit** `.npmrc.bak` or the patched `yarn.lock`
+- If `git status` shows these as modified, run `git checkout -- .npmrc yarn.lock` before committing
 
 ## Testing checklist
 
@@ -110,6 +171,20 @@ One entry under the current version in `CHANGELOG.md`, in the appropriate sectio
 - [ ] Behavior verified in **presets mode** and **kits/variants mode**
 - [ ] Behavior verified with **single-config** and **multi-config** generators
 - [ ] Windows/macOS/Linux differences considered (paths, env vars, MSVC toolchain, generator availability)
+
+### Backend tests (`yarn backendTests`)
+
+The fastest feedback loop — runs via Mocha with no VS Code instance or display required.
+
+- **Files go in** `test/unit-tests/backend/<name>.test.ts`
+- **Framework:** Mocha TDD (`suite`/`test`), Chai `expect` assertions
+- **Run:** `yarn backendTests`
+- **Mock setup:** `test/unit-tests/backend/setup-vscode-mock.ts` provides minimal `vscode` stubs
+
+**Import strategy:**
+1. If the module has **no transitive `vscode` dependency** (e.g., `encodingUtils`, `cmakeValue`) → import directly via `@cmt/*`
+2. If the module **transitively imports `vscode`** and the mock is insufficient → **mirror the pure function logic inline** in the test file. This is the established pattern in `expand.test.ts`, `targetMap.test.ts`, `shell-propagation.test.ts`.
+3. **Heuristic:** Try `@cmt/*` import first. If it fails due to vscode dependency at runtime, fall back to mirroring.
 
 ## Where to start
 
