@@ -23,6 +23,7 @@ Features:
 
 Improvements:
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
+- Document how to configure `cmake.debugConfig.visualizerFile` to use custom Natvis files with quick debugging, without requiring a `launch.json`. [#4616](https://github.com/microsoft/vscode-cmake-tools/issues/4616)
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
 - Clicking on a CTest in the Project Outline now navigates to the test source file, matching the existing Test Explorer behavior. [#4773](https://github.com/microsoft/vscode-cmake-tools/issues/4773)
 - Clicking on a CTest unit test in the Test Explorer now navigates to the test source file by matching the test executable to its CMake target's source files. [#4449](https://github.com/microsoft/vscode-cmake-tools/issues/4449)
