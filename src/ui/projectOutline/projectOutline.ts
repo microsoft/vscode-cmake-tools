@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
-import { lexicographicalCompare, splitPath } from '@cmt/util';
+import { lexicographicalCompare, platformNormalizePath, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import { populateViewCodeModel } from '@cmt/ui/projectOutline/targetsViewCodeModel';
 import { fs } from '@cmt/pr';
@@ -353,6 +353,53 @@ export class ReferenceNode extends BaseNode {
     }
 }
 
+/**
+ * Represents an individual CTest test case under an executable target in the project outline.
+ */
+export class CTestTestNode extends BaseNode {
+    constructor(
+        readonly targetId: string,
+        readonly testName: string,
+        readonly folder: vscode.WorkspaceFolder,
+        readonly sourceDir: string,
+        readonly sourceFilePath?: string,
+        readonly sourceFileLine?: number
+    ) {
+        super(`${targetId}::test::${testName}`);
+    }
+
+    get name() {
+        return this.testName;
+    }
+
+    getChildren(): BaseNode[] {
+        return [];
+    }
+
+    getOrderTuple(): string[] {
+        return ['test:' + this.testName];
+    }
+
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(this.testName);
+        item.id = this.id;
+        item.iconPath = new vscode.ThemeIcon('beaker');
+        item.contextValue = 'nodeType=test';
+        item.tooltip = localize('test.tooltip', 'Test: {0}', this.testName);
+        if (this.sourceFilePath) {
+            const uri = vscode.Uri.file(this.sourceFilePath);
+            const line = this.sourceFileLine ? this.sourceFileLine - 1 : 0;
+            const position = new vscode.Position(line, 0);
+            item.command = {
+                title: localize('open.file', 'Open file'),
+                command: 'vscode.open',
+                arguments: [uri, { selection: new vscode.Range(position, position) }]
+            };
+        }
+        return item;
+    }
+}
+
 export class TargetNode extends BaseNode {
     constructor(readonly prefix: string, readonly projectName: string, cm: codeModel.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
         // id: {prefix}::target_name:artifact_name:target_path
@@ -369,6 +416,11 @@ export class TargetNode extends BaseNode {
     private _isDefault = false;
     private _isLaunch = false;
     private _fsPath: string = '';
+    private _testNodes: CTestTestNode[] = [];
+
+    get artifactPath(): string {
+        return this._fsPath;
+    }
 
     getOrderTuple() {
         return [this.name];
@@ -378,7 +430,7 @@ export class TargetNode extends BaseNode {
     private readonly _referencesNode = new ReferencesNode(this.id);
 
     getChildren() {
-        return [this._referencesNode, ...this._rootDir.getChildren()];
+        return [this._referencesNode, ...this._rootDir.getChildren(), ...this._testNodes];
     }
     getTreeItem() {
         try {
@@ -509,6 +561,12 @@ export class TargetNode extends BaseNode {
             editor.revealRange(new vscode.Range(pos, pos.translate(2)));
             editor.selection = new vscode.Selection(pos, pos);
         }
+    }
+
+    updateTests(tests: { name: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        this._testNodes = tests.map(test =>
+            new CTestTestNode(this.id, test.name, this.folder, this.sourceDir, test.sourceFilePath, test.sourceFileLine)
+        );
     }
 }
 
@@ -689,6 +747,9 @@ export class WorkspaceFolderNode extends BaseNode {
         const rootProject = projectOutlineModel.project;
         let item = this.getNode(cmakeProject, rootProject.name);
         if (!item) {
+            // Remove stale entries for this cmakeProject so that a renamed
+            // project replaces the old node instead of appearing alongside it.
+            this.removeNodes(cmakeProject);
             item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
         }
@@ -701,6 +762,56 @@ export class WorkspaceFolderNode extends BaseNode {
             children.push(...sub_map.values());
         }
         return children.sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+    }
+
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        const sub_map = this._projects.get(cmakeProject.folderPath);
+        if (!sub_map) {
+            return;
+        }
+
+        // Collect all TargetNodes and build a map: normalized artifact path → TargetNode
+        const targetsByPath = new Map<string, TargetNode>();
+        const collectTargets = (node: BaseNode) => {
+            if (node instanceof TargetNode) {
+                if (node.artifactPath) {
+                    targetsByPath.set(platformNormalizePath(node.artifactPath), node);
+                }
+            }
+            for (const child of node.getChildren()) {
+                collectTargets(child);
+            }
+        };
+        for (const project of sub_map.values()) {
+            collectTargets(project);
+        }
+
+        // Group tests by their executable path (matching to targets)
+        const testsByTarget = new Map<TargetNode, { name: string; sourceFilePath?: string; sourceFileLine?: number }[]>();
+        for (const test of tests) {
+            const normalizedExe = platformNormalizePath(test.executablePath);
+            const target = targetsByPath.get(normalizedExe);
+            if (target) {
+                let arr = testsByTarget.get(target);
+                if (!arr) {
+                    arr = [];
+                    testsByTarget.set(target, arr);
+                }
+                arr.push({ name: test.name, sourceFilePath: test.sourceFilePath, sourceFileLine: test.sourceFileLine });
+            }
+        }
+
+        // Clear tests from targets that no longer have any
+        for (const target of targetsByPath.values()) {
+            if (!testsByTarget.has(target)) {
+                target.updateTests([]);
+            }
+        }
+
+        // Update each target with its tests
+        for (const [target, targetTests] of testsByTarget) {
+            target.updateTests(targetTests);
+        }
     }
 }
 
@@ -769,6 +880,10 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
             return node.name.toLowerCase().includes(searchLower);
         }
 
+        if (node instanceof CTestTestNode) {
+            return node.testName.toLowerCase().includes(searchLower);
+        }
+
         // Project and workspace nodes don't match directly
         return false;
     }
@@ -825,6 +940,17 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
                 folder
             });
 
+        this._changeEvent.fire(null);
+    }
+
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        const folder = cmakeProject.workspaceContext.folder;
+        const existing = this._folders.get(folder.uri.fsPath);
+        if (!existing) {
+            return;
+        }
+
+        existing.updateTests(cmakeProject, tests);
         this._changeEvent.fire(null);
     }
 

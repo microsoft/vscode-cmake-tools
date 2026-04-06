@@ -207,6 +207,18 @@ suite('Select debugger', () => {
         expect(config['miDebuggerPath']).to.be.eq('lldb');
     });
 
+    test('checkDebugger does not force shell: true (paths with spaces on Windows)', async () => {
+        const stub = sandbox.stub(proc, 'execute');
+        stub.returns(createExecuteReturn(0));
+
+        await Debugger.checkDebugger('d:/Pro gramFiles/mingw64/bin/gdb.exe');
+
+        expect(stub.calledOnce).to.be.true;
+        const options = stub.firstCall.args[3];
+        // shell must not be true; it should be left to proc.execute's determineShell logic
+        expect(options?.shell).to.not.be.eq(true);
+    });
+
     test('Create debug config from cache - debugger path override', async () => {
         const stub = sandbox.stub(proc, 'execute');
         stub.returns(createExecuteReturn(0));
