@@ -85,6 +85,7 @@ Bug Fixes:
 - Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
 - Fix issue with hover provider not checking for undefined. [#4812](https://github.com/microsoft/vscode-cmake-tools/issues/4812)
 - Fix bug in which CTest is unable to run large amount of tests in parallel due to regex exceeding command line length limits [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829) [@theuke](https://github.com/theuke)
+- Fix malformed devcontainer.json used for working with GitHub Codespaces and similar environments [#4588](https://github.com/microsoft/vscode-cmake-tools/pull/4588) [@kaladron](https://github.com/kaladron)
 
 ## 1.22.28
 
