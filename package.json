@@ -1008,6 +1008,8 @@
               "configure",
               "install",
               "test",
+              "package",
+              "workflow",
               "clean",
               "cleanRebuild"
             ],
@@ -4483,7 +4485,7 @@
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
     "uuid": "~8.3.2",
-    "lodash": "^4.17.23"
+    "lodash": "^4.18.1"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
