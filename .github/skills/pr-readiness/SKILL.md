@@ -44,7 +44,7 @@ Every PR must add an entry to `CHANGELOG.md`.
 
 #### Where to insert
 
-Insert the entry under the **most recent (topmost) version heading** in `CHANGELOG.md`. The first version heading looks like `## <version>` (e.g., `## 1.23`).
+Insert the entry under the **most recent (topmost) version heading** in `CHANGELOG.md`. The first version heading looks like `## <version>` (e.g., `## 1.23`). Always add the new entry at the **bottom** of the appropriate section (i.e., after all existing entries in that section).
 
 #### Which section
 
