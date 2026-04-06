@@ -1091,7 +1091,9 @@ export class ExtensionManager implements vscode.Disposable {
             }
         }
 
-        const duplicateRemoved = await KitsController.scanForKits(cmakePath);
+        const duplicateRemoved = await KitsController.scanForKits(cmakePath, {
+            removeStaleCompilerKits: this.workspaceConfig.removeStaleKitsOnScan
+        });
         if (duplicateRemoved) {
             // Check each project. If there is an active kit set and if it is of the old definition, unset the kit.
             for (const project of this.projectController.getAllCMakeProjects()) {
