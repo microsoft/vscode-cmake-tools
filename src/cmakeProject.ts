@@ -1994,10 +1994,9 @@ export class CMakeProject {
                 }
             }
         } else if (!this.configurePreset) {
-            const cannotConfigString = "Cannot configure: No configure preset is active for this CMake project";
-            void vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', cannotConfigString));
+            void vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
             log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
-            return { exitCode: -1, resultType: ConfigureResultType.Other, stderr: cannotConfigString };
+            return { exitCode: -1, resultType: ConfigureResultType.Other, stderr: 'Cannot configure: No configure preset is active for this CMake project' };
         }
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
