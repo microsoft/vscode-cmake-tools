@@ -309,6 +309,9 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
+                await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                    removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+                });
                 return false;
             } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
                 await KitsController.scanForKitsInSpecificFolder(this.project);
