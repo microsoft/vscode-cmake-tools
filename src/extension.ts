@@ -190,6 +190,7 @@ export class ExtensionManager implements vscode.Disposable {
                 subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.workspaceContext.config.onChange('outlineViewType', () => this.updateCodeModel(project)));
                 subs.push(project.cTestController.onTestsChanged(() => this.updateTestsInOutline(project)));
                 this.codeModelUpdateSubs.set(project.folderPath, subs);
                 rollbar.takePromise('Post-folder-open', { folder: folder, project: project }, this.postWorkspaceOpen(project));
