@@ -37,6 +37,8 @@ Improvements:
 - Set the `VSCODE_CMAKE_TOOLS` environment variable for all spawned subprocesses so that `CMakeLists.txt` can detect when CMake is run from VS Code. [#4233](https://github.com/microsoft/vscode-cmake-tools/issues/4233)
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 - Honor the active kit environment (including `environmentSetupScript` and kit-defined environment variables) when resolving `cmake.cmakePath` in kits mode, enabling `auto`/`cmake` mode discovery and `${env:...}` substitutions to use kit-provided environment values. [#4475](https://github.com/microsoft/vscode-cmake-tools/issues/4475)
+- Add `cmake.removeStaleKitsOnScan` setting to optionally remove stale compiler kits from the kit picker after a "Scan for Kits" when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions outside `PATH`. Set `"keep": true` in a kit entry to prevent automatic removal. [#3852](https://github.com/microsoft/vscode-cmake-tools/issues/3852)
+- Add `pr-readiness` Copilot skill to verify PRs have a descriptive title, meaningful description, and a properly formatted CHANGELOG entry. [#4862](https://github.com/microsoft/vscode-cmake-tools/pull/4862)
 
 Bug Fixes:
 - Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
@@ -74,6 +76,7 @@ Bug Fixes:
 - Fix build/debug/launch target selection not working when `CMAKE_BUILD_TYPE` is not set in the preset or is changed in CMakeLists.txt. [#4219](https://github.com/microsoft/vscode-cmake-tools/issues/4219)
 - Fix CMake script path links not working in CHS/CSY/FRA/PLK locales due to localized quotes. [#4383](https://github.com/microsoft/vscode-cmake-tools/issues/4383)
 - Fix user-level tasks defined in `~/.config/Code/User/tasks.json` causing infinite spinner. [#4659](https://github.com/microsoft/vscode-cmake-tools/pull/4659)
+- Fix `CMake: Set Build Target` command not showing available targets when using presets with defined targets. [#4509](https://github.com/microsoft/vscode-cmake-tools/issues/4509)
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
@@ -86,6 +89,8 @@ Bug Fixes:
 - Fix bug in which running "CMake: Build" would always run "CMake: Clean Rebuild" when `cmake.buildTask` is enabled [#4421](https://github.com/microsoft/vscode-cmake-tools/issues/4421) [@RedSkittleFox](https://github.com/RedSkittleFox)
 - Fix issue with hover provider not checking for undefined. [#4812](https://github.com/microsoft/vscode-cmake-tools/issues/4812)
 - Fix bug in which CTest is unable to run large amount of tests in parallel due to regex exceeding command line length limits [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829) [@theuke](https://github.com/theuke)
+- Fix malformed devcontainer.json used for working with GitHub Codespaces and similar environments [#4588](https://github.com/microsoft/vscode-cmake-tools/pull/4588) [@kaladron](https://github.com/kaladron)
+- Fix hang in `buildWithResult` tool when there isn't a configure preset selected. [#4857](https://github.com/microsoft/vscode-cmake-tools/issues/4857)
 
 ## 1.22.28
 

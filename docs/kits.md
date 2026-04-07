@@ -59,7 +59,9 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 - The [user-local kit](#user-local-kits) `cmake-tools-kits.json` file is updated with the new kit information.
 
 > **Warning:**
-> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
+> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names.
+>
+> By default, scans preserve existing entries in `cmake-tools-kits.json`. If `cmake.removeStaleKitsOnScan` is enabled, compiler-based kits (those with a `compilers` field) that are no longer rediscovered during a full scan are removed automatically. Set `"keep": true` in a kit entry to preserve it even when this cleanup is enabled. Kits without a `compilers` field (toolchain-only kits and Visual Studio kits) are always preserved.
 
 ## Kit options
 
