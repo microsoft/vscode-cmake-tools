@@ -190,7 +190,7 @@ The fastest feedback loop — runs via Mocha with no VS Code instance or display
 
 ## Test coverage improvements
 
-When working on issues labeled `test-coverage`, read `.github/copilot-test-coverage.md` before starting — it contains the mandatory self-audit protocol, test quality rules, and scope constraints for coverage work.
+When working on issues labeled `test-coverage`, read `.github/instructions/copilot-test-coverage.instructions.md` before starting — it contains the mandatory self-audit protocol, test quality rules, and scope constraints for coverage work.
 
 ## Where to start
 

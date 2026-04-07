@@ -115,7 +115,7 @@ ${tableRows}
 ### Agent instructions
 
 You are improving test coverage in \`microsoft/vscode-cmake-tools\`.
-Read \`.github/copilot-test-coverage.md\` before starting — it contains the
+Read \`.github/instructions/copilot-test-coverage.instructions.md\` before starting — it contains the
 mandatory self-audit protocol and test quality rules for this repo.
 
 **Files to cover (worst first):**
@@ -125,7 +125,7 @@ For each file:
 1. Read the source file fully before writing any test
 2. Identify the module's exported API surface
 3. Write tests in \`test/unit-tests/backend/\` that cover the uncovered branches
-4. Run the self-audit steps from \`copilot-test-coverage.md\`
+4. Run the self-audit steps from \`.github/instructions/copilot-test-coverage.instructions.md\`
 5. Only open the PR after every self-audit step passes
 
 ### Self-audit checklist (must be checked before opening PR)
