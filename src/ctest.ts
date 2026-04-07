@@ -1017,7 +1017,17 @@ export class CTestDriver implements vscode.Disposable {
                 parentSuiteItem = suiteItem;
             }
         }
-        const testItem = parentSuiteItem.children.get(testName) || initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        const existing = parentSuiteItem.children.get(testName);
+        let testItem: vscode.TestItem;
+        if (existing && existing.uri?.toString() === uri?.toString()) {
+            testItem = existing;
+            if (testItem.label !== testLabel) {
+                testItem.label = testLabel;
+            }
+        } else {
+            // Create or recreate testItem if the uri is stale or it does not already exist
+            testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        }
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
