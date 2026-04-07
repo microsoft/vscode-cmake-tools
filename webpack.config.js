@@ -61,7 +61,7 @@ const config = {
     }
 }
 
-module.exports = (env) => {
+module.exports = (/** @type {any} */ env) => {
     if (env.BUILD_VSCODE_NLS) {
         // rewrite nls call when being asked for
         // @ts-ignore

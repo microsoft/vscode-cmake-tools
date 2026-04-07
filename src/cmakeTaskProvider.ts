@@ -15,6 +15,10 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
+import { CommandResult } from 'vscode-cmake-tools';
+import { CompileOutputConsumer } from '@cmt/diagnostics/build';
+import collections from '@cmt/diagnostics/collections';
+import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -227,9 +231,10 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            // In this extension, the scope of the task is always a workspace folder.
-            const workspaceFolder: vscode.WorkspaceFolder = task.scope as vscode.WorkspaceFolder;
-            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
+            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
+            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                     new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
                 ), []);
@@ -238,19 +243,29 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         return undefined;
     }
 
-    public static async resolveInternalTask(task: CMakeTask): Promise<CMakeTask | undefined> {
+    public static async resolveInternalTask(task: CMakeTask): Promise<{ task: CMakeTask; exitCodePromise?: Promise<number | null> } | undefined> {
         const execution: any = task.execution;
         if (!execution) {
             const definition: CMakeTaskDefinition = <any>task.definition;
-            // In this extension, the scope of the task is always a workspace folder.
-            const workspaceFolder: vscode.WorkspaceFolder = task.scope as vscode.WorkspaceFolder;
-            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder, definition.label, CMakeTaskProvider.CMakeSourceStr,
-                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
-                ), []);
-            return resolvedTask;
+            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
+            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
+            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+            let exitCodeResolve!: (exitCode: number | null) => void;
+            const exitCodePromise = new Promise<number | null>(resolve => {
+                exitCodeResolve = resolve;
+            });
+            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
+                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
+                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
+                    const listener = terminal.onDidClose((exitCode) => {
+                        listener.dispose();
+                        exitCodeResolve(exitCode);
+                    });
+                    return terminal;
+                }), []);
+            return { task: resolvedTask, exitCodePromise };
         }
-        return task;
+        return { task };
     }
 
     public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
@@ -327,11 +342,15 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 if (defaultTask.length >= 1) {
                     return defaultTask[0];
                 } else {
+                    // If there are two tasks, both of them are templates, either build or clean rebuild, select the build one - the first one
+                    if (matchingTargetTasks.length === 2) {
+                        return matchingTargetTasks[0];
+                    }
                     // If there is no default task, matchingTargetTasks is a mixture of template and defined tasks.
                     // If there is only one task, that task is a template, so return the template.
-                    // If there are only two tasks, the first one is always a template, and the second one is the defined task that we are searching for.
-                    // But if there are more than two tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later.
-                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 2) {
+                    // If there are three tasks, the first two are always templates, and the third one is the defined task that we are searching for.
+                    // But if there are more than three tasks, it means that there are multiple defiend tasks and none are set as default. So ask the user to choose one later.
+                    if (matchingTargetTasks.length === 1 || matchingTargetTasks.length === 3) {
                         return matchingTargetTasks[matchingTargetTasks.length - 1];
                     }
                 }
@@ -346,7 +365,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 }
 
-export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
+export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vscode.Pseudoterminal {
     private writeEmitter = new vscode.EventEmitter<string>();
     private closeEmitter = new vscode.EventEmitter<number>();
     public get onDidWrite(): vscode.Event<string> {
@@ -357,14 +376,19 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     }
 
     constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+        super();
     }
 
-    output(line: string): void {
+    // These two override methods are used to write output and error messages to the terminal, as well
+    // as call the parent class's output and error methods, which store the stdout and stderr messages for returning that info later.
+    override output(line: string): void {
         this.writeEmitter.fire(line + endOfLine);
+        super.output(line);
     }
 
-    error(error: string): void {
+    override error(error: string): void {
         this.writeEmitter.fire(error + endOfLine);
+        super.error(error);
     }
 
     async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
@@ -472,7 +496,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
     private async getProject(): Promise<CMakeProject | undefined> {
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
-            this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.path + endOfLine));
+            this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.fsPath + endOfLine));
             project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
         }
         if (!project) {
@@ -505,8 +529,8 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                 this.writeEmitter.fire(localize('configure.terminated', 'Configure was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);
             } else {
-                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.result) + endOfLine);
-                this.closeEmitter.fire(result.result);
+                this.writeEmitter.fire(localize('configure.finished.with.code', 'Configure finished with return code {0}', result.exitCode) + endOfLine);
+                this.closeEmitter.fire(result.exitCode);
             }
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
@@ -574,10 +598,61 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
         }
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
+
+        // Create a compile output consumer to parse build diagnostics into the Problems pane
+        let compileConsumer: CompileOutputConsumer | undefined;
+        if (cmakeDriver.config.parseBuildDiagnostics) {
+            collections.build.clear();
+            compileConsumer = new CompileOutputConsumer(cmakeDriver.config);
+            compileConsumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                if (!cmakeDriver.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                    return;
+                }
+                const severity = diagnosticSeverity(rawDiag.severity);
+                if (severity === undefined) {
+                    return;
+                }
+                const filepath = util.resolvePath(rawDiag.file, cmakeDriver.binaryDir);
+                const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                diag.source = source;
+                if (rawDiag.code) {
+                    diag.code = rawDiag.code;
+                }
+                addDiagnosticToCollection(collections.build, { filepath, diag });
+            });
+        }
+
+        // Wrap the output consumer so build output is forwarded to both the terminal
+        // (for display) and the compile consumer (for diagnostic parsing).
+        const outputConsumer: proc.OutputConsumer = compileConsumer
+            ? {
+                output: (line: string) => {
+                    this.output(line);
+                    compileConsumer!.output(line);
+                },
+                error: (line: string) => {
+                    this.error(line);
+                    compileConsumer!.error(line);
+                }
+            }
+            : this;
+
         try {
-            this._process = proc.execute(cmakePath, args, this, this.options);
+            // On Windows, command-type-specific detection takes precedence over config.shell
+            const commandShell = process.platform === 'win32' ? proc.determineShell(cmakePath) : false;
+            const shell = (commandShell || undefined) ?? cmakeDriver.config.shell ?? undefined;
+            this._process = proc.execute(cmakePath, args, outputConsumer, { ...this.options, shell });
             const result: proc.ExecutionResult = await this._process.result;
             this._process = undefined;
+
+            if (compileConsumer) {
+                const fileDiags = await compileConsumer.resolveDiagnostics(cmakeDriver.binaryDir, cmakeDriver.sourceDir);
+                if (fileDiags) {
+                    populateCollection(collections.build, fileDiags);
+                }
+                compileConsumer.dispose();
+            }
+
             if (result.retc) {
                 this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             } else if (result.stderr || (result.stdout && result.stdout.includes(": warning"))) {
@@ -590,6 +665,9 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
             }
             return result.retc ?? 0;
         } catch {
+            if (compileConsumer) {
+                compileConsumer.dispose();
+            }
             this.writeEmitter.fire(localize("build.finished.with.error", "{0} finished with error(s).", taskName) + endOfLine);
             if (doCloseEmitter) {
                 this.closeEmitter.fire(-1);
@@ -621,7 +699,7 @@ export class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.Outp
                     return;
                 }
             }
-            const result: number | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
+            const result: CommandResult | undefined = cmakeDriver ? await project?.runCTestCustomized(cmakeDriver, testPreset, this) : undefined;
             if (result === undefined) {
                 this.writeEmitter.fire(localize('ctest.run.terminated', 'CTest run was terminated') + endOfLine);
                 this.closeEmitter.fire(-1);

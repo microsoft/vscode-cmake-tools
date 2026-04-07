@@ -59,7 +59,9 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 - The [user-local kit](#user-local-kits) `cmake-tools-kits.json` file is updated with the new kit information.
 
 > **Warning:**
-> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
+> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names.
+>
+> By default, scans preserve existing entries in `cmake-tools-kits.json`. If `cmake.removeStaleKitsOnScan` is enabled, compiler-based kits (those with a `compilers` field) that are no longer rediscovered during a full scan are removed automatically. Set `"keep": true` in a kit entry to preserve it even when this cleanup is enabled. Kits without a `compilers` field (toolchain-only kits and Visual Studio kits) are always preserved.
 
 ## Kit options
 
@@ -151,13 +153,40 @@ The following additional options may be specified:
 
 > This setting is most useful when the toolchain file respects additional options that can be passed as cache variables.
 
+> **Semicolon Handling:**
+>
+> CMake uses semicolons as list separators. The type of value you use determines how semicolons are handled:
+>
+> - **String values**: Semicolons are **escaped** (`;` → `\;`) to prevent CMake from treating them as list separators. Use this for single values that happen to contain semicolons.
+>
+> - **Array values**: Elements are joined with semicolons **without escaping**, producing a proper CMake list. Use this when you intentionally want to pass a CMake list.
+>
+> **Example - Passing a CMake list (use array notation):**
+> ```jsonc
+> "cmakeSettings": {
+>     // Array notation → semicolons NOT escaped → creates CMake list
+>     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]
+>     // Produces: -DLLVM_ENABLE_PROJECTS:STRING=clang;lld
+> }
+> ```
+>
+> **Example - String with semicolons escaped:**
+> ```jsonc
+> "cmakeSettings": {
+>     // String notation → semicolons ARE escaped → treated as single value
+>     "MY_VAR": "value;with;semicolons"
+>     // Produces: -DMY_VAR:STRING=value\;with\;semicolons
+> }
+> ```
+
 `environmentVariables`
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.
 
 `environmentSetupScript`
 
-> The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+> The absolute path to a script or a string in form of `"script path" [arg ...]`that modifies/adds environment variables for the kit. 
+Uses `call` on Windows and `source` in `bash` otherwise.
 
 `description`
 

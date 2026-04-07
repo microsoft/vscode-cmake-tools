@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13 # TODO: This is a workaround until macos-14 is fixed: https://github.com/actions/runner-images/issues/10624
+    runs-on: macos-26
 
     steps:
       - uses: actions/checkout@v3
@@ -38,6 +38,22 @@ jobs:
         with:
             cmakeVersion: 3.18.3
             ninjaVersion: 1.10.1
+      
+      - name: Remove conflicting system CMake installation 
+        # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
+        run: |
+          sudo rm -f /usr/local/bin/cmake
+          sudo rm -f /usr/local/bin/cmake-gui
+          sudo rm -f /usr/local/bin/ccmake
+          sudo rm -f /usr/local/bin/cmcldeps
+          sudo rm -f /usr/local/bin/cpack
+          sudo rm -f /usr/local/bin/ctest
+          sudo rm -f /opt/homebrew/bin/cmake
+          sudo rm -f /opt/homebrew/bin/cmake-gui
+          sudo rm -f /opt/homebrew/bin/ccmake
+          sudo rm -f /opt/homebrew/bin/cmcldeps
+          sudo rm -f /opt/homebrew/bin/cpack
+          sudo rm -f /opt/homebrew/bin/ctest
 
       - name: Build fake compilers for tests
         uses: urkle/action-cmake-build@v1.0.0

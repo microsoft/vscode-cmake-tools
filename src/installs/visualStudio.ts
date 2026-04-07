@@ -258,6 +258,7 @@ const msvcEnvVars = [
     'FrameworkVersion',
     'FrameworkVersion32',
     'FrameworkVersion64',
+    'EXTERNAL_INCLUDE',
     'INCLUDE',
     'LIB',
     'LIBPATH',
@@ -281,6 +282,7 @@ const msvcEnvVars = [
     'WindowsSDKVersion',
     'WindowsSDK_ExecutablePath_x64',
     'WindowsSDK_ExecutablePath_x86',
+    'VCPKG_ROOT',
 
     /* These are special also need to be cached */
     'CL',
@@ -317,6 +319,7 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
     const envFileName = batFileName + '.env';
     const bat = [
         `@echo off`,
+        `chcp 65001`,
         `cd /d "%~dp0"`,
         `set "VS${majorVersion}0COMNTOOLS=${commonDir}"`,
         `set "INCLUDE="`,

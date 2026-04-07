@@ -1,6 +1,5 @@
 'use strict';
 
-import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -22,7 +21,7 @@ import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
+import { ProgressHandle, reportProgress } from '@cmt/util';
 import { ConfigurationType } from 'vscode-cmake-tools';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -34,6 +33,24 @@ export enum KitsReadMode {
     userKits,
     folderKits,
     allAvailable
+}
+
+export interface ScanForKitsControllerOptions {
+    directoriesToScan?: string[];
+    removeStaleCompilerKits?: boolean;
+}
+
+export function shouldKeepUserKitAfterScan(kit: Kit, discoveredKitNames: ReadonlySet<string>, removeStaleCompilerKits: boolean): boolean {
+    if (!removeStaleCompilerKits) {
+        return true;
+    }
+    if (!kit.compilers) {
+        return true;
+    }
+    if (kit.keep === true) {
+        return true;
+    }
+    return discoveredKitNames.has(kit.name);
 }
 
 // TODO: migrate all kit related things in extension.ts to this class.
@@ -57,7 +74,7 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly project: CMakeProject, private readonly _kitsWatcher: chokidar.FSWatcher) {}
+    private constructor(readonly project: CMakeProject, private readonly _kitsWatchers: vscode.Disposable[]) {}
 
     static async init(project: CMakeProject) {
         if (KitsController.userKits.length === 0) {
@@ -67,10 +84,20 @@ export class KitsController {
 
         const expandedAdditionalKitFiles: string[] = await project.getExpandedAdditionalKitFiles();
         const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(project.workspaceFolder)].concat(expandedAdditionalKitFiles);
-        const kitsWatcher = chokidar.watch(folderKitsFiles, { ignoreInitial: true, followSymlinks: false });
-        const kitsController = new KitsController(project, kitsWatcher);
-        chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
-            kitsController.readKits(KitsReadMode.folderKits)));
+
+        const kitsWatchers: vscode.Disposable[] = [];
+        const kitsController = new KitsController(project, kitsWatchers);
+        const rereadHandler = () => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
+            kitsController.readKits(KitsReadMode.folderKits));
+        for (const kitFile of folderKitsFiles) {
+            const dirUri = vscode.Uri.file(path.dirname(kitFile));
+            const pattern = new vscode.RelativePattern(dirUri, path.basename(kitFile));
+            const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+            watcher.onDidChange(rereadHandler);
+            watcher.onDidCreate(rereadHandler);
+            watcher.onDidDelete(rereadHandler);
+            kitsWatchers.push(watcher);
+        }
         project.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
 
         await kitsController.readKits(KitsReadMode.folderKits);
@@ -81,7 +108,9 @@ export class KitsController {
         if (this._pickKitCancellationTokenSource) {
             this._pickKitCancellationTokenSource.dispose();
         }
-        void this._kitsWatcher.close();
+        for (const watcher of this._kitsWatchers) {
+            watcher.dispose();
+        }
     }
 
     get availableKits() {
@@ -89,7 +118,7 @@ export class KitsController {
         if (this.project.workspaceContext.config.showSystemKits) {
             return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
         } else {
-            return KitsController.specialKits.concat(this.folderKits);
+            return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits));
         }
     }
 
@@ -218,7 +247,9 @@ export class KitsController {
         // We don't have any kits defined. Scan for kits
         if (!KitsController.checkingHaveKits) {
             KitsController.checkingHaveKits = true;
-            await KitsController.scanForKits(await this.project.getCMakePathofProject());
+            await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+            });
             KitsController.checkingHaveKits = false;
             return true;
         } else {
@@ -278,7 +309,9 @@ export class KitsController {
             return false;
         } else {
             if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                await KitsController.scanForKits(await this.project.getCMakePathofProject());
+                await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                    removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+                });
                 return false;
             } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
                 await KitsController.scanForKitsInSpecificFolder(this.project);
@@ -496,8 +529,11 @@ export class KitsController {
      *
      * @returns if any duplicate vs kits are removed.
      */
-    static async scanForKits(cmakePath: string, directoriesToScan?: string[]) {
+    static async scanForKits(cmakePath: string, options?: ScanForKitsControllerOptions) {
         log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
+
+        const directoriesToScan = options?.directoriesToScan;
+        const removeStaleCompilerKits = options?.removeStaleCompilerKits === true && !directoriesToScan;
 
         // Do the scan:
         const discovered_kits = await scanForKits(cmakePath, !!directoriesToScan ? {
@@ -559,7 +595,15 @@ export class KitsController {
             old_kits_by_name
         );
 
-        const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
+        // Build the set of kit names found in this scan so we can drop stale entries.
+        const discovered_kit_names = new Set(discovered_kits.map(k => k.name));
+
+        // Optionally remove compiler-based kits that were not rediscovered in a
+        // full scan. Partial scans of specific directories never remove existing
+        // kits because they do not represent the full discovery set.
+        const new_kits = Object.keys(new_kits_by_name)
+            .map(k => new_kits_by_name[k])
+            .filter(kit => shouldKeepUserKitAfterScan(kit, discovered_kit_names, removeStaleCompilerKits));
         KitsController.userKits = new_kits;
         await KitsController._writeUserKitsFile(cmakePath, new_kits);
 
@@ -611,10 +655,9 @@ export class KitsController {
             }
         );
 
-        await KitsController.scanForKits(
-            await project.getCMakePathofProject(),
-            accumulatedDirs
-        );
+        await KitsController.scanForKits(await project.getCMakePathofProject(), {
+            directoriesToScan: accumulatedDirs
+        });
     }
 
     static isBetterMatch(newKit: Kit, existingKit?: Kit): boolean {
