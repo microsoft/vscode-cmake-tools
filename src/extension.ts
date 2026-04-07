@@ -190,6 +190,7 @@ export class ExtensionManager implements vscode.Disposable {
                 subs.push(project.onTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onLaunchTargetNameChanged(FireLate, () => this.updateCodeModel(project)));
                 subs.push(project.onActiveBuildPresetChanged(FireLate, () => this.updateCodeModel(project)));
+                subs.push(project.workspaceContext.config.onChange('outlineViewType', () => this.updateCodeModel(project)));
                 subs.push(project.cTestController.onTestsChanged(() => this.updateTestsInOutline(project)));
                 this.codeModelUpdateSubs.set(project.folderPath, subs);
                 rollbar.takePromise('Post-folder-open', { folder: folder, project: project }, this.postWorkspaceOpen(project));
@@ -280,9 +281,6 @@ export class ExtensionManager implements vscode.Disposable {
         });
         this.workspaceConfig.onChange('mingwSearchDirs', async _ => { // Deprecated in 1.14, replaced by additionalCompilerSearchDirs, but kept for backwards compatibility
             KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
-        });
-        this.workspaceConfig.onChange('outlineViewType', async _ => {
-            this.updateCodeModel(getActiveProject());
         });
         KitsController.additionalCompilerSearchDirs = await this.getAdditionalCompilerDirs();
 

@@ -8,7 +8,6 @@ import CMakeProject from '@cmt/cmakeProject';
 import { populateViewCodeModel } from '@cmt/ui/projectOutline/targetsViewCodeModel';
 import { fs } from '@cmt/pr';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
-import { ConfigurationReader } from '@cmt/config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -575,8 +574,7 @@ export class ProjectNode extends BaseNode {
     constructor(
         readonly name: string,
         readonly folder: vscode.WorkspaceFolder,
-        readonly sourceDirectory: string,
-        readonly config: ConfigurationReader
+        readonly sourceDirectory: string
     ) {
         // id: project_name:project_directory
         super(`${name}:${sourceDirectory}`);
@@ -661,21 +659,11 @@ export class ProjectNode extends BaseNode {
                 continue;
             }
 
-            if (this.config.outlineViewType === "tree") {
-                const srcdir = target.sourceDirectory || '';
-                const relpath = path.relative(pr.sourceDirectory, srcdir);
-                addToTree(tree, relpath, target);
+            if (target.folder) {
+                addToTree(tree, target.folder.name, target);
             } else {
-                if (target.folder) {
-                    addToTree(tree, target.folder.name, target);
-                } else {
-                    addToTree(tree, '', target);
-                }
+                addToTree(tree, '', target);
             }
-        }
-
-        if (this.config.outlineViewType === "tree") {
-            collapseTreeInplace(tree);
         }
 
         this._rootDir.update({
@@ -725,10 +713,6 @@ export class WorkspaceFolderNode extends BaseNode {
 
     private readonly _projects = new Map<string, Map<string, ProjectNode>>();
 
-    private getNode(cmakeProject: CMakeProject, modelProjectName: string) {
-        return this._projects.get(cmakeProject.folderPath)?.get(modelProjectName);
-    }
-
     private setNode(cmakeProject: CMakeProject, modelProjectName: string, node: ProjectNode) {
         let sub_map = this._projects.get(cmakeProject.folderPath);
         if (!sub_map) {
@@ -749,23 +733,37 @@ export class WorkspaceFolderNode extends BaseNode {
             return;
         }
 
-        if (model.configurations[0].projects.length === 0) {
+        const configuration = model.configurations[0];
+        if (configuration.projects.length === 0) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
             return;
         }
 
-        const projectOutlineModel = populateViewCodeModel(model);
-        const rootProject = projectOutlineModel.project;
-        let item = this.getNode(cmakeProject, rootProject.name);
-        if (!item) {
-            // Remove stale entries for this cmakeProject so that a renamed
-            // project replaces the old node instead of appearing alongside it.
-            this.removeNodes(cmakeProject);
-            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath, cmakeProject.workspaceContext.config);
+        const outlineViewType = cmakeProject.workspaceContext.config.outlineViewType;
+
+        // Always remove existing nodes first to ensure clean state when
+        // switching between view types or when projects change.
+        this.removeNodes(cmakeProject);
+
+        if (outlineViewType === "tree") {
+            // Tree mode: create a separate ProjectNode for each CMake project,
+            // restoring the pre-1.15 hierarchical outline.
+            for (const project of configuration.projects) {
+                const item = new ProjectNode(project.name, this.wsFolder, project.sourceDirectory);
+                this.setNode(cmakeProject, project.name, item);
+                item.update(project, ctx);
+            }
+        } else {
+            // List mode (default): flatten all projects into a single node.
+            const projectOutlineModel = populateViewCodeModel(model);
+            const rootProject = projectOutlineModel.project;
+            const item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
+            item.update(rootProject, ctx);
         }
-        item.update(rootProject, ctx);
+
+        ctx.nodesToUpdate.push(this);
     }
 
     getChildren() {
