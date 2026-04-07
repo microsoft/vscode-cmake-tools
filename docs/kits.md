@@ -186,6 +186,40 @@ The following additional options may be specified:
 > The absolute path to a script or a string in form of `"script path" [arg ...]`that modifies/adds environment variables for the kit. 
 Uses `call` on Windows and `source` in `bash` otherwise.
 
+### Kit environment and CMake executable resolution
+
+When using kits mode (not CMake Presets), the active kit's environment—including variables set via `environmentSetupScript` and `environmentVariables`—influences how CMake Tools resolves the CMake executable path:
+
+1. **Auto discovery (`cmake.cmakePath: auto` or `cmake`):**  
+   The active kit's `PATH` is searched first before falling back to the system `PATH`. This allows a kit's setup script to prepend a custom directory containing a CMake binary, and that binary will be discovered and used.
+
+2. **Environment variable substitution:**  
+   If `cmake.cmakePath` uses `${env:VARIABLE_NAME}` syntax, the substitution resolves to values from the active kit's environment. For example, if a kit defines `MY_CMAKE_PATH` via `environmentVariables` or `environmentSetupScript`, you can set `"cmake.cmakePath": "${env:MY_CMAKE_PATH}/cmake"` and it will resolve using the kit-provided value.
+
+**Example:**
+
+In `.vscode/cmake-kits.json`, define the environment variable in the kit:
+```json
+[
+  {
+    "name": "Cross-Compile Kit",
+    "environmentSetupScript": "${workspaceFolder}/scripts/setup.sh",
+    "environmentVariables": {
+      "MY_CMAKE_PATH": "/custom/cmake/path"
+    }
+  }
+]
+```
+
+In `.vscode/settings.json`, reference the variable (do not define it here):
+```json
+{
+  "cmake.cmakePath": "${env:MY_CMAKE_PATH}/cmake"
+}
+```
+
+When this kit is selected, `cmake.cmakePath` will resolve to `/custom/cmake/path/cmake` using the kit's environment variable. Environment variables are resolved from the active kit's context, not from workspace settings.
+
 `description`
 
 > A short description of the kit, which will appear next to its name in the selection menu.
