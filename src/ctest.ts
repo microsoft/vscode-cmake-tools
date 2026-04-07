@@ -1304,10 +1304,16 @@ export class CTestDriver implements vscode.Disposable {
         if (test.children.size > 0) {
             const children = this.testItemCollectionToArray(test.children);
             for (const child of children) {
-                await this.getTestTargets(child, foundTarget, run);
+                if (!await this.getTestTargets(child, foundTarget, run)) {
+                    return false;
+                }
             }
         } else {
             const testProgram = this.testProgram(test.id);
+            if (!testProgram) {
+                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Test program not found for {0}', test.id) });
+                return false;
+            }
             const folder = this.getTestRootFolder(test);
             const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
@@ -1335,13 +1341,24 @@ export class CTestDriver implements vscode.Disposable {
     private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
-            const binaryDir = (await project.binaryDir).toString();
-            const accmulatedTestList: vscode.TestItem[] = [];
+            const execTargets = await project.executableTargets;
+            const exePathToTargetName = new Map<string, string>();
+            for (const t of execTargets) {
+                exePathToTargetName.set(path.normalize(t.path), t.name);
+            }
+            const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
-            for  (const [targetName, testList] of targets) {
-                accumulatedTargets.push(path.relative(binaryDir, targetName));
-                accmulatedTestList.concat(testList);
+            for (const [testProgramPath, testList] of targets) {
+                const normalizedPath = path.normalize(testProgramPath);
+                const targetName = exePathToTargetName.get(normalizedPath);
+                if (targetName) {
+                    accumulatedTargets.push(targetName);
+                } else {
+                    // Fallback: use the file name without extension as the target name
+                    accumulatedTargets.push(path.basename(testProgramPath, path.extname(testProgramPath)));
+                }
+                accumulatedTestList.push(...testList);
             }
             try {
                 if (extensionManager !== undefined && extensionManager !== null) {
@@ -1356,11 +1373,11 @@ export class CTestDriver implements vscode.Disposable {
             }
             if (!success) {
                 overallSuccess = false;
-                accmulatedTestList.forEach(test => {
+                accumulatedTestList.forEach(test => {
                     this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
                 });
             }
-        };
+        }
         return overallSuccess;
     }
 
