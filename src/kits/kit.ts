@@ -1089,12 +1089,13 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     const kit_env = EnvironmentUtils.create(kit.environmentVariables);
     const getVSKitEnv = process.platform === 'win32' && kit.visualStudio && kit.visualStudioArchitecture;
     if (!getVSKitEnv) {
-        const expandOptions: expand.ExpansionOptions = {
+        const expandOptions: expand.ExpansionOptions = opts ? { ...opts, envOverride: host_env, penvOverride: host_env } : {
             vars: {} as expand.KitContextVars,
-            envOverride: host_env
+            envOverride: host_env,
+            penvOverride: host_env
         };
         for (const env_var of Object.keys(kit_env)) {
-            env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
+            env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
         }
 
         if (process.platform === 'win32') {
