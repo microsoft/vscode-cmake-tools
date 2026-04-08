@@ -82,6 +82,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ignoreCMakeListsMissing: false,
         automaticReconfigure: false,
         enableAutomaticKitScan: true,
+        removeStaleKitsOnScan: false,
         enableLanguageServices: true,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
@@ -90,6 +91,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         additionalBuildProblemMatchers: [],
         shell: null,
         setBuildTargetSameAsLaunchTarget: false,
+        outlineViewType: "list",
         modifyLists: {
             addNewSourceFiles: 'ask',
             removeDeletedSourceFiles: 'ask',
@@ -185,5 +187,17 @@ suite('Configuration', () => {
         expect(conf.shell).to.be.null;
         conf.updatePartial({ shell: '/usr/bin/bash' });
         expect(conf.shell).to.eq('/usr/bin/bash');
+    });
+
+    test('Read removeStaleKitsOnScan as false by default', () => {
+        const conf = createConfig({});
+        expect(conf.removeStaleKitsOnScan).to.be.false;
+    });
+
+    test('Update removeStaleKitsOnScan setting', () => {
+        const conf = createConfig({ removeStaleKitsOnScan: false });
+        expect(conf.removeStaleKitsOnScan).to.be.false;
+        conf.updatePartial({ removeStaleKitsOnScan: true });
+        expect(conf.removeStaleKitsOnScan).to.be.true;
     });
 });

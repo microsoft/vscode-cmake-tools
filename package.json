@@ -3292,6 +3292,16 @@
           ],
           "scope": "window"
         },
+        "cmake.outlineViewType": {
+          "type": "string",
+          "enum": [
+            "list",
+            "tree"
+          ],
+          "default": "list",
+          "description": "%cmake-tools.configuration.cmake.outlineViewType.description%",
+          "scope": "resource"
+        },
         "cmake.options.advanced": {
           "type": "object",
           "default": {
@@ -4111,6 +4121,12 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
+        },
+        "cmake.removeStaleKitsOnScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.removeStaleKitsOnScan.description%",
+          "scope": "window"
         },
         "cmake.enableLanguageServices": {
           "type": "boolean",

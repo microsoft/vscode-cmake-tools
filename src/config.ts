@@ -248,6 +248,7 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    removeStaleKitsOnScan: boolean;
     enableLanguageServices: boolean;
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
@@ -257,6 +258,7 @@ export interface ExtensionConfigurationSettings {
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
     shell: string | null;
     modifyLists: ModifyListsSettings;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
@@ -642,6 +644,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get removeStaleKitsOnScan(): boolean {
+        return this.configData.removeStaleKitsOnScan;
+    }
+
     get enableLanguageServices(): boolean {
         return this.configData.enableLanguageServices;
     }
@@ -672,6 +678,10 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get modifyLists(): ModifyListsSettings {
         return this.configData.modifyLists;
+    }
+
+    get outlineViewType(): string {
+        return this.configData.outlineViewType;
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -740,6 +750,7 @@ export class ConfigurationReader implements vscode.Disposable {
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
         enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        removeStaleKitsOnScan: new vscode.EventEmitter<boolean>(),
         enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
@@ -748,7 +759,8 @@ export class ConfigurationReader implements vscode.Disposable {
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>(),
         setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
-        modifyLists: new vscode.EventEmitter<ModifyListsSettings>()
+        modifyLists: new vscode.EventEmitter<ModifyListsSettings>(),
+        outlineViewType: new vscode.EventEmitter<string>()
     };
 
     /**

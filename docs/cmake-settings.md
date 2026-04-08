@@ -48,6 +48,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.deleteBuildDirOnCleanConfigure` | If `true`, delete build directory during clean configure. | `false` | no |
 | `cmake.emscriptenSearchDirs` | List of paths to search for Emscripten. | `[]` | no |
 | `cmake.enableAutomaticKitScan` | Enable automatic kit scanning. | `true` | no |
+| `cmake.removeStaleKitsOnScan` | If `true`, a full **Scan for Kits** run removes compiler-based kits from `cmake-tools-kits.json` when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions installed outside `PATH`. Set `"keep": true` in a kit entry to preserve it. This setting does not affect **Scan recursively for kits in specific directories**. | `false` | no |
 | `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab", "iwyu"]` | no |
 | `cmake.additionalBuildProblemMatchers` | Array of user-defined problem matchers for build output. Each entry has `name`, `regexp`, and optional capture group indices (`file`, `line`, `column`, `severity`, `message`, `code`). See [Additional Build Problem Matchers](#additional-build-problem-matchers) below. | `[]` | no |
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
@@ -76,6 +77,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.options.advanced` | Advanced options for CMake Tools. | See package.json | no |
 | `cmake.options.statusBarVisibility` | Controls visibility of the status bar. | `hidden` | no |
 | `cmake.outputLogEncoding` | Encoding to use for tool output. | `auto` | no |
+| `cmake.outlineViewType` | Project Outline View`s type. | `["list", "tree"]` | no |
 | `cmake.parallelJobs` | Specify the number of jobs run in parallel during the build. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable build parallelism. | `0` | no |
 | `cmake.parseBuildDiagnostics` | If `true`, parse compiler output for diagnostics. | `true` | no |
 | `cmake.pinnedCommands` | List of commands pinned to the command palette. | `["workbench.action.tasks.configureTaskRunner", "workbench.action.tasks.runTask"]` | no |
