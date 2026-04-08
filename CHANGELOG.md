@@ -20,8 +20,11 @@ Features:
 - Complete Bookmarks context menu with "Set Build Target", "Set Launch/Debug Target", "Open CMakeLists.txt", and "Run Utility Target" actions to match the Project Outline. [#4788](https://github.com/microsoft/vscode-cmake-tools/issues/4788)
 - Relax `intelliSenseMode` validation in CMake Presets. [#4815](https://github.com/microsoft/vscode-cmake-tools/issues/4815) [@halflifefan](https://github.com/halflifefan)
 - Support string arrays in kit `cmakeSettings` to pass CMake lists without escaping semicolons (e.g., `"LLVM_ENABLE_PROJECTS": ["clang", "lld"]`). [#4503](https://github.com/microsoft/vscode-cmake-tools/issues/4503)
+- Add `cmake.outlineViewType` setting to toggle the Project Outline between a flat list view and the prior hierarchical tree view that shows each CMake project separately. [#3799](https://github.com/microsoft/vscode-cmake-tools/issues/3799) [#4538](https://github.com/microsoft/vscode-cmake-tools/pull/4538) [@ar1m4n](https://github.com/ar1m4n)
 
 Improvements:
+- Clarify variable substitution scope in docs for `settings.json` vs generic VS Code `tasks.json`/`launch.json`, including when to use `${command:cmake.*}` and why `${buildKit}`, `${generator}`, and `${config:cmake.configureArgs}` may not expand as expected in tasks. [#4010](https://github.com/microsoft/vscode-cmake-tools/issues/4010)
+- Improve CMake syntax highlighting: extend variable recognition with compiler/toolchain families and add scoped property command colorization for `set_property`, `get_property`, `set_target_properties`, and related commands. [#4527](https://github.com/microsoft/vscode-cmake-tools/pull/4527) [@pboettch](https://github.com/pboettch)
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
 - Document how to configure `cmake.debugConfig.visualizerFile` to use custom Natvis files with quick debugging, without requiring a `launch.json`. [#4616](https://github.com/microsoft/vscode-cmake-tools/issues/4616)
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
