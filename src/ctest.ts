@@ -1108,7 +1108,7 @@ export class CTestDriver implements vscode.Disposable {
             });
         };
 
-        removeDeletedTests(initializedTestExplorer.items);
+        removeDeletedTests(testExplorerRoot.children);
     }
 
     /**
