@@ -1047,8 +1047,7 @@ export class CTestDriver implements vscode.Disposable {
         if (!ctestArgs) {
             // Happens when testPreset is not selected
             const testItem = initializedTestExplorer.createTestItem(testPresetRequired, localize('test.preset.required', 'Select a test preset to discover tests'));
-            testExplorerRoot.children.add(testItem);
-            activeTestIDs.add(testItem.id);
+            testExplorerRoot.children.replace([testItem]);
             return;
         }
 
