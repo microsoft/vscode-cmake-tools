@@ -123,6 +123,17 @@ suite('Kits test', () => {
         const env_vars = await effectiveKitEnvironment(kit);
         await fs.unlink(script_path);
 
-        expect(env_vars.PATH).to.eq(`${scriptPath}${pathSeparator}${basePath}${pathSeparator}${appendedPath}`);
+        const normalizePathList = (value: string | undefined): string[] => {
+            expect(value).to.not.eq(undefined);
+            const parts = (value ?? '').split(pathSeparator);
+            if (process.platform !== 'win32') {
+                return parts;
+            }
+
+            // cmd/set can emit PATH entries with different slash and drive-letter casing.
+            return parts.map(part => path.win32.normalize(part).toLowerCase());
+        };
+
+        expect(normalizePathList(env_vars.PATH)).to.deep.eq(normalizePathList(`${scriptPath}${pathSeparator}${basePath}${pathSeparator}${appendedPath}`));
     });
 });
