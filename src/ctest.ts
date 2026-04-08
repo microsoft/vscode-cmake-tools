@@ -1098,12 +1098,11 @@ export class CTestDriver implements vscode.Disposable {
 
         const removeDeletedTests = (collection: vscode.TestItemCollection) => {
             collection.forEach((item: vscode.TestItem, collection: vscode.TestItemCollection) => {
-                if (item.children.size === 0) {
-                    if (!activeTestIDs.has(item.id)) {
-                        collection.delete(item.id);
-                    }
-                } else {
+                if (item.children.size > 0) {
                     removeDeletedTests(item.children);
+                }
+                if (item.children.size === 0 && !activeTestIDs.has(item.id)) {
+                    collection.delete(item.id);
                 }
             });
         };
