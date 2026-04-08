@@ -102,7 +102,22 @@ Options that support substitution, in the table below, allow variable references
 
 ## Variable substitution
 
-Some settings support the replacement of special values in their string value by using a `${variable}` syntax. The following built-in variables are expanded:
+Some settings support the replacement of special values in their string value by using a `${variable}` syntax.
+
+### Where substitution works
+
+Use this quick rule to avoid confusion:
+
+- CMake Tools `${...}` variables in this section (for example `${buildKit}` and `${generator}`) are expanded only when CMake Tools reads supported `cmake.*` settings from `settings.json`.
+- Generic VS Code `tasks.json` and `launch.json` fields are resolved by VS Code, not by CMake Tools. In those fields, use VS Code variables (for example `${workspaceFolder}`) or command substitutions such as `${command:cmake.buildKit}`.
+- `${config:cmake.*}` in `tasks.json`/`launch.json` returns the raw setting value. It does not apply a second CMake Tools substitution pass.
+
+Example:
+
+- In a shell task command, `${buildKit}` and `${generator}` are not expanded.
+- In a shell task command, `${command:cmake.buildKit}` is expanded.
+
+The following built-in variables are expanded in supported `cmake.*` settings only. None of these are expanded in generic VS Code shell or process task commands. Use the `${command:cmake.*}` forms listed under [Command substitution](#command-substitution) for those contexts.
 
 | Variable | Expansion |
 |---------|---------|
@@ -134,7 +149,9 @@ Variant options are expanded using the `${variant:VARIANTNAME}` syntax, where th
 
 ### Command substitution
 
-CMake Tools can expand VS Code commands. For example, you can expand the path to the launch target by using the syntax `${command:cmake.launchTargetPath}`
+CMake Tools can expand VS Code commands. For example, you can expand the path to the launch target by using the syntax `${command:cmake.launchTargetPath}`.
+
+This form is the recommended way to get CMake Tools values in generic `tasks.json` or `launch.json` fields.
 
 Be careful with long-running commands because it isn't specified when, or how many times, CMake Tools will execute a command for a given expansion.
 

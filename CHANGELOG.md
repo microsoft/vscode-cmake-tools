@@ -22,6 +22,7 @@ Features:
 - Support string arrays in kit `cmakeSettings` to pass CMake lists without escaping semicolons (e.g., `"LLVM_ENABLE_PROJECTS": ["clang", "lld"]`). [#4503](https://github.com/microsoft/vscode-cmake-tools/issues/4503)
 
 Improvements:
+- Clarify variable substitution scope in docs for `settings.json` vs generic VS Code `tasks.json`/`launch.json`, including when to use `${command:cmake.*}` and why `${buildKit}`, `${generator}`, and `${config:cmake.configureArgs}` may not expand as expected in tasks. [#4010](https://github.com/microsoft/vscode-cmake-tools/issues/4010)
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
 - Document how to configure `cmake.debugConfig.visualizerFile` to use custom Natvis files with quick debugging, without requiring a `launch.json`. [#4616](https://github.com/microsoft/vscode-cmake-tools/issues/4616)
 - Add `.github/copilot-instructions.md` to ground GitHub Copilot in the repo's architecture and coding conventions.
