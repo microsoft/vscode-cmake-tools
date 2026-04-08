@@ -23,6 +23,7 @@ Features:
 - Add `cmake.outlineViewType` setting to toggle the Project Outline between a flat list view and the prior hierarchical tree view that shows each CMake project separately. [#3799](https://github.com/microsoft/vscode-cmake-tools/issues/3799) [#4538](https://github.com/microsoft/vscode-cmake-tools/pull/4538) [@ar1m4n](https://github.com/ar1m4n)
 
 Improvements:
+- Clarify variable substitution scope in docs for `settings.json` vs generic VS Code `tasks.json`/`launch.json`, including when to use `${command:cmake.*}` and why `${buildKit}`, `${generator}`, and `${config:cmake.configureArgs}` may not expand as expected in tasks. [#4010](https://github.com/microsoft/vscode-cmake-tools/issues/4010)
 - Improve CMake syntax highlighting: extend variable recognition with compiler/toolchain families and add scoped property command colorization for `set_property`, `get_property`, `set_target_properties`, and related commands. [#4527](https://github.com/microsoft/vscode-cmake-tools/pull/4527) [@pboettch](https://github.com/pboettch)
 - Run tests sequentially in alphabetical order (matching the Test Explorer display order) when `cmake.ctest.allowParallelJobs` is disabled. [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829)
 - Document how to configure `cmake.debugConfig.visualizerFile` to use custom Natvis files with quick debugging, without requiring a `launch.json`. [#4616](https://github.com/microsoft/vscode-cmake-tools/issues/4616)
