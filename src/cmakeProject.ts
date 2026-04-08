@@ -1401,6 +1401,8 @@ export class CMakeProject {
     async setKit(kit: Kit | null) {
         const priorCMakePath = await this.getCMakePathofProject(); // used for later comparison to determine if we need to update the driver's cmake.
         this._activeKit = kit;
+        this.cachedCMakePathEnvironment = null;  // Invalidate cache on kit change
+        this.cachedCMakePathEnvironmentKit = null;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
             const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
@@ -1423,6 +1425,8 @@ export class CMakeProject {
                     this.statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
+                    this.cachedCMakePathEnvironment = null;  // Invalidate cache on error
+                    this.cachedCMakePathEnvironmentKit = null;
                 }
             } else {
                 // Remember the selected kit for the next session.
@@ -1436,11 +1440,23 @@ export class CMakeProject {
             return undefined;
         }
 
+        // Return cached result if kit hasn't changed
+        if (this.cachedCMakePathEnvironmentKit === this.activeKit && this.cachedCMakePathEnvironment !== null) {
+            return this.cachedCMakePathEnvironment === undefined ? undefined : this.cachedCMakePathEnvironment;
+        }
+
         try {
             const expansionOptions = await this.getExpansionOptions();
-            return await effectiveKitEnvironment(this.activeKit, expansionOptions);
+            const result = await effectiveKitEnvironment(this.activeKit, expansionOptions);
+            // Cache the result: store undefined as a marker to avoid re-computation
+            this.cachedCMakePathEnvironment = result || undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
+            return result;
         } catch (e: any) {
             log.warning(localize('failed.to.compute.kit.env.for.cmake.path', 'Unable to evaluate the active kit environment while resolving cmake.cmakePath: {0}', e?.message || e));
+            // Cache the error result as undefined
+            this.cachedCMakePathEnvironment = undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
             return undefined;
         }
     }
@@ -1562,6 +1578,12 @@ export class CMakeProject {
     get activeKit(): Kit | null {
         return this._activeKit;
     }
+
+    /**
+     * Cache for CMake path environment to avoid redundant shell script executions
+     */
+    private cachedCMakePathEnvironment: Environment | undefined | null = null;
+    private cachedCMakePathEnvironmentKit: Kit | null = null;
 
     /**
      * The compilation database for this driver.
