@@ -11,6 +11,7 @@ import { vsInstallations } from '@cmt/installs/visualStudio';
 import { expandString } from '@cmt/expand';
 import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
+import { Environment } from '@cmt/environmentVariables';
 
 interface VSCMakePaths {
     cmake?: string;
@@ -189,16 +190,30 @@ class Paths {
         return this._ninjaPath;
     }
 
-    async which(name: string): Promise<string | null> {
+    private pathFromEnvironment(envOverride?: Environment): string | undefined {
+        if (!envOverride) {
+            return undefined;
+        }
+        // EnvironmentUtils.create() normalizes key casing on Windows, but keep a fallback for plain process env records.
+        return envOverride['PATH'] || envOverride['Path'] || undefined;
+    }
+
+    async which(name: string, envOverride?: Environment): Promise<string | null> {
         return new Promise<string | null>(resolve => {
-            which(name, (err, resolved) => {
+            const pathOverride = this.pathFromEnvironment(envOverride);
+            const cb = (err: Error | null, resolved?: string) => {
                 if (err) {
                     resolve(null);
                 } else {
                     console.assert(resolved, '`which` didn\'t do what it should have.');
                     resolve(resolved!);
                 }
-            });
+            };
+            if (pathOverride) {
+                which(name, { path: pathOverride }, cb);
+            } else {
+                which(name, cb);
+            }
         });
     }
 
@@ -248,17 +263,17 @@ class Paths {
         }
     }
 
-    async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string | null> {
+    async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string, envOverride?: Environment): Promise<string | null> {
         this._ninjaPath = undefined;
 
         let raw = overWriteCMakePathSetting;
         if (!raw) {
-            raw = await this.expandStringPath(wsc.config.rawCMakePath, wsc);
+            raw = await this.expandStringPath(wsc.config.rawCMakePath, wsc, envOverride);
         }
 
         if (raw === 'auto' || raw === 'cmake') {
             // We start by searching $PATH for cmake
-            const on_path = await this.which('cmake');
+            const on_path = await this.which('cmake', envOverride);
             if (on_path) {
                 return on_path;
             }
@@ -289,7 +304,7 @@ class Paths {
         return raw;
     }
 
-    async expandStringPath(raw_path: string, wsc: DirectoryContext): Promise<string> {
+    async expandStringPath(raw_path: string, wsc: DirectoryContext, envOverride?: Environment): Promise<string> {
         return expandString(raw_path, {
             vars: {
                 buildKit: '${buildKit}',
@@ -310,7 +325,8 @@ class Paths {
                 workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
                 workspaceRoot: wsc.folder.uri.fsPath,
                 workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath)
-            }
+            },
+            envOverride
         });
     }
 

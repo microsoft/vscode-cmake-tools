@@ -1008,6 +1008,8 @@
               "configure",
               "install",
               "test",
+              "package",
+              "workflow",
               "clean",
               "cleanRebuild"
             ],
@@ -3106,6 +3108,12 @@
           "description": "%cmake-tools.configuration.cmake.copyCompileCommands.description%",
           "scope": "resource"
         },
+        "cmake.postConfigureTask": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.postConfigureTask.description%",
+          "scope": "resource"
+        },
         "cmake.configureOnOpen": {
           "type": "boolean",
           "default": true,
@@ -3289,6 +3297,16 @@
             "hidden"
           ],
           "scope": "window"
+        },
+        "cmake.outlineViewType": {
+          "type": "string",
+          "enum": [
+            "list",
+            "tree"
+          ],
+          "default": "list",
+          "description": "%cmake-tools.configuration.cmake.outlineViewType.description%",
+          "scope": "resource"
         },
         "cmake.options.advanced": {
           "type": "object",
@@ -4110,6 +4128,12 @@
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
         },
+        "cmake.removeStaleKitsOnScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.removeStaleKitsOnScan.description%",
+          "scope": "window"
+        },
         "cmake.enableLanguageServices": {
           "type": "boolean",
           "default": true,
@@ -4477,7 +4501,7 @@
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
     "uuid": "~8.3.2",
-    "lodash": "^4.17.23"
+    "lodash": "^4.18.1"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",

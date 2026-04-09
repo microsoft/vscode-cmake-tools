@@ -136,6 +136,21 @@ export interface Kit extends KitDetect {
     visualStudioArchitecture?: string;
 
     /**
+     * Arguments to vcvarsall.bat.
+     * This is used for:
+     *  [platform_type]: {empty} | store | uwp
+     *  [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
+     *  [vc_version] : {none} for latest installed VC++ compiler toolset |
+     *                 "14.0" for VC++ 2015 Compiler Toolset |
+     *                 "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
+     *                 "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
+     *  [spectre_mode] : {none} for libraries without spectre mitigations |
+     *                   "spectre" for libraries with spectre mitigations
+     *
+     */
+    visualStudioArguments?: string[];
+
+    /**
      * Filename of a shell script which sets environment variables for the kit
      */
     environmentSetupScript?: string;
@@ -720,9 +735,12 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
+        // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
+        script += 'set -e\n';
         script += `source ${environmentSetupScript}\n`; // run the user shell script
-        script += `printenv >> ${environment_path}`; // write env vars to temp file
-        run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+        // Use an absolute path so PATH modifications in the setup script don't break env capture.
+        script += `/usr/bin/printenv > "${environment_path}"`; // write env vars to temp file
+        run_command = `/bin/bash "${script_path}"`;
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists
@@ -1052,7 +1070,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null>
         return null;
     }
 
-    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform, undefined, kit.visualStudioArguments);
 }
 
 /**
@@ -1074,12 +1092,13 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     const kit_env = EnvironmentUtils.create(kit.environmentVariables);
     const getVSKitEnv = process.platform === 'win32' && kit.visualStudio && kit.visualStudioArchitecture;
     if (!getVSKitEnv) {
-        const expandOptions: expand.ExpansionOptions = {
+        const expandOptions: expand.ExpansionOptions = opts ? { ...opts, envOverride: host_env, penvOverride: host_env } : {
             vars: {} as expand.KitContextVars,
-            envOverride: host_env
+            envOverride: host_env,
+            penvOverride: host_env
         };
         for (const env_var of Object.keys(kit_env)) {
-            env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
+            env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
         }
 
         if (process.platform === 'win32') {
@@ -1341,7 +1360,9 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
 
         // action === 'scan'
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject(), {
+            removeStaleCompilerKits: project.workspaceContext.config.removeStaleKitsOnScan
+        });
         await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     } finally {
@@ -1527,6 +1548,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         compilers: k.compilers,
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
+        vsArgs: k.visualStudioArguments,
         tc: k.toolchainFile,
         preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
         preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,
