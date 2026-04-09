@@ -735,9 +735,12 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
+        // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
+        script += 'set -e\n';
         script += `source ${environmentSetupScript}\n`; // run the user shell script
-        script += `printenv >> ${environment_path}`; // write env vars to temp file
-        run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+        // Use an absolute path so PATH modifications in the setup script don't break env capture.
+        script += `/usr/bin/printenv > "${environment_path}"`; // write env vars to temp file
+        run_command = `/bin/bash "${script_path}"`;
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists
@@ -1089,12 +1092,13 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     const kit_env = EnvironmentUtils.create(kit.environmentVariables);
     const getVSKitEnv = process.platform === 'win32' && kit.visualStudio && kit.visualStudioArchitecture;
     if (!getVSKitEnv) {
-        const expandOptions: expand.ExpansionOptions = {
+        const expandOptions: expand.ExpansionOptions = opts ? { ...opts, envOverride: host_env, penvOverride: host_env } : {
             vars: {} as expand.KitContextVars,
-            envOverride: host_env
+            envOverride: host_env,
+            penvOverride: host_env
         };
         for (const env_var of Object.keys(kit_env)) {
-            env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
+            env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
         }
 
         if (process.platform === 'win32') {

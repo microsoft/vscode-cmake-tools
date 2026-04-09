@@ -13,6 +13,7 @@ Features:
 - Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)
 - Add "Delete Cache, Reconfigure and Build" command that chains cache deletion, reconfiguration, and build into a single action. [#4723](https://github.com/microsoft/vscode-cmake-tools/pull/4723)
+- Add `cmake.postConfigureTask` setting to execute a named VS Code task after every successful CMake configure. [#4566](https://github.com/microsoft/vscode-cmake-tools/pull/4566) [@Francois-Le](https://github.com/Francois-Le)
 - Add "Set Build and Launch/Debug Target" command that sets both the build target and launch target simultaneously. [#4732](https://github.com/microsoft/vscode-cmake-tools/pull/4732)
 - Add `cmake.setBuildTargetSameAsLaunchTarget` setting to automatically set the build target when the launch/debug target is changed. [#4519](https://github.com/microsoft/vscode-cmake-tools/pull/4519) [@nikita-karatun](https://github.com/nikita-karatun)
 - Add `cmake.additionalBuildProblemMatchers` setting to define custom problem matchers for build output. Supports tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target`. [#4077](https://github.com/microsoft/vscode-cmake-tools/issues/4077)
@@ -39,6 +40,7 @@ Improvements:
 - Display info tooltip when hovering over CMake policy identifiers (e.g., `CMP0177`), showing the CMake version that introduced the policy, a short description, and a link to the official documentation. [#4544](https://github.com/microsoft/vscode-cmake-tools/issues/4544)
 - Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
 - Set the `VSCODE_CMAKE_TOOLS` environment variable for all spawned subprocesses so that `CMakeLists.txt` can detect when CMake is run from VS Code. [#4233](https://github.com/microsoft/vscode-cmake-tools/issues/4233)
+- Ensure kit `environmentVariables` expansions (for example, `${env:PATH}` or `${env.PATH}`) use the environment produced by `environmentSetupScript`, so script-updated values are preserved during expansion. [#4091](https://github.com/microsoft/vscode-cmake-tools/issues/4091)
 - Honor `debugger.workingDirectory` from the CMake File API when debugging a target, so that the `DEBUGGER_WORKING_DIRECTORY` target property is used as the debugger working directory. [#4595](https://github.com/microsoft/vscode-cmake-tools/issues/4595)
 - Honor the active kit environment (including `environmentSetupScript` and kit-defined environment variables) when resolving `cmake.cmakePath` in kits mode, enabling `auto`/`cmake` mode discovery and `${env:...}` substitutions to use kit-provided environment values. [#4475](https://github.com/microsoft/vscode-cmake-tools/issues/4475)
 - Add `cmake.removeStaleKitsOnScan` setting to optionally remove stale compiler kits from the kit picker after a "Scan for Kits" when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions outside `PATH`. Set `"keep": true` in a kit entry to prevent automatic removal. [#3852](https://github.com/microsoft/vscode-cmake-tools/issues/3852)
@@ -95,6 +97,7 @@ Bug Fixes:
 - Fix bug in which CTest is unable to run large amount of tests in parallel due to regex exceeding command line length limits [#4829](https://github.com/microsoft/vscode-cmake-tools/issues/4829) [@theuke](https://github.com/theuke)
 - Fix malformed devcontainer.json used for working with GitHub Codespaces and similar environments [#4588](https://github.com/microsoft/vscode-cmake-tools/pull/4588) [@kaladron](https://github.com/kaladron)
 - Fix hang in `buildWithResult` tool when there isn't a configure preset selected. [#4857](https://github.com/microsoft/vscode-cmake-tools/issues/4857)
+- Fix hiding of tests if test suite name and target name are the same when setting "Test Suite Delimiter" to `\` [#4408](https://github.com/microsoft/vscode-cmake-tools/issues/4408) [@ottmar-zittlau](https://github.com/ottmar-zittlau)
 
 ## 1.22.28
 
