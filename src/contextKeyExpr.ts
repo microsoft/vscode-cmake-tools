@@ -5,7 +5,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as nls from 'vscode-nls';
-import { Exception } from 'handlebars';
 
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const CONSTANT_VALUES = new Map<string, boolean>();
@@ -166,7 +165,7 @@ export class Scanner {
             case TokenType.EOF:
                 return 'EOF';
             default:
-                throw new Exception(`unhandled token type: ${JSON.stringify(token)}; have you forgotten to add a case?`);
+                throw new Error(`unhandled token type: ${JSON.stringify(token)}; have you forgotten to add a case?`);
         }
     }
 
@@ -840,8 +839,6 @@ export const enum CharCode {
 
 /** allow register constant context keys that are known only after startup; requires running `substituteConstants` on the context key - https://github.com/microsoft/vscode/issues/174218#issuecomment-1437972127 */
 export function setConstant(key: string, value: boolean) {
-    // if (CONSTANT_VALUES.get(key) !== undefined) { throw Exception('contextkey.setConstant(k, v) invoked with already set constant `k`'); }
-
     CONSTANT_VALUES.set(key, value);
 }
 

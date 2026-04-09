@@ -105,9 +105,11 @@ export interface Kit extends KitDetect {
     preferredGenerator?: CMakeGenerator;
 
     /**
-     * Additional settings to pass to CMake
+     * Additional settings to pass to CMake.
+     * Values can be strings or string arrays. String arrays are joined with
+     * semicolons to form CMake lists (without escaping).
      */
-    cmakeSettings?: { [key: string]: string };
+    cmakeSettings?: { [key: string]: string | string[] };
 
     /**
      * Additional environment variables for the kit
@@ -132,6 +134,21 @@ export interface Kit extends KitDetect {
      * from the dev environment batch file.
      */
     visualStudioArchitecture?: string;
+
+    /**
+     * Arguments to vcvarsall.bat.
+     * This is used for:
+     *  [platform_type]: {empty} | store | uwp
+     *  [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
+     *  [vc_version] : {none} for latest installed VC++ compiler toolset |
+     *                 "14.0" for VC++ 2015 Compiler Toolset |
+     *                 "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
+     *                 "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
+     *  [spectre_mode] : {none} for libraries without spectre mitigations |
+     *                   "spectre" for libraries with spectre mitigations
+     *
+     */
+    visualStudioArguments?: string[];
 
     /**
      * Filename of a shell script which sets environment variables for the kit
@@ -518,6 +535,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
         log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
+        if (e.stack) {
+            log.debug(e.stack);
+        }
         if (e.code === 'ENOENT') {
             return [];
         }
@@ -562,6 +582,9 @@ export async function scanDirForCompilerKits(dir: string, isTrusted: boolean = t
         } catch (ce) {
             const e = ce as NodeJS.ErrnoException;
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
+            if (e.stack) {
+                log.debug(e.stack);
+            }
             if (e.code === 'EACCES') {
                 // The binary may not be executable by this user...
                 return null;
@@ -695,18 +718,24 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let script = '';
     let run_command = '';
 
-    let environmentSetupScript = kit.environmentSetupScript?.trim();
+    let environmentSetupScript = kit.environmentSetupScript!.trim();
     if (opts) {
-        environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
+        environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
+    }
+
+    // If the string doesn't start with a quote, assume it is a path to a script file, so we quote it in case there are spaces in the path.
+    // Otherwise, assume it is in form of `"script path" [arg ...]`, we will not add extra quotes, to avoid breaking the command.
+    if (!environmentSetupScript.startsWith('"')) {
+        environmentSetupScript = `"${environmentSetupScript}"`;
     }
 
     if (process.platform === 'win32') { // windows
-        script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
+        script += `call ${environmentSetupScript}\r\n`; // call the user batch script
         script += `set >> "${environment_path}"`; // write env vars to temp file
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
-        script += `source "${environmentSetupScript}"\n`; // run the user shell script
+        script += `source ${environmentSetupScript}\n`; // run the user shell script
         script += `printenv >> ${environment_path}`; // write env vars to temp file
         run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
     }
@@ -1038,7 +1067,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null>
         return null;
     }
 
-    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform, undefined, kit.visualStudioArguments);
 }
 
 /**
@@ -1327,7 +1356,9 @@ export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolea
 
         // action === 'scan'
         log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject(), {
+            removeStaleCompilerKits: project.workspaceContext.config.removeStaleKitsOnScan
+        });
         await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
         return true;
     } finally {
@@ -1402,6 +1433,9 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         kits_raw = json5.parse(content_str.toLocaleString());
     } catch (e) {
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
+        if (e instanceof Error && e.stack) {
+            log.debug(e.stack);
+        }
         return [];
     }
     const validator = await loadSchema('./schemas/kits-schema.json');
@@ -1510,6 +1544,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         compilers: k.compilers,
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
+        vsArgs: k.visualStudioArguments,
         tc: k.toolchainFile,
         preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
         preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,
