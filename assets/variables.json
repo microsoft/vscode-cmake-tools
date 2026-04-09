@@ -1,4 +1,8 @@
 {
+  "AIX": {
+    "name": "AIX",
+    "description": "Set to true when the target system is AIX."
+  },
   "ANDROID": {
     "name": "ANDROID",
     "description": "Set to 1 when the target system (CMAKE_SYSTEM_NAME) is Android."
@@ -19,6 +23,10 @@
     "name": "BUILD_SHARED_LIBS",
     "description": "Tell add_library to default to SHARED libraries, instead of STATIC libraries, when called with no explicit library type."
   },
+  "BUILD_TESTING": {
+    "name": "BUILD_TESTING",
+    "description": "Control whether the CTest module invokes enable_testing."
+  },
   "CACHE": {
     "name": "CACHE",
     "description": "Operator to read cache variables."
@@ -38,6 +46,10 @@
   "CMAKE_AIX_EXPORT_ALL_SYMBOLS": {
     "name": "CMAKE_AIX_EXPORT_ALL_SYMBOLS",
     "description": "Default value for AIX_EXPORT_ALL_SYMBOLS target property. This variable is used to initialize the property on each target as it is created."
+  },
+  "CMAKE_AIX_SHARED_LIBRARY_ARCHIVE": {
+    "name": "CMAKE_AIX_SHARED_LIBRARY_ARCHIVE",
+    "description": "On AIX, enable or disable creation of shared library archives."
   },
   "CMAKE_ANDROID_ANT_ADDITIONAL_OPTIONS": {
     "name": "CMAKE_ANDROID_ANT_ADDITIONAL_OPTIONS",
@@ -187,9 +199,13 @@
     "name": "CMAKE_AUTOGEN_COMMAND_LINE_LENGTH_MAX",
     "description": "Command line length limit for autogen targets, i.e. moc or uic, that triggers the use of response files on Windows instead of passing all arguments to the command line."
   },
+  "CMAKE_AUTOGEN_INTERMEDIATE_DIR_STRATEGY": {
+    "name": "CMAKE_AUTOGEN_INTERMEDIATE_DIR_STRATEGY",
+    "description": "CMAKE_AUTOGEN_INTERMEDIATE_DIR_STRATEGY is a string cache variable specifying the strategy to use for autogen target intermediate directories and their contents. The supported values are:"
+  },
   "CMAKE_AUTOGEN_ORIGIN_DEPENDS": {
     "name": "CMAKE_AUTOGEN_ORIGIN_DEPENDS",
-    "description": "Switch for forwarding origin target dependencies to the corresponding <ORIGIN>_autogen targets."
+    "description": "Switch for forwarding origin target dependencies to the corresponding <ORIGIN>_autogen <<ORIGIN>_autogen> targets."
   },
   "CMAKE_AUTOGEN_PARALLEL": {
     "name": "CMAKE_AUTOGEN_PARALLEL",
@@ -218,6 +234,10 @@
   "CMAKE_AUTOMOC_EXECUTABLE": {
     "name": "CMAKE_AUTOMOC_EXECUTABLE",
     "description": "This variable is used to initialize the AUTOMOC_EXECUTABLE property on all the targets. See that target property for additional information."
+  },
+  "CMAKE_AUTOMOC_INCLUDE_DIRECTORIES": {
+    "name": "CMAKE_AUTOMOC_INCLUDE_DIRECTORIES",
+    "description": "Specifies zero or more include directories for AUTOMOC to pass explicitly to the Qt Meta\u00e2\u20ac\u2018Object Compiler (moc) instead of automatically discovering each target's include directories."
   },
   "CMAKE_AUTOMOC_MACRO_NAMES": {
     "name": "CMAKE_AUTOMOC_MACRO_NAMES",
@@ -265,7 +285,7 @@
   },
   "CMAKE_BACKWARDS_COMPATIBILITY": {
     "name": "CMAKE_BACKWARDS_COMPATIBILITY",
-    "description": "Deprecated. See CMake Policy CMP0001 documentation."
+    "description": "Removed. See policy CMP0001."
   },
   "CMAKE_BINARY_DIR": {
     "name": "CMAKE_BINARY_DIR",
@@ -337,7 +357,7 @@
   },
   "CMAKE_COLOR_DIAGNOSTICS": {
     "name": "CMAKE_COLOR_DIAGNOSTICS",
-    "description": "Enable color diagnostics throughout."
+    "description": "Enable color diagnostics throughout the generated build system."
   },
   "CMAKE_COLOR_MAKEFILE": {
     "name": "CMAKE_COLOR_MAKEFILE",
@@ -353,15 +373,15 @@
   },
   "CMAKE_COMPILER_IS_GNUCC": {
     "name": "CMAKE_COMPILER_IS_GNUCC",
-    "description": "True if the C compiler is GNU."
+    "description": "The CMAKE_COMPILER_IS_GNUCC variable is set to boolean true if the C compiler is GNU."
   },
   "CMAKE_COMPILER_IS_GNUCXX": {
     "name": "CMAKE_COMPILER_IS_GNUCXX",
-    "description": "True if the C++ (CXX) compiler is GNU."
+    "description": "The CMAKE_COMPILER_IS_GNUCXX variable is set to boolean true if the C++ (CXX) compiler is GNU."
   },
   "CMAKE_COMPILER_IS_GNUG77": {
     "name": "CMAKE_COMPILER_IS_GNUG77",
-    "description": "True if the Fortran compiler is GNU."
+    "description": "The CMAKE_COMPILER_IS_GNUG77 variable is set to boolean true if the Fortran compiler is GNU."
   },
   "CMAKE_COMPILE_PDB_OUTPUT_DIRECTORY": {
     "name": "CMAKE_COMPILE_PDB_OUTPUT_DIRECTORY",
@@ -511,6 +531,10 @@
     "name": "CMAKE_CXX_STANDARD_REQUIRED",
     "description": "Default value for CXX_STANDARD_REQUIRED target property if set when a target is created."
   },
+  "CMAKE_CXX_STDLIB_MODULES_JSON": {
+    "name": "CMAKE_CXX_STDLIB_MODULES_JSON",
+    "description": "This variable may be used to set the path to a metadata file for CMake to understand how the import std target for the active CXX compiler should be constructed."
+  },
   "CMAKE_C_COMPILE_FEATURES": {
     "name": "CMAKE_C_COMPILE_FEATURES",
     "description": "List of features known to the C compiler"
@@ -526,6 +550,10 @@
   "CMAKE_C_STANDARD_REQUIRED": {
     "name": "CMAKE_C_STANDARD_REQUIRED",
     "description": "Default value for C_STANDARD_REQUIRED target property if set when a target is created."
+  },
+  "CMAKE_DEBUGGER_WORKING_DIRECTORY": {
+    "name": "CMAKE_DEBUGGER_WORKING_DIRECTORY",
+    "description": "This variable is used to initialize the DEBUGGER_WORKING_DIRECTORY property on each target as it is created. See that target property for additional information."
   },
   "CMAKE_DEBUG_POSTFIX": {
     "name": "CMAKE_DEBUG_POSTFIX",
@@ -569,7 +597,7 @@
   },
   "CMAKE_DL_LIBS": {
     "name": "CMAKE_DL_LIBS",
-    "description": "Name of library containing dlopen and dlclose."
+    "description": "This variable contains a name of the dynamic loading library, or a list of system libraries needed to use the dlopen() and dlclose() functions."
   },
   "CMAKE_DOTNET_SDK": {
     "name": "CMAKE_DOTNET_SDK",
@@ -625,7 +653,7 @@
   },
   "CMAKE_EXECUTABLE_SUFFIX": {
     "name": "CMAKE_EXECUTABLE_SUFFIX",
-    "description": "The suffix for executables on this platform."
+    "description": "The suffix for executables on the target platform."
   },
   "CMAKE_EXECUTABLE_SUFFIX_<LANG>": {
     "name": "CMAKE_EXECUTABLE_SUFFIX_<LANG>",
@@ -634,6 +662,10 @@
   "CMAKE_EXECUTE_PROCESS_COMMAND_ECHO": {
     "name": "CMAKE_EXECUTE_PROCESS_COMMAND_ECHO",
     "description": "If this variable is set to STDERR, STDOUT or NONE then commands in execute_process calls will be printed to either stderr or stdout or not at all."
+  },
+  "CMAKE_EXECUTE_PROCESS_COMMAND_ERROR_IS_FATAL": {
+    "name": "CMAKE_EXECUTE_PROCESS_COMMAND_ERROR_IS_FATAL",
+    "description": "Specify a default for the execute_process command's COMMAND_ERROR_IS_FATAL option. This variable is ignored when a RESULTS_VARIABLE or RESULT_VARIABLE keyword is supplied to the command."
   },
   "CMAKE_EXE_LINKER_FLAGS": {
     "name": "CMAKE_EXE_LINKER_FLAGS",
@@ -651,6 +683,10 @@
     "name": "CMAKE_EXE_LINKER_FLAGS_INIT",
     "description": "Value used to initialize the CMAKE_EXE_LINKER_FLAGS cache entry the first time a build tree is configured. This variable is meant to be set by a toolchain file . CMake may prepend or append content to the value based on the environment and target platform."
   },
+  "CMAKE_EXPORT_BUILD_DATABASE": {
+    "name": "CMAKE_EXPORT_BUILD_DATABASE",
+    "description": "Enable/Disable output of module compile commands during the build."
+  },
   "CMAKE_EXPORT_COMPILE_COMMANDS": {
     "name": "CMAKE_EXPORT_COMPILE_COMMANDS",
     "description": "Enable/Disable output of compile commands during generation."
@@ -667,6 +703,10 @@
     "name": "CMAKE_EXPORT_PACKAGE_REGISTRY",
     "description": "Enables the export command when CMP0090 is set to NEW."
   },
+  "CMAKE_EXPORT_SARIF": {
+    "name": "CMAKE_EXPORT_SARIF",
+    "description": "Enable or disable CMake diagnostics output in SARIF format for a project."
+  },
   "CMAKE_EXTRA_GENERATOR": {
     "name": "CMAKE_EXTRA_GENERATOR",
     "description": "The extra generator used to build the project. See cmake-generators."
@@ -675,6 +715,66 @@
     "name": "CMAKE_EXTRA_SHARED_LIBRARY_SUFFIXES",
     "description": "Additional suffixes for shared libraries."
   },
+  "CMAKE_FASTBUILD_ALLOW_RESPONSE_FILE": {
+    "name": "CMAKE_FASTBUILD_ALLOW_RESPONSE_FILE",
+    "description": "Enables FASTBuild's AllowResponseFile option."
+  },
+  "CMAKE_FASTBUILD_CACHE_PATH": {
+    "name": "CMAKE_FASTBUILD_CACHE_PATH",
+    "description": "Specifies the directory for the FASTBuild artifact cache in the generated file."
+  },
+  "CMAKE_FASTBUILD_CAPTURE_SYSTEM_ENV": {
+    "name": "CMAKE_FASTBUILD_CAPTURE_SYSTEM_ENV",
+    "description": "Controls capturing of the system environment into fbuild.bff. Setting it to OFF makes the invocation of all tools (compilers and other external processes) hermetic."
+  },
+  "CMAKE_FASTBUILD_CLANG_GCC_UPDATE_XLANG_ARG": {
+    "name": "CMAKE_FASTBUILD_CLANG_GCC_UPDATE_XLANG_ARG",
+    "description": "Enables FASTBuild's ClangGCCUpdateXLanguageArg option."
+  },
+  "CMAKE_FASTBUILD_CLANG_REWRITE_INCLUDES": {
+    "name": "CMAKE_FASTBUILD_CLANG_REWRITE_INCLUDES",
+    "description": "Enables FASTBuild's ClangRewriteIncludes option."
+  },
+  "CMAKE_FASTBUILD_COMPILER_EXTRA_FILES": {
+    "name": "CMAKE_FASTBUILD_COMPILER_EXTRA_FILES",
+    "description": "Specifies a semicolon-separated list of additional files (usually DLLs) to include in the FASTBuild Compiler() node."
+  },
+  "CMAKE_FASTBUILD_ENV_OVERRIDES": {
+    "name": "CMAKE_FASTBUILD_ENV_OVERRIDES",
+    "description": "Allows overriding environment variables in the captured environment written to fbuild.bff."
+  },
+  "CMAKE_FASTBUILD_FORCE_RESPONSE_FILE": {
+    "name": "CMAKE_FASTBUILD_FORCE_RESPONSE_FILE",
+    "description": "Enables FASTBuild's ForceResponseFile option."
+  },
+  "CMAKE_FASTBUILD_IDE_ARGS": {
+    "name": "CMAKE_FASTBUILD_IDE_ARGS",
+    "description": "Specifies the command-line arguments used when invoking fbuild from IDE projects."
+  },
+  "CMAKE_FASTBUILD_SOURCE_MAPPING": {
+    "name": "CMAKE_FASTBUILD_SOURCE_MAPPING",
+    "description": "Sets FASTBuild's SourceMapping_Experimental option."
+  },
+  "CMAKE_FASTBUILD_TRACK_BYPRODUCTS_AS_OUTPUT": {
+    "name": "CMAKE_FASTBUILD_TRACK_BYPRODUCTS_AS_OUTPUT",
+    "description": "By default, custom commands declaring only BYPRODUCTS will always run unconditionally. You can use this variable to make FASTBuild rerun the command only when its inputs have changed or the byproduct file is missing."
+  },
+  "CMAKE_FASTBUILD_USE_DETERMINISTIC_PATHS": {
+    "name": "CMAKE_FASTBUILD_USE_DETERMINISTIC_PATHS",
+    "description": "Enables FASTBuild's UseDeterministicPaths_Experimental option."
+  },
+  "CMAKE_FASTBUILD_USE_LIGHTCACHE": {
+    "name": "CMAKE_FASTBUILD_USE_LIGHTCACHE",
+    "description": "Enables FASTBuild\u00e2\u20ac\u2122s light caching mode, which accelerates cache lookups by parsing source files directly (instead of invoking the compiler preprocessor)."
+  },
+  "CMAKE_FASTBUILD_USE_RELATIVE_PATHS": {
+    "name": "CMAKE_FASTBUILD_USE_RELATIVE_PATHS",
+    "description": "Enables FASTBuild's UseRelativePaths_Experimental option."
+  },
+  "CMAKE_FASTBUILD_VERBOSE_GENERATOR": {
+    "name": "CMAKE_FASTBUILD_VERBOSE_GENERATOR",
+    "description": "Enables verbose logging during FASTBuild file generation."
+  },
   "CMAKE_FIND_APPBUNDLE": {
     "name": "CMAKE_FIND_APPBUNDLE",
     "description": "This variable affects how find_* commands choose between macOS Application Bundles and unix-style package components."
@@ -682,6 +782,10 @@
   "CMAKE_FIND_DEBUG_MODE": {
     "name": "CMAKE_FIND_DEBUG_MODE",
     "description": "Print extra find call information for the following commands to standard error:"
+  },
+  "CMAKE_FIND_DEBUG_MODE_NO_IMPLICIT_CONFIGURE_LOG": {
+    "name": "CMAKE_FIND_DEBUG_MODE_NO_IMPLICIT_CONFIGURE_LOG",
+    "description": "The following commands will report configure log events when they experience a transition between found and not-found states or when the result is first defined:"
   },
   "CMAKE_FIND_FRAMEWORK": {
     "name": "CMAKE_FIND_FRAMEWORK",
@@ -733,15 +837,19 @@
   },
   "CMAKE_FIND_PACKAGE_SORT_ORDER": {
     "name": "CMAKE_FIND_PACKAGE_SORT_ORDER",
-    "description": "The default order for sorting packages found using find_package. It can assume one of the following values:"
+    "description": "The default order for sorting directories which match a search path containing a glob expression found using find_package. It can assume one of the following values:"
   },
   "CMAKE_FIND_PACKAGE_TARGETS_GLOBAL": {
     "name": "CMAKE_FIND_PACKAGE_TARGETS_GLOBAL",
-    "description": "Setting to TRUE promotes all IMPORTED targets discoverd by find_package to a GLOBAL scope."
+    "description": "Setting to TRUE promotes all IMPORTED targets discovered by find_package to a GLOBAL scope."
   },
   "CMAKE_FIND_PACKAGE_WARN_NO_MODULE": {
     "name": "CMAKE_FIND_PACKAGE_WARN_NO_MODULE",
     "description": "Tell find_package to warn if called without an explicit mode."
+  },
+  "CMAKE_FIND_REQUIRED": {
+    "name": "CMAKE_FIND_REQUIRED",
+    "description": "If enabled, the following commands are treated as having the REQUIRED keyword unless provided with the OPTIONAL keyword:"
   },
   "CMAKE_FIND_ROOT_PATH": {
     "name": "CMAKE_FIND_ROOT_PATH",
@@ -903,6 +1011,10 @@
     "name": "CMAKE_HOME_DIRECTORY",
     "description": "Path to top of source tree. Same as CMAKE_SOURCE_DIR."
   },
+  "CMAKE_HOST_AIX": {
+    "name": "CMAKE_HOST_AIX",
+    "description": "Set to true when the host system is AIX."
+  },
   "CMAKE_HOST_APPLE": {
     "name": "CMAKE_HOST_APPLE",
     "description": "True for Apple macOS operating systems."
@@ -910,6 +1022,10 @@
   "CMAKE_HOST_BSD": {
     "name": "CMAKE_HOST_BSD",
     "description": "Set to a string value when the host system is BSD. This value can be one of the following: DragonFlyBSD, FreeBSD, OpenBSD, or NetBSD."
+  },
+  "CMAKE_HOST_EXECUTABLE_SUFFIX": {
+    "name": "CMAKE_HOST_EXECUTABLE_SUFFIX",
+    "description": "The suffix for executables on the host platform. This may differ from the suffix for the target platform, CMAKE_EXECUTABLE_SUFFIX."
   },
   "CMAKE_HOST_LINUX": {
     "name": "CMAKE_HOST_LINUX",
@@ -987,6 +1103,10 @@
     "name": "CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS",
     "description": "Default permissions for directories created implicitly during installation of files by install and file."
   },
+  "CMAKE_INSTALL_EXPORTS_AS_PACKAGE_INFO": {
+    "name": "CMAKE_INSTALL_EXPORTS_AS_PACKAGE_INFO",
+    "description": "A list of directives instructing CMake to install CPS package information when exported target information is installed via install. The value is treated as a list, with each directive having the form:"
+  },
   "CMAKE_INSTALL_MESSAGE": {
     "name": "CMAKE_INSTALL_MESSAGE",
     "description": "Specify verbosity of installation script code generated by the install command (using the file command). For paths that are newly installed or updated, installation may print lines like:"
@@ -994,6 +1114,14 @@
   "CMAKE_INSTALL_NAME_DIR": {
     "name": "CMAKE_INSTALL_NAME_DIR",
     "description": "Directory name for installed targets on Apple platforms."
+  },
+  "CMAKE_INSTALL_OBJECT_NAME_STRATEGY": {
+    "name": "CMAKE_INSTALL_OBJECT_NAME_STRATEGY",
+    "description": "Strategy to use for naming installed object files."
+  },
+  "CMAKE_INSTALL_OBJECT_ONLY_USE_DESTINATION": {
+    "name": "CMAKE_INSTALL_OBJECT_ONLY_USE_DESTINATION",
+    "description": "Controls whether the install(DESTINATION) for object libraries is used as-is or supplemented with conflict-avoiding subdirectories."
   },
   "CMAKE_INSTALL_PREFIX": {
     "name": "CMAKE_INSTALL_PREFIX",
@@ -1014,6 +1142,10 @@
   "CMAKE_INSTALL_RPATH_USE_LINK_PATH": {
     "name": "CMAKE_INSTALL_RPATH_USE_LINK_PATH",
     "description": "Add paths to linker search and installed rpath."
+  },
+  "CMAKE_INTERMEDIATE_DIR_STRATEGY": {
+    "name": "CMAKE_INTERMEDIATE_DIR_STRATEGY",
+    "description": "CMAKE_INTERMEDIATE_DIR_STRATEGY is a string cache variable specifying the strategy to use for target intermediate directories and their contents. The supported values are:"
   },
   "CMAKE_INTERNAL_PLATFORM_ABI": {
     "name": "CMAKE_INTERNAL_PLATFORM_ABI",
@@ -1079,6 +1211,14 @@
     "name": "CMAKE_<LANG>_ANDROID_TOOLCHAIN_SUFFIX",
     "description": "When Cross Compiling for Android this variable contains the host platform suffix of the toolchain GNU compiler and its binutils."
   },
+  "CMAKE_<LANG>_ARCHIVER_WRAPPER_FLAG": {
+    "name": "CMAKE_<LANG>_ARCHIVER_WRAPPER_FLAG",
+    "description": "Defines the syntax of compiler driver option to pass options to the archiver tool. It will be used to translate the ARCHIVER: prefix in the static library options (see STATIC_LIBRARY_OPTIONS)."
+  },
+  "CMAKE_<LANG>_ARCHIVER_WRAPPER_FLAG_SEP": {
+    "name": "CMAKE_<LANG>_ARCHIVER_WRAPPER_FLAG_SEP",
+    "description": "This variable is used with CMAKE_<LANG>_ARCHIVER_WRAPPER_FLAG variable to format ARCHIVER: prefix in the static library options (see STATIC_LIBRARY_OPTIONS)."
+  },
   "CMAKE_<LANG>_ARCHIVE_APPEND": {
     "name": "CMAKE_<LANG>_ARCHIVE_APPEND",
     "description": "Rule variable to append to a static archive."
@@ -1117,7 +1257,7 @@
   },
   "CMAKE_<LANG>_COMPILER_ARCHITECTURE_ID": {
     "name": "CMAKE_<LANG>_COMPILER_ARCHITECTURE_ID",
-    "description": "An internal variable subject to change."
+    "description": "List  of identifiers indicating the target architecture(s) of the compiler for language <LANG>."
   },
   "CMAKE_<LANG>_COMPILER_EXTERNAL_TOOLCHAIN": {
     "name": "CMAKE_<LANG>_COMPILER_EXTERNAL_TOOLCHAIN",
@@ -1191,6 +1331,10 @@
     "name": "CMAKE_<LANG>_CREATE_SHARED_LIBRARY",
     "description": "Rule variable to create a shared library."
   },
+  "CMAKE_<LANG>_CREATE_SHARED_LIBRARY_ARCHIVE": {
+    "name": "CMAKE_<LANG>_CREATE_SHARED_LIBRARY_ARCHIVE",
+    "description": "Rule variable to create a shared library with archive."
+  },
   "CMAKE_<LANG>_CREATE_SHARED_MODULE": {
     "name": "CMAKE_<LANG>_CREATE_SHARED_MODULE",
     "description": "Rule variable to create a shared module."
@@ -1198,6 +1342,10 @@
   "CMAKE_<LANG>_CREATE_STATIC_LIBRARY": {
     "name": "CMAKE_<LANG>_CREATE_STATIC_LIBRARY",
     "description": "Rule variable to create a static library."
+  },
+  "CMAKE_<LANG>_DEVICE_LINK_MODE": {
+    "name": "CMAKE_<LANG>_DEVICE_LINK_MODE",
+    "description": "Defines how the device link step is done. The possible values are:"
   },
   "CMAKE_<LANG>_EXTENSIONS": {
     "name": "CMAKE_<LANG>_EXTENSIONS",
@@ -1259,6 +1407,18 @@
     "name": "CMAKE_<LANG>_HOST_COMPILER",
     "description": "This variable is available when <LANG> is CUDA or HIP."
   },
+  "CMAKE_<LANG>_HOST_COMPILER_ID": {
+    "name": "CMAKE_<LANG>_HOST_COMPILER_ID",
+    "description": "This variable is available when <LANG> is CUDA or HIP and CMAKE_<LANG>_COMPILER_ID is NVIDIA. It contains the identity of the host compiler invoked by nvcc, either by default or as specified by CMAKE_<LANG>_HOST_COMPILER, among possibilities documented by CMAKE_<LANG>_COMPILER_ID."
+  },
+  "CMAKE_<LANG>_HOST_COMPILER_VERSION": {
+    "name": "CMAKE_<LANG>_HOST_COMPILER_VERSION",
+    "description": "This variable is available when <LANG> is CUDA or HIP and CMAKE_<LANG>_COMPILER_ID is NVIDIA. It contains the version of the host compiler invoked by nvcc, either by default or as specified by CMAKE_<LANG>_HOST_COMPILER, in the same format as CMAKE_<LANG>_COMPILER_VERSION."
+  },
+  "CMAKE_<LANG>_ICSTAT": {
+    "name": "CMAKE_<LANG>_ICSTAT",
+    "description": "Default value for <LANG>_ICSTAT target property. This variable is used to initialize the property on each target as it is created. This is done only when <LANG> is C or CXX."
+  },
   "CMAKE_<LANG>_IGNORE_EXTENSIONS": {
     "name": "CMAKE_<LANG>_IGNORE_EXTENSIONS",
     "description": "File extensions that should be ignored by the build."
@@ -1289,7 +1449,7 @@
   },
   "CMAKE_<LANG>_LINKER_LAUNCHER": {
     "name": "CMAKE_<LANG>_LINKER_LAUNCHER",
-    "description": "Default value for <LANG>_LINKER_LAUNCHER target property. This variable is used to initialize the property on each target as it is created. This is done only when <LANG> is C, CXX, OBJC, or OBJCXX."
+    "description": "Default value for <LANG>_LINKER_LAUNCHER target property. This variable is used to initialize the property on each target as it is created. This is done only when <LANG> is one of:"
   },
   "CMAKE_<LANG>_LINKER_PREFERENCE": {
     "name": "CMAKE_<LANG>_LINKER_PREFERENCE",
@@ -1307,9 +1467,21 @@
     "name": "CMAKE_<LANG>_LINKER_WRAPPER_FLAG_SEP",
     "description": "This variable is used with CMAKE_<LANG>_LINKER_WRAPPER_FLAG variable to format LINKER: prefix in the link options (see add_link_options and target_link_options)."
   },
+  "CMAKE_<LANG>_LINK_DEF_FILE_FLAG": {
+    "name": "CMAKE_<LANG>_LINK_DEF_FILE_FLAG",
+    "description": "Linker flag to be used to specify a .def file for dll creation with the toolchain for language <LANG>."
+  },
   "CMAKE_<LANG>_LINK_EXECUTABLE": {
     "name": "CMAKE_<LANG>_LINK_EXECUTABLE",
     "description": "Rule variable to link an executable."
+  },
+  "CMAKE_<LANG>_LINK_FLAGS": {
+    "name": "CMAKE_<LANG>_LINK_FLAGS",
+    "description": "Language-wide flags for language <LANG> used when linking for all configurations. These flags will be passed to all invocations of the compiler which drive linking."
+  },
+  "CMAKE_<LANG>_LINK_FLAGS_<CONFIG>": {
+    "name": "CMAKE_<LANG>_LINK_FLAGS_<CONFIG>",
+    "description": "Language-wide flags for language <LANG> used when linking for the <CONFIG> configuration. These flags will be passed to all invocations of the compiler which drive linking."
   },
   "CMAKE_<LANG>_LINK_GROUP_USING_<FEATURE>": {
     "name": "CMAKE_<LANG>_LINK_GROUP_USING_<FEATURE>",
@@ -1343,9 +1515,13 @@
     "name": "CMAKE_<LANG>_LINK_LIBRARY_USING_<FEATURE>_SUPPORTED",
     "description": "Set to TRUE if the <FEATURE>, as defined by variable CMAKE_<LANG>_LINK_LIBRARY_USING_, is supported for the linker language <LANG>."
   },
+  "CMAKE_<LANG>_LINK_MODE": {
+    "name": "CMAKE_<LANG>_LINK_MODE",
+    "description": "Defines how the link step is done. The possible values are:"
+  },
   "CMAKE_<LANG>_LINK_WHAT_YOU_USE_FLAG": {
     "name": "CMAKE_<LANG>_LINK_WHAT_YOU_USE_FLAG",
-    "description": "Linker flag to be used to configure linker so that all specified libraries on the command line will be linked into the target."
+    "description": "Linker flag used by LINK_WHAT_YOU_USE to tell the linker to link all shared libraries specified on the command line even if none of their symbols is needed. This is an implementation detail used so that the command in CMAKE_LINK_WHAT_YOU_USE_CHECK can check the binary for unnecessarily-linked shared libraries."
   },
   "CMAKE_<LANG>_OUTPUT_EXTENSION": {
     "name": "CMAKE_<LANG>_OUTPUT_EXTENSION",
@@ -1354,6 +1530,10 @@
   "CMAKE_<LANG>_PLATFORM_ID": {
     "name": "CMAKE_<LANG>_PLATFORM_ID",
     "description": "An internal variable subject to change."
+  },
+  "CMAKE_<LANG>_PVS_STUDIO": {
+    "name": "CMAKE_<LANG>_PVS_STUDIO",
+    "description": "Default value for <LANG>_PVS_STUDIO target property when <LANG> is C or CXX."
   },
   "CMAKE_<LANG>_SIMULATE_ID": {
     "name": "CMAKE_<LANG>_SIMULATE_ID",
@@ -1391,17 +1571,21 @@
     "name": "CMAKE_<LANG>_STANDARD_LIBRARIES",
     "description": "Libraries linked into every executable and shared library linked for language <LANG>. This is meant for specification of system libraries needed by the language for the current platform."
   },
+  "CMAKE_<LANG>_STANDARD_LINK_DIRECTORIES": {
+    "name": "CMAKE_<LANG>_STANDARD_LINK_DIRECTORIES",
+    "description": "Link directories specified for every executable and library linked for language <LANG>. This is meant for specification of system link directories needed by the language for the current platform."
+  },
   "CMAKE_<LANG>_STANDARD_REQUIRED": {
     "name": "CMAKE_<LANG>_STANDARD_REQUIRED",
     "description": "The variations are:"
   },
   "CMAKE_<LANG>_USING_LINKER_MODE": {
     "name": "CMAKE_<LANG>_USING_LINKER_MODE",
-    "description": "This controls how the value of the CMAKE_<LANG>_USING_LINKER_ variable should be interpreted. The supported linker mode values are:"
+    "description": "This variable controls how the value of the CMAKE_<LANG>_USING_LINKER_ variable should be interpreted. The supported linker mode values are:"
   },
   "CMAKE_<LANG>_USING_LINKER_<TYPE>": {
     "name": "CMAKE_<LANG>_USING_LINKER_<TYPE>",
-    "description": "This variable defines how to specify the <TYPE> linker for the link step, as controlled by the CMAKE_LINKER_TYPE variable or the LINKER_TYPE target property. Depending on the value of the CMAKE_<LANG>_USING_LINKER_MODE variable, CMAKE_<LANG>_USING_LINKER_<TYPE> can hold compiler flags for the link step, or flags to be given directly to the linker tool."
+    "description": "This variable defines how to specify the <TYPE> linker for the link step, as controlled by the CMAKE_LINKER_TYPE variable or the LINKER_TYPE target property. Depending on the value of the CMAKE_<LANG>_LINK_MODE variable, CMAKE_<LANG>_USING_LINKER_<TYPE> can hold compiler flags for the link step, or the path to the linker tool."
   },
   "CMAKE_<LANG>_VISIBILITY_PRESET": {
     "name": "CMAKE_<LANG>_VISIBILITY_PRESET",
@@ -1467,6 +1651,10 @@
     "name": "CMAKE_LINK_LIBRARIES_ONLY_TARGETS",
     "description": "Set this variable to initialize the LINK_LIBRARIES_ONLY_TARGETS property of non-imported targets when they are created. Setting it to true enables an additional check that all items named by target_link_libraries that can be target names are actually names of existing targets. See the target property documentation for details."
   },
+  "CMAKE_LINK_LIBRARIES_STRATEGY": {
+    "name": "CMAKE_LINK_LIBRARIES_STRATEGY",
+    "description": "Specify a strategy for ordering targets' direct link dependencies on linker command lines."
+  },
   "CMAKE_LINK_LIBRARY_<FEATURE>_ATTRIBUTES": {
     "name": "CMAKE_LINK_LIBRARY_<FEATURE>_ATTRIBUTES",
     "description": "This variable defines the behavior of the specified link library <FEATURE>. It specifies how the <FEATURE> interacts with other features, when the <FEATURE> should be applied, and aspects of how the <FEATURE> should be handled when CMake assembles the final linker command line (e.g. de-duplication)."
@@ -1499,13 +1687,21 @@
     "name": "CMAKE_LINK_SEARCH_START_STATIC",
     "description": "Assume the linker looks for static libraries by default."
   },
+  "CMAKE_LINK_WARNING_AS_ERROR": {
+    "name": "CMAKE_LINK_WARNING_AS_ERROR",
+    "description": "Specify whether to treat warnings on link as errors."
+  },
   "CMAKE_LINK_WHAT_YOU_USE": {
     "name": "CMAKE_LINK_WHAT_YOU_USE",
     "description": "Default value for LINK_WHAT_YOU_USE target property. This variable is used to initialize the property on each target as it is created."
   },
   "CMAKE_LINK_WHAT_YOU_USE_CHECK": {
     "name": "CMAKE_LINK_WHAT_YOU_USE_CHECK",
-    "description": "Defines the command executed after the link step to check libraries usage. This check is currently only defined on ELF platforms with value ldd -u -r."
+    "description": "Command executed by LINK_WHAT_YOU_USE after the linker to check for unnecessarily-linked shared libraries. This check is currently only defined on ELF platforms with value ldd -u -r."
+  },
+  "CMAKE_LIST_FILE_NAME": {
+    "name": "CMAKE_LIST_FILE_NAME",
+    "description": "The name of the CMake project files. This determines the top-level file processed when CMake is configured, and the file processed by add_subdirectory."
   },
   "CMAKE_MACOSX_BUNDLE": {
     "name": "CMAKE_MACOSX_BUNDLE",
@@ -1589,11 +1785,15 @@
   },
   "CMAKE_MSVCIDE_RUN_PATH": {
     "name": "CMAKE_MSVCIDE_RUN_PATH",
-    "description": "Extra PATH locations that should be used when executing add_custom_command or add_custom_target when using the Visual Studio 12 2013 (or above) generator. This allows for running commands and using dll's that the IDE environment is not aware of."
+    "description": "Extra PATH locations that should be used when executing add_custom_command or add_custom_target when using Visual Studio Generators. This allows for running commands and using dll's that the IDE environment is not aware of."
   },
   "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": {
     "name": "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT",
     "description": "Select the MSVC debug information format targeting the MSVC ABI. This variable is used to initialize the MSVC_DEBUG_INFORMATION_FORMAT property on all targets as they are created. It is also propagated by calls to the try_compile command into the test project."
+  },
+  "CMAKE_MSVC_RUNTIME_CHECKS": {
+    "name": "CMAKE_MSVC_RUNTIME_CHECKS",
+    "description": "Select the list of enabled runtime checks when targeting the MSVC ABI. This variable is used to initialize the MSVC_RUNTIME_CHECKS property on all targets as they are created. It is also propagated by calls to the try_compile command into the test project."
   },
   "CMAKE_MSVC_RUNTIME_LIBRARY": {
     "name": "CMAKE_MSVC_RUNTIME_LIBRARY",
@@ -1647,6 +1847,10 @@
     "name": "CMAKE_OBJC_STANDARD_REQUIRED",
     "description": "Default value for OBJC_STANDARD_REQUIRED target property if set when a target is created."
   },
+  "CMAKE_OBJDUMP": {
+    "name": "CMAKE_OBJDUMP",
+    "description": "Path to the objdump executable on the host system. This tool, typically part of the Binutils collection on Unix-like systems, provides information about compiled object files."
+  },
   "CMAKE_OBJECT_PATH_MAX": {
     "name": "CMAKE_OBJECT_PATH_MAX",
     "description": "Maximum object file full-path length allowed by native build tools."
@@ -1661,11 +1865,11 @@
   },
   "CMAKE_OSX_DEPLOYMENT_TARGET": {
     "name": "CMAKE_OSX_DEPLOYMENT_TARGET",
-    "description": "Specify the minimum version of the target platform (e.g. macOS or iOS) on which the target binaries are to be deployed. CMake uses this variable value for the -mmacosx-version-min flag or their respective target platform equivalents. For older Xcode versions that shipped multiple macOS SDKs this variable also helps to choose the SDK in case CMAKE_OSX_SYSROOT is unset."
+    "description": "Specify the minimum version of the target platform, e.g., macOS or iOS, on which the target binaries are to be deployed."
   },
   "CMAKE_OSX_SYSROOT": {
     "name": "CMAKE_OSX_SYSROOT",
-    "description": "Specify the location or name of the macOS platform SDK to be used. CMake uses this value to compute the value of the -isysroot flag or equivalent and to help the find_* commands locate files in the SDK."
+    "description": "Specify the location or name of the macOS platform SDK to be used."
   },
   "CMAKE_PARENT_LIST_FILE": {
     "name": "CMAKE_PARENT_LIST_FILE",
@@ -1691,6 +1895,26 @@
     "name": "CMAKE_PDB_OUTPUT_DIRECTORY_<CONFIG>",
     "description": "Per-configuration output directory for MS debug symbol .pdb files generated by the linker for executable and shared library targets."
   },
+  "CMAKE_PKG_CONFIG_DISABLE_UNINSTALLED": {
+    "name": "CMAKE_PKG_CONFIG_DISABLE_UNINSTALLED",
+    "description": "Enable / Disable the default \"uninstalled\" search behavior of the cmake_pkg_config command. When this variable is false, package files with an \"-uninstalled\" suffix have higher priority than exact package name matches."
+  },
+  "CMAKE_PKG_CONFIG_PC_LIB_DIRS": {
+    "name": "CMAKE_PKG_CONFIG_PC_LIB_DIRS",
+    "description": "Semicolon-separated list  of primary paths which the cmake_pkg_config command will search for package files by default. Also used to derive the pc_path package variable."
+  },
+  "CMAKE_PKG_CONFIG_PC_PATH": {
+    "name": "CMAKE_PKG_CONFIG_PC_PATH",
+    "description": "Semicolon-separated list  of supplementary paths which the cmake_pkg_config command will search for package files by default. Also used to derive the pc_path package variable."
+  },
+  "CMAKE_PKG_CONFIG_SYSROOT_DIR": {
+    "name": "CMAKE_PKG_CONFIG_SYSROOT_DIR",
+    "description": "Path prepended to -I include directories and -L library directories extracted by the cmake_pkg_config command by default. Also used to derive the pc_sysrootdir package variable."
+  },
+  "CMAKE_PKG_CONFIG_TOP_BUILD_DIR": {
+    "name": "CMAKE_PKG_CONFIG_TOP_BUILD_DIR",
+    "description": "Path used to derive the pc_top_builddir package variable by the cmake_pkg_config command by default."
+  },
   "CMAKE_PLATFORM_NO_VERSIONED_SONAME": {
     "name": "CMAKE_PLATFORM_NO_VERSIONED_SONAME",
     "description": "This variable is used to globally control whether the VERSION and SOVERSION target properties should be used for shared libraries. When set to true, adding version information to each shared library target is disabled."
@@ -1699,13 +1923,17 @@
     "name": "CMAKE_POLICY_DEFAULT_CMP<NNNN>",
     "description": "Default for CMake Policy CMP<NNNN> when it is otherwise left unset."
   },
+  "CMAKE_POLICY_VERSION_MINIMUM": {
+    "name": "CMAKE_POLICY_VERSION_MINIMUM",
+    "description": "Specify a minimum Policy Version for a project without modifying its calls to cmake_minimum_required and cmake_policy."
+  },
   "CMAKE_POLICY_WARNING_CMP<NNNN>": {
     "name": "CMAKE_POLICY_WARNING_CMP<NNNN>",
     "description": "Explicitly enable or disable the warning when CMake Policy CMP<NNNN> has not been set explicitly by cmake_policy or implicitly by cmake_minimum_required. This is meaningful only for the policies that do not warn by default:"
   },
   "CMAKE_POSITION_INDEPENDENT_CODE": {
     "name": "CMAKE_POSITION_INDEPENDENT_CODE",
-    "description": "Default value for POSITION_INDEPENDENT_CODE of targets."
+    "description": "Default value for the POSITION_INDEPENDENT_CODE target property."
   },
   "CMAKE_PREFIX_PATH": {
     "name": "CMAKE_PREFIX_PATH",
@@ -1714,6 +1942,10 @@
   "CMAKE_PROGRAM_PATH": {
     "name": "CMAKE_PROGRAM_PATH",
     "description": "Semicolon-separated list  of directories specifying a search path for the find_program command. By default it is empty, it is intended to be set by the project."
+  },
+  "CMAKE_PROJECT_COMPAT_VERSION": {
+    "name": "CMAKE_PROJECT_COMPAT_VERSION",
+    "description": "The compatibility version of the top level project."
   },
   "CMAKE_PROJECT_DESCRIPTION": {
     "name": "CMAKE_PROJECT_DESCRIPTION",
@@ -1742,6 +1974,10 @@
   "CMAKE_PROJECT_<PROJECT-NAME>_INCLUDE_BEFORE": {
     "name": "CMAKE_PROJECT_<PROJECT-NAME>_INCLUDE_BEFORE",
     "description": "A CMake language file to be included as the first step of any project command calls that specify <PROJECT-NAME> as the project name. This is intended for injecting custom code into project builds without modifying their source. See Code Injection for a more detailed discussion of files potentially included during a project call."
+  },
+  "CMAKE_PROJECT_SPDX_LICENSE": {
+    "name": "CMAKE_PROJECT_SPDX_LICENSE",
+    "description": "The license(s) of the top level project."
   },
   "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": {
     "name": "CMAKE_PROJECT_TOP_LEVEL_INCLUDES",
@@ -1794,6 +2030,10 @@
   "CMAKE_SCRIPT_MODE_FILE": {
     "name": "CMAKE_SCRIPT_MODE_FILE",
     "description": "Full path to the cmake -P script file currently being processed."
+  },
+  "CMAKE_SHARED_LIBRARY_ARCHIVE_SUFFIX": {
+    "name": "CMAKE_SHARED_LIBRARY_ARCHIVE_SUFFIX",
+    "description": "The suffix for archived shared libraries that you link to."
   },
   "CMAKE_SHARED_LIBRARY_ENABLE_EXPORTS": {
     "name": "CMAKE_SHARED_LIBRARY_ENABLE_EXPORTS",
@@ -1850,6 +2090,10 @@
   "CMAKE_SKIP_INSTALL_RULES": {
     "name": "CMAKE_SKIP_INSTALL_RULES",
     "description": "Whether to disable generation of installation rules."
+  },
+  "CMAKE_SKIP_LINTING": {
+    "name": "CMAKE_SKIP_LINTING",
+    "description": "Default value for the SKIP_LINTING target property."
   },
   "CMAKE_SKIP_RPATH": {
     "name": "CMAKE_SKIP_RPATH",
@@ -1993,11 +2237,11 @@
   },
   "CMAKE_TLS_VERIFY": {
     "name": "CMAKE_TLS_VERIFY",
-    "description": "Specify the default value for the file and file commands' TLS_VERIFY options. If this variable is not set, the commands check the CMAKE_TLS_VERIFY environment variable. If neither is set, the default is off."
+    "description": "Specify the default value for the file and file commands' TLS_VERIFY options. If this variable is not set, the commands check the CMAKE_TLS_VERIFY environment variable. If neither is set, the default is on."
   },
   "CMAKE_TLS_VERSION": {
     "name": "CMAKE_TLS_VERSION",
-    "description": "Specify the default value for the file and file commands' TLS_VERSION option. If this variable is not set, the commands check the CMAKE_TLS_VERSION environment variable."
+    "description": "Specify the default value for the file and file commands' TLS_VERSION option. If this variable is not set, the commands check the CMAKE_TLS_VERSION environment variable. If neither is set, the default is TLS 1.2."
   },
   "CMAKE_TOOLCHAIN_FILE": {
     "name": "CMAKE_TOOLCHAIN_FILE",
@@ -2031,6 +2275,10 @@
     "name": "CMAKE_UNITY_BUILD_BATCH_SIZE",
     "description": "This variable is used to initialize the UNITY_BUILD_BATCH_SIZE property of targets when they are created. It specifies the default upper limit on the number of source files that may be combined in any one unity source file when unity builds are enabled for a target."
   },
+  "CMAKE_UNITY_BUILD_RELOCATABLE": {
+    "name": "CMAKE_UNITY_BUILD_RELOCATABLE",
+    "description": "This variable is used to initialize the UNITY_BUILD_RELOCATABLE property of targets when they are created. Setting it to true causes sources generated for CMAKE_UNITY_BUILD to #include the original source files using relative paths where possible."
+  },
   "CMAKE_UNITY_BUILD_UNIQUE_ID": {
     "name": "CMAKE_UNITY_BUILD_UNIQUE_ID",
     "description": "This variable is used to initialize the UNITY_BUILD_UNIQUE_ID property of targets when they are created. It specifies the name of the unique identifier generated per file in a unity build."
@@ -2053,7 +2301,11 @@
   },
   "CMAKE_VERIFY_INTERFACE_HEADER_SETS": {
     "name": "CMAKE_VERIFY_INTERFACE_HEADER_SETS",
-    "description": "This variable is used to initialize the VERIFY_INTERFACE_HEADER_SETS property of targets when they are created. Setting it to true enables header set verification."
+    "description": "This variable is used to initialize the VERIFY_XXX_HEADER_SETS property of targets when they are created. Setting it to true enables xxx header set verification."
+  },
+  "CMAKE_VERIFY_PRIVATE_HEADER_SETS": {
+    "name": "CMAKE_VERIFY_PRIVATE_HEADER_SETS",
+    "description": "This variable is used to initialize the VERIFY_XXX_HEADER_SETS property of targets when they are created. Setting it to true enables xxx header set verification."
   },
   "CMAKE_VERSION": {
     "name": "CMAKE_VERSION",
@@ -2081,7 +2333,7 @@
   },
   "CMAKE_VS_DEVENV_COMMAND": {
     "name": "CMAKE_VS_DEVENV_COMMAND",
-    "description": "The generators for Visual Studio 12 2013 and above set this variable to the devenv.com command installed with the corresponding Visual Studio version. Note that this variable may be empty on Visual Studio Express editions because they do not provide this tool."
+    "description": "The Visual Studio Generators set this variable to the devenv.com command installed with the corresponding Visual Studio version."
   },
   "CMAKE_VS_GLOBALS": {
     "name": "CMAKE_VS_GLOBALS",
@@ -2097,7 +2349,7 @@
   },
   "CMAKE_VS_INTEL_Fortran_PROJECT_VERSION": {
     "name": "CMAKE_VS_INTEL_Fortran_PROJECT_VERSION",
-    "description": "When generating for Visual Studio 12 2013 or greater with the Intel Fortran plugin installed, this specifies the .vfproj project file format version. This is intended for internal use by CMake and should not be used by project code."
+    "description": "When generating for Visual Studio 14 2015 or greater with the Intel Fortran plugin installed, this specifies the .vfproj project file format version. This is intended for internal use by CMake and should not be used by project code."
   },
   "CMAKE_VS_JUST_MY_CODE_DEBUGGING": {
     "name": "CMAKE_VS_JUST_MY_CODE_DEBUGGING",
@@ -2105,7 +2357,7 @@
   },
   "CMAKE_VS_MSBUILD_COMMAND": {
     "name": "CMAKE_VS_MSBUILD_COMMAND",
-    "description": "The generators for Visual Studio 12 2013 and above set this variable to the MSBuild.exe command installed with the corresponding Visual Studio version."
+    "description": "The Visual Studio Generators set this variable to the MSBuild.exe command installed with the corresponding Visual Studio version."
   },
   "CMAKE_VS_NO_COMPILE_BATCHING": {
     "name": "CMAKE_VS_NO_COMPILE_BATCHING",
@@ -2113,11 +2365,11 @@
   },
   "CMAKE_VS_NsightTegra_VERSION": {
     "name": "CMAKE_VS_NsightTegra_VERSION",
-    "description": "When using a Visual Studio generator with the CMAKE_SYSTEM_NAME variable set to Android, this variable contains the version number of the installed NVIDIA Nsight Tegra Visual Studio Edition."
+    "description": "When using Visual Studio Generators with the CMAKE_SYSTEM_NAME variable set to Android, this variable contains the version number of the installed NVIDIA Nsight Tegra Visual Studio Edition."
   },
   "CMAKE_VS_NUGET_PACKAGE_RESTORE": {
     "name": "CMAKE_VS_NUGET_PACKAGE_RESTORE",
-    "description": "When using a Visual Studio generator, this cache variable controls if msbuild should automatically attempt to restore NuGet packages prior to a build. NuGet packages can be defined using the VS_PACKAGE_REFERENCES property on a target. If no package references are defined, this setting will do nothing."
+    "description": "When using Visual Studio Generators, this cache variable controls if msbuild should automatically attempt to restore NuGet packages prior to a build. NuGet packages can be defined using the VS_PACKAGE_REFERENCES property on a target. If no package references are defined, this setting will do nothing."
   },
   "CMAKE_VS_PLATFORM_NAME": {
     "name": "CMAKE_VS_PLATFORM_NAME",
@@ -2235,6 +2487,10 @@
     "name": "CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS",
     "description": "Default value for WINDOWS_EXPORT_ALL_SYMBOLS target property. This variable is used to initialize the property on each target as it is created."
   },
+  "CMAKE_WINDOWS_KMDF_VERSION": {
+    "name": "CMAKE_WINDOWS_KMDF_VERSION",
+    "description": "Specify the Kernel-Mode Drive Framework target version."
+  },
   "CMAKE_XCODE_ATTRIBUTE_<an-attribute>": {
     "name": "CMAKE_XCODE_ATTRIBUTE_<an-attribute>",
     "description": "Set Xcode target attributes directly."
@@ -2285,15 +2541,15 @@
   },
   "CMAKE_XCODE_SCHEME_ENABLE_GPU_API_VALIDATION": {
     "name": "CMAKE_XCODE_SCHEME_ENABLE_GPU_API_VALIDATION",
-    "description": "Property value for Metal: API Validation in the Options section of the generated Xcode scheme."
+    "description": "Populate Metal: API Validation in the Options section of the generated Xcode scheme."
   },
   "CMAKE_XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE": {
     "name": "CMAKE_XCODE_SCHEME_ENABLE_GPU_FRAME_CAPTURE_MODE",
-    "description": "Property value for GPU Frame Capture in the Options section of the generated Xcode scheme. Example values are Metal and Disabled."
+    "description": "Populate GPU Frame Capture in the Options section of the generated Xcode scheme. Example values are Metal and Disabled."
   },
   "CMAKE_XCODE_SCHEME_ENABLE_GPU_SHADER_VALIDATION": {
     "name": "CMAKE_XCODE_SCHEME_ENABLE_GPU_SHADER_VALIDATION",
-    "description": "Property value for Metal: Shader Validation in the Options section of the generated Xcode scheme."
+    "description": "Populate Metal: Shader Validation in the Options section of the generated Xcode scheme."
   },
   "CMAKE_XCODE_SCHEME_ENVIRONMENT": {
     "name": "CMAKE_XCODE_SCHEME_ENVIRONMENT",
@@ -2309,7 +2565,11 @@
   },
   "CMAKE_XCODE_SCHEME_LAUNCH_MODE": {
     "name": "CMAKE_XCODE_SCHEME_LAUNCH_MODE",
-    "description": "Property value for Launch in the Info section of the generated Xcode scheme."
+    "description": "Populate Launch in the Info section of the generated Xcode scheme."
+  },
+  "CMAKE_XCODE_SCHEME_LLDB_INIT_FILE": {
+    "name": "CMAKE_XCODE_SCHEME_LLDB_INIT_FILE",
+    "description": "Populate LLDB Init File in the Info section of the generated Xcode scheme."
   },
   "CMAKE_XCODE_SCHEME_MAIN_THREAD_CHECKER_STOP": {
     "name": "CMAKE_XCODE_SCHEME_MAIN_THREAD_CHECKER_STOP",
@@ -2326,6 +2586,10 @@
   "CMAKE_XCODE_SCHEME_MALLOC_STACK": {
     "name": "CMAKE_XCODE_SCHEME_MALLOC_STACK",
     "description": "Whether to enable Malloc Stack in the Diagnostics section of the generated Xcode scheme."
+  },
+  "CMAKE_XCODE_SCHEME_TEST_CONFIGURATION": {
+    "name": "CMAKE_XCODE_SCHEME_TEST_CONFIGURATION",
+    "description": "Set the build configuration for testing targets."
   },
   "CMAKE_XCODE_SCHEME_THREAD_SANITIZER": {
     "name": "CMAKE_XCODE_SCHEME_THREAD_SANITIZER",
@@ -2393,51 +2657,51 @@
   },
   "CTEST_BINARY_DIRECTORY": {
     "name": "CTEST_BINARY_DIRECTORY",
-    "description": "Specify the CTest BuildDirectory setting in a ctest dashboard client script."
+    "description": "Specify the CTest BuildDirectory setting in a ctest Dashboard Client script."
   },
   "CTEST_BUILD_COMMAND": {
     "name": "CTEST_BUILD_COMMAND",
-    "description": "Specify the CTest MakeCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest MakeCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_BUILD_NAME": {
     "name": "CTEST_BUILD_NAME",
-    "description": "Specify the CTest BuildName setting in a ctest dashboard client script."
+    "description": "Specify the CTest BuildName setting in a ctest Dashboard Client script."
   },
   "CTEST_BZR_COMMAND": {
     "name": "CTEST_BZR_COMMAND",
-    "description": "Specify the CTest BZRCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest BZRCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_BZR_UPDATE_OPTIONS": {
     "name": "CTEST_BZR_UPDATE_OPTIONS",
-    "description": "Specify the CTest BZRUpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest BZRUpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_CHANGE_ID": {
     "name": "CTEST_CHANGE_ID",
-    "description": "Specify the CTest ChangeId setting in a ctest dashboard client script."
+    "description": "Specify the CTest ChangeId setting in a ctest Dashboard Client script."
   },
   "CTEST_CHECKOUT_COMMAND": {
     "name": "CTEST_CHECKOUT_COMMAND",
-    "description": "Tell the ctest_start command how to checkout or initialize the source directory in a ctest dashboard client script."
+    "description": "Tell the ctest_start command how to checkout or initialize the source directory in a ctest Dashboard Client script."
   },
   "CTEST_CONFIGURATION_TYPE": {
     "name": "CTEST_CONFIGURATION_TYPE",
-    "description": "Specify the CTest DefaultCTestConfigurationType setting in a ctest dashboard client script."
+    "description": "Specify the CTest DefaultCTestConfigurationType setting in a ctest Dashboard Client script."
   },
   "CTEST_CONFIGURE_COMMAND": {
     "name": "CTEST_CONFIGURE_COMMAND",
-    "description": "Specify the CTest ConfigureCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest ConfigureCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_COVERAGE_COMMAND": {
     "name": "CTEST_COVERAGE_COMMAND",
-    "description": "Specify the CTest CoverageCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest CoverageCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_COVERAGE_EXTRA_FLAGS": {
     "name": "CTEST_COVERAGE_EXTRA_FLAGS",
-    "description": "Specify the CTest CoverageExtraFlags setting in a ctest dashboard client script."
+    "description": "Specify the CTest CoverageExtraFlags setting in a ctest Dashboard Client script."
   },
   "CTEST_CURL_OPTIONS": {
     "name": "CTEST_CURL_OPTIONS",
-    "description": "Specify the CTest CurlOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest CurlOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_CUSTOM_COVERAGE_EXCLUDE": {
     "name": "CTEST_CUSTOM_COVERAGE_EXCLUDE",
@@ -2513,119 +2777,127 @@
   },
   "CTEST_CVS_CHECKOUT": {
     "name": "CTEST_CVS_CHECKOUT",
-    "description": "Deprecated. Use CTEST_CHECKOUT_COMMAND instead."
+    "description": "Deprecated since version 3.1: Use CTEST_CHECKOUT_COMMAND variable instead."
   },
   "CTEST_CVS_COMMAND": {
     "name": "CTEST_CVS_COMMAND",
-    "description": "Specify the CTest CVSCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest CVSCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_CVS_UPDATE_OPTIONS": {
     "name": "CTEST_CVS_UPDATE_OPTIONS",
-    "description": "Specify the CTest CVSUpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest CVSUpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_LOCATION": {
     "name": "CTEST_DROP_LOCATION",
-    "description": "Specify the CTest DropLocation setting in a ctest dashboard client script."
+    "description": "Specify the CTest DropLocation setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_METHOD": {
     "name": "CTEST_DROP_METHOD",
-    "description": "Specify the CTest DropMethod setting in a ctest dashboard client script."
+    "description": "Specify the CTest DropMethod setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_SITE": {
     "name": "CTEST_DROP_SITE",
-    "description": "Specify the CTest DropSite setting in a ctest dashboard client script."
+    "description": "Specify the CTest DropSite setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_SITE_CDASH": {
     "name": "CTEST_DROP_SITE_CDASH",
-    "description": "Specify the CTest IsCDash setting in a ctest dashboard client script."
+    "description": "Specify the CTest IsCDash setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_SITE_PASSWORD": {
     "name": "CTEST_DROP_SITE_PASSWORD",
-    "description": "Specify the CTest DropSitePassword setting in a ctest dashboard client script."
+    "description": "Specify the CTest DropSitePassword setting in a ctest Dashboard Client script."
   },
   "CTEST_DROP_SITE_USER": {
     "name": "CTEST_DROP_SITE_USER",
-    "description": "Specify the CTest DropSiteUser setting in a ctest dashboard client script."
+    "description": "Specify the CTest DropSiteUser setting in a ctest Dashboard Client script."
   },
   "CTEST_EXTRA_COVERAGE_GLOB": {
     "name": "CTEST_EXTRA_COVERAGE_GLOB",
     "description": "A list of regular expressions which will be used to find files which should be covered by the ctest_coverage command."
   },
+  "CTEST_EXTRA_SUBMIT_FILES": {
+    "name": "CTEST_EXTRA_SUBMIT_FILES",
+    "description": "Specify files for ctest_submit to submit in a ctest Dashboard Client script."
+  },
   "CTEST_GIT_COMMAND": {
     "name": "CTEST_GIT_COMMAND",
-    "description": "Specify the CTest GITCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest GITCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_GIT_INIT_SUBMODULES": {
     "name": "CTEST_GIT_INIT_SUBMODULES",
-    "description": "Specify the CTest GITInitSubmodules setting in a ctest dashboard client script."
+    "description": "Specify the CTest GITInitSubmodules setting in a ctest Dashboard Client script."
   },
   "CTEST_GIT_UPDATE_CUSTOM": {
     "name": "CTEST_GIT_UPDATE_CUSTOM",
-    "description": "Specify the CTest GITUpdateCustom setting in a ctest dashboard client script."
+    "description": "Specify the CTest GITUpdateCustom setting in a ctest Dashboard Client script."
   },
   "CTEST_GIT_UPDATE_OPTIONS": {
     "name": "CTEST_GIT_UPDATE_OPTIONS",
-    "description": "Specify the CTest GITUpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest GITUpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_HG_COMMAND": {
     "name": "CTEST_HG_COMMAND",
-    "description": "Specify the CTest HGCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest HGCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_HG_UPDATE_OPTIONS": {
     "name": "CTEST_HG_UPDATE_OPTIONS",
-    "description": "Specify the CTest HGUpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest HGUpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_LABELS_FOR_SUBPROJECTS": {
     "name": "CTEST_LABELS_FOR_SUBPROJECTS",
-    "description": "Specify the CTest LabelsForSubprojects setting in a ctest dashboard client script."
+    "description": "Specify the CTest LabelsForSubprojects setting in a ctest Dashboard Client script."
   },
   "CTEST_MEMORYCHECK_COMMAND": {
     "name": "CTEST_MEMORYCHECK_COMMAND",
-    "description": "Specify the CTest MemoryCheckCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest MemoryCheckCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_MEMORYCHECK_COMMAND_OPTIONS": {
     "name": "CTEST_MEMORYCHECK_COMMAND_OPTIONS",
-    "description": "Specify the CTest MemoryCheckCommandOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest MemoryCheckCommandOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_MEMORYCHECK_SANITIZER_OPTIONS": {
     "name": "CTEST_MEMORYCHECK_SANITIZER_OPTIONS",
-    "description": "Specify the CTest MemoryCheckSanitizerOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest MemoryCheckSanitizerOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_MEMORYCHECK_SUPPRESSIONS_FILE": {
     "name": "CTEST_MEMORYCHECK_SUPPRESSIONS_FILE",
-    "description": "Specify the CTest MemoryCheckSuppressionFile setting in a ctest dashboard client script."
+    "description": "Specify the CTest MemoryCheckSuppressionFile setting in a ctest Dashboard Client script."
   },
   "CTEST_MEMORYCHECK_TYPE": {
     "name": "CTEST_MEMORYCHECK_TYPE",
-    "description": "Specify the CTest MemoryCheckType setting in a ctest dashboard client script. Valid values are Valgrind, Purify, BoundsChecker, DrMemory, CudaSanitizer, ThreadSanitizer, AddressSanitizer, LeakSanitizer, MemorySanitizer and UndefinedBehaviorSanitizer."
+    "description": "Specify the CTest MemoryCheckType setting in a ctest Dashboard Client script. Valid values are Valgrind, Purify, BoundsChecker, DrMemory, CudaSanitizer, ThreadSanitizer, AddressSanitizer, LeakSanitizer, MemorySanitizer and UndefinedBehaviorSanitizer."
   },
   "CTEST_NIGHTLY_START_TIME": {
     "name": "CTEST_NIGHTLY_START_TIME",
-    "description": "Specify the CTest NightlyStartTime setting in a ctest dashboard client script."
+    "description": "Specify the CTest NightlyStartTime setting in a ctest Dashboard Client script."
+  },
+  "CTEST_NOTES_FILES": {
+    "name": "CTEST_NOTES_FILES",
+    "description": "Specify files for ctest_submit to submit in a ctest Dashboard Client script."
   },
   "CTEST_P4_CLIENT": {
     "name": "CTEST_P4_CLIENT",
-    "description": "Specify the CTest P4Client setting in a ctest dashboard client script."
+    "description": "Specify the CTest P4Client setting in a ctest Dashboard Client script."
   },
   "CTEST_P4_COMMAND": {
     "name": "CTEST_P4_COMMAND",
-    "description": "Specify the CTest P4Command setting in a ctest dashboard client script."
+    "description": "Specify the CTest P4Command setting in a ctest Dashboard Client script."
   },
   "CTEST_P4_OPTIONS": {
     "name": "CTEST_P4_OPTIONS",
-    "description": "Specify the CTest P4Options setting in a ctest dashboard client script."
+    "description": "Specify the CTest P4Options setting in a ctest Dashboard Client script."
   },
   "CTEST_P4_UPDATE_OPTIONS": {
     "name": "CTEST_P4_UPDATE_OPTIONS",
-    "description": "Specify the CTest P4UpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest P4UpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_RESOURCE_SPEC_FILE": {
     "name": "CTEST_RESOURCE_SPEC_FILE",
-    "description": "Specify the CTest ResourceSpecFile setting in a ctest dashboard client script."
+    "description": "Specify the CTest ResourceSpecFile setting in a ctest Dashboard Client script."
   },
   "CTEST_RUN_CURRENT_SCRIPT": {
     "name": "CTEST_RUN_CURRENT_SCRIPT",
-    "description": "Setting this to 0 prevents ctest from being run again when it reaches the end of a script run by calling ctest -S."
+    "description": "Removed. This variable once supported an undocumented feature that has since been removed."
   },
   "CTEST_SCP_COMMAND": {
     "name": "CTEST_SCP_COMMAND",
@@ -2637,39 +2909,39 @@
   },
   "CTEST_SITE": {
     "name": "CTEST_SITE",
-    "description": "Specify the CTest Site setting in a ctest dashboard client script."
+    "description": "Specify the CTest Site setting in a ctest Dashboard Client script."
   },
   "CTEST_SOURCE_DIRECTORY": {
     "name": "CTEST_SOURCE_DIRECTORY",
-    "description": "Specify the CTest SourceDirectory setting in a ctest dashboard client script."
+    "description": "Specify the CTest SourceDirectory setting in a ctest Dashboard Client script."
   },
   "CTEST_SUBMIT_INACTIVITY_TIMEOUT": {
     "name": "CTEST_SUBMIT_INACTIVITY_TIMEOUT",
-    "description": "Specify the CTest SubmitInactivityTimeout setting in a ctest dashboard client script."
+    "description": "Specify the CTest SubmitInactivityTimeout setting in a ctest Dashboard Client script."
   },
   "CTEST_SUBMIT_URL": {
     "name": "CTEST_SUBMIT_URL",
-    "description": "Specify the CTest SubmitURL setting in a ctest dashboard client script."
+    "description": "Specify the CTest SubmitURL setting in a ctest Dashboard Client script."
   },
   "CTEST_SVN_COMMAND": {
     "name": "CTEST_SVN_COMMAND",
-    "description": "Specify the CTest SVNCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest SVNCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_SVN_OPTIONS": {
     "name": "CTEST_SVN_OPTIONS",
-    "description": "Specify the CTest SVNOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest SVNOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_SVN_UPDATE_OPTIONS": {
     "name": "CTEST_SVN_UPDATE_OPTIONS",
-    "description": "Specify the CTest SVNUpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest SVNUpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_TEST_LOAD": {
     "name": "CTEST_TEST_LOAD",
-    "description": "Specify the TestLoad setting in the CTest Test Step of a ctest dashboard client script. This sets the default value for the TEST_LOAD option of the ctest_test command."
+    "description": "Specify the TestLoad setting in the CTest Test Step of a ctest Dashboard Client script. This sets the default value for the TEST_LOAD option of the ctest_test command."
   },
   "CTEST_TEST_TIMEOUT": {
     "name": "CTEST_TEST_TIMEOUT",
-    "description": "Specify the CTest TimeOut setting in a ctest dashboard client script."
+    "description": "Specify the CTest TimeOut setting in a ctest Dashboard Client script."
   },
   "CTEST_TLS_VERIFY": {
     "name": "CTEST_TLS_VERIFY",
@@ -2685,25 +2957,28 @@
   },
   "CTEST_UPDATE_COMMAND": {
     "name": "CTEST_UPDATE_COMMAND",
-    "description": "Specify the CTest UpdateCommand setting in a ctest dashboard client script."
+    "description": "Specify the CTest UpdateCommand setting in a ctest Dashboard Client script."
   },
   "CTEST_UPDATE_OPTIONS": {
     "name": "CTEST_UPDATE_OPTIONS",
-    "description": "Specify the CTest UpdateOptions setting in a ctest dashboard client script."
+    "description": "Specify the CTest UpdateOptions setting in a ctest Dashboard Client script."
   },
   "CTEST_UPDATE_VERSION_ONLY": {
     "name": "CTEST_UPDATE_VERSION_ONLY",
-    "description": "Specify the CTest UpdateVersionOnly  setting in a ctest dashboard client script."
+    "description": "Specify the CTest UpdateVersionOnly  setting in a ctest Dashboard Client script."
   },
   "CTEST_UPDATE_VERSION_OVERRIDE": {
     "name": "CTEST_UPDATE_VERSION_OVERRIDE",
-    "description": "Specify the CTest UpdateVersionOverride  setting in a ctest dashboard client script."
+    "description": "Specify the CTest UpdateVersionOverride  setting in a ctest Dashboard Client script."
   },
   "CTEST_USE_LAUNCHERS": {
     "name": "CTEST_USE_LAUNCHERS",
-    "description": "Specify the CTest UseLaunchers setting in a ctest dashboard client script."
+    "description": "Specify the CTest UseLaunchers setting in a ctest Dashboard Client script."
   },
-  "CYGWIN": { "name": "CYGWIN", "description": "True for Cygwin." },
+  "CYGWIN": {
+    "name": "CYGWIN",
+    "description": "True for Cygwin."
+  },
   "ENV": {
     "name": "ENV",
     "description": "Operator to read environment variables."
@@ -2796,6 +3071,10 @@
     "name": "<PROJECT-NAME>_BINARY_DIR",
     "description": "Top level binary directory for the named project."
   },
+  "<PROJECT-NAME>_COMPAT_VERSION": {
+    "name": "<PROJECT-NAME>_COMPAT_VERSION",
+    "description": "Value given to the COMPAT_VERSION option of the most recent call to the project command with project name <PROJECT-NAME>, if any."
+  },
   "<PROJECT-NAME>_DESCRIPTION": {
     "name": "<PROJECT-NAME>_DESCRIPTION",
     "description": "Value given to the DESCRIPTION option of the most recent call to the project command with project name <PROJECT-NAME>, if any."
@@ -2811,6 +3090,10 @@
   "<PROJECT-NAME>_SOURCE_DIR": {
     "name": "<PROJECT-NAME>_SOURCE_DIR",
     "description": "Top level source directory for the named project."
+  },
+  "<PROJECT-NAME>_SPDX_LICENSE": {
+    "name": "<PROJECT-NAME>_SPDX_LICENSE",
+    "description": "Value given to the SPDX_LICENSE option of the most recent call to the project command with project name <PROJECT-NAME>, if any."
   },
   "<PROJECT-NAME>_VERSION": {
     "name": "<PROJECT-NAME>_VERSION",
@@ -2836,6 +3119,10 @@
     "name": "PROJECT_BINARY_DIR",
     "description": "Full path to build directory for project."
   },
+  "PROJECT_COMPAT_VERSION": {
+    "name": "PROJECT_COMPAT_VERSION",
+    "description": "Value given to the COMPAT_VERSION option of the most recent call to the project command, if any. To obtain the compatibility version of the top level project, see the CMAKE_PROJECT_COMPAT_VERSION variable."
+  },
   "PROJECT_DESCRIPTION": {
     "name": "PROJECT_DESCRIPTION",
     "description": "Short project description given to the project command."
@@ -2855,6 +3142,10 @@
   "PROJECT_SOURCE_DIR": {
     "name": "PROJECT_SOURCE_DIR",
     "description": "This is the source directory of the last call to the project command made in the current directory scope or one of its parents. Note, it is not affected by calls to project made within a child directory scope (i.e. from within a call to add_subdirectory from the current scope)."
+  },
+  "PROJECT_SPDX_LICENSE": {
+    "name": "PROJECT_SPDX_LICENSE",
+    "description": "Value given to the SPDX_LICENSE option of the most recent call to the project command, if any. To obtain the compatibility version of the top level project, see the CMAKE_PROJECT_SPDX_LICENSE variable."
   },
   "PROJECT_VERSION": {
     "name": "PROJECT_VERSION",
@@ -2879,6 +3170,10 @@
   "UNIX": {
     "name": "UNIX",
     "description": "Set to True when the target system is UNIX or UNIX-like (e.g. APPLE and CYGWIN). The CMAKE_SYSTEM_NAME variable should be queried if a more specific understanding of the target system is required."
+  },
+  "WASI": {
+    "name": "WASI",
+    "description": "Set to 1 when the target system is WebAssembly System Interface (CMAKE_SYSTEM_NAME is WASI)."
   },
   "WIN32": {
     "name": "WIN32",
@@ -2920,11 +3215,17 @@
     "name": "STRINGS",
     "description": "Enumerate possible STRING entry values for GUI selection."
   },
-  "TYPE": { "name": "TYPE", "description": "Widget type for entry in GUIs." },
-  "VALUE": { "name": "VALUE", "description": "Value of a cache entry." },
+  "TYPE": {
+    "name": "TYPE",
+    "description": "Widget type for entry in GUIs."
+  },
+  "VALUE": {
+    "name": "VALUE",
+    "description": "Value of a cache entry."
+  },
   "ADDITIONAL_CLEAN_FILES": {
     "name": "ADDITIONAL_CLEAN_FILES",
-    "description": "A Semicolon-separated list  of files or directories that will be removed as a part of the global clean target. It is useful for specifying generated files or directories that are used by multiple targets or by CMake itself, or that are generated in ways which cannot be captured as outputs or byproducts of custom commands."
+    "description": "A semicolon-separated list  of files or directories that will be removed as a part of the global clean target. It is useful for specifying generated files or directories that are used by multiple targets or by CMake itself, or that are generated in ways which cannot be captured as outputs or byproducts of custom commands."
   },
   "ADDITIONAL_MAKE_CLEAN_FILES": {
     "name": "ADDITIONAL_MAKE_CLEAN_FILES",
@@ -2968,7 +3269,7 @@
   },
   "EXCLUDE_FROM_ALL": {
     "name": "EXCLUDE_FROM_ALL",
-    "description": "Set this directory property to a true value on a subdirectory to exclude its targets from the \"all\" target of its ancestors. If excluded, running e.g. make in the parent directory will not build targets the subdirectory by default. This does not affect the \"all\" target of the subdirectory itself. Running e.g. make inside the subdirectory will still build its targets."
+    "description": "Set this directory property to a true value on a subdirectory to exclude its targets from the \"all\" target of its ancestors. If excluded, running e.g. make in the parent directory will not build targets in the subdirectory by default. This does not affect the \"all\" target of the subdirectory itself. Running e.g. make inside the subdirectory will still build its targets."
   },
   "IMPLICIT_DEPENDS_INCLUDE_TRANSFORM": {
     "name": "IMPLICIT_DEPENDS_INCLUDE_TRANSFORM",
@@ -3042,14 +3343,17 @@
     "name": "SYSTEM",
     "description": "This directory property is used to initialize the SYSTEM target property for non-imported targets created in that directory. It is set to true by add_subdirectory and FetchContent_Declare when the SYSTEM option is given as an argument to those commands."
   },
-  "TESTS": { "name": "TESTS", "description": "List of tests." },
+  "TESTS": {
+    "name": "TESTS",
+    "description": "List of tests."
+  },
   "TEST_INCLUDE_FILE": {
     "name": "TEST_INCLUDE_FILE",
-    "description": "Deprecated. Use TEST_INCLUDE_FILES instead."
+    "description": "The TEST_INCLUDE_FILE directory property specifies a CMake script that is included and processed when ctest is run on the directory."
   },
   "TEST_INCLUDE_FILES": {
     "name": "TEST_INCLUDE_FILES",
-    "description": "A list of cmake files that will be included when ctest is run."
+    "description": "This directory property specifies a list of CMake scripts to be included and processed when ctest runs on the directory. Use absolute paths, to avoid ambiguity. Script files are included in the specified order."
   },
   "VARIABLES": {
     "name": "VARIABLES",
@@ -3062,6 +3366,10 @@
   "VS_GLOBAL_SECTION_PRE_<section>": {
     "name": "VS_GLOBAL_SECTION_PRE_<section>",
     "description": "Specify a preSolution global section in Visual Studio."
+  },
+  "VS_SOLUTION_ITEMS": {
+    "name": "VS_SOLUTION_ITEMS",
+    "description": "Specify solution level items included in the generated Visual Studio solution."
   },
   "VS_STARTUP_PROJECT": {
     "name": "VS_STARTUP_PROJECT",
@@ -3117,7 +3425,7 @@
   },
   "DEBUG_CONFIGURATIONS": {
     "name": "DEBUG_CONFIGURATIONS",
-    "description": "Specify which configurations are for debugging."
+    "description": "This property specifies which Build Configurations are for debugging."
   },
   "DISABLED_FEATURES": {
     "name": "DISABLED_FEATURES",
@@ -3169,7 +3477,7 @@
   },
   "INSTALL_PARALLEL": {
     "name": "INSTALL_PARALLEL",
-    "description": "Enables parallel installation option for the Ninja generator."
+    "description": "Enables parallel installation option for a project. The install code for each subdirectory added with add_subdirectory can run independently."
   },
   "IN_TRY_COMPILE": {
     "name": "IN_TRY_COMPILE",
@@ -3287,6 +3595,14 @@
     "name": "HEADER_FILE_ONLY",
     "description": "Is this source file only a header file."
   },
+  "INSTALL_OBJECT_NAME": {
+    "name": "INSTALL_OBJECT_NAME",
+    "description": "Set the installed object name (without the object extension) of the source file. An empty string value disables custom object naming. The value must be a relative path, and may not include special directory components (e.g., ..)."
+  },
+  "JOB_POOL_COMPILE": {
+    "name": "JOB_POOL_COMPILE",
+    "description": "Ninja only: Pool used for compiling."
+  },
   "KEEP_EXTENSION": {
     "name": "KEEP_EXTENSION",
     "description": "Make the output file have the same extension as the source file."
@@ -3306,6 +3622,10 @@
   "OBJECT_DEPENDS": {
     "name": "OBJECT_DEPENDS",
     "description": "Additional files on which a compiled object file depends."
+  },
+  "OBJECT_NAME": {
+    "name": "OBJECT_NAME",
+    "description": "Set the object name (without the object extension) of the source file. An empty string value disables custom object naming. The value must be a relative path, and may not include special directory components (e.g., ..)."
   },
   "OBJECT_OUTPUTS": {
     "name": "OBJECT_OUTPUTS",
@@ -3329,7 +3649,7 @@
   },
   "SKIP_LINTING": {
     "name": "SKIP_LINTING",
-    "description": "This property allows you to exclude a specific source file from the linting process. The linting process involves running tools such as <LANG>_CPPLINT, <LANG>_CLANG_TIDY, <LANG>_CPPCHECK, and <LANG>_INCLUDE_WHAT_YOU_USE on the source files, as well as compiling header files as part of VERIFY_INTERFACE_HEADER_SETS. By setting SKIP_LINTING on a source file, the mentioned linting tools will not be executed for that particular file."
+    "description": "This property allows you to exclude a specific source file from the linting process. The linting process involves running tools such as <LANG>_CPPLINT, <LANG>_CLANG_TIDY, <LANG>_CPPCHECK, <LANG>_ICSTAT, <LANG>_PVS_STUDIO and <LANG>_INCLUDE_WHAT_YOU_USE on the source files, as well as compiling header files as part of VERIFY_INTERFACE_HEADER_SETS. By setting SKIP_LINTING on a source file, the mentioned linting tools will not be executed for that particular file."
   },
   "SKIP_PRECOMPILE_HEADERS": {
     "name": "SKIP_PRECOMPILE_HEADERS",
@@ -3363,9 +3683,13 @@
     "name": "VS_CSHARP_<tagname>",
     "description": "Visual Studio and CSharp source-file-specific configuration."
   },
+  "VS_CUSTOM_COMMAND_DISABLE_PARALLEL_BUILD": {
+    "name": "VS_CUSTOM_COMMAND_DISABLE_PARALLEL_BUILD",
+    "description": "A boolean property that disables parallel building for the source file in Visual Studio if it is built via add_custom_command and is the MAIN_DEPENDENCY input for the custom command. See policy CMP0147."
+  },
   "VS_DEPLOYMENT_CONTENT": {
     "name": "VS_DEPLOYMENT_CONTENT",
-    "description": "Mark a source file as content for deployment with a Windows Phone or Windows Store application when built with a Visual Studio generators <cmake-generators(7)>. The value must evaluate to either 1 or 0 and may use generator expressions <cmake-generator-expressions(7)> to make the choice based on the build configuration. The .vcxproj file entry for the source file will be marked either DeploymentContent or ExcludedFromBuild for values 1 and 0, respectively."
+    "description": "Mark a source file as content for deployment with a Windows Phone or Windows Store application when built with a Visual Studio Generators. The value must evaluate to either 1 or 0 and may use generator expressions <cmake-generator-expressions(7)> to make the choice based on the build configuration. The .vcxproj file entry for the source file will be marked either DeploymentContent or ExcludedFromBuild for values 1 and 0, respectively."
   },
   "VS_DEPLOYMENT_LOCATION": {
     "name": "VS_DEPLOYMENT_LOCATION",
@@ -3381,7 +3705,7 @@
   },
   "VS_SETTINGS": {
     "name": "VS_SETTINGS",
-    "description": "Set any item metadata on a file."
+    "description": "Add arbitrary MSBuild item metadata to a file."
   },
   "VS_SHADER_DISABLE_OPTIMIZATIONS": {
     "name": "VS_SHADER_DISABLE_OPTIMIZATIONS",
@@ -3421,7 +3745,7 @@
   },
   "VS_TOOL_OVERRIDE": {
     "name": "VS_TOOL_OVERRIDE",
-    "description": "Override the default Visual Studio tool that will be applied to the source file with a new tool not based on the extension of the file."
+    "description": "Override the MSBuild item type of a source file in a Visual Studio project."
   },
   "VS_XAML_TYPE": {
     "name": "VS_XAML_TYPE",
@@ -3559,6 +3883,10 @@
     "name": "AIX_EXPORT_ALL_SYMBOLS",
     "description": "On AIX, CMake automatically exports all symbols from shared libraries, and from executables with the ENABLE_EXPORTS target property set. Explicitly disable this boolean property to suppress the behavior and export no symbols by default. In this case it is expected that the project will use other means to export some symbols."
   },
+  "AIX_SHARED_LIBRARY_ARCHIVE": {
+    "name": "AIX_SHARED_LIBRARY_ARCHIVE",
+    "description": "On AIX, enable or disable creation of a shared library archive for a SHARED library target:"
+  },
   "ALIASED_TARGET": {
     "name": "ALIASED_TARGET",
     "description": "Name of target aliased by this target."
@@ -3665,7 +3993,7 @@
   },
   "AUTOGEN_ORIGIN_DEPENDS": {
     "name": "AUTOGEN_ORIGIN_DEPENDS",
-    "description": "Switch for forwarding origin target dependencies to the corresponding <ORIGIN>_autogen target."
+    "description": "Switch for forwarding origin target dependencies to the corresponding <ORIGIN>_autogen <<ORIGIN>_autogen> target."
   },
   "AUTOGEN_PARALLEL": {
     "name": "AUTOGEN_PARALLEL",
@@ -3673,7 +4001,7 @@
   },
   "AUTOGEN_TARGET_DEPENDS": {
     "name": "AUTOGEN_TARGET_DEPENDS",
-    "description": "Additional target dependencies of the corresponding <ORIGIN>_autogen target."
+    "description": "Additional target dependencies of the corresponding <ORIGIN>_autogen <<ORIGIN>_autogen> target."
   },
   "AUTOGEN_USE_SYSTEM_INCLUDE": {
     "name": "AUTOGEN_USE_SYSTEM_INCLUDE",
@@ -3694,6 +4022,10 @@
   "AUTOMOC_EXECUTABLE": {
     "name": "AUTOMOC_EXECUTABLE",
     "description": "AUTOMOC_EXECUTABLE is file path pointing to the moc executable to use for AUTOMOC enabled files. Setting this property will make CMake skip the automatic detection of the moc binary as well as the sanity-tests normally run to ensure that the binary is available and working as expected."
+  },
+  "AUTOMOC_INCLUDE_DIRECTORIES": {
+    "name": "AUTOMOC_INCLUDE_DIRECTORIES",
+    "description": "Specifies zero or more include directories for AUTOMOC to pass explicitly to the Qt Meta\u00e2\u20ac\u2018Object Compiler (moc) instead of automatically discovering a target's include directories."
   },
   "AUTOMOC_MACRO_NAMES": {
     "name": "AUTOMOC_MACRO_NAMES",
@@ -3899,13 +4231,17 @@
     "name": "C_STANDARD_REQUIRED",
     "description": "Boolean describing whether the value of C_STANDARD is a requirement."
   },
+  "DEBUGGER_WORKING_DIRECTORY": {
+    "name": "DEBUGGER_WORKING_DIRECTORY",
+    "description": "Sets the local debugger working directory for targets, specifically the process launched by the debugger."
+  },
   "DEBUG_POSTFIX": {
     "name": "DEBUG_POSTFIX",
     "description": "See target property <CONFIG>_POSTFIX."
   },
   "DEFINE_SYMBOL": {
     "name": "DEFINE_SYMBOL",
-    "description": "Define a symbol when compiling this target's sources."
+    "description": "Define a preprocessor symbol when compiling this target's sources."
   },
   "DEPLOYMENT_ADDITIONAL_FILES": {
     "name": "DEPLOYMENT_ADDITIONAL_FILES",
@@ -3949,11 +4285,15 @@
   },
   "EXCLUDE_FROM_DEFAULT_BUILD": {
     "name": "EXCLUDE_FROM_DEFAULT_BUILD",
-    "description": "Exclude target from Build Solution."
+    "description": "Exclude a target from the solution build configuration."
   },
   "EXCLUDE_FROM_DEFAULT_BUILD_<CONFIG>": {
     "name": "EXCLUDE_FROM_DEFAULT_BUILD_<CONFIG>",
     "description": "Per-configuration version of target exclusion from Build Solution."
+  },
+  "EXPORT_BUILD_DATABASE": {
+    "name": "EXPORT_BUILD_DATABASE",
+    "description": "Enable/Disable output of a build database for a target."
   },
   "EXPORT_COMPILE_COMMANDS": {
     "name": "EXPORT_COMPILE_COMMANDS",
@@ -3961,7 +4301,7 @@
   },
   "EXPORT_FIND_PACKAGE_NAME": {
     "name": "EXPORT_FIND_PACKAGE_NAME",
-    "description": "Control the package name associated with a dependency target when exporting a find_dependency call in install or export. This can be used to assign a package name to a package that is built by CMake and exported, or to override the package in the find_package call that created the target."
+    "description": "Control the package name associated with a dependency target when exporting a find_dependency call in install, export, install or export. This can be used to assign a package name to a package that is built by CMake and exported, or a package that was provided by FetchContent."
   },
   "EXPORT_NAME": {
     "name": "EXPORT_NAME",
@@ -3975,12 +4315,24 @@
     "name": "EXPORT_PROPERTIES",
     "description": "List additional properties to export for a target."
   },
+  "FASTBUILD_CACHING": {
+    "name": "FASTBUILD_CACHING",
+    "description": "A target property that controls whether caching is enabled for the given target in the generated fbuild.bff."
+  },
+  "FASTBUILD_DISTRIBUTION": {
+    "name": "FASTBUILD_DISTRIBUTION",
+    "description": "A target property that controls whether distribution is enabled for the given target in the generated fbuild.bff."
+  },
   "FOLDER": {
     "name": "FOLDER",
     "description": "For IDEs that present targets using a folder hierarchy, this property specifies the name of the folder to place the target under. To nest folders, use FOLDER values such as GUI/Dialogs with / characters separating folder levels. Targets with no FOLDER property will appear as top level entities. Targets with the same FOLDER property value will appear in the same folder as siblings."
   },
   "Fortran_BUILDING_INSTRINSIC_MODULES": {
     "name": "Fortran_BUILDING_INSTRINSIC_MODULES",
+    "description": "A misspelled variant of the Fortran_BUILDING_INTRINSIC_MODULES target property."
+  },
+  "Fortran_BUILDING_INTRINSIC_MODULES": {
+    "name": "Fortran_BUILDING_INTRINSIC_MODULES",
     "description": "Instructs the CMake Fortran preprocessor that the target is building Fortran intrinsics for building a Fortran compiler."
   },
   "Fortran_MODULE_DIRECTORY": {
@@ -4078,6 +4430,10 @@
   "IMPORTED_CXX_MODULES_COMPILE_OPTIONS": {
     "name": "IMPORTED_CXX_MODULES_COMPILE_OPTIONS",
     "description": "List of options to pass to the compiler for this IMPORTED target's C++ modules."
+  },
+  "IMPORTED_CXX_MODULES_<CONFIG>": {
+    "name": "IMPORTED_CXX_MODULES_<CONFIG>",
+    "description": "A list of C++ module specifications available with the target for configuration <CONFIG>. Each item in the list is of the form <NAME>=<INTERFACE>[,<BMI>]* where <NAME> is the name of the module, <INTERFACE> is its module interface unit, and any number of available <BMI> files are provided."
   },
   "IMPORTED_CXX_MODULES_INCLUDE_DIRECTORIES": {
     "name": "IMPORTED_CXX_MODULES_INCLUDE_DIRECTORIES",
@@ -4187,6 +4543,14 @@
     "name": "INSTALL_NAME_DIR",
     "description": "Directory name for installed targets on Apple platforms."
   },
+  "INSTALL_OBJECT_NAME_STRATEGY": {
+    "name": "INSTALL_OBJECT_NAME_STRATEGY",
+    "description": "INSTALL_OBJECT_NAME_STRATEGY is a string target property variable specifying the strategy to use when naming installed object files. The supported values are:"
+  },
+  "INSTALL_OBJECT_ONLY_USE_DESTINATION": {
+    "name": "INSTALL_OBJECT_ONLY_USE_DESTINATION",
+    "description": "Controls whether the install(DESTINATION) for object libraries is used as-is or supplemented with conflict-avoiding subdirectories."
+  },
   "INSTALL_REMOVE_ENVIRONMENT_RPATH": {
     "name": "INSTALL_REMOVE_ENVIRONMENT_RPATH",
     "description": "Controls whether toolchain-defined rpaths should be removed during installation."
@@ -4229,7 +4593,7 @@
   },
   "INTERFACE_HEADER_SETS_TO_VERIFY": {
     "name": "INTERFACE_HEADER_SETS_TO_VERIFY",
-    "description": "Used to specify which PUBLIC and INTERFACE header sets of a target should be verified."
+    "description": "Used to specify which PUBLIC and INTERFACE header sets of a target should be verified as interface headers."
   },
   "INTERFACE_INCLUDE_DIRECTORIES": {
     "name": "INTERFACE_INCLUDE_DIRECTORIES",
@@ -4291,10 +4655,6 @@
     "name": "ISPC_INSTRUCTION_SETS",
     "description": "List of instruction set architectures to generate code for."
   },
-  "JOB_POOL_COMPILE": {
-    "name": "JOB_POOL_COMPILE",
-    "description": "Ninja only: Pool used for compiling."
-  },
   "JOB_POOL_LINK": {
     "name": "JOB_POOL_LINK",
     "description": "Ninja only: Pool used for linking."
@@ -4327,13 +4687,21 @@
     "name": "<LANG>_EXTENSIONS",
     "description": "The variations are:"
   },
+  "<LANG>_ICSTAT": {
+    "name": "<LANG>_ICSTAT",
+    "description": "This property is supported only when <LANG> is C or CXX."
+  },
   "<LANG>_INCLUDE_WHAT_YOU_USE": {
     "name": "<LANG>_INCLUDE_WHAT_YOU_USE",
     "description": "This property is implemented only when <LANG> is C or CXX."
   },
   "<LANG>_LINKER_LAUNCHER": {
     "name": "<LANG>_LINKER_LAUNCHER",
-    "description": "This property is implemented only when <LANG> is C, CXX, OBJC, or OBJCXX"
+    "description": "This property is implemented only when <LANG> is one of:"
+  },
+  "<LANG>_PVS_STUDIO": {
+    "name": "<LANG>_PVS_STUDIO",
+    "description": "This property is implemented only when <LANG> is C or CXX."
   },
   "<LANG>_STANDARD": {
     "name": "<LANG>_STANDARD",
@@ -4411,6 +4779,10 @@
     "name": "LINK_LIBRARIES_ONLY_TARGETS",
     "description": "Enforce that link items that can be target names are actually existing targets."
   },
+  "LINK_LIBRARIES_STRATEGY": {
+    "name": "LINK_LIBRARIES_STRATEGY",
+    "description": "Specify a strategy for ordering a target's direct link dependencies on linker command lines. This property is initialized by the value of the CMAKE_LINK_LIBRARIES_STRATEGY variable if it is set when a target is created."
+  },
   "LINK_LIBRARY_OVERRIDE": {
     "name": "LINK_LIBRARY_OVERRIDE",
     "description": "Override the library features associated with libraries from LINK_LIBRARY generator expressions. This can be used to resolve incompatible library features that result from specifying different features for the same library in different LINK_LIBRARY generator expressions."
@@ -4427,9 +4799,13 @@
     "name": "LINK_SEARCH_START_STATIC",
     "description": "Assume the linker looks for static libraries by default."
   },
+  "LINK_WARNING_AS_ERROR": {
+    "name": "LINK_WARNING_AS_ERROR",
+    "description": "Specify whether to treat warnings on link as errors. If enabled, adds a flag to treat warnings on link as errors. If the cmake --link-no-warning-as-error option is given on the cmake command line, this property is ignored."
+  },
   "LINK_WHAT_YOU_USE": {
     "name": "LINK_WHAT_YOU_USE",
-    "description": "This is a boolean option that, when set to TRUE, will automatically run contents of variable CMAKE_LINK_WHAT_YOU_USE_CHECK on the target after it is linked. In addition, the linker flag specified by variable CMAKE_<LANG>_LINK_WHAT_YOU_USE_FLAG will be passed to the target with the link command so that all libraries specified on the command line will be linked into the target. This will result in the link producing a list of libraries that provide no symbols used by this target but are being linked to it."
+    "description": "This is a boolean option that, when set to TRUE, adds a link-time check to print a list of shared libraries that are being linked but provide no symbols used by the target. This is intended as a lint."
   },
   "LOCATION_<CONFIG>": {
     "name": "LOCATION_<CONFIG>",
@@ -4471,11 +4847,18 @@
     "name": "MSVC_DEBUG_INFORMATION_FORMAT",
     "description": "Select debug information format when targeting the MSVC ABI."
   },
+  "MSVC_RUNTIME_CHECKS": {
+    "name": "MSVC_RUNTIME_CHECKS",
+    "description": "Select the list of enabled runtime checks when targeting the MSVC ABI."
+  },
   "MSVC_RUNTIME_LIBRARY": {
     "name": "MSVC_RUNTIME_LIBRARY",
     "description": "Select the MSVC runtime library for use by compilers targeting the MSVC ABI."
   },
-  "NAME": { "name": "NAME", "description": "Logical name for the target." },
+  "NAME": {
+    "name": "NAME",
+    "description": "Logical name for the target."
+  },
   "NO_SONAME": {
     "name": "NO_SONAME",
     "description": "Whether to set soname when linking a shared library."
@@ -4554,7 +4937,7 @@
   },
   "POSITION_INDEPENDENT_CODE": {
     "name": "POSITION_INDEPENDENT_CODE",
-    "description": "Whether to create a position-independent target"
+    "description": "A target property that specifies whether to create a target that has position-independent code enabled."
   },
   "POST_INSTALL_SCRIPT": {
     "name": "POST_INSTALL_SCRIPT",
@@ -4579,6 +4962,10 @@
   "PRIVATE_HEADER": {
     "name": "PRIVATE_HEADER",
     "description": "Specify private header files in a FRAMEWORK shared library target."
+  },
+  "PRIVATE_HEADER_SETS_TO_VERIFY": {
+    "name": "PRIVATE_HEADER_SETS_TO_VERIFY",
+    "description": "Used to specify which PUBLIC and PRIVATE header sets of a target should be verified as private headers."
   },
   "PROJECT_LABEL": {
     "name": "PROJECT_LABEL",
@@ -4619,6 +5006,10 @@
   "SOVERSION": {
     "name": "SOVERSION",
     "description": "ABI version number of a shared library target."
+  },
+  "SPDX_LICENSE": {
+    "name": "SPDX_LICENSE",
+    "description": "Specify the license(s) of a target using a SPDX (SPDX) License Expression. See the SPDX License List for a list of commonly used licenses and their identifiers."
   },
   "STATIC_LIBRARY_FLAGS": {
     "name": "STATIC_LIBRARY_FLAGS",
@@ -4680,9 +5071,17 @@
     "name": "UNITY_BUILD_CODE_BEFORE_INCLUDE",
     "description": "Code snippet which is included verbatim by the UNITY_BUILD feature just before every #include statement in the generated unity source files. For example:"
   },
+  "UNITY_BUILD_FILENAME_PREFIX": {
+    "name": "UNITY_BUILD_FILENAME_PREFIX",
+    "description": "By default, the unity file generated when UNITY_BUILD is enabled is of the form unity_<index>_<suffix>, where <suffix> is language-specific."
+  },
   "UNITY_BUILD_MODE": {
     "name": "UNITY_BUILD_MODE",
     "description": "CMake provides different algorithms for selecting which sources are grouped together into a bucket. Selection is decided by this property, which has the following acceptable values:"
+  },
+  "UNITY_BUILD_RELOCATABLE": {
+    "name": "UNITY_BUILD_RELOCATABLE",
+    "description": "By default, the unity file generated when UNITY_BUILD is enabled uses absolute paths to reference the original source files. This causes the unity file to result in a different output depending on the location of the source files."
   },
   "UNITY_BUILD_UNIQUE_ID": {
     "name": "UNITY_BUILD_UNIQUE_ID",
@@ -4691,6 +5090,10 @@
   "VERIFY_INTERFACE_HEADER_SETS": {
     "name": "VERIFY_INTERFACE_HEADER_SETS",
     "description": "Used to verify that all headers in a target's PUBLIC and INTERFACE header sets can be included on their own."
+  },
+  "VERIFY_PRIVATE_HEADER_SETS": {
+    "name": "VERIFY_PRIVATE_HEADER_SETS",
+    "description": "Used to verify that all headers in a target's PUBLIC and PRIVATE header sets can be included on their own."
   },
   "VERSION": {
     "name": "VERSION",
@@ -4718,7 +5121,7 @@
   },
   "VS_DEBUGGER_WORKING_DIRECTORY": {
     "name": "VS_DEBUGGER_WORKING_DIRECTORY",
-    "description": "Sets the local debugger working directory for Visual Studio C++ targets. The property value may use generator expressions <cmake-generator-expressions(7)>. This is defined in <LocalDebuggerWorkingDirectory> in the Visual Studio project file. This property is initialized by the value of the variable CMAKE_VS_DEBUGGER_WORKING_DIRECTORY if it is set when a target is created."
+    "description": "Sets the local debugger working directory for Visual Studio targets, specifically the process launched by the debugger."
   },
   "VS_DESKTOP_EXTENSIONS_VERSION": {
     "name": "VS_DESKTOP_EXTENSIONS_VERSION",
@@ -4759,6 +5162,10 @@
   "VS_FILTER_PROPS": {
     "name": "VS_FILTER_PROPS",
     "description": "Sets the filter props file to be included in the visual studio C++ project filter file."
+  },
+  "VS_FRAMEWORK_REFERENCES": {
+    "name": "VS_FRAMEWORK_REFERENCES",
+    "description": "Visual Studio framework references. Specify a semicolon-separated list  of framework references to be added to a generated Visual Studio project. For example:"
   },
   "VS_GLOBAL_KEYWORD": {
     "name": "VS_GLOBAL_KEYWORD",
@@ -4858,7 +5265,7 @@
   },
   "VS_WINRT_COMPONENT": {
     "name": "VS_WINRT_COMPONENT",
-    "description": "Mark a target as a Windows Runtime component for the Visual Studio generator. Compile the target with C++/CX language extensions for Windows Runtime. For SHARED and MODULE libraries, this also defines the _WINRT_DLL preprocessor macro."
+    "description": "Mark a target as a Windows Runtime component for the Visual Studio Generators. Compile the target with C++/CX language extensions for Windows Runtime. For SHARED and MODULE libraries, this also defines the _WINRT_DLL preprocessor macro."
   },
   "VS_WINRT_EXTENSIONS": {
     "name": "VS_WINRT_EXTENSIONS",
@@ -4984,6 +5391,10 @@
     "name": "XCODE_SCHEME_LAUNCH_MODE",
     "description": "Property value for Launch in the Info section of the generated Xcode scheme."
   },
+  "XCODE_SCHEME_LLDB_INIT_FILE": {
+    "name": "XCODE_SCHEME_LLDB_INIT_FILE",
+    "description": "Property value for LLDB Init File in the Info section of the generated Xcode scheme. In case the value contains generator expressions those are evaluated."
+  },
   "XCODE_SCHEME_MAIN_THREAD_CHECKER_STOP": {
     "name": "XCODE_SCHEME_MAIN_THREAD_CHECKER_STOP",
     "description": "Whether to enable the Main Thread Checker option Pause on issues in the Diagnostics section of the generated Xcode scheme."
@@ -4999,6 +5410,10 @@
   "XCODE_SCHEME_MALLOC_STACK": {
     "name": "XCODE_SCHEME_MALLOC_STACK",
     "description": "Whether to enable Malloc Stack in the Diagnostics section of the generated Xcode scheme."
+  },
+  "XCODE_SCHEME_TEST_CONFIGURATION": {
+    "name": "XCODE_SCHEME_TEST_CONFIGURATION",
+    "description": "Set the build configuration to test the target."
   },
   "XCODE_SCHEME_THREAD_SANITIZER": {
     "name": "XCODE_SCHEME_THREAD_SANITIZER",
@@ -5030,6 +5445,6 @@
   },
   "XCTEST": {
     "name": "XCTEST",
-    "description": "This target is a XCTest CFBundle on the Mac."
+    "description": "Boolean target property that indicates whether a target is an XCTest CFBundle (Core Foundation Bundle) on Apple systems."
   }
 }
