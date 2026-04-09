@@ -17,6 +17,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Chemin d'un fichier de chaîne d'outils",
 	"schemas/kits-schema.json.items.properties.visualStudio": "ID d’instance du produit Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architecture à cibler",
+	"schemas/kits-schema.json.items.properties.visualStudioArguments": "Arguments to vcvarsall.bat",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Chemin absolu d'un script qui modifie l'environnement pour le kit",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Valeur de la variable d'environnement",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*.oneOf.0": "Valeur du paramètre CMake. Les points-virgules dans les chaînes sont placés dans une séquence d’échappement.",
