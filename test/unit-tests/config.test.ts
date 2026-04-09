@@ -88,6 +88,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         postRunCoverageTarget: null,
         coverageInfoFiles: [],
         useFolderPropertyInBuildTargetDropdown: true,
+        postConfigureTask: null,
         additionalBuildProblemMatchers: [],
         shell: null,
         setBuildTargetSameAsLaunchTarget: false,
