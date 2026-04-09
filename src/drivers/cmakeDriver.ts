@@ -95,6 +95,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +128,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
@@ -234,17 +239,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         private readonly usingFileApi: boolean = false
     ) {
         this.sourceDir = this.sourceDirUnexpanded;
-        // We have a cache of file-compilation terminals. Wipe them out when the
-        // user closes those terminals.
-        vscode.window.onDidCloseTerminal(closed => {
-            for (const [key, term] of this._compileTerms) {
-                if (term === closed) {
-                    log.debug(localize('user.closed.file.compilation.terminal', 'User closed a file compilation terminal'));
-                    this._compileTerms.delete(key);
-                    break;
-                }
-            }
-        });
     }
 
     /**
@@ -269,9 +263,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     dispose() {
         log.debug(localize('disposing.base.cmakedriver', 'Disposing base CMakeDriver'));
-        for (const term of this._compileTerms.values()) {
-            term.dispose();
-        }
         for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._packArgsSub, this._generalEnvSub]) {
             sub.dispose();
         }
@@ -514,7 +505,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): Environment {
         const cur_env = process.env;
         const kit_env = (this.config.ignoreKitEnv) ? EnvironmentUtils.create() : this._kitEnvironmentVariables;
-        return EnvironmentUtils.merge([cur_env, kit_env, opts?.environment]);
+        const cmakeToolsEnv = EnvironmentUtils.create({ VSCODE_CMAKE_TOOLS: "1" });
+        return EnvironmentUtils.merge([cur_env, kit_env, cmakeToolsEnv, opts?.environment]);
     }
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
@@ -529,18 +521,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
-     * File compilation terminals. This is a map, rather than a single terminal
-     * instance for two reasons:
-     *
-     * 1. Different compile commands may require different environment variables.
-     * 2. Different compile commands may require different working directories.
-     *
-     * The key of each terminal is generated deterministically in `runCompileCommand()`
-     * based on the CWD and environment of the compile command.
-     */
-    private readonly _compileTerms = new Map<string, vscode.Terminal>();
-
-    /**
      * Launch the given compilation command in an embedded terminal.
      * @param cmd The compilation command from a compilation database to run
      */
@@ -548,30 +528,77 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const env = await this.getCMakeBuildCommandEnvironment();
 
         if (this.useCMakePresets && this._buildPreset && checkBuildOverridesPresent(this.config)) {
-            log.info(localize('compile.with.overrides', 'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.', this._buildPreset.displayName ?? this._buildPreset.name));
+            log.info(localize('compile.with.overrides',
+                'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.',
+                this._buildPreset.displayName ?? this._buildPreset.name));
         }
 
-        const key = `${cmd.directory}${JSON.stringify(env)}`;
-        let existing = this._compileTerms.get(key);
-        if (existing && this.config.clearOutputBeforeBuild) {
-            this._compileTerms.delete(key);
-            existing.dispose();
-            existing = undefined;
-        }
-        if (!existing) {
-            const shellPath = this.config.shell ?? (process.platform === 'win32' ? 'cmd.exe' : undefined);
+        const args = cmd.arguments;
+        if (!args || args.length === 0) {
+            // Fallback: no structured args available — send the raw command string via terminal.
+            // This path should never be reached because CompilationDatabase always populates arguments.
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,
-                env,
-                shellPath
+                env
             });
-            this._compileTerms.set(key, term);
-            existing = term;
+            term.show();
+            term.sendText(cmd.command, true);
+            return term;
         }
-        existing.show();
-        existing.sendText(cmd.command + '\r\n');
-        return existing;
+
+        // Spawn the compiler directly via proc.execute() to avoid the PTY 4096-byte
+        // input-buffer truncation bug (https://github.com/microsoft/vscode-cmake-tools/issues/4836).
+        // We open a Pseudoterminal so output appears in the Terminal panel without any
+        // shell intermediary — args are passed as an array straight to child_process.spawn.
+        const writeEmitter = new vscode.EventEmitter<string>();
+        const closeEmitter = new vscode.EventEmitter<number>();
+        let activeProcess: proc.Subprocess | undefined;
+
+        const pty: vscode.Pseudoterminal = {
+            onDidWrite: writeEmitter.event,
+            onDidClose: closeEmitter.event,
+            open: () => {
+                const executable = args[0];
+                const execArgs = args.slice(1);
+                writeEmitter.fire(proc.buildCmdStr(executable, execArgs) + '\r\n');
+                activeProcess = proc.execute(executable, execArgs, {
+                    output: (line: string) => writeEmitter.fire(line + '\r\n'),
+                    error: (line: string) => writeEmitter.fire(line + '\r\n')
+                }, { cwd: cmd.directory, environment: env });
+                activeProcess.result.then(result => {
+                    activeProcess = undefined;
+                    const retc = result.retc ?? 0;
+                    if (retc !== 0) {
+                        writeEmitter.fire(localize('compile.finished.with.error',
+                            'Compilation finished with error(s).') + '\r\n');
+                    } else {
+                        writeEmitter.fire(localize('compile.finished.successfully',
+                            'Compilation finished successfully.') + '\r\n');
+                    }
+                    closeEmitter.fire(retc);
+                }, (e: any) => {
+                    activeProcess = undefined;
+                    writeEmitter.fire((e?.message ?? String(e)) + '\r\n');
+                    closeEmitter.fire(-1);
+                });
+            },
+            close: () => {
+                // Terminate the compiler process if the user closes the terminal
+                // while compilation is still running, to avoid orphaned processes.
+                if (activeProcess?.child) {
+                    void util.termProc(activeProcess.child);
+                    activeProcess = undefined;
+                }
+            }
+        };
+
+        const term = vscode.window.createTerminal({
+            name: localize('file.compilation', 'File Compilation'),
+            pty
+        });
+        term.show();
+        return term;
     }
 
     /**
@@ -592,6 +619,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (await fs.exists(cmake_files)) {
             log.info(localize('removing', 'Removing {0}', encodeURI(cmake_files)));
             await fs.rmdir(cmake_files);
+        }
+    }
+
+    /**
+     * Remove the entire build directory.
+     */
+    protected async _cleanBuildDirectory() {
+        const build_dir = this.binaryDir;
+        if (await fs.exists(build_dir)) {
+            log.info(localize('removing', 'Removing {0}', encodeURI(build_dir)));
+            await fs.rmdir(build_dir);
         }
     }
 
@@ -748,7 +786,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return;
         }
 
-        log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
+        let switch_to_kit_info = localize('switching.to.kit', 'Switching to kit: {0}', kit.name);
+        if (Array.isArray(kit.visualStudioArguments)) {
+            switch_to_kit_info += ` visualStudioArguments: ${JSON.stringify(kit.visualStudioArguments)}`;
+        }
+        log.info(switch_to_kit_info);
 
         const oldBinaryDir = this.binaryDir;
         const needsCleanIfKitChange = kitChangeNeedsClean(kit, this._kit);
@@ -1108,6 +1150,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.isConfigInProgress = false;
 
         return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
+    }
+
+    /**
+     * Perform a full clean configure. Deletes the entire build directory before running the config.
+     * @param consumer The output consumer
+     */
+    public async fullCleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation): Promise<ConfigureResult> {
+        if (this.isConfigInProgress) {
+            await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ForcedCancel };
+        }
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
+            await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
+        }
+        this.isConfigInProgress = true;
+        await this._cleanBuildDirectory();
+        this.isConfigInProgress = false;
+
+        return this.configure(trigger, extra_args, consumer, cancelInformation);
     }
 
     async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
@@ -1649,6 +1711,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     telemetryProperties.VisualStudioArchitecture =
                         this._kit?.visualStudioArchitecture;
                 }
+                if (Array.isArray(this._kit?.visualStudioArguments)) {
+                    telemetryProperties.VisualStudioArguments = JSON.stringify(this._kit?.visualStudioArguments);
+                }
             }
 
             const telemetryMeasures: telemetry.Measures = {
@@ -1796,7 +1861,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         if (this._kit.cmakeSettings) {
             util.objectPairs(this._kit.cmakeSettings)
-                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
         }
 
         return util.objectPairs(settingMap).map(([key, value]) => {
@@ -2062,9 +2127,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (useBuildTask) {
                 const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
-                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
-                    if (resolvedTask) {
-                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
+                    const resolved = await CMakeTaskProvider.resolveInternalTask(task);
+                    if (resolved) {
+                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolved.task), resolved.exitCodePromise);
                     }
                 }
             } else {

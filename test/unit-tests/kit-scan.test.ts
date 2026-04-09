@@ -7,6 +7,7 @@ chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
 import * as kit from '@cmt/kits/kit';
+import { shouldKeepUserKitAfterScan } from '@cmt/kits/kitsController';
 import * as triple from '@cmt/triple';
 import { fs } from '@cmt/pr';
 
@@ -346,6 +347,49 @@ suite('Kits scan test', () => {
                 0, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
                 /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
             expect(action).to.eq('scan');
+        });
+    });
+
+    suite('shouldKeepUserKitAfterScan', () => {
+        test('preserves compiler kits when stale-kit cleanup is disabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'My Custom GCC',
+                compilers: { C: 'C:/toolchains/gcc.exe' },
+                isTrusted: true
+            };
+
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), false)).to.be.true;
+        });
+
+        test('drops compiler kits not rediscovered when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Old GCC',
+                compilers: { C: 'gcc' },
+                isTrusted: true
+            };
+
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.false;
+        });
+
+        test('preserves keep:true compiler kits when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Pinned GCC',
+                compilers: { C: 'gcc' },
+                keep: true,
+                isTrusted: true
+            };
+
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
+        });
+
+        test('preserves non-compiler kits when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Toolchain only',
+                toolchainFile: 'toolchain.cmake',
+                isTrusted: true
+            };
+
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
         });
     });
 });

@@ -55,6 +55,13 @@
                 "type": "string",
                 "description": "Architecture to target"
             },
+            "visualStudioArguments": {
+                "type": "array",
+                "description": "Arguments to vcvarsall.bat",
+                "items": {
+                    "type": "string"
+                }
+            },
             "environmentSetupScript": {
                 "type": "string",
                 "description": "The absolute path to a script that modifies the environment for the Kit"
@@ -72,7 +79,19 @@
                 "type": "object",
                 "patternProperties": {
                     ".*": {
-                        "description": "Value for the CMake Setting"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "Value for the CMake Setting. Semicolons in strings are escaped."
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Values joined with semicolons to form a CMake list without escaping."
+                            }
+                        ]
                     }
                 }
             },

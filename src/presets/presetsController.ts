@@ -28,9 +28,12 @@ export class PresetsController implements vscode.Disposable {
     private _presetsWatchers: FileWatcher | undefined;
     private _sourceDirChangedSub: vscode.Disposable | undefined;
     private _isChangingPresets = false;
+    // Populated by reapplyPresets() with paths of all preset files (CMakePresets.json,
+    // CMakeUserPresets.json, and any files pulled in via "include").
     private _referencedFiles: string[] = [];
     private _presetsParser!: PresetsParser; // Using definite assigment (!) because we initialize it in the init method
     private _reapplyInProgress: Promise<void> = Promise.resolve();
+    private _suppressWatcherReapply: boolean = false;
 
     private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
     private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
@@ -133,6 +136,21 @@ export class PresetsController implements vscode.Disposable {
         return this._presetsParser.userPresetsPath;
     }
 
+    get referencedFiles(): readonly string[] {
+        return this._referencedFiles;
+    }
+
+    /**
+     * When true, the file-watcher's change handler will not call reapplyPresets().
+     * Set this before saveAll() when the caller will explicitly await reapplyPresets()
+     * afterward, to avoid redundant re-reads triggered by the OS file-change
+     * notification for the same save (see #4792).
+     * Cleared automatically at the end of reapplyPresets().
+     */
+    set suppressWatcherReapply(value: boolean) {
+        this._suppressWatcherReapply = value;
+    }
+
     get workspaceFolder() {
         return this.project.workspaceFolder;
     }
@@ -194,7 +212,8 @@ export class PresetsController implements vscode.Disposable {
                 this.project.workspaceContext.config.allowUnsupportedPresetsVersions
             );
 
-            // reset all expanded presets storage.
+            // Collect the paths of all referenced preset files (main files + includes).
+            // resetPresetsFiles() populates the referencedFiles map as it parses each file.
             this._referencedFiles = Array.from(referencedFiles.keys());
 
             this.project.minCMakeVersion = preset.minCMakeVersion(this.folderPath);
@@ -212,6 +231,10 @@ export class PresetsController implements vscode.Disposable {
             if (!existedBefore && this.presetsFileExist) {
                 await this.project.projectController?.updateActiveProject(this.workspaceFolder);
             }
+
+            // Clear after completing so that late watcher events from a
+            // prior saveAll() remain suppressed for the entire reapply.
+            this._suppressWatcherReapply = false;
         };
         this._reapplyInProgress = this._reapplyInProgress.then(doReapply, doReapply);
         return this._reapplyInProgress;
@@ -364,7 +387,9 @@ export class PresetsController implements vscode.Disposable {
                         return false;
                     } else {
                         if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
-                            await KitsController.scanForKits(await this.project.getCMakePathofProject());
+                            await KitsController.scanForKits(await this.project.getCMakePathofProject(), {
+                                removeStaleCompilerKits: this.project.workspaceContext.config.removeStaleKitsOnScan
+                            });
                             return false;
                         } else if (chosen_kit.kit.name === SpecialKits.ScanSpecificDir) {
                             await KitsController.scanForKitsInSpecificFolder(this.project);
@@ -1027,8 +1052,9 @@ export class PresetsController implements vscode.Disposable {
                 (_preset) =>
                     this.checkCompatibility(
                         this.project.configurePreset,
+                        this.project.buildPreset,
                         _preset
-                    ).buildPresetCompatible &&
+                    ).testPresetCompatible &&
                     preset.evaluatePresetCondition(_preset, allPresets)
             );
             for (const testPreset of testPresets) {
@@ -1180,11 +1206,11 @@ export class PresetsController implements vscode.Disposable {
             this._isChangingPresets = true;
         }
 
-        if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
+        if (presetName !== preset.defaultBuildPreset.name) {
             preset.expandConfigurePresetForPresets(this.folderPath, 'build');
             const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderPath), presetName);
             const compatibility = this.checkCompatibility(this.project.configurePreset, _preset, this.project.testPreset, this.project.packagePreset, this.project.workflowPreset);
-            if (!compatibility.buildPresetCompatible) {
+            if (needToCheckConfigurePreset && !compatibility.buildPresetCompatible) {
                 log.warning(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the active configure preset', presetName));
                 await vscode.window.withProgress(
                     {
@@ -1208,7 +1234,6 @@ export class PresetsController implements vscode.Disposable {
                     },
                     () => this.project.setTestPreset(null)
                 );
-                // Not sure we need to do the same for package/workflow build
             }
         }
         // Load the build preset into the backend
@@ -1219,6 +1244,11 @@ export class PresetsController implements vscode.Disposable {
             },
             () => this.project.setBuildPreset(presetName)
         );
+
+        // Auto-select a compatible test preset if none is currently set
+        if (!this.project.testPreset) {
+            await this.guessTestPreset();
+        }
 
         if (checkChangingPreset) {
             this._isChangingPresets = false;
@@ -1719,7 +1749,9 @@ export class PresetsController implements vscode.Disposable {
     private async watchPresetsChange() {
 
         const presetChangeHandler = () => {
-            void this.reapplyPresets();
+            if (!this._suppressWatcherReapply) {
+                void this.reapplyPresets();
+            }
         };
 
         this._presetsWatchers?.dispose();
@@ -1769,6 +1801,9 @@ class FileWatcher implements vscode.Disposable {
                 this.watchers.push(watcher);
             } catch (error) {
                 log.error(localize('failed.to.watch', 'Watcher could not be created for {0}: {1}', filePath, util.errorToString(error)));
+                if (error instanceof Error && error.stack) {
+                    log.debug(error.stack);
+                }
             }
         }
     }
