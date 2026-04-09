@@ -735,9 +735,11 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
+        // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
+        script += 'set -e\n';
         script += `source ${environmentSetupScript}\n`; // run the user shell script
-        script += `printenv >> ${environment_path}`; // write env vars to temp file
-        run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+        script += `printenv > "${environment_path}"`; // write env vars to temp file
+        run_command = `/bin/bash "${script_path}"`;
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists

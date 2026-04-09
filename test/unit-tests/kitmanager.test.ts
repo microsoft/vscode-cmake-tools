@@ -120,6 +120,15 @@ suite('Kits test', () => {
             isTrusted: true
         };
 
+        const setupOnlyKit = {
+            name: 'Test Kit 3 setup-only',
+            environmentSetupScript: script_path,
+            isTrusted: true
+        };
+
+        const setup_env_vars = await getShellScriptEnvironment(setupOnlyKit);
+        expect(setup_env_vars).to.not.be.undefined;
+
         const env_vars = await effectiveKitEnvironment(kit);
         await fs.unlink(script_path);
 
@@ -134,6 +143,7 @@ suite('Kits test', () => {
             return parts.map(part => path.win32.normalize(part).toLowerCase());
         };
 
+        expect(normalizePathList(setup_env_vars?.PATH)).to.deep.eq(normalizePathList(`${scriptPath}${pathSeparator}${basePath}`));
         expect(normalizePathList(env_vars.PATH)).to.deep.eq(normalizePathList(`${scriptPath}${pathSeparator}${basePath}${pathSeparator}${appendedPath}`));
     });
 });
