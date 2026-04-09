@@ -843,7 +843,9 @@ export class CMakeProject {
         // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
         const cmakeInfo = await this.getCMakeExecutable();
         if (!cmakeInfo.isPresent) {
-            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
+            // Do not show a popup here to avoid duplicate "Bad CMake executable" messages.
+            // The canonical user-facing error is shown when a command actually needs a driver
+            // and getCMakeDriverInstance() validates the executable.
             telemetry.logEvent('CMakeExecutableNotFound');
         }
 
