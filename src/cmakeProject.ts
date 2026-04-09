@@ -30,7 +30,7 @@ import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
-import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
+import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -843,7 +843,9 @@ export class CMakeProject {
         // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
         const cmakeInfo = await this.getCMakeExecutable();
         if (!cmakeInfo.isPresent) {
-            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
+            // Do not show a popup here to avoid duplicate "Bad CMake executable" messages.
+            // The canonical user-facing error is shown when a command actually needs a driver
+            // and getCMakeDriverInstance() validates the executable.
             telemetry.logEvent('CMakeExecutableNotFound');
         }
 
@@ -1399,7 +1401,10 @@ export class CMakeProject {
     }
 
     async setKit(kit: Kit | null) {
+        const priorCMakePath = await this.getCMakePathofProject(); // used for later comparison to determine if we need to update the driver's cmake.
         this._activeKit = kit;
+        this.cachedCMakePathEnvironment = null;  // Invalidate cache on kit change
+        this.cachedCMakePathEnvironmentKit = null;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
             const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
@@ -1407,6 +1412,14 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setKit(kit, this.getPreferredGenerators());
+
+                    const updatedCMakePath = await this.getCMakePathofProject();
+
+                    // check if we need to update the driver's cmake, if so, update.
+                    if (priorCMakePath !== updatedCMakePath) {
+                        drv.cmake = await this.getCMakeExecutable();
+                    }
+
                     await this.workspaceContext.state.setActiveKitName(this.folderName, kit.name, this.isMultiProjectFolder);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -1414,6 +1427,8 @@ export class CMakeProject {
                     this.statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
+                    this.cachedCMakePathEnvironment = null;  // Invalidate cache on error
+                    this.cachedCMakePathEnvironmentKit = null;
                 }
             } else {
                 // Remember the selected kit for the next session.
@@ -1422,9 +1437,36 @@ export class CMakeProject {
         }
     }
 
+    private async getCMakePathEnvironment(): Promise<Environment | undefined> {
+        if (this.useCMakePresets || !this.activeKit) {
+            return undefined;
+        }
+
+        // Return cached result if kit hasn't changed
+        if (this.cachedCMakePathEnvironmentKit === this.activeKit && this.cachedCMakePathEnvironment !== null) {
+            return this.cachedCMakePathEnvironment === undefined ? undefined : this.cachedCMakePathEnvironment;
+        }
+
+        try {
+            const expansionOptions = await this.getExpansionOptions();
+            const result = await effectiveKitEnvironment(this.activeKit, expansionOptions);
+            // Cache the result: store undefined as a marker to avoid re-computation
+            this.cachedCMakePathEnvironment = result || undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
+            return result;
+        } catch (e: any) {
+            log.warning(localize('failed.to.compute.kit.env.for.cmake.path', 'Unable to evaluate the active kit environment while resolving cmake.cmakePath: {0}', e?.message || e));
+            // Cache the error result as undefined
+            this.cachedCMakePathEnvironment = undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
+            return undefined;
+        }
+    }
+
     async getCMakePathofProject(): Promise<string> {
         const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
-        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting) || '';
+        const envOverride = await this.getCMakePathEnvironment();
+        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
 
     async getCMakeExecutable() {
@@ -1538,6 +1580,12 @@ export class CMakeProject {
     get activeKit(): Kit | null {
         return this._activeKit;
     }
+
+    /**
+     * Cache for CMake path environment to avoid redundant shell script executions
+     */
+    private cachedCMakePathEnvironment: Environment | undefined | null = null;
+    private cachedCMakePathEnvironmentKit: Kit | null = null;
 
     /**
      * The compilation database for this driver.
