@@ -4118,6 +4118,12 @@
           "description": "%cmake-tools.configuration.cmake.enableLanguageServices.description%",
           "scope": "machine"
         },
+        "cmake.languageServerOnlyMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.languageServerOnlyMode.description%",
+          "scope": "machine"
+        },
         "cmake.preRunCoverageTarget": {
           "type": "string",
           "default": null,

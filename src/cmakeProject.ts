@@ -843,11 +843,25 @@ export class CMakeProject {
         // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
         const cmakeInfo = await this.getCMakeExecutable();
         if (!cmakeInfo.isPresent) {
-            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
-            telemetry.logEvent('CMakeExecutableNotFound');
+            if (!this.workspaceContext.config.languageServerOnlyMode) {
+                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
+                telemetry.logEvent('CMakeExecutableNotFound');
+            } else {
+                log.debug(localize('bad.executable.suppressed.language.server.only', 'Skipping bad CMake executable notification because language-server-only mode is enabled.'));
+            }
         }
 
         await this.reloadCMakeDriver();
+    });
+
+    private readonly languageServerOnlyModeSub = this.workspaceContext.config.onChange('languageServerOnlyMode', async enabled => {
+        if (enabled) {
+            log.info(localize('language.server.only.shutdown.driver', 'Shutting down the CMake driver because language-server-only mode was enabled.'));
+            await this.shutDownCMakeDriver();
+        } else {
+            log.info(localize('language.server.only.reload.driver', 'Reloading the CMake driver because language-server-only mode was disabled.'));
+            await this.reloadCMakeDriver();
+        }
     });
 
     private readonly shellSub = this.workspaceContext.config.onChange('shell', async () => {
@@ -899,6 +913,7 @@ export class CMakeProject {
             this.preferredGeneratorsSub,
             this.communicationModeSub,
             this.cmakePathSub,
+            this.languageServerOnlyModeSub,
             this.shellSub
         ]) {
             sub.dispose();
@@ -1449,6 +1464,10 @@ export class CMakeProject {
      */
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
+            if (this.workspaceContext.config.languageServerOnlyMode) {
+                log.debug(localize('not.starting.language.server.only', 'Not starting CMake driver because language-server-only mode is enabled.'));
+                return null;
+            }
             if (!this.useCMakePresets && !this.activeKit) {
                 log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kit selected'));
                 return null;
@@ -1456,8 +1475,12 @@ export class CMakeProject {
 
             const cmake = await this.getCMakeExecutable();
             if (!cmake.isPresent) {
-                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
-                telemetry.logEvent('CMakeExecutableNotFound');
+                if (!this.workspaceContext.config.languageServerOnlyMode) {
+                    void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
+                    telemetry.logEvent('CMakeExecutableNotFound');
+                } else {
+                    log.debug(localize('bad.executable.suppressed.driver.language.server.only', 'Not showing a bad CMake executable notification because language-server-only mode is enabled.'));
+                }
                 return null;
             }
 
@@ -2074,6 +2097,9 @@ export class CMakeProject {
 
     // Reconfigure if the saved file is a cmake file.
     async doCMakeFileChangeReconfigure(uri: vscode.Uri) {
+        if (this.workspaceContext.config.languageServerOnlyMode) {
+            return;
+        }
         const filePath = util.platformNormalizePath(uri.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 

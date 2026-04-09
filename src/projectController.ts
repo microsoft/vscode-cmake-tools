@@ -635,6 +635,9 @@ export class ProjectController implements vscode.Disposable {
     private async doCMakeFileChangeReconfigure(uri: vscode.Uri): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
+            if (activeProject.workspaceContext.config.languageServerOnlyMode) {
+                return;
+            }
             const isFileInsideActiveProject: boolean = util.isFileInsideFolder(uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             // A save of settings.json triggers the doSave event (doSaveTextDocument or onDidRenameFile)
             // before the settings update event (onDidChangeConfiguration).

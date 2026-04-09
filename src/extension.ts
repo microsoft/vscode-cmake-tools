@@ -141,6 +141,9 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             });
         }
+        this.workspaceConfig.onChange('languageServerOnlyMode', async () => {
+            await updateFullFeatureSet();
+        });
 
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
@@ -219,7 +222,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
-                await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
+                await updateFullFeatureSet();
             }
 
             this.projectOutline.removeFolder(folder);
@@ -293,7 +296,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             await this.initActiveProject();
         }
-        const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
+        const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject() && !this.workspaceConfig.languageServerOnlyMode;
         await enableFullFeatureSet(isFullyActivated);
 
         const telemetryProperties: telemetry.Properties = {
@@ -708,6 +711,10 @@ export class ExtensionManager implements vscode.Disposable {
 
     async postWorkspaceOpen(project?: CMakeProject) {
         if (!project) {
+            return;
+        }
+        if (project.workspaceContext.config.languageServerOnlyMode) {
+            log.debug(localize('language.server.only.skip.workspace.open', 'Skipping CMake project integration during workspace open because language-server-only mode is enabled.'));
             return;
         }
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
@@ -2862,8 +2869,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // and show or hide the buttons in the status bar, according to the boolean.
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
-    await setContextAndStore("cmake:enableFullFeatureSet", fullFeatureSet);
-    extensionManager?.showStatusBar(fullFeatureSet);
+    const enableFeatureSet = fullFeatureSet && !extensionManager?.getWorkspaceConfig().languageServerOnlyMode;
+    await setContextAndStore("cmake:enableFullFeatureSet", enableFeatureSet);
+    extensionManager?.showStatusBar(enableFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {
