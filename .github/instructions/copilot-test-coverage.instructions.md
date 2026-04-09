@@ -73,5 +73,5 @@ Do **not** open the PR unless every file listed in the issue has either:
 
 - Branch name: `coverage/<module-name>-tests`
 - Open as **ready for review** only after the self-audit checklist in the issue is fully checked
-- PR description must use `.github/PULL_REQUEST_TEMPLATE/coverage.md`
+- **PR description must use the coverage template**: copy the contents of `.github/PULL_REQUEST_TEMPLATE/coverage.md` into the PR body (or append `?template=coverage.md` to the PR creation URL). Fill in the coverage-delta table and check every self-audit box.
 - `CHANGELOG.md` must have one entry under `Improvements:`

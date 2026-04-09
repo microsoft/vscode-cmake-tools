@@ -150,6 +150,13 @@ New tests **must** go in \`test/unit-tests/backend/\` and run in plain Node.js (
 - Pure logic modules (\`expand.ts\`, \`shlex.ts\`, \`cache.ts\`, \`diagnostics/\`, \`preset.ts\`) are ideal targets.
 ${remainingNote}
 
+### PR template
+
+When opening the pull request, **you must use the coverage PR template**.
+Include \`?template=coverage.md\` in the PR creation URL, or copy the contents of
+\`.github/PULL_REQUEST_TEMPLATE/coverage.md\` into the PR description and fill in
+the coverage table and checklist.
+
 ### Constraints
 
 - Tests go in \`test/unit-tests/backend/\` — use Mocha \`suite\`/\`test\` with \`assert\`
