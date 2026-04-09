@@ -738,7 +738,8 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
         script += 'set -e\n';
         script += `source ${environmentSetupScript}\n`; // run the user shell script
-        script += `printenv > "${environment_path}"`; // write env vars to temp file
+        // Use an absolute path so PATH modifications in the setup script don't break env capture.
+        script += `/usr/bin/printenv > "${environment_path}"`; // write env vars to temp file
         run_command = `/bin/bash "${script_path}"`;
     }
     try {
