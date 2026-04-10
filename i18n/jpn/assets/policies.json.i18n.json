@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy は Python::Development.Module に依存しません。",
 	"assets/policies.json.CMP0202": "PDB ファイル名には常にターゲットの構成ごとの POSTFIX が含まれます。",
 	"assets/policies.json.CMP0203": "MSVC ABI をターゲットとする共有ライブラリでは _WINDLL が定義されます。",
-	"assets/policies.json.CMP0204": "MSVC ABI をターゲットとする場合、文字セットは常に定義されます。"
+	"assets/policies.json.CMP0204": "MSVC ABI をターゲットとする場合、文字セットは常に定義されます。",
+	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
+	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
+	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
+	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
+	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
 }
