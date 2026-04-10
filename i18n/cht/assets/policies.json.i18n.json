@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy 不依賴 Python::Development.Module。",
 	"assets/policies.json.CMP0202": "PDB 檔案名稱一律會包含其目標的每個組態後綴。",
 	"assets/policies.json.CMP0203": "對於以 MSVC ABI 為目標的共用函式庫，會定義 _WINDLL。",
-	"assets/policies.json.CMP0204": "當目標為 MSVC ABI 時，一律會定義字元集設定。"
+	"assets/policies.json.CMP0204": "當目標為 MSVC ABI 時，一律會定義字元集設定。",
+	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
+	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
+	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
+	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
+	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
 }

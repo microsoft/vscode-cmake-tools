@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory içinde tüm compile_commands.json dosyalarını özyinelemeli olarak topla ve birleştir.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
+	"cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory veya CMakeLists.txt içeriği kaydedildiğinde CMake proje dizinlerini otomatik olarak yapılandırın.",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Temiz bir yapılandırma çağrıldığında tüm derleme dizinini silin.",
