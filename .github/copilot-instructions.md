@@ -111,6 +111,10 @@ One entry under the current version in `CHANGELOG.md`, in the appropriate sectio
 - [ ] Behavior verified with **single-config** and **multi-config** generators
 - [ ] Windows/macOS/Linux differences considered (paths, env vars, MSVC toolchain, generator availability)
 
+## Test coverage improvements
+
+When working on issues labeled `test-coverage`, read `.github/instructions/copilot-test-coverage.instructions.md` before starting — it contains the mandatory self-audit protocol, test quality rules, and scope constraints for coverage work.
+
 ## Where to start
 
 - **Configure/build/test behavior** → `src/cmakeProject.ts` + `src/drivers/`
