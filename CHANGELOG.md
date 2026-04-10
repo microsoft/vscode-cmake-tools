@@ -100,6 +100,7 @@ Bug Fixes:
 - Fix malformed devcontainer.json used for working with GitHub Codespaces and similar environments [#4588](https://github.com/microsoft/vscode-cmake-tools/pull/4588) [@kaladron](https://github.com/kaladron)
 - Fix hang in `buildWithResult` tool when there isn't a configure preset selected. [#4857](https://github.com/microsoft/vscode-cmake-tools/issues/4857)
 - Fix hiding of tests if test suite name and target name are the same when setting "Test Suite Delimiter" to `\` [#4408](https://github.com/microsoft/vscode-cmake-tools/issues/4408) [@ottmar-zittlau](https://github.com/ottmar-zittlau)
+- Fix backtick used instead of apostrophe in the `cmake.outlineViewType` setting description. [#4876](https://github.com/microsoft/vscode-cmake-tools/pull/4876)
 
 ## 1.22.28
 
