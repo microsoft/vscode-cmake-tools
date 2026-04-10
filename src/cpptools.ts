@@ -431,12 +431,30 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private readonly fileIndex = new Map<string, Map<string, cpptools.SourceFileConfigurationItem>>();
 
     /**
+     * Track indexed files per workspace folder so stale entries can be evicted
+     * when a folder is reconfigured (e.g. switching presets).
+     */
+    private readonly fileIndexByFolder = new Map<string, Set<string>>();
+
+    /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private activeTarget: string | null = null;
 
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
+
+    private clearConfigurationDataForFolder(folder: string) {
+        const normalizedFolder = util.platformNormalizePath(folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
+        if (indexedFiles) {
+            for (const filePath of indexedFiles) {
+                this.fileIndex.delete(filePath);
+            }
+            this.fileIndexByFolder.delete(normalizedFolder);
+        }
+        this.workspaceBrowseConfigurations.delete(normalizedFolder);
+    }
 
     /**
      * Create a source file configuration for the given file group.
@@ -552,9 +570,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
+        const normalizedFolder = util.platformNormalizePath(options.folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
             const normalizedAbsolutePath = util.platformNormalizePath(absolutePath);
+            indexedFiles?.add(normalizedAbsolutePath);
             if (this.fileIndex.has(normalizedAbsolutePath)) {
                 this.fileIndex.get(normalizedAbsolutePath)!.set(target.name, {
                     uri: vscode.Uri.file(absolutePath).toString(),
@@ -592,6 +613,10 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         this.responses.clear();
         this.buildTypesSeen.clear();
         this.targets = [];
+
+        const normalizedFolder = util.platformNormalizePath(opts.folder);
+        this.clearConfigurationDataForFolder(normalizedFolder);
+        this.fileIndexByFolder.set(normalizedFolder, new Set<string>());
 
         let hadMissingCompilers = false;
         this.workspaceBrowseConfiguration = { browsePath: [] };

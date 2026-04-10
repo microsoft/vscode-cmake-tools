@@ -406,4 +406,67 @@ suite('CppTools tests', () => {
         expect(browseConfig2?.browsePath.length).to.eq(1);
         expect(browseConfig2?.browsePath[0]).to.eq(util.platformNormalizePath(smokeFolder));
     });
+
+    test('Evicts stale file configurations after folder refresh', async () => {
+        const provider = new CppConfigurationProvider();
+        const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
+        const folder = here;
+        const oldSourceFile = path.join(folder, 'stale_old.cpp');
+        const newSourceFile = path.join(folder, 'stale_new.cpp');
+
+        const oldCodeModel: codeModel.CodeModelContent = {
+            configurations: [{
+                name: 'Release',
+                projects: [{
+                    name: 'stale-config-test',
+                    sourceDirectory: folder,
+                    targets: [{
+                        name: 'oldTarget',
+                        type: 'EXECUTABLE',
+                        fileGroups: [{
+                            sources: [oldSourceFile],
+                            isGenerated: false,
+                            defines: ['OLD'],
+                            compileCommandFragments: ['-DOLD'],
+                            language: 'CXX'
+                        }]
+                    }]
+                }]
+            }],
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
+        };
+
+        provider.updateConfigurationData({ cache, codeModelContent: oldCodeModel, activeTarget: 'oldTarget', activeBuildTypeVariant: 'Release', folder });
+
+        const newCodeModel: codeModel.CodeModelContent = {
+            configurations: [{
+                name: 'Release',
+                projects: [{
+                    name: 'stale-config-test',
+                    sourceDirectory: folder,
+                    targets: [{
+                        name: 'newTarget',
+                        type: 'EXECUTABLE',
+                        fileGroups: [{
+                            sources: [newSourceFile],
+                            isGenerated: false,
+                            defines: ['NEW'],
+                            compileCommandFragments: ['-DNEW'],
+                            language: 'CXX'
+                        }]
+                    }]
+                }]
+            }],
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
+        };
+
+        provider.updateConfigurationData({ cache, codeModelContent: newCodeModel, activeTarget: 'newTarget', activeBuildTypeVariant: 'Release', folder });
+
+        const staleConfigurations = await provider.provideConfigurations([vscode.Uri.file(oldSourceFile)]);
+        expect(staleConfigurations.length).to.eq(0);
+
+        const activeConfigurations = await provider.provideConfigurations([vscode.Uri.file(newSourceFile)]);
+        expect(activeConfigurations.length).to.eq(1);
+        expect(activeConfigurations[0].configuration.defines).to.contain('NEW');
+    });
 });

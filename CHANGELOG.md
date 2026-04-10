@@ -49,6 +49,7 @@ Improvements:
 - Updated IntelliSense tooltips with changes from CMake 4.3.1. [#4872](https://github.com/microsoft/vscode-cmake-tools/pull/4872)
 
 Bug Fixes:
+- Fix stale C/C++ custom-configuration entries persisting after reconfigure/preset switches, which could cause Go to Definition/IntelliSense to surface symbols from inactive sources in the same folder. [#4472](https://github.com/microsoft/vscode-cmake-tools/issues/4472)
 - Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
 - Import the `EXTERNAL_INCLUDE` environment variable from the VS developer environment so that MSVC's external-header diagnostic suppression works correctly. [#4217](https://github.com/microsoft/vscode-cmake-tools/issues/4217)
 - Fix test presets not automatically switching when the build preset changes in multi-config generator setups (e.g., Ninja Multi-Config). The extension now auto-selects a compatible test preset after a build preset change, and properly considers build type when guessing the test preset. [#4395](https://github.com/microsoft/vscode-cmake-tools/issues/4395)
