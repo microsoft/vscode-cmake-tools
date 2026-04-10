@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten がインストールされる可能性のあるディレクトリです。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory で見つかったすべての compile_commands.json を再帰的に収集してマージします。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "構成が正常に完了したら、compile_commands.json をこの場所にコピーします。",
+	"cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake プロジェクト ディレクトリを開いたときに自動的に構成します。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory または CMakeLists.txt のコンテンツの保存時に、CMake プロジェクトのディレクトリを自動的に構成します。",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "クリーン構成が呼び出されたときに、ビルド ディレクトリ全体を削除します。",
