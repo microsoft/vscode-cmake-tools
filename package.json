@@ -4401,11 +4401,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       }
     ]
   },
@@ -4482,7 +4482,7 @@
     "tsconfig-paths": "^3.11.0",
     "tslint": "^6.1.3",
     "typescript": "^4.1.5",
-    "vscode-cmake-tools": "^1.5.0",
+    "vscode-cmake-tools": "^1.6.0",
     "vscode-nls-dev": "^3.3.2",
     "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4"

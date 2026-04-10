@@ -3,6 +3,7 @@
 ## 1.23
 
 Features:
+- Add support for CMake Presets version 11 (added in CMake 4.3). In test presets, the `execution.jobs` field can now be an empty string, equivalent to passing `--parallel` with no value.
 - Automatically add new source files to `CMakeLists.txt` and remove deleted source files from `CMakeLists.txt`. Two new commands (`cmake.addFileToCMakeLists` and `cmake.removeFileFromCMakeLists`) and nine new `cmake.modifyLists.*` settings provide full control over target selection, variable handling, and confirmation behavior. [#2132](https://github.com/microsoft/vscode-cmake-tools/issues/2132) [#4454](https://github.com/microsoft/vscode-cmake-tools/pull/4454) [@malsyned](https://github.com/malsyned)
 - Add `cmake.languageServerOnlyMode` to keep CMake language services active while disabling CMake project integration when no local CMake executable is available. [#4516](https://github.com/microsoft/vscode-cmake-tools/issues/4516)
 - Allow specifying a custom debug adapter type in `cmake.debugConfig` via the `type` property. When set, automatic debugger detection is skipped and any debug adapter (e.g., `codelldb`, `lldb`) can be used with arbitrary configuration properties. [#4818](https://github.com/microsoft/vscode-cmake-tools/pull/4818)
@@ -100,6 +101,7 @@ Bug Fixes:
 - Fix malformed devcontainer.json used for working with GitHub Codespaces and similar environments [#4588](https://github.com/microsoft/vscode-cmake-tools/pull/4588) [@kaladron](https://github.com/kaladron)
 - Fix hang in `buildWithResult` tool when there isn't a configure preset selected. [#4857](https://github.com/microsoft/vscode-cmake-tools/issues/4857)
 - Fix hiding of tests if test suite name and target name are the same when setting "Test Suite Delimiter" to `\` [#4408](https://github.com/microsoft/vscode-cmake-tools/issues/4408) [@ottmar-zittlau](https://github.com/ottmar-zittlau)
+- Fix backtick used instead of apostrophe in the `cmake.outlineViewType` setting description. [#4876](https://github.com/microsoft/vscode-cmake-tools/pull/4876)
 
 ## 1.22.28
 

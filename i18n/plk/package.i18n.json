@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Katalogi, w których można zainstalować program Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Cyklicznie zbieraj i scalaj wszystkie compile_commands.json znalezione w katalogu cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Kopiuj plik compile_commands.json do tej lokalizacji po pomyślnym skonfigurowaniu.",
+	"cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake przy ich otwieraniu.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automatycznie konfiguruj katalogi projektu CMake po zapisaniu zawartości ustawienia cmake.sourceDirectory i pliku CMakeLists.txt.",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Usuń cały katalog kompilacji po wywołaniu czystego konfigurowania.",
