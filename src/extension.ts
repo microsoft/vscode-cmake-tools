@@ -715,7 +715,7 @@ export class ExtensionManager implements vscode.Disposable {
             return;
         }
         if (project.workspaceContext.config.languageServerOnlyMode) {
-            log.debug(localize('language.server.only.skip.workspace.open', 'Skipping CMake project integration during workspace open because language-server-only mode is enabled.'));
+            log.debug('Skipping CMake project integration during workspace open because language-server-only mode is enabled.');
             return;
         }
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
