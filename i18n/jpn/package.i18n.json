@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "起動ターミナル インスタンスが再利用され、ターゲットを起動する前にアクティブなフォアグラウンド プロセスを終了するために `break` コマンドが送信されます。",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "新しいターミナル インスタンスが作成され、その中でターゲットが起動されます。既存のターミナルは自動的にはクリーンアップされません。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "拡張子が単一ファイルのコンパイルを有効にするために compile_commands.json を読み取るかどうかを制御します。",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "プロジェクトの状態を最新の情報に更新",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "ピン留めする CMake コマンドを追加する",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "コマンドのピン留めを外す",
