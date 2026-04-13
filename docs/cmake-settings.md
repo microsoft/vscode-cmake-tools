@@ -53,6 +53,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.enabledOutputParsers` | List of enabled output parsers. | `["cmake", "gcc", "gnuld", "msvc", "ghs", "diab", "iwyu"]` | no |
 | `cmake.additionalBuildProblemMatchers` | Array of user-defined problem matchers for build output. Each entry has `name`, `regexp`, and optional capture group indices (`file`, `line`, `column`, `severity`, `message`, `code`). See [Additional Build Problem Matchers](#additional-build-problem-matchers) below. | `[]` | no |
 | `cmake.enableLanguageServices` | If `true`, enable CMake language services. | `true` | no |
+| `cmake.languageServerOnlyMode` | If `true`, keep CMake language services enabled while disabling CMake project, build, test, and kit integration. | `false` | no |
 | `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
 | `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |
 | `cmake.exclude` | CMake Tools will ignore the folders defined in this setting. | `[]` | no |
