@@ -844,14 +844,15 @@ export class CMakeProject {
         const cmakeInfo = await this.getCMakeExecutable();
         if (!cmakeInfo.isPresent) {
             if (!this.workspaceContext.config.languageServerOnlyMode) {
-                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
                 telemetry.logEvent('CMakeExecutableNotFound');
             } else {
                 log.debug(localize('bad.executable.suppressed.language.server.only', 'Skipping bad CMake executable notification because language-server-only mode is enabled.'));
             }
         }
 
-        await this.reloadCMakeDriver();
+        if (!this.workspaceContext.config.languageServerOnlyMode) {
+            await this.reloadCMakeDriver();
+        }
     });
 
     private readonly languageServerOnlyModeSub = this.workspaceContext.config.onChange('languageServerOnlyMode', async enabled => {
@@ -1515,12 +1516,8 @@ export class CMakeProject {
 
             const cmake = await this.getCMakeExecutable();
             if (!cmake.isPresent) {
-                if (!this.workspaceContext.config.languageServerOnlyMode) {
-                    void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
-                    telemetry.logEvent('CMakeExecutableNotFound');
-                } else {
-                    log.debug(localize('bad.executable.suppressed.driver.language.server.only', 'Not showing a bad CMake executable notification because language-server-only mode is enabled.'));
-                }
+                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
+                telemetry.logEvent('CMakeExecutableNotFound');
                 return null;
             }
 
