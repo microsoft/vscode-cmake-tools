@@ -84,6 +84,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         enableAutomaticKitScan: true,
         removeStaleKitsOnScan: false,
         enableLanguageServices: true,
+        languageServerOnlyMode: false,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
         coverageInfoFiles: [],
