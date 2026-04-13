@@ -66,25 +66,26 @@ export const hideDebugCommandKey = 'cmake:hideDebugCommand';
 export const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
- * Known vendor extension IDs that install or manage their own CMake binary.
- * This list is used only for progress-message text — retries happen regardless
- * of whether a vendor extension is installed.
+ * Friendly display names for known vendor extensions. Used to show a nicer
+ * progress message (e.g., "Waiting for STM32 for VS Code..." instead of
+ * "Waiting for stmicroelectronics.stm32-vscode-extension...").
+ * Extensions not in this map fall back to their raw ID.
  */
-const vendorCMakeExtensions: { id: string; label: string }[] = [
-    { id: 'stmicroelectronics.stm32-vscode-extension', label: 'STM32 for VS Code' },
-    { id: 'espressif.esp-idf-extension', label: 'ESP-IDF' },
-    { id: 'NXPSemiconductors.mcuxpresso', label: 'MCUXpresso' },
-    { id: 'nordic-semiconductor.nrf-connect', label: 'nRF Connect' }
-];
+const vendorExtensionLabels: ReadonlyMap<string, string> = new Map([
+    ['stmicroelectronics.stm32-vscode-extension', 'STM32 for VS Code'],
+    ['espressif.esp-idf-extension', 'ESP-IDF'],
+    ['NXPSemiconductors.mcuxpresso', 'MCUXpresso'],
+    ['nordic-semiconductor.nrf-connect', 'nRF Connect']
+]);
 
 /**
- * Returns the display name of a known vendor extension that manages CMake,
- * or undefined if none is installed. Used for progress message text only.
+ * Check if any extension ID from the given list is currently installed.
+ * Returns the friendly display name of the first match, or undefined if none.
  */
-function getVendorExtensionHint(): string | undefined {
-    for (const ext of vendorCMakeExtensions) {
-        if (vscode.extensions.getExtension(ext.id)) {
-            return ext.label;
+function getInstalledVendorHint(vendorIds: string[]): string | undefined {
+    for (const id of vendorIds) {
+        if (vscode.extensions.getExtension(id)) {
+            return vendorExtensionLabels.get(id) ?? id;
         }
     }
     return undefined;
@@ -769,15 +770,24 @@ export class ExtensionManager implements vscode.Disposable {
                 // configure it now.
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
 
-                // Check cmake availability first. If cmake is not present,
-                // a vendor extension may still be installing it. In that case,
-                // skip the immediate configure (which would show a premature
-                // "Bad CMake executable" error) and poll for availability instead.
+                // Check cmake availability first. If cmake is not present AND
+                // a vendor extension from the cmake.vendorIntegrators setting is
+                // installed, poll for cmake to appear (the vendor may still be
+                // installing it). Otherwise, proceed to configure immediately —
+                // the standard "Bad CMake executable" error will surface if needed.
                 const cmake = await project.getCMakeExecutable();
                 if (cmake.isPresent) {
                     await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
                 } else {
-                    await this.waitForCmakeAndConfigure(project);
+                    const vendorIds = project.workspaceContext.config.vendorIntegrators;
+                    const vendorHint = getInstalledVendorHint(vendorIds);
+                    if (vendorHint) {
+                        await this.waitForCmakeAndConfigure(project, vendorHint);
+                    } else {
+                        // No vendor extension installed — cmake is genuinely missing.
+                        // Run configure to surface the error immediately.
+                        await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
+                    }
                 }
             } else {
                 const configureButtonMessage = localize('configure.now.button', 'Configure Now');
@@ -802,9 +812,10 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Wait for CMake to become available, then configure.
      *
-     * When cmake is not found during the automatic configureOnOpen flow, this
-     * method polls for cmake presence with exponential backoff. This handles the
-     * case where a vendor extension (e.g., STMicroelectronics, Espressif) is
+     * When cmake is not found during the automatic configureOnOpen flow and a
+     * vendor extension from the `cmake.vendorIntegrators` setting is installed,
+     * this method polls for cmake presence with exponential backoff. This handles
+     * the case where a vendor extension (e.g., STMicroelectronics, Espressif) is
      * still downloading or installing cmake when CMake Tools activates.
      *
      * A window progress indicator is shown while retrying.
@@ -813,15 +824,14 @@ export class ExtensionManager implements vscode.Disposable {
      * window — no configure pipeline, no error popups, no driver strand held.
      * When cmake is finally found, a single configureExtensionInternal() call
      * runs the full configure.
+     *
+     * @param vendorHint Display name of the detected vendor extension, used in
+     *                   the progress message.
      */
-    private async waitForCmakeAndConfigure(project: CMakeProject): Promise<void> {
-        const vendorHint = getVendorExtensionHint();
-        const progressTitle = vendorHint
-            ? localize('cmake.retry.vendor.title', 'Waiting for {0} to set up CMake...', vendorHint)
-            : localize('cmake.retry.title', 'Waiting for CMake to become available...');
+    private async waitForCmakeAndConfigure(project: CMakeProject, vendorHint: string): Promise<void> {
+        const progressTitle = localize('cmake.retry.vendor.title', 'Waiting for {0} to set up CMake...', vendorHint);
 
-        log.info(localize('cmake.not.found.retrying', 'CMake not found during configure-on-open. Retrying... ({0})',
-            vendorHint ?? localize('cmake.retry.no.vendor', 'no vendor extension detected')));
+        log.info(localize('cmake.not.found.retrying', 'CMake not found during configure-on-open. Waiting for {0} to finish setup...', vendorHint));
 
         const found = await vscode.window.withProgress(
             {

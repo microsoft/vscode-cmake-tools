@@ -3126,6 +3126,20 @@
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
+        "cmake.vendorIntegrators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "stmicroelectronics.stm32-vscode-extension",
+            "espressif.esp-idf-extension",
+            "NXPSemiconductors.mcuxpresso",
+            "nordic-semiconductor.nrf-connect"
+          ],
+          "description": "%cmake-tools.configuration.cmake.vendorIntegrators.description%",
+          "scope": "resource"
+        },
         "cmake.deleteBuildDirOnCleanConfigure": {
           "type": "boolean",
           "default": false,
