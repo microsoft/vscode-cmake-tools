@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Wystąpienie terminalu uruchamiania jest ponownie uruchamiane, a polecenie `break` jest wysyłane w celu zakończenia wszelkich aktywnych procesów pierwszego planu przed uruchomieniem elementu docelowego.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Tworzone jest nowe wystąpienie terminalu i zostanie w nim uruchomiony element docelowy. Istniejące terminale nie są automatycznie czyszczone.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Określa, czy rozszerzenie odczytuje plik compile_commands.json, aby włączać kompilację pojedynczego pliku.",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Odśwież stan projektu",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "Dodaj polecenie narzędzia CMake do przypięcia",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "Odepnij polecenie",

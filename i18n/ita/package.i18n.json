@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "L'istanza del terminale di avvio viene riutilizzata e viene inviato un comando `break` per terminare qualsiasi processo in primo piano attivo prima di avviare la destinazione.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Viene creata una nuova istanza del terminale in cui viene avviata la destinazione. I terminali esistenti non vengono puliti automaticamente.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Controlla se l'estensione legge compile_commands.json per abilitare la compilazione di file singoli.",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Aggiornare lo stato del progetto",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "Aggiungi un comando CMake da bloccare",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "Sblocca comando",

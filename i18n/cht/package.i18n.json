@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重複使用啟動終端機執行個體，並在啟動目標之前傳送 `break` 命令以終止任何使用中的前景進程。",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已建立新的終端機執行個體，並在其中啟動目標。不會自動清除現有的終端機。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制延伸模組是否要讀取 compile_commands.json 以啟用單一檔案編譯。",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "重新整理專案狀態",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "新增要釘選的 CMake 命令",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "取消釘選命令",

@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Başlatma terminali örneği yeniden kullanılır ve hedefi başlatmadan önce herhangi bir etkin ön plan sürecini sonlandırmak için bir `break` komutu gönderilir.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Yeni bir terminal örneği oluşturulur ve içinde hedef başlatılır. Mevcut terminaller otomatik olarak temizlenmez.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Tek dosya derlemesini etkinleştirmek için uzantının compile_commands.json dosyasını okuyup okumadığını denetler.",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Proje durumunu yenileyin",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "Sabitlemek için bir CMake komutu ekleyin",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "Komutu Kaldır",
