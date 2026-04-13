@@ -1842,6 +1842,9 @@ export class CTestDriver implements vscode.Disposable {
             return true;
         }
 
+        // Folder => status
+        const builtFolder = new Map<string, number>();
+        let status: number = 0;
         const foundTarget = new Map<CMakeProject, Map<string, vscode.TestItem[]>>();
         for (const test of tests) {
             if (!await this.getTestTargets(test, foundTarget, run)) {
