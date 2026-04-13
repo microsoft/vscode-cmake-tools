@@ -1846,6 +1846,7 @@ export class CTestDriver implements vscode.Disposable {
         for (const test of tests) {
             if (!await this.getTestTargets(test, foundTarget, run)) {
                 return false;
+            }
             const folder = this.getTestRootFolder(test);
             if (!builtFolder.has(folder)) {
                 const project = await this.projectController?.getProjectForFolder(folder);
@@ -1929,7 +1930,7 @@ export class CTestDriver implements vscode.Disposable {
                     extensionManager.cleanOutputChannel();
                 }
                 const buildResult = await project.build(accumulatedTargets, false, false);
-                if (buildResult !== 0) {
+                if (buildResult.exitCode !== 0) {
                     success = false;
                 }
             } catch (e) {
