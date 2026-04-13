@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "Instance spouštěcího terminálu se znovu použije a před spuštěním cíle se odešle příkaz `break` k přerušení veškerých aktivních procesů v popředí.",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "Vytvoří se nová instance terminál a cíl se v ní spustí. Existující terminály se automaticky nevyčistí.",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "Určuje, jestli rozšíření přečte soubor compile_commands.json a povolí kompilaci jednoho souboru.",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "Aktualizovat stav projektu",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "Přidání příkazu CMake pro připnutí",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "Odepnout příkaz",

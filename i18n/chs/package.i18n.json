@@ -287,7 +287,7 @@
 	"cmake-tools.configuration.cmake.launchBehavior.breakAndReuseTerminal.markdownDescriptions": "已重用启动终端实例，并且将在启动目标之前发送 `break` 命令以终止任何活动的前台进程。",
 	"cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "已创建新的终端实例，并且已在其中启动目标。系统不会自动清理现有终端。",
 	"cmake-tools.configuration.cmake.loadCompileCommands.description": "控制扩展是否读取 compile_commands.json 以启用单个文件编译。",
-	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View`s type. Available options are: \"list\" and \"tree\".",
+	"cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
 	"cmake-tools.command.cmake.projectStatus.update.title": "刷新项目状态",
 	"cmake-tools.command.cmake.pinnedCommands.add.title": "添加要固定的 CMake 命令",
 	"cmake-tools.command.cmake.pinnedCommands.remove.title": "取消固定命令",
