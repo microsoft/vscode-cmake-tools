@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.10.0)
 project(FakeOutputGenerator VERSION 0.1.0)
 
 file(GLOB CONFIG_FILES "configfiles/*.cfg")

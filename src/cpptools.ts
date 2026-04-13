@@ -311,6 +311,27 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
 }
 
 /**
+ * Try to find a target configuration with some populated properties.
+ *
+ * All targets get defaults for `compilerPath`, `compilerArgs`, and
+ * `compilerFragments`, even `UTILITY` targets defined with
+ * `add_custom_command()` that provide no other useful configuration, so if
+ * possible, return one with more than just those populated.
+ */
+function fallbackConfiguration(configurations: Map<string, cpptools.SourceFileConfigurationItem> | undefined) {
+    if (!configurations) {
+        return undefined;
+    }
+    for (const item of configurations.values()) {
+        const { configuration: { includePath, defines, intelliSenseMode, standard} } = item;
+        if (includePath.length || defines.length || intelliSenseMode || standard) {
+            return item;
+        }
+    }
+    return configurations.values().next().value;
+}
+
+/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -345,7 +366,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
-            return configurations?.values().next().value; // Any value is fine if the target doesn't match
+            return fallbackConfiguration(configurations);
         }
     }
 
@@ -410,12 +431,30 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private readonly fileIndex = new Map<string, Map<string, cpptools.SourceFileConfigurationItem>>();
 
     /**
+     * Track indexed files per workspace folder so stale entries can be evicted
+     * when a folder is reconfigured (e.g. switching presets).
+     */
+    private readonly fileIndexByFolder = new Map<string, Set<string>>();
+
+    /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private activeTarget: string | null = null;
 
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
+
+    private clearConfigurationDataForFolder(folder: string) {
+        const normalizedFolder = util.platformNormalizePath(folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
+        if (indexedFiles) {
+            for (const filePath of indexedFiles) {
+                this.fileIndex.delete(filePath);
+            }
+            this.fileIndexByFolder.delete(normalizedFolder);
+        }
+        this.workspaceBrowseConfigurations.delete(normalizedFolder);
+    }
 
     /**
      * Create a source file configuration for the given file group.
@@ -531,9 +570,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
+        const normalizedFolder = util.platformNormalizePath(options.folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
             const normalizedAbsolutePath = util.platformNormalizePath(absolutePath);
+            indexedFiles?.add(normalizedAbsolutePath);
             if (this.fileIndex.has(normalizedAbsolutePath)) {
                 this.fileIndex.get(normalizedAbsolutePath)!.set(target.name, {
                     uri: vscode.Uri.file(absolutePath).toString(),
@@ -572,6 +614,10 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         this.buildTypesSeen.clear();
         this.targets = [];
 
+        const normalizedFolder = util.platformNormalizePath(opts.folder);
+        this.clearConfigurationDataForFolder(normalizedFolder);
+        this.fileIndexByFolder.set(normalizedFolder, new Set<string>());
+
         let hadMissingCompilers = false;
         this.workspaceBrowseConfiguration = { browsePath: [] };
         this.activeTarget = opts.activeTarget;
@@ -598,7 +644,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         target.fileGroups?.reverse();
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                        const compileCommandFragments = [...util.first(grps, grp => grp.compileCommandFragments || [])];
+                        const compileCommandFragments = [...util.first(grps.filter(grp => grp.language !== 'RC'), grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });

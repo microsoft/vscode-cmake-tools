@@ -29,6 +29,7 @@ export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
  * interface that maps to cmake.debugConfig.
  */
 export interface CppDebugConfiguration {
+    type?: string;
     symbolSearchPath?: string;
     additionalSOLibSearchPath?: string;
     externalConsole?: boolean;
@@ -46,6 +47,7 @@ export interface CppDebugConfiguration {
     launchCompleteCommand?: string;
     dumpPath?: string;
     coreDumpPath?: string;
+    [key: string]: any;
 }
 
 export interface DebuggerLogging {
@@ -95,7 +97,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
         type: 'cppdbg',
         name: `Debug ${target.name}`,
         request: 'launch',
-        cwd: path.dirname(target.path),
+        cwd: target.debuggerWorkingDirectory || path.dirname(target.path),
         args: [],
         MIMode: MIModes.gdb,
         miDebuggerPath: debuggerPath,
@@ -127,7 +129,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
         type: 'cppdbg',
         name: `Debug ${target.name}`,
         request: 'launch',
-        cwd: path.dirname(target.path),
+        cwd: target.debuggerWorkingDirectory || path.dirname(target.path),
         args: [],
         MIMode: MIModes.lldb,
         miDebuggerPath: debuggerPath,
@@ -146,7 +148,7 @@ function createMsvcDebugConfiguration(target: ExecutableTarget): VSCodeDebugConf
         type: 'cppvsdbg',
         name: `Debug ${target.name}`,
         request: 'launch',
-        cwd: path.dirname(target.path),
+        cwd: target.debuggerWorkingDirectory || path.dirname(target.path),
         args: [],
         program: target.path
     };
@@ -288,6 +290,6 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 }
 
 export async function checkDebugger(debuggerPath: string): Promise<boolean> {
-    const res = await proc.execute(debuggerPath, ['--version'], null, { shell: true }).result;
+    const res = await proc.execute(debuggerPath, ['--version'], null, {}).result;
     return res.retc === 0;
 }
