@@ -251,6 +251,7 @@
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Włącz automatyczne skanowanie w poszukiwaniu zestawów, gdy zestaw nie jest wybrany. Będzie to miało wpływ tylko wtedy, gdy nie są używane ustawienia wstępne narzędzia CMake.",
 	"cmake-tools.configuration.cmake.removeStaleKitsOnScan.description": "Remove compiler-based kits from the user kits file during a full kit scan when they are no longer rediscovered. Set \"keep\": true in a kit entry to preserve it.",
 	"cmake-tools.configuration.cmake.enableLanguageServices.description": "Włącz usługi językowe dla plików narzędzia CMake. Umożliwi to wyróżnianie składni, uzupełnianie kodu i inne funkcje.",
+	"cmake-tools.configuration.cmake.languageServerOnlyMode.description": "Enable language-server-only mode for CMake files. This keeps CMake language services active while disabling CMake project, build, test, and kit integration.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Element docelowy do utworzenia przed przeprowadzeniem testów z pokryciem przy użyciu eksploratora testów",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Element docelowy do utworzenia po przeprowadzeniu testów z pokryciem przy użyciu eksploratora testów",
 	"cmake-tools.configuration.cmake.coverageInfoFiles.description": "Pliki z informacjami o pokryciu narzędzia LCOV do przetworzenia po przeprowadzeniu testów z pokryciem przy użyciu eksploratora testów.",
