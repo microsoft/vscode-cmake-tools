@@ -251,6 +251,7 @@
 	"cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "未选择工具包时启用工具包的自动扫描。这只会在未使用 CMake 预设时生效。",
 	"cmake-tools.configuration.cmake.removeStaleKitsOnScan.description": "Remove compiler-based kits from the user kits file during a full kit scan when they are no longer rediscovered. Set \"keep\": true in a kit entry to preserve it.",
 	"cmake-tools.configuration.cmake.enableLanguageServices.description": "为 CMake 文件启用语言服务。这将启用语法突出显示、代码完成和其他功能。",
+	"cmake-tools.configuration.cmake.languageServerOnlyMode.description": "Enable language-server-only mode for CMake files. This keeps CMake language services active while disabling CMake project, build, test, and kit integration.",
 	"cmake-tools.configuration.cmake.preRunCoverageTarget.description": "使用测试资源管理器运行覆盖率测试之前要生成的目标",
 	"cmake-tools.configuration.cmake.postRunCoverageTarget.description": "使用测试资源管理器运行覆盖率测试之后要生成的目标",
 	"cmake-tools.configuration.cmake.coverageInfoFiles.description": "使用测试资源管理器运行覆盖率测试后要处理的 LCOV 覆盖率信息文件。",
