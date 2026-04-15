@@ -363,6 +363,18 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private getConfiguration(uri: vscode.Uri): cpptools.SourceFileConfigurationItem | undefined {
         const normalizedPath = util.platformNormalizePath(uri.fsPath);
         const configurations = this.fileIndex.get(normalizedPath);
+
+        // If we have an active folder, only provide configurations for files
+        // that belong to that folder's project. This ensures IntelliSense
+        // reflects the active project in multi-project workspaces.
+        if (this.activeFolder) {
+            const activeFolderFiles = this.fileIndexByFolder.get(this.activeFolder);
+            if (!activeFolderFiles?.has(normalizedPath)) {
+                // This file is not part of the active folder's project
+                return undefined;
+            }
+        }
+
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
@@ -440,6 +452,22 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private activeTarget: string | null = null;
+
+    /**
+     * The active folder path. When set, IntelliSense configurations from this folder
+     * are preferred over configurations from other folders for shared source files.
+     */
+    private activeFolder: string | null = null;
+
+    /**
+     * Set the active folder for IntelliSense configuration resolution.
+     * When a file exists in multiple project folders, configurations from
+     * the active folder will be preferred.
+     * @param folder The folder path, or null to clear
+     */
+    setActiveFolder(folder: string | null) {
+        this.activeFolder = folder ? util.platformNormalizePath(folder) : null;
+    }
 
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
