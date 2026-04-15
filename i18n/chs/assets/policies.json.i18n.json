@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "PDB 文件名将始终包含其目标的基于配置的后缀。",
 	"assets/policies.json.CMP0203": "_WINDLL 是为以 MSVC ABI 为目标的共享库定义的。",
 	"assets/policies.json.CMP0204": "在以 MSVC ABI 为目标时，一律定义字符集。",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "带 COPY_ON_ERROR 的文件会复制目录内容。",
+	"assets/policies.json.CMP0206": "CPack 存档生成器默认为 UID 0 和 GID 0。",
+	"assets/policies.json.CMP0207": "文件将在匹配之前规范化路径。",
+	"assets/policies.json.CMP0208": "导出不允许使用空参数。",
+	"assets/policies.json.CMP0209": "验证接口标头集会在不导出的情况下检查可执行文件。",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS 会将链接标志添加到所有目标类型。"
 }
