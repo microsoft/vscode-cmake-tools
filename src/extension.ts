@@ -977,6 +977,13 @@ export class ExtensionManager implements vscode.Disposable {
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+
+            // Update IntelliSense to prefer configurations from the active project
+            this.configProvider.setActiveFolder(activeProject.folderPath);
+            if (this.cppToolsAPI && this.configProvider.ready) {
+                this.cppToolsAPI.didChangeCustomBrowseConfiguration(this.configProvider);
+                this.cppToolsAPI.didChangeCustomConfiguration(this.configProvider);
+            }
         }
     }
 
