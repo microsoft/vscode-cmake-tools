@@ -3126,6 +3126,20 @@
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
+        "cmake.cmakeProviderExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "stmicroelectronics.stm32-vscode-extension",
+            "espressif.esp-idf-extension",
+            "NXPSemiconductors.mcuxpresso",
+            "nordic-semiconductor.nrf-connect"
+          ],
+          "description": "%cmake-tools.configuration.cmake.cmakeProviderExtensions.description%",
+          "scope": "resource"
+        },
         "cmake.deleteBuildDirOnCleanConfigure": {
           "type": "boolean",
           "default": false,
@@ -4138,6 +4152,12 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableLanguageServices.description%",
+          "scope": "machine"
+        },
+        "cmake.languageServerOnlyMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.languageServerOnlyMode.description%",
           "scope": "machine"
         },
         "cmake.preRunCoverageTarget": {

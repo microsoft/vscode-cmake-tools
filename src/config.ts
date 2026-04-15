@@ -227,6 +227,7 @@ export interface ExtensionConfigurationSettings {
     loadCompileCommands: boolean;
     configureOnOpen: boolean;
     configureOnEdit: boolean;
+    cmakeProviderExtensions: string[];
     deleteBuildDirOnCleanConfigure: boolean;
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
@@ -251,6 +252,7 @@ export interface ExtensionConfigurationSettings {
     enableAutomaticKitScan: boolean;
     removeStaleKitsOnScan: boolean;
     enableLanguageServices: boolean;
+    languageServerOnlyMode: boolean;
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
@@ -503,6 +505,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get configureOnEdit() {
         return this.configData.configureOnEdit;
     }
+    get cmakeProviderExtensions(): string[] {
+        return this.configData.cmakeProviderExtensions;
+    }
     get deleteBuildDirOnCleanConfigure() {
         return this.configData.deleteBuildDirOnCleanConfigure;
     }
@@ -656,6 +661,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableLanguageServices;
     }
 
+    get languageServerOnlyMode(): boolean {
+        return this.configData.languageServerOnlyMode;
+    }
+
     get preRunCoverageTarget(): string | null {
         return this.configData.preRunCoverageTarget;
     }
@@ -733,6 +742,7 @@ export class ConfigurationReader implements vscode.Disposable {
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
+        cmakeProviderExtensions: new vscode.EventEmitter<string[]>(),
         deleteBuildDirOnCleanConfigure: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
@@ -764,6 +774,7 @@ export class ConfigurationReader implements vscode.Disposable {
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>(),
         setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        languageServerOnlyMode: new vscode.EventEmitter<boolean>(),
         modifyLists: new vscode.EventEmitter<ModifyListsSettings>(),
         outlineViewType: new vscode.EventEmitter<string>()
     };

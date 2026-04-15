@@ -13,6 +13,7 @@ import * as api from 'vscode-cmake-tools';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
+import { CMakeDriver, CMakePreconditionProblems, ConfigureResult, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
 import { ProjectController, AfterAcknowledgeFolderType} from '@cmt/projectController';
 
@@ -37,7 +38,6 @@ import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cm
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver, CMakePreconditionProblems } from './drivers/cmakeDriver';
 import { platform } from 'os';
 import { CMakeToolsApiImpl } from '@cmt/api';
 import { DirectoryContext } from '@cmt/workspace';
@@ -64,6 +64,37 @@ const multiProjectModeKey = 'cmake:multiProject';
 export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
 export const hideDebugCommandKey = 'cmake:hideDebugCommand';
 export const hideBuildCommandKey = 'cmake:hideBuildCommand';
+
+/**
+ * Friendly display names for known vendor extensions. Used to show a nicer
+ * progress message (e.g., "Waiting for STM32 for VS Code..." instead of
+ * "Waiting for stmicroelectronics.stm32-vscode-extension...").
+ * Extensions not in this map fall back to their raw ID.
+ */
+const vendorExtensionLabels: ReadonlyMap<string, string> = new Map([
+    ['stmicroelectronics.stm32-vscode-extension', 'STM32 for VS Code'],
+    ['espressif.esp-idf-extension', 'ESP-IDF'],
+    ['NXPSemiconductors.mcuxpresso', 'MCUXpresso'],
+    ['nordic-semiconductor.nrf-connect', 'nRF Connect']
+]);
+
+/**
+ * Check if any extension ID from the given list is currently installed.
+ * Returns the friendly display name of the first match, or undefined if none.
+ */
+function getInstalledVendorHint(vendorIds: string[]): string | undefined {
+    for (const id of vendorIds) {
+        if (vscode.extensions.getExtension(id)) {
+            return vendorExtensionLabels.get(id) ?? id;
+        }
+    }
+    return undefined;
+}
+
+/** Maximum number of retries when CMake is not found during configure-on-open. */
+const cmakeNotFoundMaxRetries = 4;
+/** Delay sequence (in ms) between retries — exponential backoff. */
+const cmakeNotFoundRetryDelaysMs: readonly number[] = [2000, 4000, 8000, 16000];
 
 /**
  * The global extension manager. There is only one of these, even if multiple
@@ -141,6 +172,9 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             });
         }
+        this.workspaceConfig.onChange('languageServerOnlyMode', async () => {
+            await updateFullFeatureSet();
+        });
 
         this.updateTouchBarVisibility(this.workspaceConfig.touchbar);
         this.workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
@@ -220,7 +254,7 @@ export class ExtensionManager implements vscode.Disposable {
                 await setContextAndStore(multiProjectModeKey, this.projectController.hasMultipleProjects);
                 // Update the full/partial view of the workspace by verifying if after the folder removal
                 // it still has at least one CMake project.
-                await enableFullFeatureSet(this.workspaceHasAtLeastOneProject());
+                await updateFullFeatureSet();
             }
 
             this.projectOutline.removeFolder(folder);
@@ -294,7 +328,7 @@ export class ExtensionManager implements vscode.Disposable {
             }
             await this.initActiveProject();
         }
-        const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject();
+        const isFullyActivated: boolean = this.workspaceHasAtLeastOneProject() && !this.workspaceConfig.languageServerOnlyMode;
         await enableFullFeatureSet(isFullyActivated);
 
         const telemetryProperties: telemetry.Properties = {
@@ -699,16 +733,20 @@ export class ExtensionManager implements vscode.Disposable {
         await telemetry.deactivate();
     }
 
-    async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject): Promise<void> {
+    async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject): Promise<ConfigureResult> {
         if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project)) {
-            return;
+            return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
 
-        await project.configureInternal(trigger, [], ConfigureType.Normal);
+        return project.configureInternal(trigger, [], ConfigureType.Normal);
     }
 
     async postWorkspaceOpen(project?: CMakeProject) {
         if (!project) {
+            return;
+        }
+        if (project.workspaceContext.config.languageServerOnlyMode) {
+            log.debug('Skipping CMake project integration during workspace open because language-server-only mode is enabled.');
             return;
         }
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
@@ -731,7 +769,26 @@ export class ExtensionManager implements vscode.Disposable {
                 // We've opened a new workspace folder, and the user wants us to
                 // configure it now.
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
-                await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
+
+                // Check cmake availability first. If cmake is not present AND
+                // a vendor extension from the cmake.cmakeProviderExtensions setting is
+                // installed, poll for cmake to appear (the vendor may still be
+                // installing it). Otherwise, proceed to configure immediately —
+                // the standard "Bad CMake executable" error will surface if needed.
+                const cmake = await project.getCMakeExecutable();
+                if (cmake.isPresent) {
+                    await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
+                } else {
+                    const vendorIds = project.workspaceContext.config.cmakeProviderExtensions;
+                    const vendorHint = getInstalledVendorHint(vendorIds);
+                    if (vendorHint) {
+                        await this.waitForCmakeAndConfigure(project, vendorHint);
+                    } else {
+                        // No vendor extension installed — cmake is genuinely missing.
+                        // Run configure to surface the error immediately.
+                        await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
+                    }
+                }
             } else {
                 const configureButtonMessage = localize('configure.now.button', 'Configure Now');
                 let result: string | undefined;
@@ -750,6 +807,70 @@ export class ExtensionManager implements vscode.Disposable {
                 }
             }
         }
+    }
+
+    /**
+     * Wait for CMake to become available, then configure.
+     *
+     * When cmake is not found during the automatic configureOnOpen flow and a
+     * vendor extension from the `cmake.cmakeProviderExtensions` setting is installed,
+     * this method polls for cmake presence with exponential backoff. This handles
+     * the case where a vendor extension (e.g., STMicroelectronics, Espressif) is
+     * still downloading or installing cmake when CMake Tools activates.
+     *
+     * A window progress indicator is shown while retrying.
+     *
+     * Only the lightweight getCMakeExecutable() probe runs during the retry
+     * window — no configure pipeline, no error popups, no driver strand held.
+     * When cmake is finally found, a single configureExtensionInternal() call
+     * runs the full configure.
+     *
+     * @param vendorHint Display name of the detected vendor extension, used in
+     *                   the progress message.
+     */
+    private async waitForCmakeAndConfigure(project: CMakeProject, vendorHint: string): Promise<void> {
+        const progressTitle = localize('cmake.retry.vendor.title', 'Waiting for {0} to set up CMake...', vendorHint);
+
+        log.info(localize('cmake.not.found.retrying', 'CMake not found during configure-on-open. Waiting for {0} to finish setup...', vendorHint));
+
+        const found = await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Window,
+                title: progressTitle
+            },
+            async (): Promise<boolean> => {
+                for (let attempt = 0; attempt < cmakeNotFoundMaxRetries; attempt++) {
+                    const delayMs = cmakeNotFoundRetryDelaysMs[
+                        Math.min(attempt, cmakeNotFoundRetryDelaysMs.length - 1)
+                    ];
+                    await new Promise<void>(resolve => setTimeout(resolve, delayMs));
+
+                    // Lightweight probe: just check if cmake is available now.
+                    // This does NOT enter the driverStrand, does NOT show popups,
+                    // and does NOT run the configure pipeline.
+                    const cmake = await project.getCMakeExecutable();
+                    if (cmake.isPresent) {
+                        log.info(localize('cmake.retry.success', 'CMake found after {0}s (attempt {1}/{2})',
+                            cmakeNotFoundRetryDelaysMs.slice(0, attempt + 1).reduce((a, b) => a + b, 0) / 1000,
+                            attempt + 1, cmakeNotFoundMaxRetries));
+                        return true;
+                    }
+
+                    log.debug(localize('cmake.retry.not.yet', 'CMake not yet available (attempt {0}/{1})',
+                        attempt + 1, cmakeNotFoundMaxRetries));
+                }
+                return false;
+            }
+        );
+
+        if (found) {
+            log.info(localize('cmake.retry.configuring', 'CMake is now available — configuring project'));
+        } else {
+            // All retries exhausted. Run configure anyway to surface the
+            // "Bad CMake executable" error popup so the user knows what's wrong.
+            log.warning(localize('cmake.retry.exhausted', 'CMake not found after {0} retries', cmakeNotFoundMaxRetries));
+        }
+        await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
@@ -2872,8 +2993,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 // and show or hide the buttons in the status bar, according to the boolean.
 // The scope of this is the whole workspace.
 export async function enableFullFeatureSet(fullFeatureSet: boolean) {
-    await setContextAndStore("cmake:enableFullFeatureSet", fullFeatureSet);
-    extensionManager?.showStatusBar(fullFeatureSet);
+    const enableFeatureSet = fullFeatureSet && !extensionManager?.getWorkspaceConfig().languageServerOnlyMode;
+    await setContextAndStore("cmake:enableFullFeatureSet", enableFeatureSet);
+    extensionManager?.showStatusBar(enableFeatureSet);
 }
 
 export function getActiveProject(): CMakeProject | undefined {

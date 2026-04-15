@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "I nomi dei file PDB includono sempre il POSTFIX per configurazione della destinazione.",
 	"assets/policies.json.CMP0203": "_WINDLL è definito per le librerie condivise destinate ad ABI MSVC.",
 	"assets/policies.json.CMP0204": "Un set di caratteri è sempre definito quando la destinazione è ABI MSVC.",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "file con COPY_ON_ERROR copia il contenuto della directory.",
+	"assets/policies.json.CMP0206": "Il generatore di archivi CPack imposta come valori predefiniti UID 0 e GID 0.",
+	"assets/policies.json.CMP0207": "Il file normalizza i percorsi prima della corrispondenza.",
+	"assets/policies.json.CMP0208": "l'esportazione non consente argomenti vuoti.",
+	"assets/policies.json.CMP0209": "Verificare che l'intestazione dell'interfaccia controlli gli eseguibili senza esportazioni.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS aggiunge flag di collegamento (link) a tutti i tipi di destinazione."
 }
