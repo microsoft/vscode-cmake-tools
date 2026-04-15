@@ -34,7 +34,7 @@ function getInstalledVendorHint(vendorIds: string[], installedExtensionIds: Set<
 const cmakeNotFoundMaxRetries = 4;
 const cmakeNotFoundRetryDelaysMs: readonly number[] = [2000, 4000, 8000, 16000];
 
-// Default vendor IDs (mirrors the package.json default for cmake.vendorIntegrators)
+// Default vendor IDs (mirrors the package.json default for cmake.cmakeProviderExtensions)
 const defaultVendorIds = [
     'stmicroelectronics.stm32-vscode-extension',
     'espressif.esp-idf-extension',

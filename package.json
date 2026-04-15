@@ -3126,7 +3126,7 @@
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
-        "cmake.vendorIntegrators": {
+        "cmake.cmakeProviderExtensions": {
           "type": "array",
           "items": {
             "type": "string"
@@ -3137,7 +3137,7 @@
             "NXPSemiconductors.mcuxpresso",
             "nordic-semiconductor.nrf-connect"
           ],
-          "description": "%cmake-tools.configuration.cmake.vendorIntegrators.description%",
+          "description": "%cmake-tools.configuration.cmake.cmakeProviderExtensions.description%",
           "scope": "resource"
         },
         "cmake.deleteBuildDirOnCleanConfigure": {

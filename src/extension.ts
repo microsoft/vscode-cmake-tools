@@ -771,7 +771,7 @@ export class ExtensionManager implements vscode.Disposable {
                 log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', project.folderPath));
 
                 // Check cmake availability first. If cmake is not present AND
-                // a vendor extension from the cmake.vendorIntegrators setting is
+                // a vendor extension from the cmake.cmakeProviderExtensions setting is
                 // installed, poll for cmake to appear (the vendor may still be
                 // installing it). Otherwise, proceed to configure immediately —
                 // the standard "Bad CMake executable" error will surface if needed.
@@ -779,7 +779,7 @@ export class ExtensionManager implements vscode.Disposable {
                 if (cmake.isPresent) {
                     await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
                 } else {
-                    const vendorIds = project.workspaceContext.config.vendorIntegrators;
+                    const vendorIds = project.workspaceContext.config.cmakeProviderExtensions;
                     const vendorHint = getInstalledVendorHint(vendorIds);
                     if (vendorHint) {
                         await this.waitForCmakeAndConfigure(project, vendorHint);
@@ -813,7 +813,7 @@ export class ExtensionManager implements vscode.Disposable {
      * Wait for CMake to become available, then configure.
      *
      * When cmake is not found during the automatic configureOnOpen flow and a
-     * vendor extension from the `cmake.vendorIntegrators` setting is installed,
+     * vendor extension from the `cmake.cmakeProviderExtensions` setting is installed,
      * this method polls for cmake presence with exponential backoff. This handles
      * the case where a vendor extension (e.g., STMicroelectronics, Espressif) is
      * still downloading or installing cmake when CMake Tools activates.

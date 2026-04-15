@@ -55,7 +55,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         loadCompileCommands: true,
         configureOnOpen: true,
         configureOnEdit: true,
-        vendorIntegrators: [],
+        cmakeProviderExtensions: [],
         deleteBuildDirOnCleanConfigure: false,
         skipConfigureIfCachePresent: null,
         useCMakeServer: true,
