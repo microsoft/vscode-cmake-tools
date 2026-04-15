@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "PDB 파일 이름에는 항상 대상의 구성별 POSTFIX가 포함됩니다.",
 	"assets/policies.json.CMP0203": "_WINDLL은 MSVC ABI를 대상으로 지정하는 공유 라이브러리에 대해 정의됩니다.",
 	"assets/policies.json.CMP0204": "MSVC ABI를 대상으로 지정할 때 문자 집합이 항상 정의됩니다.",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "COPY_ON_ERROR가 있는 파일이 디렉터리 콘텐츠를 복사합니다.",
+	"assets/policies.json.CMP0206": "CPack 아카이브 생성기는 기본적으로 UID 0과 GID 0을 사용합니다.",
+	"assets/policies.json.CMP0207": "파일은 일치시키기 전에 경로를 정규화합니다.",
+	"assets/policies.json.CMP0208": "내보내기는 빈 인수를 허용하지 않습니다.",
+	"assets/policies.json.CMP0209": "인터페이스 헤더 집합이 내보내기 없는 실행 파일을 확인하는지 확인합니다.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS는 모든 대상 유형에 링크 플래그를 추가합니다."
 }

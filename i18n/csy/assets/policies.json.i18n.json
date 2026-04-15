@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "Názvy souborů PDB vždy zahrnují POSTFIX cíle pro danou konfiguraci.",
 	"assets/policies.json.CMP0203": "_WINDLL je definováno pro sdílené knihovny cílené na MSVC ABI.",
 	"assets/policies.json.CMP0204": "Při cílení na ABI MSVC je vždy definována znaková sada.",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "Soubor s COPY_ON_ERROR zkopíruje obsah adresáře.",
+	"assets/policies.json.CMP0206": "Generátor archivů CPack ve výchozím nastavení používá UID 0 a GID 0.",
+	"assets/policies.json.CMP0207": "Soubor před porovnáním normalizuje cesty.",
+	"assets/policies.json.CMP0208": "export nepovoluje prázdné argumenty.",
+	"assets/policies.json.CMP0209": "Ověření sad hlaviček rozhraní kontroluje spustitelné soubory bez exportů.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS přidává příznaky linkeru ke všem typům cílů."
 }

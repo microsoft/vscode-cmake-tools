@@ -17,7 +17,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Percorso di un file della toolchain",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Identificazione dell’istanza del prodotto Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architettura da usare come destinazione",
-	"schemas/kits-schema.json.items.properties.visualStudioArguments": "Arguments to vcvarsall.bat",
+	"schemas/kits-schema.json.items.properties.visualStudioArguments": "Argomenti per vcvarsall.bat",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Percorso assoluto di uno script che modifica l'ambiente per il kit",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Valore della variabile di ambiente",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*.oneOf.0": "Valore dell'impostazione di CMake. I punti e virgola nelle stringhe sono preceduti da un carattere di escape.",

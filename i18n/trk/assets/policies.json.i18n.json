@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "PDB dosya adları her zaman hedefin yapılandırma başına POSTFIX'ini içerir.",
 	"assets/policies.json.CMP0203": "_WINDLL, MSVC ABI hedefleyen paylaşılan kitaplıklar için tanımlanmıştır.",
 	"assets/policies.json.CMP0204": "MSVC ABI hedeflenirken her zaman bir karakter kümesi tanımlanır.",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "COPY_ON_ERROR komutunu içeren dosya, dizin içeriğini kopyalar.",
+	"assets/policies.json.CMP0206": "CPack Arşiv Oluşturucusu varsayılan olarak UID 0 ve GID 0 değerini alır.",
+	"assets/policies.json.CMP0207": "Dosya eşleşmeden önce yolları normalleştirir.",
+	"assets/policies.json.CMP0208": "Dışarı aktarma boş bağımsız değişkenlere izin vermez.",
+	"assets/policies.json.CMP0209": "Arabirim üst bilgisi kümelerinin yürütülebilir dosyaları dışarı aktarmalar olmadan denetlediğini doğrulayın.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS tüm hedef türlerine bağlantı bayrakları ekler."
 }
