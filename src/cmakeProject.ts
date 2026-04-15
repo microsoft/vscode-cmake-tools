@@ -1265,14 +1265,18 @@ export class CMakeProject {
     private async reloadCMakeDriver() {
         try {
             const drv = await this.cmakeDriver;
-            if (drv) {
-                log.debug(localize('reloading.driver', 'Reloading CMake driver'));
-                await drv?.asyncDispose();
-                return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
-            }
+            log.debug(localize('reloading.driver', 'Reloading CMake driver'));
+            await drv?.asyncDispose();
         } catch {
-            return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
+            // Driver was in a bad state — proceed to create a new one.
         }
+        const cmake = await this.getCMakeExecutable();
+        if (cmake.isPresent) {
+            return this.cmakeDriver = this.startNewCMakeDriver(cmake);
+        }
+        // CMake is still not available — reset to null so getCMakeDriverInstance()
+        // can surface the error when the user next triggers a command.
+        return this.cmakeDriver = Promise.resolve(null);
     }
 
     /**
