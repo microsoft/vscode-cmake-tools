@@ -48,6 +48,7 @@ Improvements:
 - Add `cmake.removeStaleKitsOnScan` setting to optionally remove stale compiler kits from the kit picker after a "Scan for Kits" when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions outside `PATH`. Set `"keep": true` in a kit entry to prevent automatic removal. [#3852](https://github.com/microsoft/vscode-cmake-tools/issues/3852)
 - Add `pr-readiness` Copilot skill to verify PRs have a descriptive title, meaningful description, and a properly formatted CHANGELOG entry. [#4862](https://github.com/microsoft/vscode-cmake-tools/pull/4862)
 - Updated IntelliSense tooltips with changes from CMake 4.3.1. [#4872](https://github.com/microsoft/vscode-cmake-tools/pull/4872)
+- Make it easier for a new developer of CMake Tools to run tests. [#4620](https://github.com/microsoft/vscode-cmake-tools/pull/4620) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
 - Fix stale C/C++ custom-configuration entries persisting after reconfigure/preset switches, which could cause Go to Definition/IntelliSense to surface symbols from inactive sources in the same folder. [#4472](https://github.com/microsoft/vscode-cmake-tools/issues/4472)
