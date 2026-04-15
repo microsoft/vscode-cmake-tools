@@ -209,10 +209,10 @@
 	"assets/policies.json.CMP0202": "PDB ファイル名には常にターゲットの構成ごとの POSTFIX が含まれます。",
 	"assets/policies.json.CMP0203": "MSVC ABI をターゲットとする共有ライブラリでは _WINDLL が定義されます。",
 	"assets/policies.json.CMP0204": "MSVC ABI をターゲットとする場合、文字セットは常に定義されます。",
-	"assets/policies.json.CMP0205": "file with COPY_ON_ERROR copies directory content.",
-	"assets/policies.json.CMP0206": "The CPack Archive Generator defaults to UID 0 and GID 0.",
-	"assets/policies.json.CMP0207": "file normalizes paths before matching.",
-	"assets/policies.json.CMP0208": "export does not allow empty arguments.",
-	"assets/policies.json.CMP0209": "Verify interface header sets checks executables without exports.",
-	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS adds link flags to all target types."
+	"assets/policies.json.CMP0205": "COPY_ON_ERROR を含むファイルはディレクトリ コンテンツをコピーします。",
+	"assets/policies.json.CMP0206": "CPack アーカイブ ジェネレーターの既定値は UID 0 と GID 0 です。",
+	"assets/policies.json.CMP0207": "ファイルは、一致する前にパスを正規化します。",
+	"assets/policies.json.CMP0208": "export では、空の引数は許可されません。",
+	"assets/policies.json.CMP0209": "インターフェイス ヘッダー セットがエクスポートなしで実行可能ファイルをチェックしていることを確認します。",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS は、すべてのターゲットの種類にリンク フラグを追加します。"
 }
