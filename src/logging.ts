@@ -264,6 +264,9 @@ export class Logger {
             should_show = error_to_show;
         }
         const should_focus = (reveal_log === 'focus');
+        if (should_focus) {
+            should_show = true;
+        }
 
         if (should_show) {
             SingletonLogger.instance().showChannel(!should_focus);

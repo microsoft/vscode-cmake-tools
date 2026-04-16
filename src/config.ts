@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { CppDebugConfiguration } from '@cmt/debug/debugger';
 import { Environment } from '@cmt/environmentVariables';
+import { BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -163,6 +164,24 @@ export interface FailurePattern {
 
 export type FailurePatternsConfig = (FailurePattern | string)[] | string;
 
+export type ModifyListsActionMode = 'no' | 'yes' | 'ask';
+export type ModifyListsVariableSelection = 'never' | 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsTargetSelection = 'auto' | 'askNearestSourceDir' | 'askParentSourceDirs';
+export type ModifyListsTargetCommandInvocationSelection = 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsScopeSelection = 'auto' | 'ask';
+
+export interface ModifyListsSettings {
+    addNewSourceFiles: ModifyListsActionMode;
+    removeDeletedSourceFiles: ModifyListsActionMode;
+    variableSelection: ModifyListsVariableSelection;
+    sourceVariables: string[];
+    targetSelection: ModifyListsTargetSelection;
+    targetCommandInvocationSelection: ModifyListsTargetCommandInvocationSelection;
+    targetSourceCommands: string[];
+    scopeSelection: ModifyListsScopeSelection;
+    sourceListKeywords: string[];
+}
+
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
@@ -185,7 +204,7 @@ export interface ExtensionConfigurationSettings {
     buildToolArgs: string[];
     parallelJobs: number;
     ctestPath: string;
-    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null };
+    ctest: { parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null; neverDebugTestsWithLaunchConfiguration: boolean | null };
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
@@ -204,9 +223,11 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    postConfigureTask: string | null;
     loadCompileCommands: boolean;
     configureOnOpen: boolean;
     configureOnEdit: boolean;
+    cmakeProviderExtensions: string[];
     deleteBuildDirOnCleanConfigure: boolean;
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
@@ -229,11 +250,18 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    removeStaleKitsOnScan: boolean;
     enableLanguageServices: boolean;
+    languageServerOnlyMode: boolean;
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
     useFolderPropertyInBuildTargetDropdown: boolean;
+    setBuildTargetSameAsLaunchTarget: boolean;
+    additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
+    shell: string | null;
+    modifyLists: ModifyListsSettings;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
@@ -414,11 +442,17 @@ export class ConfigurationReader implements vscode.Disposable {
     get ctestDebugLaunchTarget(): string | null {
         return this.configData.ctest.debugLaunchTarget;
     }
+    get ctestNeverDebugTestsWithLaunchConfiguration(): boolean | null {
+        return this.configData.ctest.neverDebugTestsWithLaunchConfiguration;
+    }
     get parseBuildDiagnostics(): boolean {
         return !!this.configData.parseBuildDiagnostics;
     }
     get enableOutputParsers(): string[] | null {
         return this.configData.enabledOutputParsers;
+    }
+    get additionalBuildProblemMatchers(): BuildProblemMatcherConfig[] {
+        return this.configData.additionalBuildProblemMatchers ?? [];
     }
     get pinnedCommands(): string[] | null {
         return this.configData.pinnedCommands;
@@ -471,6 +505,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get configureOnEdit() {
         return this.configData.configureOnEdit;
     }
+    get cmakeProviderExtensions(): string[] {
+        return this.configData.cmakeProviderExtensions;
+    }
     get deleteBuildDirOnCleanConfigure() {
         return this.configData.deleteBuildDirOnCleanConfigure;
     }
@@ -521,6 +558,13 @@ export class ConfigurationReader implements vscode.Disposable {
         }
     }
 
+    get numJobsForPreset(): number | undefined {
+        if (this.isDefaultValue("parallelJobs")) {
+            return undefined;
+        }
+        return this.parallelJobs;
+    }
+
     get numCTestJobs(): number {
         const ctestJobs = this.ctestParallelJobs;
         if (!ctestJobs) {
@@ -530,12 +574,23 @@ export class ConfigurationReader implements vscode.Disposable {
     }
 
     get additionalCompilerSearchDirs(): string[] {
+        return ConfigurationReader.getAdditionalCompilerSearchDirsFromConfig(this.configData);
+    }
+
+    /**
+     * Extract additionalCompilerSearchDirs from raw config data, applying the
+     * mingwSearchDirs deprecation fallback.  This is intentionally static so
+     * callers that only have an `ExtensionConfigurationSettings` object (e.g.
+     * the multiroot aggregation in extension.ts) can reuse the logic without
+     * constructing a full ConfigurationReader.
+     */
+    static getAdditionalCompilerSearchDirsFromConfig(configData: ExtensionConfigurationSettings): string[] {
         // mingwSearchDirs is deprecated, but we still use it if additionalCompilerSearchDirs is not set for backwards compatibility
-        if (this.configData.additionalCompilerSearchDirs.length === 0 && this.configData.mingwSearchDirs.length > 0) {
+        if (configData.additionalCompilerSearchDirs.length === 0 && configData.mingwSearchDirs.length > 0) {
             log.warning(localize('please.upgrade.configuration', 'The setting {0} is replaced by {1}. Please upgrade your configuration.', '"mingwSearchDirs"', '"additionalCompilerSearchDirs"'));
-            return this.configData.mingwSearchDirs;
+            return configData.mingwSearchDirs;
         }
-        return this.configData.additionalCompilerSearchDirs;
+        return configData.additionalCompilerSearchDirs;
     }
     get additionalKits(): string[] {
         return this.configData.additionalKits;
@@ -548,6 +603,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
+    }
+    get postConfigureTask(): string | null {
+        return this.configData.postConfigureTask;
     }
     get loadCompileCommands(): boolean {
         return this.configData.loadCompileCommands;
@@ -595,8 +653,16 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get removeStaleKitsOnScan(): boolean {
+        return this.configData.removeStaleKitsOnScan;
+    }
+
     get enableLanguageServices(): boolean {
         return this.configData.enableLanguageServices;
+    }
+
+    get languageServerOnlyMode(): boolean {
+        return this.configData.languageServerOnlyMode;
     }
 
     get preRunCoverageTarget(): string | null {
@@ -613,6 +679,22 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get useFolderPropertyInBuildTargetDropdown(): boolean {
         return this.configData.useFolderPropertyInBuildTargetDropdown;
+    }
+
+    get shell(): string | null {
+        return this.configData.shell;
+    }
+
+    get setBuildTargetSameAsLaunchTarget(): boolean {
+        return this.configData.setBuildTargetSameAsLaunchTarget;
+    }
+
+    get modifyLists(): ModifyListsSettings {
+        return this.configData.modifyLists;
+    }
+
+    get outlineViewType(): string {
+        return this.configData.outlineViewType;
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -638,7 +720,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parallelJobs: new vscode.EventEmitter<number>(),
         ctestPath: new vscode.EventEmitter<string>(),
         cpackPath: new vscode.EventEmitter<string>(),
-        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null }>(),
+        ctest: new vscode.EventEmitter<{ parallelJobs: number; allowParallelJobs: boolean; testExplorerIntegrationEnabled: boolean; testSuiteDelimiter: string; testSuiteDelimiterMaxOccurrence: number; failurePatterns: FailurePatternsConfig; debugLaunchTarget: string | null; neverDebugTestsWithLaunchConfiguration: boolean | null }>(),
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
@@ -656,9 +738,11 @@ export class ConfigurationReader implements vscode.Disposable {
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
+        postConfigureTask: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
+        cmakeProviderExtensions: new vscode.EventEmitter<string[]>(),
         deleteBuildDirOnCleanConfigure: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
@@ -681,11 +765,18 @@ export class ConfigurationReader implements vscode.Disposable {
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
         enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        removeStaleKitsOnScan: new vscode.EventEmitter<boolean>(),
         enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         coverageInfoFiles: new vscode.EventEmitter<string[]>(),
-        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>()
+        useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
+        additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
+        shell: new vscode.EventEmitter<string | null>(),
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        languageServerOnlyMode: new vscode.EventEmitter<boolean>(),
+        modifyLists: new vscode.EventEmitter<ModifyListsSettings>(),
+        outlineViewType: new vscode.EventEmitter<string>()
     };
 
     /**
@@ -748,7 +839,7 @@ export function getSettingsChangePromise(): Promise<any[]> {
 }
 
 export function checkConfigureOverridesPresent(config: ConfigurationReader): boolean {
-    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || checkGeneralEnvironmentOverridesPresent(config)) {
+    if (config.configureArgs.length > 0 || Object.values(config.configureEnvironment).length > 0 || config.installPrefix || checkGeneralEnvironmentOverridesPresent(config)) {
         return true;
     }
 
