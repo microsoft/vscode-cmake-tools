@@ -9,6 +9,11 @@ Bug Fixes:
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 
+## 1.23.51
+
+Bug Fixes:
+- Fix regression where VS kits with existing Ninja cache would fail due to generator mismatch after update. [#4890](https://github.com/microsoft/vscode-cmake-tools/issues/4890)
+
 ## 1.23
 
 Features:
