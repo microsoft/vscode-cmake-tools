@@ -373,6 +373,28 @@ suite('Kits scan test', () => {
         });
     });
 
+    suite('VS Generator mapping', () => {
+        test('returns correct generator for VS 2022', () => {
+            expect(kit.vsGeneratorForVersion('17')).to.eq('Visual Studio 17 2022');
+        });
+
+        test('returns correct generator for VS 2026', () => {
+            expect(kit.vsGeneratorForVersion('18')).to.eq('Visual Studio 18 2026');
+        });
+
+        test('returns correct generator for VS 2019', () => {
+            expect(kit.vsGeneratorForVersion('16')).to.eq('Visual Studio 16 2019');
+        });
+
+        test('returns undefined for unknown version', () => {
+            expect(kit.vsGeneratorForVersion('99')).to.be.undefined;
+        });
+
+        test('returns correct generator for legacy VS120COMNTOOLS', () => {
+            expect(kit.vsGeneratorForVersion('VS120COMNTOOLS')).to.eq('Visual Studio 12 2013');
+        });
+    });
+
     suite('Kit change detection for generator regression (#4890)', () => {
         // These tests verify kitChangeNeedsClean correctly detects generator-related
         // kit changes, which is the safety net for the regression fixed in #4890.

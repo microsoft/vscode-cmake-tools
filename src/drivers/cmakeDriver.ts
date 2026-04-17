@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment } from '@cmt/kits/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment, getVsKitPreferredGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -624,22 +624,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     /**
      * Check if the generator to be used differs from what is cached in CMakeCache.txt.
-     * If so, auto-clean the prior configuration to prevent CMake errors.
      */
-    protected async _cleanIfGeneratorChanged(newGeneratorName: string | undefined): Promise<void> {
+    protected async _hasGeneratorChanged(newGeneratorName: string | undefined): Promise<boolean> {
         if (!newGeneratorName) {
-            return;
+            return false;
         }
         const cachePath = this.cachePath;
         if (!await fs.exists(cachePath)) {
-            return;
+            return false;
         }
         const cache = await CMakeCache.fromPath(cachePath);
         const cachedGenerator = cache.get('CMAKE_GENERATOR');
         if (cachedGenerator && cachedGenerator.value !== newGeneratorName) {
             log.info(localize('generator.changed', 'Generator changed from {0} to {1}; cleaning prior configuration', cachedGenerator.value, newGeneratorName));
-            await this._cleanPriorConfiguration();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -819,10 +819,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this._refreshExpansions();
             const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
             const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), this.expansionOptions));
-            if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
+            const generatorChanged = await this._hasGeneratorChanged(this._generator?.name);
+            if ((needsCleanIfKitChange || generatorChanged) && (newBinaryDir === oldBinaryDir)) {
                 await this._cleanPriorConfiguration();
             }
-            await this._cleanIfGeneratorChanged(this._generator?.name);
         });
     }
 
@@ -832,7 +832,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
-        // Place a kit preferred generator at the front of the list
+        // Place a kit preferred generator at the front of the list.
         if (kit.preferredGenerator) {
             preferredGenerators.unshift(kit.preferredGenerator);
         }
@@ -846,6 +846,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         ) {
             preferredGenerators.push({ name: "Ninja" });
             preferredGenerators.push({ name: "Unix Makefiles" });
+        }
+
+        // For VS kits that don't have preferredGenerator (e.g., scanned before
+        // a VS version was added), derive the VS generator as a last-resort
+        // fallback so it is tried only after Ninja / Unix Makefiles.
+        if (!kit.preferredGenerator && kit.visualStudio) {
+            const derived = await getVsKitPreferredGenerator(kit);
+            if (derived) {
+                preferredGenerators.push(derived);
+            }
         }
 
         // Use the "best generator" logic only if the user did not define a particular
