@@ -504,7 +504,6 @@ suite('Kits scan test', () => {
                 compilers: { C: 'gcc' },
                 isTrusted: true
             };
-
             expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.false;
         });
 
@@ -515,7 +514,6 @@ suite('Kits scan test', () => {
                 keep: true,
                 isTrusted: true
             };
-
             expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
         });
 
@@ -525,11 +523,10 @@ suite('Kits scan test', () => {
                 toolchainFile: 'toolchain.cmake',
                 isTrusted: true
             };
-
             expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
         });
     });
-    
+
     suite('getKitDetect vendor detection from kit name', () => {
         test('Detect GCC vendor from kit name starting with GCC', async () => {
             const testKit: kit.Kit = {
