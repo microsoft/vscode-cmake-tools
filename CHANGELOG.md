@@ -2,6 +2,9 @@
 
 ## 1.24
 
+Features:
+- Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
+
 Bug Fixes:
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 
@@ -98,7 +101,6 @@ Bug Fixes:
 - Fix `cmake.compileFile` failing to find compilation info when using presets without `CMAKE_EXPORT_COMPILE_COMMANDS`. [#4484](https://github.com/microsoft/vscode-cmake-tools/issues/4484)
 - Fix "Copy Value" in CMake debugger copying variable name instead of value. [#4551](https://github.com/microsoft/vscode-cmake-tools/issues/4551)
 - cmakeDriver: Fixes getCompilerVersion by using compilerPath instead of compilerName. [#4647](https://github.com/microsoft/vscode-cmake-tools/pull/4647) [@lygstate](https://github.com/lygstate)
-- Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Add support for Visual Studio 2026 generator. [#4637](https://github.com/microsoft/vscode-cmake-tools/issues/4637)
 - Fix `$comment` not being accepted inside a cacheVariable object in CMake presets. [#4600](https://github.com/microsoft/vscode-cmake-tools/issues/4600)
 - Fix kits from `cmake.additionalKits` not being shown when `cmake.showSystemKits` is `false`. [#4651](https://github.com/microsoft/vscode-cmake-tools/issues/4651)
