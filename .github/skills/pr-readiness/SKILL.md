@@ -116,7 +116,7 @@ Identify areas where the change could break existing behavior:
 - **Settings**: Adding or renaming a setting in `package.json` without updating `src/config.ts` (or vice versa) causes silent failures.
 - **Task provider**: Changes to `cmakeTaskProvider.ts` can break `tasks.json` definitions that users have already configured.
 - **Public API / extensibility**: Changes to exports in `src/api.ts` or types in `EXTENSIBILITY.md` can break dependent extensions.
-- **Test coverage**: Flag changes to critical paths that lack corresponding test updates, especially in `src/drivers/`, `src/presets/`, and `src/kits/`.
+- **Test coverage**: Flag changes to critical paths that lack corresponding test updates, especially in `src/drivers/`, `src/presets/`, and `src/kits/`. See also section 7 (Test Coverage) for detailed test review guidance.
 
 ### 6. Adherence to Existing Patterns
 
@@ -131,7 +131,26 @@ Verify the change follows the project's established conventions:
 - **Async patterns**: Prefers `async`/`await` over `.then()` chains (exception: fire-and-forget UI calls).
 - **Naming and structure**: New files are placed in the correct layer directory (see architecture table in `.github/copilot-instructions.md`). New commands are registered in `src/extension.ts`.
 
-### 7. Documentation Updates
+### 7. Test Coverage
+
+Verify that the PR includes adequate tests for the changes:
+
+- **New functionality**: Any new function, command, setting, or behavior branch should have corresponding tests. If the change adds a new helper or utility, check that it has unit tests covering its inputs and edge cases.
+- **Bug fixes**: A bug fix should include at least one test that would have caught the original bug — i.e., a test that fails on the base branch and passes with the fix applied.
+- **Changed behavior**: If existing behavior is modified, check that existing tests are updated to reflect the new behavior and that no tests are silently broken or deleted without justification.
+- **Test location**: Unit tests that don't require VS Code APIs belong in `test/unit-tests/backend/` and run via `yarn backendTests`. Tests that require VS Code belong in `test/unit-tests/` and run via `yarn unitTests`. Check that new tests are placed in the correct location.
+- **Test quality**: Tests should be specific and descriptive:
+  - Test names should clearly state what is being tested and the expected outcome.
+  - Tests should assert specific values, not just "no error thrown".
+  - Tests should cover both positive cases (expected input → expected output) and negative/edge cases (invalid input, boundary conditions, fallback paths).
+  - Comments in tests should be accurate and not misleading about what the test actually exercises.
+- **Coverage gaps to flag**: Pay special attention to:
+  - Code paths that touch `src/drivers/`, `src/presets/`, or `src/kits/` — these are critical and should have test coverage for any non-trivial changes.
+  - Fallback/error paths — if the PR adds a fallback (e.g., "if X fails, try Y"), both the success and fallback paths should be tested.
+  - Platform-specific branches — if the code branches on `process.platform`, each branch should ideally be covered.
+- **When tests are not feasible**: Some changes (e.g., pure UI wiring, VS Code API integration) are difficult to unit test. In these cases, verify that the manual-checklist or PR description explains how to manually verify the change, and flag the gap rather than ignoring it.
+
+### 8. Documentation Updates
 
 Check whether the change requires documentation updates:
 
@@ -151,4 +170,5 @@ When reviewing or preparing a PR:
 4. **Check correctness** — review code for logical errors, missing mode/generator handling, cross-platform issues, and error handling gaps.
 5. **Check regression risks** — identify areas where the change could break existing behavior and flag missing test coverage for critical paths.
 6. **Check pattern adherence** — verify the change follows established import, logging, localization, settings access, and architectural conventions.
-7. **Check documentation** — verify that new or changed settings, commands, and behavior are reflected in the appropriate docs.
+7. **Check test coverage** — verify that new or changed behavior has corresponding tests, bug fixes include regression tests, and tests are placed in the correct location with good quality.
+8. **Check documentation** — verify that new or changed settings, commands, and behavior are reflected in the appropriate docs.
