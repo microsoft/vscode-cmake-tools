@@ -263,7 +263,7 @@ function detectVendorFromBinaryPath(compilerPath: string): CompilerVendorEnum | 
         return 'Clang';
     }
     if (binBasename === 'gcc' || binBasename.startsWith('gcc-') ||
-        binBasename.endsWith('-gcc') || binBasename.includes('-gcc-')) {
+        binBasename.endsWith('-gcc') || /-gcc-\d/.test(binBasename)) {
         return 'GCC';
     }
     return undefined;
@@ -1016,9 +1016,7 @@ async function scanDirForClangForMSVCKits(dir: PathWithTrust, vsInstalls: VSInst
             const vsArch = (version?.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'x64';
             const archForKitName = vsArch === 'x86' ? 'x86' : 'amd64';
             const clangArchPath = (vsArch === "x64") ? "x64\\" : "";
-            // Use 'Clang-cl' prefix for clang-cl.exe, 'Clang' for clang.exe to match vendor detection pattern
-            const clangNamePrefix = isClangMsvcCli ? 'Clang-cl' : 'Clang';
-            const clangKitName: string = `${clangNamePrefix} ${version?.version} ${clang_cli} - ${archForKitName} for MSVC ${vs.installationVersion} (${install_name})`;
+            const clangKitName: string = `Clang ${version?.version} ${clang_cli} - ${archForKitName} for MSVC ${vs.installationVersion} (${install_name})`;
             const clangExists = async () => {
                 const exists = binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArchPath}bin`) && await util.checkFileExists(util.lightNormalizePath(binPath));
                 return exists;

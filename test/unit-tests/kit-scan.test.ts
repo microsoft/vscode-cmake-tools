@@ -251,8 +251,7 @@ suite('Kits scan test', () => {
                 isTrusted: false
             };
             const detect = await kit.getKitDetect(testKit);
-            // When not trusted, getKitDetect returns the original kit with vendor from binary path detection
-            // Since the binary doesn't exist and we can't get version, it should still detect vendor from path
+            // Name doesn't match known prefixes, so vendor is detected from binary path
             expect(detect.vendor).to.eq('ClangCl');
         });
 
@@ -334,6 +333,32 @@ suite('Kits scan test', () => {
             expect(detect.vendor).to.eq('GCC');
         });
 
+        test('Detect GCC vendor from versioned cross-compiler gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/opt/toolchain/arm-linux-gnueabihf-gcc-12',
+                    CXX: '/opt/toolchain/arm-linux-gnueabihf-g++-12'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Do not falsely detect GCC from unrelated binary with gcc in name', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/not-gcc-related',
+                    CXX: '/usr/bin/not-gcc-related'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.be.undefined;
+        });
+
         test('Return original kit when vendor cannot be detected', async () => {
             const testKit: kit.Kit = {
                 name: 'Unknown Kit',
@@ -344,7 +369,6 @@ suite('Kits scan test', () => {
                 isTrusted: false
             };
             const detect = await kit.getKitDetect(testKit);
-            // Should return original kit when vendor cannot be detected
             expect(detect.vendor).to.be.undefined;
         });
     });
@@ -503,6 +527,47 @@ suite('Kits scan test', () => {
             };
 
             expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
+        });
+    });
+    
+    suite('getKitDetect vendor detection from kit name', () => {
+        test('Detect GCC vendor from kit name starting with GCC', async () => {
+            const testKit: kit.Kit = {
+                name: 'GCC 12.2.0 x86_64-linux-gnu',
+                compilers: {
+                    C: '/usr/bin/gcc-12',
+                    CXX: '/usr/bin/g++-12'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect Clang vendor from kit name starting with Clang', async () => {
+            const testKit: kit.Kit = {
+                name: 'Clang 14.0.0 x86_64-pc-linux-gnu',
+                compilers: {
+                    C: '/usr/bin/clang-14',
+                    CXX: '/usr/bin/clang++-14'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect ClangCl vendor from kit name starting with Clang-cl', async () => {
+            const testKit: kit.Kit = {
+                name: 'Clang-cl 14.0.0 (MSVC CLI)',
+                compilers: {
+                    C: 'C:/LLVM/bin/clang-cl.exe',
+                    CXX: 'C:/LLVM/bin/clang-cl.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('ClangCl');
         });
     });
 });
