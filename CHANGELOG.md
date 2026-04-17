@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.24
+
+Bug Fixes:
+- Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
+
 ## 1.23
 
 Features:
