@@ -3,7 +3,9 @@ name: pr-readiness
 description: >
   Verify that a pull request into microsoft/vscode-cmake-tools meets contribution
   requirements. Use when preparing, reviewing, or finalizing a PR to check for a
-  descriptive title, a meaningful description, and a properly formatted CHANGELOG entry.
+  descriptive title, a meaningful description, a properly formatted CHANGELOG entry,
+  code correctness, regression risks, adherence to existing patterns, and whether
+  documentation updates are needed.
 ---
 
 # PR Readiness
@@ -94,6 +96,70 @@ Bug Fixes:
 - Do **not** use past tense (write "Fix …", not "Fixed …").
 - Do **not** omit the issue or PR link.
 
+### 4. Correctness
+
+Review the code changes for logical correctness:
+
+- **Both operating modes**: If the change touches shared logic (configure, build, test, targets, environment), verify it handles both *presets mode* and *kits/variants mode*. Check for `useCMakePresets` branching where appropriate.
+- **Both generator types**: If the change involves build-type logic, verify it handles both single-config generators (`CMAKE_BUILD_TYPE` at configure time) and multi-config generators (`--config` at build time).
+- **Edge cases**: Look for off-by-one errors, null/undefined access, missing `await` on async calls, and unhandled promise rejections.
+- **Error handling**: Verify errors are not silently swallowed. Top-level event handlers should use `rollbar.invokeAsync()` / `rollbar.invoke()`. Empty `catch` blocks are a red flag.
+- **Cross-platform**: Check for hardcoded path separators (`/` or `\\`), case-sensitive env var assumptions, or platform-specific APIs used without guards. Paths must use `path.join()` / `path.normalize()`.
+
+### 5. Regression Risks
+
+Identify areas where the change could break existing behavior:
+
+- **Shared utilities**: Changes to `src/expand.ts`, `src/proc.ts`, `src/shlex.ts`, or `src/util.ts` affect many callers — verify all call sites still behave correctly.
+- **Driver base class**: Changes to `cmakeDriver.ts` propagate to `cmakeFileApiDriver.ts`, `cmakeLegacyDriver.ts`, and `cmakeServerDriver.ts`. Check that subclass overrides are still compatible.
+- **Preset merging**: Changes to `presetsController.ts` or `presetsParser.ts` can alter how presets resolve — verify with nested `include` chains and `CMakeUserPresets.json` overrides.
+- **Settings**: Adding or renaming a setting in `package.json` without updating `src/config.ts` (or vice versa) causes silent failures.
+- **Task provider**: Changes to `cmakeTaskProvider.ts` can break `tasks.json` definitions that users have already configured.
+- **Public API / extensibility**: Changes to exports in `src/api.ts` or types in `EXTENSIBILITY.md` can break dependent extensions.
+- **Test coverage**: Flag changes to critical paths that lack corresponding test updates, especially in `src/drivers/`, `src/presets/`, and `src/kits/`. See also section 7 (Test Coverage) for detailed test review guidance.
+
+### 6. Adherence to Existing Patterns
+
+Verify the change follows the project's established conventions:
+
+- **Import style**: Uses `@cmt/*` path aliases (not relative paths from outside `src/`). Uses `import * as nls from 'vscode-nls'` for localization.
+- **Logging**: Uses `logging.createLogger('module-name')` — never `console.log`.
+- **Localization**: All user-visible strings use `localize('message.key', 'Message text')` with the `vscode-nls` boilerplate at the top of the file.
+- **Settings access**: Reads settings through `ConfigurationReader` (`src/config.ts`) — never calls `vscode.workspace.getConfiguration()` directly.
+- **Telemetry**: Uses helpers from `src/telemetry.ts` — never calls the VS Code telemetry API directly.
+- **Data access**: Uses canonical data paths (e.g., `CMakeProject.targets` for targets, `CMakeDriver.cmakeCacheEntries` for cache) — never parses CMake files or cache directly.
+- **Async patterns**: Prefers `async`/`await` over `.then()` chains (exception: fire-and-forget UI calls).
+- **Naming and structure**: New files are placed in the correct layer directory (see architecture table in `.github/copilot-instructions.md`). New commands are registered in `src/extension.ts`.
+
+### 7. Test Coverage
+
+Verify that the PR includes adequate tests for the changes:
+
+- **New functionality**: Any new function, command, setting, or behavior branch should have corresponding tests. If the change adds a new helper or utility, check that it has unit tests covering its inputs and edge cases.
+- **Bug fixes**: A bug fix should include at least one test that would have caught the original bug — i.e., a test that fails on the base branch and passes with the fix applied.
+- **Changed behavior**: If existing behavior is modified, check that existing tests are updated to reflect the new behavior and that no tests are silently broken or deleted without justification.
+- **Test location**: Unit tests that don't require VS Code APIs belong in `test/unit-tests/backend/` and run via `yarn backendTests`. Tests that require VS Code belong in `test/unit-tests/` and run via `yarn unitTests`. Check that new tests are placed in the correct location.
+- **Test quality**: Tests should be specific and descriptive:
+  - Test names should clearly state what is being tested and the expected outcome.
+  - Tests should assert specific values, not just "no error thrown".
+  - Tests should cover both positive cases (expected input → expected output) and negative/edge cases (invalid input, boundary conditions, fallback paths).
+  - Comments in tests should be accurate and not misleading about what the test actually exercises.
+- **Coverage gaps to flag**: Pay special attention to:
+  - Code paths that touch `src/drivers/`, `src/presets/`, or `src/kits/` — these are critical and should have test coverage for any non-trivial changes.
+  - Fallback/error paths — if the PR adds a fallback (e.g., "if X fails, try Y"), both the success and fallback paths should be tested.
+  - Platform-specific branches — if the code branches on `process.platform`, each branch should ideally be covered.
+- **When tests are not feasible**: Some changes (e.g., pure UI wiring, VS Code API integration) are difficult to unit test. In these cases, verify that the manual-checklist or PR description explains how to manually verify the change, and flag the gap rather than ignoring it.
+
+### 8. Documentation Updates
+
+Check whether the change requires documentation updates:
+
+- **New or changed settings**: Must be reflected in all three locations — `package.json` (`contributes.configuration`), `src/config.ts` (`ConfigurationReader`), and `docs/cmake-settings.md`.
+- **New commands**: Must be documented in `package.json` (`contributes.commands`) and referenced in the relevant docs page under `docs/`.
+- **User-visible behavior changes**: If the change alters how a feature works (not just fixes a bug), check whether `docs/` pages describing that feature need updating.
+- **Extensibility changes**: If `src/api.ts` or public types change, update `EXTENSIBILITY.md`.
+- **README**: If a new major feature is added, check whether `README.md` should mention it.
+
 ## Applying This Skill
 
 When reviewing or preparing a PR:
@@ -101,3 +167,8 @@ When reviewing or preparing a PR:
 1. **Check the title** — rewrite it if it is vague or missing context.
 2. **Check the description** — ensure it explains what, why, and (if needed) how.
 3. **Check `CHANGELOG.md`** — verify an entry exists under the current version in the correct section with the correct format. If missing, add one.
+4. **Check correctness** — review code for logical errors, missing mode/generator handling, cross-platform issues, and error handling gaps.
+5. **Check regression risks** — identify areas where the change could break existing behavior and flag missing test coverage for critical paths.
+6. **Check pattern adherence** — verify the change follows established import, logging, localization, settings access, and architectural conventions.
+7. **Check test coverage** — verify that new or changed behavior has corresponding tests, bug fixes include regression tests, and tests are placed in the correct location with good quality.
+8. **Check documentation** — verify that new or changed settings, commands, and behavior are reflected in the appropriate docs.
