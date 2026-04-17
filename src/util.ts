@@ -1,5 +1,4 @@
 import * as child_process from 'child_process';
-import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -281,43 +280,9 @@ export function product<T>(arrays: T[][]): T[][] {
         [[]] as T[][]);
 }
 
-export interface CMakeValue {
-    type: ('UNKNOWN' | 'BOOL' | 'STRING' | 'FILEPATH' | 'PATH' | '');  // There are more types, but we don't care ATM
-    value: string;
-}
-
-/**
- * Converts a given value to a CMake-compatible value.
- * The function determines the type of the input value and converts it to a corresponding CMakeValue object.
- * @param value The value to convert. It can be a string, boolean, number, string array, or CMakeValue.
- * @returns A CMakeValue object with the appropriate type and value.
- * @throws An error if the input value is invalid or cannot be converted to a CMakeValue.
- */
-export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
-    const ret: CMakeValue = {
-        type: 'UNKNOWN',
-        value: ''
-    };
-    if (value === true || value === false) {
-        ret.type = 'BOOL';
-        ret.value = value ? 'TRUE' : 'FALSE';
-    } else if (isString(value)) {
-        ret.type = 'STRING';
-        ret.value = replaceAll(value, ';', '\\;');
-    } else if (typeof value === 'number') {
-        ret.type = 'STRING';
-        ret.value = value.toString();
-    } else if (value instanceof Array) {
-        ret.type = 'STRING';
-        ret.value = value.join(';');
-    } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
-        ret.type = value.type;
-        ret.value = value.value;
-    } else {
-        throw new Error(localize('invalid.value', 'Invalid value to convert to cmake value: {0}', JSON.stringify(value)));
-    }
-    return ret;
-}
+// Re-export CMakeValue types and function from the pure module (no vscode dependency)
+// This allows backward compatibility for existing imports from @cmt/util
+export { CMakeValue, cmakeify } from '@cmt/cmakeValue';
 
 /**
  * Terminates a child process and its descendant processes.
@@ -447,15 +412,14 @@ export function versionToString(ver: Version): string {
 }
 
 /**
- * Converts an error object to a string.
- * If the error has a stack trace, it includes the stack trace in the string.
+ * Converts an error object to a human-readable string.
+ * Only includes the error message, not the stack trace.
  * @param e The error object to convert.
- * @returns A string representation of the error.
+ * @returns A string representation of the error message.
  */
 export function errorToString(e: any): string {
-    if (e.stack) {
-        // e.stack has both the message and the stack in it.
-        return `\n\t${e.stack}`;
+    if (e.message) {
+        return `\n\t${e.message}`;
     }
     return `\n\t${e.toString()}`;
 }
@@ -819,6 +783,15 @@ export function platformPathEquivalent(a: string, b: string): boolean {
 }
 
 /**
+ * Normalizes a URI's file-system path according to the platform's case and Unicode normalization rules.
+ * @param uri The URI whose fsPath to normalize.
+ * @returns The normalized path string.
+ */
+export function platformNormalizeUri(uri: vscode.Uri): string {
+    return platformNormalizePath(uri.fsPath);
+}
+
+/**
  * Sets a context value in the VS Code context.
  * @param key The context key to set.
  * @param value The value to set for the context key.
@@ -826,6 +799,23 @@ export function platformPathEquivalent(a: string, b: string): boolean {
  */
 export function setContextValue(key: string, value: any): Thenable<void> {
     return vscode.commands.executeCommand('setContext', key, value);
+}
+
+/**
+ * Shows a Quick Pick with typed payload items and returns the selected payload.
+ * @param items The Quick Pick items, each with an associated payload value.
+ * @param options Standard VS Code Quick Pick options.
+ * @returns The payload of the selected item, or null if the user cancelled.
+ */
+export async function quickPick<T>(
+    items: (vscode.QuickPickItem & { payload: T })[],
+    options: vscode.QuickPickOptions
+): Promise<T | null> {
+    const selected = await vscode.window.showQuickPick(items, options);
+    if (!selected) {
+        return null;
+    }
+    return selected.payload;
 }
 
 export interface ProgressReport {
@@ -1011,18 +1001,6 @@ export function reportProgress(message: string, progress?: ProgressHandle) {
     if (progress) {
         progress.report({ message });
     }
-}
-
-/**
- * Sets up a chokidar watcher to listen for any file changes (add, change, unlink).
- * @param watcher The chokidar FSWatcher instance.
- * @param listener The listener function to call on file changes.
- * @returns The chokidar FSWatcher instance with the listener attached.
- */
-export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
-    return watcher.on('add', listener)
-        .on('change', listener)
-        .on('unlink', listener);
 }
 
 /**

@@ -8,6 +8,7 @@
 
 import * as cache from '@cmt/cache';
 import {
+    BacktraceGraph,
     CodeModelConfiguration,
     CodeModelContent,
     CodeModelFileGroup,
@@ -171,6 +172,10 @@ export namespace CodeModelKind {
         name: string;
     }
 
+    export interface DebuggerInfo {
+        workingDirectory?: string;
+    }
+
     export interface TargetObject {
         name: string;
         type: string;
@@ -183,6 +188,8 @@ export namespace CodeModelKind {
         folder?: Folder;
         isGeneratorProvided?: boolean;
         install?: InstallInfo;
+        debugger?: DebuggerInfo;
+        backtraceGraph?: BacktraceGraph;
     }
 }
 
@@ -427,7 +434,8 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         targetType: targetObject.type,
         folder: targetObject.folder,
         type: 'rich' as 'rich',
-        installPaths: installPaths
+        installPaths: installPaths,
+        debuggerWorkingDirectory: targetObject.debugger?.workingDirectory
     } as RichTarget;
 }
 
@@ -532,12 +540,13 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sourceDirectory: convertToAbsolutePath(targetObject.paths.source, rootPaths.source),
         fullName: targetObject.nameOnDisk,
         artifacts: targetObject.artifacts ? targetObject.artifacts.map(
-            a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), rootPaths.build))
+            a => convertToAbsolutePath(a.path, rootPaths.build))
             : [],
         fileGroups,
         sysroot,
         folder: targetObject.folder,
         dependencies: targetObject.dependencies,
+        backtraceGraph: targetObject.backtraceGraph,
         install: targetObject.install,
         isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
@@ -595,9 +604,9 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target, sourceFileExtensions: el.sourceFileExtensions });
             } else {
-                acc.set(el.language, { path: el.compiler.path });
+                acc.set(el.language, { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions });
             }
         }
         return acc;

@@ -59,7 +59,9 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 - The [user-local kit](#user-local-kits) `cmake-tools-kits.json` file is updated with the new kit information.
 
 > **Warning:**
-> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-tools-kits.json`. It only adds and updates existing ones.
+> The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names.
+>
+> By default, scans preserve existing entries in `cmake-tools-kits.json`. If `cmake.removeStaleKitsOnScan` is enabled, compiler-based kits (those with a `compilers` field) that are no longer rediscovered during a full scan are removed automatically. Set `"keep": true` in a kit entry to preserve it even when this cleanup is enabled. Kits without a `compilers` field (toolchain-only kits and Visual Studio kits) are always preserved.
 
 ## Kit options
 
@@ -110,7 +112,8 @@ CMake Tools automatically sets up the environment for working with Visual C++. I
     {
         "name": "A Visual Studio",
         "visualStudio": "Visual Studio Build Tools 2017",
-        "visualStudioArchitecture": "amd64"
+        "visualStudioArchitecture": "amd64",
+        "visualStudioArguments": ["uwp", "10.0.10240.0"]
     }
 ]
 ```
@@ -118,6 +121,7 @@ CMake Tools automatically sets up the environment for working with Visual C++. I
 Keys:
 > `visualStudio` : the name of a Visual Studio installation obtained by `VSWhere`.\
 > `visualStudioArchitecture`: the Visual Studio target architecture that would be passed to the `vcvarsall.bat` file when entering the VS dev environment.
+> `visualStudioArguments`: the extra arguments that would be passed to the `vcvarsall.bat` file when entering the VS dev environment, those arguments are `[platform_type] [winsdk_version] [-vcvars_ver=vc_version] [-vcvars_spectre_libs=spectre_mode]`
 
 > **Note:**
 > To use Visual C++, both `visualStudio` and `visualStudioArchitecture` must be specified. Omitting either one won't work.
@@ -151,13 +155,74 @@ The following additional options may be specified:
 
 > This setting is most useful when the toolchain file respects additional options that can be passed as cache variables.
 
+> **Semicolon Handling:**
+>
+> CMake uses semicolons as list separators. The type of value you use determines how semicolons are handled:
+>
+> - **String values**: Semicolons are **escaped** (`;` → `\;`) to prevent CMake from treating them as list separators. Use this for single values that happen to contain semicolons.
+>
+> - **Array values**: Elements are joined with semicolons **without escaping**, producing a proper CMake list. Use this when you intentionally want to pass a CMake list.
+>
+> **Example - Passing a CMake list (use array notation):**
+> ```jsonc
+> "cmakeSettings": {
+>     // Array notation → semicolons NOT escaped → creates CMake list
+>     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]
+>     // Produces: -DLLVM_ENABLE_PROJECTS:STRING=clang;lld
+> }
+> ```
+>
+> **Example - String with semicolons escaped:**
+> ```jsonc
+> "cmakeSettings": {
+>     // String notation → semicolons ARE escaped → treated as single value
+>     "MY_VAR": "value;with;semicolons"
+>     // Produces: -DMY_VAR:STRING=value\;with\;semicolons
+> }
+> ```
+
 `environmentVariables`
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.
 
 `environmentSetupScript`
 
-> The absolute path to a script that modifies/adds environment variables for the kit. Uses `call` on Windows and `source` in `bash` otherwise.
+> The absolute path to a script or a string in form of `"script path" [arg ...]`that modifies/adds environment variables for the kit. 
+Uses `call` on Windows and `source` in `bash` otherwise.
+
+### Kit environment and CMake executable resolution
+
+When using kits mode (not CMake Presets), the active kit's environment—including variables set via `environmentSetupScript` and `environmentVariables`—influences how CMake Tools resolves the CMake executable path:
+
+1. **Auto discovery (`cmake.cmakePath: auto` or `cmake`):**  
+   The active kit's `PATH` is searched first before falling back to the system `PATH`. This allows a kit's setup script to prepend a custom directory containing a CMake binary, and that binary will be discovered and used.
+
+2. **Environment variable substitution:**  
+   If `cmake.cmakePath` uses `${env:VARIABLE_NAME}` syntax, the substitution resolves to values from the active kit's environment. For example, if a kit defines `MY_CMAKE_PATH` via `environmentVariables` or `environmentSetupScript`, you can set `"cmake.cmakePath": "${env:MY_CMAKE_PATH}/cmake"` and it will resolve using the kit-provided value.
+
+**Example:**
+
+In `.vscode/cmake-kits.json`, define the environment variable in the kit:
+```json
+[
+  {
+    "name": "Cross-Compile Kit",
+    "environmentSetupScript": "${workspaceFolder}/scripts/setup.sh",
+    "environmentVariables": {
+      "MY_CMAKE_PATH": "/custom/cmake/path"
+    }
+  }
+]
+```
+
+In `.vscode/settings.json`, reference the variable (do not define it here):
+```json
+{
+  "cmake.cmakePath": "${env:MY_CMAKE_PATH}/cmake"
+}
+```
+
+When this kit is selected, `cmake.cmakePath` will resolve to `/custom/cmake/path/cmake` using the kit's environment variable. Environment variables are resolved from the active kit's context, not from workspace settings.
 
 `description`
 
