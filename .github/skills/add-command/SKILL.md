@@ -1,3 +1,11 @@
+---
+name: add-command
+description: >
+  Use when adding a new cmake.* command to CMake Tools. Touches package.json
+  (contributes.commands), package.nls.json, src/extension.ts (funs array), and
+  CHANGELOG.md. Triggers: "add command", "register command", "new command palette entry".
+---
+
 # Adding a New Command
 
 Recipe for adding a new `cmake.*` command to CMake Tools.

@@ -1,3 +1,11 @@
+---
+name: backend-tests
+description: >
+  Use when writing unit tests under test/unit-tests/backend/*.test.ts that run in
+  Node with Mocha+Chai and no VS Code API. For pure logic: parsers, helpers, env
+  merging. Triggers: "backend test", "unit test", "mocha test without vscode".
+---
+
 # Writing Backend Tests
 
 Recipe for adding backend (unit) tests that run without VS Code.

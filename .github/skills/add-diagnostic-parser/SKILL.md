@@ -1,3 +1,12 @@
+---
+name: add-diagnostic-parser
+description: >
+  Use when adding a compiler or tool output parser for the Problems panel. Touches
+  src/diagnostics/<name>.ts, src/diagnostics/build.ts, package.json
+  (cmake.enabledOutputParsers), and package.nls.json. Triggers: "add parser",
+  "new diagnostic parser", "parse compiler output".
+---
+
 # Adding a New Diagnostic / Output Parser
 
 Recipe for adding a new compiler or tool output parser to CMake Tools. A parser extracts diagnostics (errors, warnings, notes) from build output and surfaces them in the VS Code **Problems** panel.

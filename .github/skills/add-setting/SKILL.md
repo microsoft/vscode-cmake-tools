@@ -1,3 +1,12 @@
+---
+name: add-setting
+description: >
+  Use when adding a new cmake.* configuration setting. Touches package.json
+  (contributes.configuration), package.nls.json, src/config.ts (interface + getter),
+  docs/cmake-settings.md, and CHANGELOG.md. Triggers: "add setting", "new setting",
+  "add configuration".
+---
+
 # Adding a New Configuration Setting
 
 Recipe for adding a new `cmake.*` setting to CMake Tools.

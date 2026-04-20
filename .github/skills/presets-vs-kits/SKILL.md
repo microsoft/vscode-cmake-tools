@@ -1,3 +1,11 @@
+---
+name: presets-vs-kits
+description: >
+  Use when writing or reviewing code that must work in both CMake Presets and
+  Kits/Variants modes. Covers configure, build, test, environment, and generator
+  paths. Triggers: "presets vs kits", "useCMakePresets", "works in both modes".
+---
+
 # Presets Mode vs Kits/Variants Mode
 
 Guide for writing code that works correctly in **both** operating modes of CMake Tools. Any shared code path (configure, build, test, environment, targets) **must** handle both modes.
