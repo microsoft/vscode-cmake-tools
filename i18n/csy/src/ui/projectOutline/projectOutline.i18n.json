@@ -13,6 +13,7 @@
 	"edit.filter": "Upravit filtr",
 	"open.file": "Otevřít soubor",
 	"references": "Odkazy",
+	"test.tooltip": "Test: {0}",
 	"static.library": "Statická knihovna",
 	"module.library": "Knihovna modulů",
 	"shared.library": "Sdílená knihovna",

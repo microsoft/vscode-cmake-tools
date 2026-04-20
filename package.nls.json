@@ -1,4 +1,6 @@
 {
+    "cmake-tools.command.cmake.addFileToCMakeLists.title": "Add File to CMake Lists",
+    "cmake-tools.command.cmake.removeFileFromCMakeLists.title": "Remove File from CMake Lists",
     "cmake-tools.command.cmake.openCMakePresets.title": "Open CMakePresets.json",
     "cmake-tools.command.cmake.addConfigurePreset.title": "Add Configure Preset",
     "cmake-tools.command.cmake.addBuildPreset.title": "Add Build Preset",
@@ -46,6 +48,9 @@
     "cmake-tools.command.cmake.cleanConfigureWithDebugger.title": "Delete Cache and Reconfigure with CMake Debugger",
     "cmake-tools.command.cmake.cleanConfigureAll.title": "Delete Cache and Reconfigure All Projects",
     "cmake-tools.command.cmake.cleanConfigureAllWithDebugger.title": "Delete Cache and Reconfigure All Projects with CMake Debugger",
+    "cmake-tools.command.cmake.fullCleanConfigure.title": "Delete Build Directory and Reconfigure",
+    "cmake-tools.command.cmake.fullCleanConfigureAll.title": "Delete Build Directory and Reconfigure All Projects",
+    "cmake-tools.command.cmake.outline.fullCleanConfigureAll.title": "Full Clean Reconfigure All Projects",
     "cmake-tools.command.cmake.editCacheUI.title": "Edit CMake Cache (UI)",
     "cmake-tools.command.cmake.outline.cleanConfigure.title": "Clean Reconfigure",
     "cmake-tools.command.cmake.outline.cleanConfigureWithDebugger.title": "Clean Reconfigure with CMake Debugger",
@@ -55,6 +60,12 @@
     "cmake-tools.command.cmake.cleanAll.title": "Clean All Projects",
     "cmake-tools.command.cmake.cleanRebuild.title": "Clean Rebuild",
     "cmake-tools.command.cmake.cleanRebuildAll.title": "Clean Rebuild All Projects",
+    "cmake-tools.command.cmake.cleanConfigureAndBuild.title": "Delete Cache, Reconfigure and Build",
+    "cmake-tools.command.cmake.cleanConfigureAndBuildAll.title": "Delete Cache, Reconfigure and Build All Projects",
+    "cmake-tools.command.cmake.outline.cleanConfigureAndBuildAll.title": "Clean Reconfigure and Build All Projects",
+    "cmake-tools.command.cmake.fullCleanConfigureAndBuild.title": "Delete Build Directory, Reconfigure and Build",
+    "cmake-tools.command.cmake.fullCleanConfigureAndBuildAll.title": "Delete Build Directory, Reconfigure and Build All Projects",
+    "cmake-tools.command.cmake.outline.fullCleanConfigureAndBuildAll.title": "Full Clean Reconfigure and Build All Projects",
     "cmake-tools.command.cmake.ctest.title": "Run Tests",
     "cmake-tools.command.cmake.ctestAll.title": "Run Tests for All Projects",
     "cmake-tools.command.cmake.cpack.title": "Run CPack",
@@ -71,6 +82,7 @@
     "cmake-tools.command.cmake.launchTarget.title": "Run Without Debugging",
     "cmake-tools.command.cmake.launchTargetAll.title": "Run All Projects Without Debugging",
     "cmake-tools.command.cmake.selectLaunchTarget.title": "Set Launch/Debug Target",
+    "cmake-tools.command.cmake.selectBuildAndLaunchTarget.title": "Set Build and Launch/Debug Target",
     "cmake-tools.command.cmake.stop.title": "Cancel Build",
     "cmake-tools.command.cmake.stopAll.title": "Cancel Build for All Projects",
     "cmake-tools.command.cmake.resetState.title": {
@@ -92,6 +104,8 @@
     "cmake-tools.command.cmake.outline.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
+    "cmake-tools.command.cmake.outline.runTest.title": "Run Test",
+    "cmake-tools.command.cmake.outline.debugTest.title": "Debug Test",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
     "cmake-tools.configuration.title": {
         "message": "CMake Tools configuration",
@@ -115,6 +129,7 @@
     "cmake-tools.configuration.cmake.generator.description": "The CMake generator to use.",
     "cmake-tools.configuration.cmake.toolset.description": "The CMake toolset to use when configuring.",
     "cmake-tools.configuration.cmake.platform.description": "The CMake platform to use when configuring.",
+    "cmake-tools.configuration.cmake.shell.description": "Path to a shell executable to use when running CMake, CTest, and CPack commands (e.g., Git Bash or MSYS2). When set, all subprocess invocations are routed through this shell. Useful for embedded toolchains that require POSIX path translation. When null, the default system shell behavior is used.",
     "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active configure preset.",
     "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset.",
     "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building. When using CMake Presets, these arguments are temporarily appended to the arguments provided by the active build preset to invoke the build tool.",
@@ -125,7 +140,7 @@
         "message": "The number of parallel test jobs. Use zero to use the value of `#cmake.parallelJobs#`. This only applies when `#cmake.ctest.allowParallelJobs#` is set to `true`.",
         "comment": "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
     },
-    "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress.",
+    "cmake-tools.configuration.cmake.ctest.allowParallelJobs.description": "Allows ctests to be run in parallel, however the result output may be garbled as a result and the Test Explorer may not accurately reflect test progress. When disabled, tests run sequentially in alphabetical order, matching the Test Explorer display order.",
     "cmake-tools.configuration.cmake.ctest.testExplorerIntegrationEnabled.description": "Whether or not the integration with the test explorer is enabled. This is helpful to disable if you prefer using a different extension for test integration.",
     "cmake-tools.configuration.cmake.ctest.testSuiteDelimiter.markdownDescription": {
         "message": "Optional delimiter used to separate test suite names and group tests hierarchically in the Test Explorer. This string is used in a Regular Expression, so some delimiters may need escaping. Examples: `-` ( One delimiter: `-`), `\\.|::` (Two delimiters: `.` or `::`. Note that `.` needs to be escaped.)",
@@ -161,6 +176,7 @@
         "message": "The match group index of the expected test output. Defaults to undefined."
     },
 	"cmake-tools.configuration.cmake.ctest.debugLaunchTarget.description": "Target name from launch.json to start when debugging a test with CTest. By default and in case of a non-existing target, this will show a picker with all available targets.",
+	"cmake-tools.configuration.cmake.ctest.neverDebugTestsWithLaunchConfiguration.description": "When set to true, always debug tests without a launch configuration, bypassing the quick pick menu. Default is false.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
     "cmake-tools.configuration.cmake.enabledOutputParsers.description": {
         "message": "Output parsers to use. Supported parsers `cmake`, `gcc`, `gnuld` for GNULD-style linker output, `msvc` for Microsoft Visual C++, `ghs` for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, `diab` for the Wind River Diab compiler, and `iwyu` for include-what-you-use diagnostics.",
@@ -168,7 +184,43 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.markdownDescription": {
+        "message": "Additional problem matchers for build output. Use this to surface diagnostics from tools like clang-tidy, PCLint Plus, cppcheck, or custom scripts integrated via `add_custom_command`/`add_custom_target` in CMake.\n\nEach entry defines a `name` (used as the diagnostic source label), a `regexp`, and capture group indices for `file`, `line`, `column`, `severity`, `message`, and `code`.\n\nFor example, to match clang-tidy output like `/path/file.cpp:10:5: warning: some message [check-name]`:\n```json\n[\n  {\n    \"name\": \"clang-tidy\",\n    \"regexp\": \"^(.+?):(\\\\d+):(\\\\d+):\\\\s+(warning|error|note):\\\\s+(.+?)\\\\s*(?:\\\\[(.+)\\\\])?$\",\n    \"file\": 1,\n    \"line\": 2,\n    \"column\": 3,\n    \"severity\": 4,\n    \"message\": 5,\n    \"code\": 6\n  }\n]\n```\n\nCustom matchers run **after** the built-in parsers (`gcc`, `msvc`, etc.) so they do not steal lines from built-in compilers.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.name": "A unique name for this matcher, used as the diagnostic source label in the Problems pane.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.regexp": "The regular expression to match against each build output line.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.file": {
+        "message": "The capture group index for the file path. Defaults to `1`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.line": {
+        "message": "The capture group index for the line number. Defaults to `2`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.column": {
+        "message": "The capture group index for the column number. Optional.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.group": "The capture group index for the severity (should capture 'error', 'warning', or 'info').",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.severity.fixed": "A fixed severity to apply to all matches from this pattern.",
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.message": {
+        "message": "The capture group index for the diagnostic message. Defaults to `3`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.additionalBuildProblemMatchers.code": "The capture group index for an optional diagnostic code.",
+    "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target. When `type` is specified, the auto-detected debugger configuration is skipped and only a minimal base configuration (program, cwd, name) is generated from the target. All other properties are applied from this setting, allowing full control over the debug launch configuration for any debug adapter.",
+    "cmake-tools.configuration.cmake.debugConfig.type.description": "The debug adapter type to use (e.g., `cppdbg`, `cppvsdbg`, `lldb`, `codelldb`). When set, skips the automatic debugger detection from the CMake cache and uses this type directly. Any additional properties required by the debug adapter can be added to `#cmake.debugConfig#`.",
     "cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio debugger symbol search paths.",
     "cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Paths for GDB or LLDB to search for .so files.",
     "cmake-tools.configuration.cmake.debugConfig.externalConsole.description": "Launch an external console for the program.",
@@ -220,8 +272,10 @@
     "cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directories where Emscripten may be installed.",
     "cmake-tools.configuration.cmake.mergedCompileCommands.description": "Recursively collect and merge all compile_commands.json found in the cmake.buildDirectory.",
     "cmake-tools.configuration.cmake.copyCompileCommands.description": "Copy compile_commands.json to this location after a successful configure.",
+    "cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
     "cmake-tools.configuration.cmake.configureOnOpen.description": "Automatically configure CMake project directories when they are opened.",
     "cmake-tools.configuration.cmake.configureOnEdit.description": "Automatically configure CMake project directories when cmake.sourceDirectory or CMakeLists.txt content are saved.",
+    "cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "List of VS Code extension IDs that provide or install their own CMake binary. When CMake is not found during automatic configure-on-open and one of these extensions is installed, CMake Tools will briefly poll for CMake availability instead of showing an immediate error. Set to an empty array to disable this behavior.",
     "cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Delete the entire build directory when a clean configure is invoked.",
     "cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "Set CMAKE_BUILD_TYPE also on multi config generators.",
     "cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Skip over the configure process if cache is present.",
@@ -328,11 +382,14 @@
         ]
     },
     "cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Enable automatic scanning for kits when a kit isn't selected. This will only take affect when CMake Presets aren't being used.",
+    "cmake-tools.configuration.cmake.removeStaleKitsOnScan.description": "Remove compiler-based kits from the user kits file during a full kit scan when they are no longer rediscovered. Set \"keep\": true in a kit entry to preserve it.",
     "cmake-tools.configuration.cmake.enableLanguageServices.description": "Enable language services for CMake files. This will enable syntax highlighting, code completion, and other features.",
+    "cmake-tools.configuration.cmake.languageServerOnlyMode.description": "Enable language-server-only mode for CMake files. This keeps CMake language services active while disabling CMake project, build, test, and kit integration.",
     "cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Target to build before running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Target to build after running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.coverageInfoFiles.description": "LCOV coverage info files to be processed after running tests with coverage using the test explorer.",
     "cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description": "Controls if the default build target dropdown is grouped by the CMake folder groups.",
+    "cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description": "When enabled, setting the launch/debug target automatically sets the build target to match. The build target can still be changed independently.",
     "cmake-tools.debugger.pipeName.description": "Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.",
     "cmake-tools.debugger.clean.description": "Clean prior to configuring.",
     "cmake-tools.debugger.configureAll.description": "Configure for all projects.",
@@ -374,6 +431,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
     "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
+    "cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
     "cmake-tools.command.cmake.pinnedCommands.add.title": "Add a CMake command to pin",
     "cmake-tools.command.cmake.pinnedCommands.remove.title": "Unpin Command",
@@ -384,5 +442,58 @@
     "cmake-tools.debugger.label": "CMake Debugger",
     "cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Append Build Directory to Current Workspace",
     "cmake-tools.command.workbench.action.tasks.configureTaskRunner.title":"Configure Task",
-    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task"
+    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.description": "Add source files to CMake lists when they are created.",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.no.description": "Do not automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description": "Automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.description": "Remove source files from CMake lists when they are deleted.",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.no.description": "Do not automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description": "Automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.markdownDescription": {
+        "message": "How to choose which `set()` or `list(APPEND/PREPEND/INSERT)` command invocation to edit when adding source files to CMake lists.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.never.description": "Do not look for variable modification command invocations, only look for source command invocations.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description": {
+        "message": "Present a Quick Pick with options from the first `CMakeLists.txt` found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description": {
+        "message": "Present a Quick Pick with options from all `CMakeLists.txt` files found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription": {
+        "message": "Variables to add source files to. Variables appearing earlier in this list will be given higher priority. Only used if `#cmake.modifyLists.variableSelection#` is not `never`. Supports glob patterns.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.description": "How to choose which target to add new source files to when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description": "Present a Quick Pick with targets whose source directories are closest to location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description": "Present a Quick Pick with targets whose source directories contain the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.description": "How to choose which of a target's source command invocations to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description": "Present a Quick Pick with options from the CMake list file in the parent directory closest to the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description": "Present a Quick Pick with options from all CMake list files in the parent directories of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription": {
+        "message": "Commands to treat as target source commands when adding source files CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns.\n\nIf you are using the File API (see `#cmake.cmakeCommunicationMode#`), user-defined functions and macros which call the commands in this list are detected automatically and added to it.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Present a Quick Pick with options from the selected target source command invocation.",
+    "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns.",
+    "update.code.model.for.list.modifier": "Update code model for automatic list file modifier"
 }

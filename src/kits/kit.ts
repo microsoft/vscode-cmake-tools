@@ -105,9 +105,11 @@ export interface Kit extends KitDetect {
     preferredGenerator?: CMakeGenerator;
 
     /**
-     * Additional settings to pass to CMake
+     * Additional settings to pass to CMake.
+     * Values can be strings or string arrays. String arrays are joined with
+     * semicolons to form CMake lists (without escaping).
      */
-    cmakeSettings?: { [key: string]: string };
+    cmakeSettings?: { [key: string]: string | string[] };
 
     /**
      * Additional environment variables for the kit
@@ -132,6 +134,21 @@ export interface Kit extends KitDetect {
      * from the dev environment batch file.
      */
     visualStudioArchitecture?: string;
+
+    /**
+     * Arguments to vcvarsall.bat.
+     * This is used for:
+     *  [platform_type]: {empty} | store | uwp
+     *  [winsdk_version] : full Windows 10 SDK number (e.g. 10.0.10240.0) or "8.1" to use the Windows 8.1 SDK.
+     *  [vc_version] : {none} for latest installed VC++ compiler toolset |
+     *                 "14.0" for VC++ 2015 Compiler Toolset |
+     *                 "14.xx" for the latest 14.xx.yyyyy toolset installed (e.g. "14.11") |
+     *                 "14.xx.yyyyy" for a specific full version number (e.g. "14.11.25503")
+     *  [spectre_mode] : {none} for libraries without spectre mitigations |
+     *                   "spectre" for libraries with spectre mitigations
+     *
+     */
+    visualStudioArguments?: string[];
 
     /**
      * Filename of a shell script which sets environment variables for the kit
@@ -231,6 +248,27 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     };
 }
 
+/**
+ * Detects the compiler vendor from the compiler binary path.
+ * @param compilerPath Path to the compiler binary
+ * @returns The detected vendor or undefined if not detected
+ */
+function detectVendorFromBinaryPath(compilerPath: string): CompilerVendorEnum | undefined {
+    const binBasename = path.basename(compilerPath, '.exe').toLowerCase();
+    // Check for clang-cl first (before clang) to avoid false matches
+    if (binBasename === 'clang-cl' || binBasename.startsWith('clang-cl-')) {
+        return 'ClangCl';
+    }
+    if (binBasename === 'clang' || binBasename.startsWith('clang-')) {
+        return 'Clang';
+    }
+    if (binBasename === 'gcc' || binBasename.startsWith('gcc-') ||
+        binBasename.endsWith('-gcc') || /-gcc-\d/.test(binBasename)) {
+        return 'GCC';
+    }
+    return undefined;
+}
+
 export async function getKitDetect(kit: Kit): Promise<KitDetect> {
     const c_bin = kit?.compilers?.C;
     /* Special handling of visualStudio */
@@ -239,9 +277,12 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         if (!vs) {
             return kit;
         }
+        // Determine if the compiler is clang-cl based on binary name using helper function
+        const detectedVendor = c_bin ? detectVendorFromBinaryPath(c_bin) : undefined;
+        const clangVendor: CompilerVendorEnum = detectedVendor === 'ClangCl' ? 'ClangCl' : 'Clang';
         let version: CompilerVersion | null = null;
         if (c_bin) {
-            version = await getCompilerVersion('Clang', c_bin);
+            version = await getCompilerVersion(clangVendor, c_bin);
         }
         let targetArch = kit.preferredGenerator?.platform ?? kit.visualStudioArchitecture ?? 'i686';
         if (targetArch === 'win32') {
@@ -251,7 +292,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         let versionCompiler = vs.installationVersion;
         let vendor: CompilerVendorEnum;
         if (version !== null) {
-            vendor = 'Clang';
+            vendor = clangVendor;
             versionCompiler = version.version;
         } else {
             vendor = `MSVC`;
@@ -271,6 +312,10 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
         } else if (kit.name.startsWith('Clang-cl')) {
             vendor = 'ClangCl';
         }
+        // Fallback: detect vendor from compiler binary path if name pattern doesn't match
+        if (vendor === undefined && c_bin) {
+            vendor = detectVendorFromBinaryPath(c_bin);
+        }
         if (vendor === undefined) {
             return kit;
         }
@@ -280,7 +325,11 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
             version = await getCompilerVersion(vendor, c_bin);
         }
         if (!version) {
-            return kit;
+            // Return at least the vendor information even when version detection fails
+            return {
+                ...kit,
+                vendor
+            };
         }
         return {
             vendor,
@@ -518,6 +567,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     } catch (ce) {
         const e = ce as NodeJS.ErrnoException;
         log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
+        if (e.stack) {
+            log.debug(e.stack);
+        }
         if (e.code === 'ENOENT') {
             return [];
         }
@@ -562,6 +614,9 @@ export async function scanDirForCompilerKits(dir: string, isTrusted: boolean = t
         } catch (ce) {
             const e = ce as NodeJS.ErrnoException;
             log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
+            if (e.stack) {
+                log.debug(e.stack);
+            }
             if (e.code === 'EACCES') {
                 // The binary may not be executable by this user...
                 return null;
@@ -695,20 +750,29 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let script = '';
     let run_command = '';
 
-    let environmentSetupScript = kit.environmentSetupScript?.trim();
+    let environmentSetupScript = kit.environmentSetupScript!.trim();
     if (opts) {
-        environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
+        environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
+    }
+
+    // If the string doesn't start with a quote, assume it is a path to a script file, so we quote it in case there are spaces in the path.
+    // Otherwise, assume it is in form of `"script path" [arg ...]`, we will not add extra quotes, to avoid breaking the command.
+    if (!environmentSetupScript.startsWith('"')) {
+        environmentSetupScript = `"${environmentSetupScript}"`;
     }
 
     if (process.platform === 'win32') { // windows
-        script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
+        script += `call ${environmentSetupScript}\r\n`; // call the user batch script
         script += `set >> "${environment_path}"`; // write env vars to temp file
         // Quote the script file path before running it, in case there are spaces.
         run_command = `call "${script_path}"`;
     } else { // non-windows
-        script += `source "${environmentSetupScript}"\n`; // run the user shell script
-        script += `printenv >> ${environment_path}`; // write env vars to temp file
-        run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+        // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
+        script += 'set -e\n';
+        script += `source ${environmentSetupScript}\n`; // run the user shell script
+        // Use an absolute path so PATH modifications in the setup script don't break env capture.
+        script += `/usr/bin/printenv > "${environment_path}"`; // write env vars to temp file
+        run_command = `/bin/bash "${script_path}"`;
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists
@@ -764,8 +828,63 @@ const VsGenerators: { [key: string]: string } = {
     14: 'Visual Studio 14 2015',
     15: 'Visual Studio 15 2017',
     16: 'Visual Studio 16 2019',
-    17: 'Visual Studio 17 2022'
+    17: 'Visual Studio 17 2022',
+    18: 'Visual Studio 18 2026'
 };
+
+/**
+ * Get the CMake generator name for a given Visual Studio version
+ * @param version The major version of Visual Studio (e.g., '17' for VS 2022, '18' for VS 2026)
+ * @returns The CMake generator name, or undefined if the version is not recognized
+ */
+export function vsGeneratorForVersion(version: string): string | undefined {
+    return VsGenerators[version];
+}
+
+/**
+ * Get the preferred CMake generator for a Visual Studio kit.
+ * This is useful for kits that were scanned before a VS version was added to the VsGenerators mapping.
+ * @param kit The Visual Studio kit
+ * @returns The preferred generator, or undefined if the kit is not a VS kit or the VS version is not recognized
+ */
+export async function getVsKitPreferredGenerator(kit: Kit): Promise<CMakeGenerator | undefined> {
+    if (!kit.visualStudio || !kit.visualStudioArchitecture) {
+        return undefined;
+    }
+
+    // If the kit already has a preferredGenerator, return it
+    if (kit.preferredGenerator) {
+        return kit.preferredGenerator;
+    }
+
+    // Try to derive the preferredGenerator from the VS installation
+    const vsInstall = await getVSInstallForKit(kit);
+    if (!vsInstall) {
+        return undefined;
+    }
+
+    const version = /^(\d+)+./.exec(vsInstall.installationVersion);
+    if (!version) {
+        return undefined;
+    }
+
+    const generatorName = VsGenerators[version[1]];
+    if (!generatorName) {
+        return undefined;
+    }
+
+    const majorVersion = parseInt(vsInstall.installationVersion);
+    const hostArch = kit.visualStudioArchitecture;
+    const host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
+    // For VS kits, use the hostArch as the target platform (x64 -> x64)
+    const targetArch = hostArch;
+
+    return {
+        name: generatorName,
+        platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
+        toolset: majorVersion < 15 ? undefined : host
+    };
+}
 
 /**
  * Try to get a VSKit from a VS installation and architecture
@@ -863,7 +982,8 @@ async function scanDirForClangForMSVCKits(dir: PathWithTrust, vsInstalls: VSInst
             return null;
         }
 
-        const version = dir.isTrusted ? await getCompilerVersion('Clang', binPath) : null;
+        const clangVendor: CompilerVendorEnum = isClangMsvcCli ? 'ClangCl' : 'Clang';
+        const version = dir.isTrusted ? await getCompilerVersion(clangVendor, binPath) : null;
         if (dir.isTrusted && version === null) {
             return null;
         }
@@ -983,7 +1103,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Environment | null>
         return null;
     }
 
-    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+    return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform, undefined, kit.visualStudioArguments);
 }
 
 /**
@@ -1005,12 +1125,13 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     const kit_env = EnvironmentUtils.create(kit.environmentVariables);
     const getVSKitEnv = process.platform === 'win32' && kit.visualStudio && kit.visualStudioArchitecture;
     if (!getVSKitEnv) {
-        const expandOptions: expand.ExpansionOptions = {
+        const expandOptions: expand.ExpansionOptions = opts ? { ...opts, envOverride: host_env, penvOverride: host_env } : {
             vars: {} as expand.KitContextVars,
-            envOverride: host_env
+            envOverride: host_env,
+            penvOverride: host_env
         };
         for (const env_var of Object.keys(kit_env)) {
-            env[env_var] = await expand.expandString(kit_env[env_var], opts ?? expandOptions);
+            env[env_var] = await expand.expandString(kit_env[env_var], expandOptions);
         }
 
         if (process.platform === 'win32') {
@@ -1208,20 +1329,78 @@ export async function scanForKits(cmakePath?: string, opt?: KitScanOptions) {
     return result.filter(kit => kit.isTrusted);
 }
 
+// Guard to prevent concurrent calls from multiple projects in the same workspace.
+let scanForKitsInProgress = false;
+
+/**
+ * Possible outcomes for the kit scan decision logic.
+ * - 'scan': A version mismatch was detected and scanning is enabled; proceed with scanning.
+ * - 'skip-and-update-version': A version mismatch was detected but scanning is disabled; update the saved version without scanning.
+ * - 'blocked-by-concurrent': A version mismatch was detected but another scan is already in progress.
+ * - 'no-action': The saved version matches the current version, or we're in test mode.
+ */
+export type ScanForKitsAction = 'scan' | 'skip-and-update-version' | 'blocked-by-concurrent' | 'no-action';
+
+/**
+ * Pure decision function for whether to scan for kits.
+ * Extracted for testability from scanForKitsIfNeeded.
+ */
+export function determineScanForKitsAction(
+    kitsVersionSaved: number | undefined,
+    kitsVersionCurrent: number,
+    enableAutomaticKitScan: boolean,
+    isScanInProgress: boolean,
+    isAlreadyScanning: boolean,
+    isTestMode: boolean
+): ScanForKitsAction {
+    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !isTestMode) {
+        if (isScanInProgress || isAlreadyScanning) {
+            return 'blocked-by-concurrent';
+        }
+        if (!enableAutomaticKitScan) {
+            return 'skip-and-update-version';
+        }
+        return 'scan';
+    }
+    return 'no-action';
+}
+
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
 export async function scanForKitsIfNeeded(project: CMakeProject): Promise<boolean> {
     const kitsVersionSaved = project.workspaceContext.state.extensionContext.globalState.get<number>('kitsVersionSaved');
     const kitsVersionCurrent = 2;
 
-    // Scan also when there is no kits version saved in the state.
-    if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) && !util.isTestMode() && !kitsController.KitsController.isScanningForKits()) {
-        log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject());
-        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
-        return true;
+    const action = determineScanForKitsAction(
+        kitsVersionSaved,
+        kitsVersionCurrent,
+        project.workspaceContext.config.enableAutomaticKitScan,
+        scanForKitsInProgress,
+        kitsController.KitsController.isScanningForKits(),
+        util.isTestMode()
+    );
+
+    if (action === 'no-action' || action === 'blocked-by-concurrent') {
+        return false;
     }
 
-    return false;
+    scanForKitsInProgress = true;
+    try {
+        if (action === 'skip-and-update-version') {
+            // Respect the user's preference to disable automatic kit scanning.
+            await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+            return false;
+        }
+
+        // action === 'scan'
+        log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
+        await kitsController.KitsController.scanForKits(await project.getCMakePathofProject(), {
+            removeStaleCompilerKits: project.workspaceContext.config.removeStaleKitsOnScan
+        });
+        await project.workspaceContext.state.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+        return true;
+    } finally {
+        scanForKitsInProgress = false;
+    }
 }
 
 /**
@@ -1291,6 +1470,9 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         kits_raw = json5.parse(content_str.toLocaleString());
     } catch (e) {
         log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filePath), util.errorToString(e)));
+        if (e instanceof Error && e.stack) {
+            log.debug(e.stack);
+        }
         return [];
     }
     const validator = await loadSchema('./schemas/kits-schema.json');
@@ -1299,7 +1481,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         const errors = validator.errors!;
         log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filePath), filePath));
         for (const err of errors) {
-            log.error(` >> ${err.dataPath}: ${err.message}`);
+            log.error(` >> ${err.instancePath}: ${err.message}`);
         }
         return [];
     }
@@ -1399,6 +1581,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
         compilers: k.compilers,
         vs: k.visualStudio,
         vsArch: k.visualStudioArchitecture,
+        vsArgs: k.visualStudioArguments,
         tc: k.toolchainFile,
         preferredGeneratorName: k.preferredGenerator ? k.preferredGenerator.name : null,
         preferredGeneratorPlatform: k.preferredGenerator && k.preferredGenerator.platform ? k.preferredGenerator.platform : null,

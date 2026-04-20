@@ -28,9 +28,9 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { FileDiagnostic, populateCollection } from '@cmt/diagnostics/util';
+import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
-import { CMakeGenerator, Kit, SpecialKits } from '@cmt/kits/kit';
+import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
@@ -70,7 +70,8 @@ export enum ConfigureType {
     Cache,
     ShowCommandOnly,
     NormalWithDebugger,
-    CleanWithDebugger
+    CleanWithDebugger,
+    FullClean
 }
 
 export enum ConfigureTrigger {
@@ -100,6 +101,8 @@ export enum ConfigureTrigger {
     commandCleanConfigureAll = "commandCleanConfigureAll",
     commandCleanConfigureAllWithDebugger = "commandConfigureAllWithDebugger",
     projectOutlineCleanConfigureAllWithDebugger = "projectOutlineCleanConfigureAllWithDebugger",
+    commandFullCleanConfigure = "commandFullCleanConfigure",
+    commandFullCleanConfigureAll = "commandFullCleanConfigureAll",
     configureFailedConfigureWithDebuggerButton = "configureFailedConfigureWithDebuggerButton",
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
@@ -759,6 +762,14 @@ export class CMakeProject {
     private readonly _launchTargetName = new Property<string | null>(null);
 
     /**
+     * Short-lived cache for `prepareLaunchTargetExecutable` results keyed by target name.
+     * Prevents duplicate builds when multiple `${input:...}` variables resolve the same
+     * target within a single launch.json evaluation (typically < 1 s apart).
+     */
+    private readonly _prepareCache = new Map<string, { timestamp: number; result: ExecutableTarget }>();
+    private static readonly PREPARE_CACHE_TTL_MS = 10_000;
+
+    /**
      * Whether CTest is enabled
      */
     get ctestEnabled() {
@@ -832,10 +843,30 @@ export class CMakeProject {
         // Force re-reading of cmake exe, this will ensure that the debugger capabilities are updated.
         const cmakeInfo = await this.getCMakeExecutable();
         if (!cmakeInfo.isPresent) {
-            void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmakeInfo.path}"`, '"cmake.cmakePath"'));
-            telemetry.logEvent('CMakeExecutableNotFound');
+            if (!this.workspaceContext.config.languageServerOnlyMode) {
+                telemetry.logEvent('CMakeExecutableNotFound');
+            } else {
+                log.debug(localize('bad.executable.suppressed.language.server.only', 'Skipping bad CMake executable notification because language-server-only mode is enabled.'));
+            }
         }
 
+        if (!this.workspaceContext.config.languageServerOnlyMode) {
+            await this.reloadCMakeDriver();
+        }
+    });
+
+    private readonly languageServerOnlyModeSub = this.workspaceContext.config.onChange('languageServerOnlyMode', async enabled => {
+        if (enabled) {
+            log.info(localize('language.server.only.shutdown.driver', 'Shutting down the CMake driver because language-server-only mode was enabled.'));
+            await this.shutDownCMakeDriver();
+        } else {
+            log.info(localize('language.server.only.reload.driver', 'Reloading the CMake driver because language-server-only mode was disabled.'));
+            await this.reloadCMakeDriver();
+        }
+    });
+
+    private readonly shellSub = this.workspaceContext.config.onChange('shell', async () => {
+        log.info(localize('shell.changed.restart.driver', "Restarting the CMake driver after a shell change."));
         await this.reloadCMakeDriver();
     });
 
@@ -882,7 +913,9 @@ export class CMakeProject {
             this.generatorSub,
             this.preferredGeneratorsSub,
             this.communicationModeSub,
-            this.cmakePathSub
+            this.cmakePathSub,
+            this.languageServerOnlyModeSub,
+            this.shellSub
         ]) {
             sub.dispose();
         }
@@ -1014,6 +1047,9 @@ export class CMakeProject {
                     if (selectedFile) {
                         const newSourceDirectory = path.dirname(selectedFile);
                         await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+                        // Update the PresetsController so that CMakePresets.json is
+                        // looked up relative to the new source directory (fixes #4727).
+                        await this.presetsController.updateSourceDir(this._sourceDir);
                         void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
                         if (config) {
                             // Updating sourceDirectory here, at the beginning of the configure process,
@@ -1229,14 +1265,18 @@ export class CMakeProject {
     private async reloadCMakeDriver() {
         try {
             const drv = await this.cmakeDriver;
-            if (drv) {
-                log.debug(localize('reloading.driver', 'Reloading CMake driver'));
-                await drv?.asyncDispose();
-                return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
-            }
+            log.debug(localize('reloading.driver', 'Reloading CMake driver'));
+            await drv?.asyncDispose();
         } catch {
-            return this.cmakeDriver = this.startNewCMakeDriver(await this.getCMakeExecutable());
+            // Driver was in a bad state — proceed to create a new one.
         }
+        const cmake = await this.getCMakeExecutable();
+        if (cmake.isPresent) {
+            return this.cmakeDriver = this.startNewCMakeDriver(cmake);
+        }
+        // CMake is still not available — reset to null so getCMakeDriverInstance()
+        // can surface the error when the user next triggers a command.
+        return this.cmakeDriver = Promise.resolve(null);
     }
 
     /**
@@ -1379,7 +1419,10 @@ export class CMakeProject {
     }
 
     async setKit(kit: Kit | null) {
+        const priorCMakePath = await this.getCMakePathofProject(); // used for later comparison to determine if we need to update the driver's cmake.
         this._activeKit = kit;
+        this.cachedCMakePathEnvironment = null;  // Invalidate cache on kit change
+        this.cachedCMakePathEnvironmentKit = null;
         if (kit) {
             log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
             const drv = await this.cmakeDriver;  // Use only an existing driver, do not create one
@@ -1387,6 +1430,14 @@ export class CMakeProject {
                 try {
                     this.statusMessage.set(localize('reloading.status', 'Reloading...'));
                     await drv.setKit(kit, this.getPreferredGenerators());
+
+                    const updatedCMakePath = await this.getCMakePathofProject();
+
+                    // check if we need to update the driver's cmake, if so, update.
+                    if (priorCMakePath !== updatedCMakePath) {
+                        drv.cmake = await this.getCMakeExecutable();
+                    }
+
                     await this.workspaceContext.state.setActiveKitName(this.folderName, kit.name, this.isMultiProjectFolder);
                     this.statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
@@ -1394,6 +1445,8 @@ export class CMakeProject {
                     this.statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this.cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
+                    this.cachedCMakePathEnvironment = null;  // Invalidate cache on error
+                    this.cachedCMakePathEnvironmentKit = null;
                 }
             } else {
                 // Remember the selected kit for the next session.
@@ -1402,9 +1455,36 @@ export class CMakeProject {
         }
     }
 
+    private async getCMakePathEnvironment(): Promise<Environment | undefined> {
+        if (this.useCMakePresets || !this.activeKit) {
+            return undefined;
+        }
+
+        // Return cached result if kit hasn't changed
+        if (this.cachedCMakePathEnvironmentKit === this.activeKit && this.cachedCMakePathEnvironment !== null) {
+            return this.cachedCMakePathEnvironment === undefined ? undefined : this.cachedCMakePathEnvironment;
+        }
+
+        try {
+            const expansionOptions = await this.getExpansionOptions();
+            const result = await effectiveKitEnvironment(this.activeKit, expansionOptions);
+            // Cache the result: store undefined as a marker to avoid re-computation
+            this.cachedCMakePathEnvironment = result || undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
+            return result;
+        } catch (e: any) {
+            log.warning(localize('failed.to.compute.kit.env.for.cmake.path', 'Unable to evaluate the active kit environment while resolving cmake.cmakePath: {0}', e?.message || e));
+            // Cache the error result as undefined
+            this.cachedCMakePathEnvironment = undefined;
+            this.cachedCMakePathEnvironmentKit = this.activeKit;
+            return undefined;
+        }
+    }
+
     async getCMakePathofProject(): Promise<string> {
         const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
-        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting) || '';
+        const envOverride = await this.getCMakePathEnvironment();
+        return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
 
     async getCMakeExecutable() {
@@ -1429,6 +1509,10 @@ export class CMakeProject {
      */
     async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
         return this.driverStrand.execute(async () => {
+            if (this.workspaceContext.config.languageServerOnlyMode) {
+                log.debug(localize('not.starting.language.server.only', 'Not starting CMake driver because language-server-only mode is enabled.'));
+                return null;
+            }
             if (!this.useCMakePresets && !this.activeKit) {
                 log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kit selected'));
                 return null;
@@ -1518,6 +1602,12 @@ export class CMakeProject {
     get activeKit(): Kit | null {
         return this._activeKit;
     }
+
+    /**
+     * Cache for CMake path environment to avoid redundant shell script executions
+     */
+    private cachedCMakePathEnvironment: Environment | undefined | null = null;
+    private cachedCMakePathEnvironmentKit: Kit | null = null;
 
     /**
      * The compilation database for this driver.
@@ -1612,6 +1702,36 @@ export class CMakeProject {
                 return;
             }
         }
+
+    }
+
+    /**
+     * Execute the postConfigureTask if configured
+     */
+    private async executePostConfigureTask(): Promise<void> {
+        const postConfigureTask = this.workspaceContext.config.postConfigureTask;
+        if (postConfigureTask) {
+            try {
+                log.debug(localize('executing.post.configure.task', 'Executing post configure task: {0}', postConfigureTask));
+
+                // Fetch all available tasks
+                const tasks = await vscode.tasks.fetchTasks();
+
+                // Find the task by label
+                const task = tasks.find(t => t.name === postConfigureTask);
+
+                if (task) {
+                    await vscode.tasks.executeTask(task);
+                } else {
+                    const errorMsg = localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', postConfigureTask, tasks.map(t => t.name).join(', '));
+                    void vscode.window.showErrorMessage(errorMsg);
+                    log.error(errorMsg);
+                }
+            } catch (error: any) {
+                void vscode.window.showErrorMessage(localize('failed.to.execute.post.configure.task', 'Failed to execute post configure task: {0}', error.toString()));
+                log.error(localize('post.configure.task.error', 'Error executing post configure task'), error);
+            }
+        }
     }
 
     /**
@@ -1635,6 +1755,7 @@ export class CMakeProject {
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.exitCode === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
+                await this.executePostConfigureTask();
             } else {
                 log.showChannel(true);
             }
@@ -1683,6 +1804,7 @@ export class CMakeProject {
                 }
 
                 if (type !== ConfigureType.ShowCommandOnly) {
+                    log.showChannel();
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
@@ -1722,6 +1844,9 @@ export class CMakeProject {
                                         case ConfigureType.ShowCommandOnly:
                                             result = await drv.configure(trigger, extraArgs, consumer, cancelInformation, undefined, false, true);
                                             break;
+                                        case ConfigureType.FullClean:
+                                            result = await drv.fullCleanConfigure(trigger, extraArgs, consumer, cancelInformation);
+                                            break;
                                         default:
                                             rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), { type });
                                             result = await this.configureInternal(trigger, extraArgs, ConfigureType.Normal);
@@ -1736,6 +1861,7 @@ export class CMakeProject {
                                 if (result.exitCode === 0) {
                                     await enableFullFeatureSet(true);
                                     await this.refreshCompileDatabase(drv.expansionOptions);
+                                    await this.executePostConfigureTask();
                                 } else if (result.exitCode !== 0 && (await this.getCMakeExecutable()).isDebuggerSupported && cmakeConfiguration.get(showDebuggerConfigurationString) && !forciblyCanceled && !cancelInformation.canceled && result.resultType === ConfigureResultType.NormalOperation) {
                                     log.showChannel(true);
                                     const yesButtonTitle: string = localize(
@@ -1823,10 +1949,45 @@ export class CMakeProject {
     }
 
     /**
+     * Implementation of `cmake.fullCleanConfigure()`
+     * Removes the entire build directory contents before reconfiguring.
+     */
+    fullCleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api, cancellationToken?: vscode.CancellationToken) {
+        return this.configureInternal(trigger, [], ConfigureType.FullClean, undefined, cancellationToken);
+    }
+
+    /**
      * Save all open files. "maybe" because the user may have disabled auto-saving
      * with `config.saveBeforeBuild`.
      */
-    async maybeAutoSaveAll(showCommandOnly?: boolean): Promise<boolean> {
+    /**
+     * Save all open files. "maybe" because the user may have disabled auto-saving
+     * with `config.saveBeforeBuild`.
+     *
+     * When preset files have unsaved changes, this method also:
+     * 1. Suppresses the file-watcher to avoid redundant reapplyPresets() calls
+     * 2. Saves all open editors
+     * 3. Conditionally reapplies presets from disk so the caller sees fresh state
+     * 4. Resumes the file-watcher
+     *
+     * @param showCommandOnly When true, skip the "saving files" log message
+     * @param requireConfigureOnEdit When true (default), dirty presets are only
+     *   reapplied if cmake.configureOnEdit is also enabled.  Pass false for
+     *   explicit-configure paths where the user expects presets to be refreshed
+     *   regardless of that setting (see #4792).
+     */
+    async maybeAutoSaveAll(showCommandOnly?: boolean, requireConfigureOnEdit: boolean = true): Promise<boolean> {
+        // Snapshot dirty preset state *before* saving so we can report it back.
+        // After saveAll() the dirty flags will be cleared.
+        const hadDirtyPresets = this.useCMakePresets && this.haveUnsavedPresetFileChanges();
+
+        // Suppress watcher-triggered reapply during save — we will explicitly
+        // await reapplyPresets() below when needed, so the file-watcher's
+        // fire-and-forget call would be redundant (see #4792).
+        if (hadDirtyPresets) {
+            this.presetsController.suppressWatcherReapply = true;
+        }
+
         // Save open files before we configure/build
         if (this.workspaceContext.config.saveBeforeBuild) {
             if (!showCommandOnly) {
@@ -1864,10 +2025,42 @@ export class CMakeProject {
                 if (chosen?.title === yesAndDoNotShowAgain) {
                     await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
                 }
-                return chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                if (!saved) {
+                    this.presetsController.suppressWatcherReapply = false;
+                    return false;
+                }
             }
         }
+
+        // After saving, explicitly refresh presets from disk so that any
+        // just-saved changes are picked up before configure/build runs.
+        // Without this, the async file-watcher may not have completed yet
+        // (see #4502).  The configureOnEdit gate is skipped for explicit-
+        // configure paths (requireConfigureOnEdit=false) — see #4792.
+        if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
+            await this.presetsController.reapplyPresets();
+        }
+        // Resume normal file-watcher behavior now that the explicit reapply
+        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+        this.presetsController.suppressWatcherReapply = false;
+
         return true;
+    }
+
+    /**
+     * Returns true when at least one of the preset files tracked by the
+     * presets controller (including files pulled in via "include") is currently
+     * dirty (has unsaved changes) in VS Code.
+     */
+    private haveUnsavedPresetFileChanges(): boolean {
+        const dirtyPaths = new Set(
+            vscode.workspace.textDocuments
+                .filter(doc => doc.isDirty)
+                .map(doc => util.platformNormalizePath(doc.uri.fsPath))
+        );
+        return this.presetsController.referencedFiles
+            .some(f => dirtyPaths.has(util.platformNormalizePath(f)));
     }
 
     /**
@@ -1876,7 +2069,12 @@ export class CMakeProject {
      */
     private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
-        if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
+        // configureOnEdit is intentionally NOT required here. doConfigure()
+        // is the explicit configure path — when the user manually triggers
+        // configure, we should always pick up just-saved preset changes
+        // regardless of configureOnEdit (which only controls *automatic*
+        // reconfigure on edit). See #4792.
+        if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly, false)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
         if (!this.useCMakePresets) {
@@ -1898,11 +2096,10 @@ export class CMakeProject {
                 }
             }
         } else if (!this.configurePreset) {
-            await vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
+            void vscode.window.showErrorMessage(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake project'));
             log.debug(localize('no.preset.abort', 'No preset selected. Abort configure'));
-            return { exitCode: -1, resultType: ConfigureResultType.Other };
+            return { exitCode: -1, resultType: ConfigureResultType.Other, stderr: 'Cannot configure: No configure preset is active for this CMake project' };
         }
-        log.showChannel();
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
         const result = await cb(consumer);
         result.stdout = consumer.stdout;
@@ -1966,7 +2163,7 @@ export class CMakeProject {
         if (!drv) {
             return null;
         }
-        // First, save open files
+        // First, save open files and conditionally reapply dirty presets
         if (!await this.maybeAutoSaveAll()) {
             return { exitCode: -1 };
         }
@@ -1979,6 +2176,9 @@ export class CMakeProject {
 
     // Reconfigure if the saved file is a cmake file.
     async doCMakeFileChangeReconfigure(uri: vscode.Uri) {
+        if (this.workspaceContext.config.languageServerOnlyMode) {
+            return;
+        }
         const filePath = util.platformNormalizePath(uri.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
 
@@ -2045,6 +2245,7 @@ export class CMakeProject {
      */
     async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
         if (!showCommandOnly) {
+            log.showChannel();
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
@@ -2096,6 +2297,9 @@ export class CMakeProject {
         try {
             this.statusMessage.set(localize('building.status', 'Building'));
             this.isBusy.set(true);
+            if (drv.config.parseBuildDiagnostics) {
+                collections.build.clear();
+            }
             let rc: number | null;
             if (taskConsumer) {
                 buildLogger.info(localize('starting.build', 'Starting build'));
@@ -2115,6 +2319,24 @@ export class CMakeProject {
                 };
             } else {
                 consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+                if (drv.config.parseBuildDiagnostics) {
+                    consumer.onDiagnostic(({ source, diagnostic: rawDiag }) => {
+                        if (!drv!.config.enableOutputParsers?.includes(source.toLowerCase())) {
+                            return;
+                        }
+                        const severity = diagnosticSeverity(rawDiag.severity);
+                        if (severity === undefined) {
+                            return;
+                        }
+                        const filepath = util.resolvePath(rawDiag.file, drv!.binaryDir);
+                        const diag = new vscode.Diagnostic(rawDiag.location, rawDiag.message, severity);
+                        diag.source = source;
+                        if (rawDiag.code) {
+                            diag.code = rawDiag.code;
+                        }
+                        addDiagnosticToCollection(collections.build, { filepath, diag });
+                    });
+                }
                 return await vscode.window.withProgress(
                     {
                         location: vscode.ProgressLocation.Window,
@@ -2132,7 +2354,6 @@ export class CMakeProject {
                         });
                         const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                         combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
-                        log.showChannel();
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
@@ -2145,9 +2366,23 @@ export class CMakeProject {
                         } else {
                             buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
                         }
-                        const fileDiags: FileDiagnostic[] | undefined = drv!.config.parseBuildDiagnostics ? await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir) : [];
-                        if (fileDiags) {
-                            populateCollection(collections.build, fileDiags);
+                        if (drv!.config.parseBuildDiagnostics) {
+                            const fileDiags = await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir);
+                            if (fileDiags.length > 0) {
+                                // Re-populate with fully resolved diagnostics (proper
+                                // path resolution and related information). This replaces
+                                // the incremental diagnostics added during the build.
+                                populateCollection(collections.build, fileDiags);
+                            }
+                            // When empty: either the build succeeded (collection was
+                            // already cleared at build start), or the build ran through
+                            // the task path and diagnostics were populated by
+                            // CustomBuildTaskTerminal. In both cases leave the
+                            // collection as-is.
+                        } else {
+                            // Parsing disabled — clear any stale diagnostics that may
+                            // remain from a previous build that had parsing enabled.
+                            collections.build.clear();
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);
@@ -2279,18 +2514,16 @@ export class CMakeProject {
             return '';
         }
 
-        if (this.useCMakePresets && this.buildPreset?.targets) {
-            const targets = [this.targetsInPresetName];
-            targets.push(...(util.isString(this.buildPreset.targets) ? [this.buildPreset.targets] : this.buildPreset.targets));
-            const sel = await vscode.window.showQuickPick(targets, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
-            return sel || null;
-        }
-
         if (!drv.targets.length) {
             return await vscode.window.showInputBox({ prompt: localize('enter.target.name', 'Enter a target name') }) || null;
         } else {
             const folders: string[] = [];
             const itemsGroup: (RichTarget | NamedTarget | FolderTarget)[] = [];
+
+            // Add special "[Targets In Preset]" option when using presets with defined targets
+            if (this.useCMakePresets && this.buildPreset?.targets) {
+                itemsGroup.push({ type: 'named', name: this.targetsInPresetName });
+            }
 
             // group the data
             drv.uniqueTargets.forEach((t) => {
@@ -2384,6 +2617,22 @@ export class CMakeProject {
         return (await this.build()).exitCode;
     }
 
+    async cleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
+        const configureResult = (await this.cleanConfigure(trigger)).exitCode;
+        if (configureResult !== 0) {
+            return configureResult;
+        }
+        return (await this.build()).exitCode;
+    }
+
+    async fullCleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
+        const configureResult = (await this.fullCleanConfigure(trigger)).exitCode;
+        if (configureResult !== 0) {
+            return configureResult;
+        }
+        return (await this.build()).exitCode;
+    }
+
     public async runCTestCustomized(driver: CMakeDriver, testPreset?: preset.TestPreset, consumer?: proc.CommandConsumer) {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
@@ -2441,6 +2690,89 @@ export class CMakeProject {
     async refreshTests(): Promise<number> {
         const drv = await this.preTest();
         return this.cTestController.refreshTests(drv);
+    }
+
+    async runTest(testName: string): Promise<CommandResult> {
+        return this.ctest(false, undefined, [testName]);
+    }
+
+    async debugCTest(testName: string): Promise<vscode.DebugSession | null> {
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            void vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
+            return null;
+        }
+
+        const testInfo = this.cTestController.getTestInfo(testName);
+        if (!testInfo) {
+            log.error(localize('test.not.found', 'Test not found: {0}', testName));
+            return null;
+        }
+
+        const target: ExecutableTarget = {
+            name: testName,
+            path: testInfo.program
+        };
+
+        let debugConfig;
+        const userConfig = this.workspaceContext.config.debugConfig;
+        if (userConfig?.type) {
+            // User specified a custom debug adapter type — skip auto-detection
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
+            debugConfig = {
+                type: userConfig.type,
+                name: `Debug ${testName}`,
+                request: 'launch',
+                program: testInfo.program,
+                cwd: path.dirname(testInfo.program),
+                args: [] as string[]
+            };
+            Object.assign(debugConfig, userConfig);
+        } else {
+            try {
+                const cache = await CMakeCache.fromPath(drv.cachePath);
+                debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, target, process.platform,
+                    userConfig?.MIMode,
+                    userConfig?.miDebuggerPath);
+            } catch (error: any) {
+                void vscode.window
+                    .showErrorMessage(error.message, {
+                        title: localize('debugging.documentation.button', 'Debugging documentation'),
+                        isLearnMore: true
+                    })
+                    .then(item => {
+                        if (item && item.isLearnMore) {
+                            open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+                        }
+                    });
+                return null;
+            }
+
+            if (debugConfig === null) {
+                log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
+                void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
+                return null;
+            }
+
+            // Add debug configuration from settings
+            Object.assign(debugConfig, userConfig);
+        }
+
+        // Add test arguments and working directory
+        debugConfig.args = testInfo.args;
+        if (testInfo.workingDirectory) {
+            debugConfig.cwd = testInfo.workingDirectory;
+        }
+
+        // Merge CTest ENVIRONMENT properties into the debug environment
+        const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
+        const combinedEnvVars = [...testEnvVars, ...(debugConfig.environment ?? [])];
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, combinedEnvVars);
+        debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
+
+        await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
+        return vscode.debug.activeDebugSession!;
     }
 
     addTestExplorerRoot(folder: string) {
@@ -2562,9 +2894,29 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.selectLaunchTarget`
+     * When cmake.setBuildTargetSameAsLaunchTarget is true, delegates to
+     * selectBuildAndLaunchTarget so the build target is also updated.
      */
     async selectLaunchTarget(name?: string): Promise<string | null> {
+        if (this.workspaceContext.config.setBuildTargetSameAsLaunchTarget) {
+            return this.selectBuildAndLaunchTarget(name);
+        }
         return this.setLaunchTargetByName(name);
+    }
+
+    /**
+     * Implementation of `cmake.selectBuildAndLaunchTarget`
+     * Sets both the build target and the launch/debug target simultaneously.
+     */
+    async selectBuildAndLaunchTarget(name?: string): Promise<string | null> {
+        const result = await this.setLaunchTargetByName(name);
+        if (result !== null) {
+            const launchTargetName = this._launchTargetName.value;
+            if (launchTargetName) {
+                await this.setDefaultBuildTarget(launchTargetName);
+            }
+        }
+        return result;
     }
 
     /**
@@ -2582,8 +2934,7 @@ export class CMakeProject {
             return null;
         } if (executableTargets.length === 1) {
             const target = executableTargets[0];
-            await this.workspaceContext.state.setLaunchTargetName(this.folderName, target.name, this.isMultiProjectFolder);
-            this._launchTargetName.set(target.name);
+            await this.setLaunchTargetName(target.name);
             return target.path;
         }
 
@@ -2601,9 +2952,13 @@ export class CMakeProject {
         if (!chosen) {
             return null;
         }
-        await this.workspaceContext.state.setLaunchTargetName(this.folderName, chosen.label, this.isMultiProjectFolder);
-        this._launchTargetName.set(chosen.label);
+        await this.setLaunchTargetName(chosen.label);
         return chosen.detail;
+    }
+
+    private async setLaunchTargetName(name: string) {
+        await this.workspaceContext.state.setLaunchTargetName(this.folderName, name, this.isMultiProjectFolder);
+        this._launchTargetName.set(name);
     }
 
     async getCurrentLaunchTarget(): Promise<ExecutableTarget | null> {
@@ -2618,9 +2973,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetPath`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetPath(): Promise<string | null> {
-        const executable = await this.prepareLaunchTargetExecutable();
+    async launchTargetPath(name?: string): Promise<string | null> {
+        const executable = await this.prepareLaunchTargetExecutable(name);
         if (!executable) {
             log.showChannel();
             log.warning('=======================================================');
@@ -2635,9 +2991,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetDirectory`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetDirectory(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetDirectory(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2646,9 +3003,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetFilename`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetFilename(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetFilename(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2657,9 +3015,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.launchTargetName`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetNameForSubstitution(): Promise<string | null> {
-        const targetPath = await this.launchTargetPath();
+    async launchTargetNameForSubstitution(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2668,15 +3027,21 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetPath`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetPath(): Promise<string | null> {
+    async getLaunchTargetPath(name?: string): Promise<string | null> {
         if (await this.needsReconfigure()) {
             const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
             if (rc.exitCode !== 0) {
                 return null;
             }
         }
-        const target = await this.getOrSelectLaunchTarget();
+        let target: ExecutableTarget | null;
+        if (name) {
+            target = (await this.executableTargets).find(e => e.name === name) || null;
+        } else {
+            target = await this.getOrSelectLaunchTarget();
+        }
         if (!target) {
             log.showChannel();
             log.warning('=======================================================');
@@ -2692,9 +3057,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetDirectory`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetDirectory(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetDirectory(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2703,9 +3069,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetFilename`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetFilename(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetFilename(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2714,9 +3081,10 @@ export class CMakeProject {
 
     /**
      * Implementation of `cmake.getLaunchTargetName`. This does not ensure the target exists.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async getLaunchTargetName(): Promise<string | null> {
-        const targetPath = await this.getLaunchTargetPath();
+    async getLaunchTargetName(name?: string): Promise<string | null> {
+        const targetPath = await this.getLaunchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -2797,7 +3165,25 @@ export class CMakeProject {
     }
 
     async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+        // Return cached result for named targets to avoid duplicate builds when
+        // multiple ${input:...} variables resolve the same target in quick succession.
+        if (name) {
+            const cached = this._prepareCache.get(name);
+            if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
+                && await fs.exists(cached.result.path)) {
+                return cached.result;
+            }
+        }
+
         let chosen: ExecutableTarget;
+
+        // Save dirty editors and refresh presets from disk before checking whether
+        // reconfiguration is needed.  This mirrors the logic in ensureConfigured()
+        // and doConfigure() so that unsaved changes to included preset files are
+        // picked up for debug/launch paths as well (see #4502).
+        if (!await this.maybeAutoSaveAll()) {
+            return null;
+        }
 
         // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
         // executable targets and may show an uneccessary prompt to the user
@@ -2847,6 +3233,12 @@ export class CMakeProject {
             }
 
         }
+
+        // Cache the result for named targets
+        if (name) {
+            this._prepareCache.set(name, { timestamp: Date.now(), result: chosen });
+        }
+
         return chosen;
     }
 
@@ -2936,36 +3328,52 @@ export class CMakeProject {
         }
 
         let debugConfig;
-        try {
-            const cache = await CMakeCache.fromPath(drv.cachePath);
-            debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
-                this.workspaceContext.config.debugConfig?.MIMode,
-                this.workspaceContext.config.debugConfig?.miDebuggerPath);
-            log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debugConfig)));
-        } catch (error: any) {
-            void vscode.window
-                .showErrorMessage(error.message, {
-                    title: localize('debugging.documentation.button', 'Debugging documentation'),
-                    isLearnMore: true
-                })
-                .then(item => {
-                    if (item && item.isLearnMore) {
-                        open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
-                    }
-                });
-            log.debug(localize('problem.getting.debug', 'Problem getting debug configuration from cache.'), error);
-            return null;
-        }
-
-        if (debugConfig === null) {
-            log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
-            void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
-            return null;
-        }
-
-        // Add debug configuration from settings.
         const userConfig = this.workspaceContext.config.debugConfig;
-        Object.assign(debugConfig, userConfig);
+        if (userConfig?.type) {
+            // User specified a custom debug adapter type — skip auto-detection
+            // and build a minimal base config from the target. Properties from
+            // userConfig are merged on top, so any base property can be overridden.
+            debugConfig = {
+                type: userConfig.type,
+                name: `Debug ${targetExecutable.name}`,
+                request: 'launch',
+                program: targetExecutable.path,
+                cwd: targetExecutable.debuggerWorkingDirectory || path.dirname(targetExecutable.path),
+                args: [] as string[]
+            };
+            Object.assign(debugConfig, userConfig);
+            log.debug(localize('debug.configuration.from.settings', 'Debug configuration from user settings: {0}', JSON.stringify(debugConfig)));
+        } else {
+            try {
+                const cache = await CMakeCache.fromPath(drv.cachePath);
+                debugConfig = await debuggerModule.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
+                    userConfig?.MIMode,
+                    userConfig?.miDebuggerPath);
+                log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debugConfig)));
+            } catch (error: any) {
+                void vscode.window
+                    .showErrorMessage(error.message, {
+                        title: localize('debugging.documentation.button', 'Debugging documentation'),
+                        isLearnMore: true
+                    })
+                    .then(item => {
+                        if (item && item.isLearnMore) {
+                            open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+                        }
+                    });
+                log.debug(localize('problem.getting.debug', 'Problem getting debug configuration from cache.'), error);
+                return null;
+            }
+
+            if (debugConfig === null) {
+                log.error(localize('failed.to.generate.debugger.configuration', 'Failed to generate debugger configuration'));
+                void vscode.window.showErrorMessage(localize('unable.to.generate.debugging.configuration', 'Unable to generate a debugging configuration.'));
+                return null;
+            }
+
+            // Add debug configuration from settings.
+            Object.assign(debugConfig, userConfig);
+        }
 
         const launchEnv = await this.getTargetLaunchEnvironment(drv, debugConfig.environment);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);

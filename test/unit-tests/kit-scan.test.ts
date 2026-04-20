@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
+import chaiAsPromised = require('chai-as-promised');
 import * as path from 'path';
 
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
 import * as kit from '@cmt/kits/kit';
+import { shouldKeepUserKitAfterScan } from '@cmt/kits/kitsController';
 import * as triple from '@cmt/triple';
 import { fs } from '@cmt/pr';
 
@@ -34,6 +35,10 @@ suite('Kits scan test', () => {
     async function disableMingwMake() {
         await fs.rename(mingwMakePath, mingwMakePathBackup);
     }
+
+    suiteSetup(function () {
+        expect(fakebin).to.satisfy(fs.existsSync, `${fakebin} not found. Run 'yarn pretest-buildfakebin'.`);
+    });
 
     teardown(async () => {
         if (await fs.exists(mingwMakePathBackup)) {
@@ -233,5 +238,333 @@ suite('Kits scan test', () => {
                 'GCC 6.3.0 x86_64-w64-mingw32'
             ]);
         }).timeout(10000);
+    });
+
+    suite('getKitDetect vendor detection from binary path', () => {
+        test('Detect ClangCl vendor from clang-cl binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: 'C:/path/to/clang-cl.exe',
+                    CXX: 'C:/path/to/clang-cl.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            // Name doesn't match known prefixes, so vendor is detected from binary path
+            expect(detect.vendor).to.eq('ClangCl');
+        });
+
+        test('Detect Clang vendor from clang binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/clang',
+                    CXX: '/usr/bin/clang++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect GCC vendor from gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/gcc',
+                    CXX: '/usr/bin/g++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect GCC vendor from versioned gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/gcc-11',
+                    CXX: '/usr/bin/g++-11'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect Clang vendor from versioned clang binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/clang-14',
+                    CXX: '/usr/bin/clang++-14'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect ClangCl vendor from versioned clang-cl binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: 'C:/LLVM/bin/clang-cl-14.exe',
+                    CXX: 'C:/LLVM/bin/clang-cl-14.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('ClangCl');
+        });
+
+        test('Detect GCC vendor from cross-compiler gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/opt/toolchain/arm-linux-gnueabihf-gcc',
+                    CXX: '/opt/toolchain/arm-linux-gnueabihf-g++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect GCC vendor from versioned cross-compiler gcc binary path', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/opt/toolchain/arm-linux-gnueabihf-gcc-12',
+                    CXX: '/opt/toolchain/arm-linux-gnueabihf-g++-12'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Do not falsely detect GCC from unrelated binary with gcc in name', async () => {
+            const testKit: kit.Kit = {
+                name: 'Custom Kit Name',
+                compilers: {
+                    C: '/usr/bin/not-gcc-related',
+                    CXX: '/usr/bin/not-gcc-related'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.be.undefined;
+        });
+
+        test('Return original kit when vendor cannot be detected', async () => {
+            const testKit: kit.Kit = {
+                name: 'Unknown Kit',
+                compilers: {
+                    C: '/usr/bin/unknown-compiler',
+                    CXX: '/usr/bin/unknown-compiler++'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.be.undefined;
+        });
+    });
+
+    suite('VS Generator mapping', () => {
+        test('returns correct generator for VS 2022', () => {
+            expect(kit.vsGeneratorForVersion('17')).to.eq('Visual Studio 17 2022');
+        });
+
+        test('returns correct generator for VS 2026', () => {
+            expect(kit.vsGeneratorForVersion('18')).to.eq('Visual Studio 18 2026');
+        });
+
+        test('returns correct generator for VS 2019', () => {
+            expect(kit.vsGeneratorForVersion('16')).to.eq('Visual Studio 16 2019');
+        });
+
+        test('returns undefined for unknown version', () => {
+            expect(kit.vsGeneratorForVersion('99')).to.be.undefined;
+        });
+
+        test('returns correct generator for legacy VS120COMNTOOLS', () => {
+            expect(kit.vsGeneratorForVersion('VS120COMNTOOLS')).to.eq('Visual Studio 12 2013');
+        });
+    });
+
+    suite('determineScanForKitsAction', () => {
+        // Regression tests for https://github.com/microsoft/vscode-cmake-tools/issues/4726
+        // Validates that:
+        // 1. enableAutomaticKitScan: false suppresses the version migration scan
+        // 2. Concurrent scan guard prevents redundant scans in multi-project workspaces
+
+        const CURRENT_VERSION = 2;
+
+        test('returns scan when version mismatch and scanning enabled', () => {
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('scan');
+        });
+
+        test('returns scan when saved version is older', () => {
+            const action = kit.determineScanForKitsAction(
+                1, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('scan');
+        });
+
+        test('returns skip-and-update-version when enableAutomaticKitScan is false (issue #4726)', () => {
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/false,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('skip-and-update-version');
+        });
+
+        test('returns skip-and-update-version when enableAutomaticKitScan is false and version is older', () => {
+            const action = kit.determineScanForKitsAction(
+                1, CURRENT_VERSION, /*enableAutomaticKitScan=*/false,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('skip-and-update-version');
+        });
+
+        test('returns no-action when version is current', () => {
+            const action = kit.determineScanForKitsAction(
+                CURRENT_VERSION, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('no-action');
+        });
+
+        test('returns no-action in test mode even with version mismatch', () => {
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/true);
+            expect(action).to.eq('no-action');
+        });
+
+        test('returns blocked-by-concurrent when scan is already in progress (issue #4726 race condition)', () => {
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/true, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('blocked-by-concurrent');
+        });
+
+        test('returns blocked-by-concurrent when KitsController is already scanning', () => {
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/true, /*isTestMode=*/false);
+            expect(action).to.eq('blocked-by-concurrent');
+        });
+
+        test('concurrent guard takes priority over enableAutomaticKitScan check', () => {
+            // Even with scanning disabled, if a concurrent scan is in progress,
+            // the function should return blocked-by-concurrent (not skip-and-update-version)
+            // to avoid multiple callers racing on the globalState update.
+            const action = kit.determineScanForKitsAction(
+                undefined, CURRENT_VERSION, /*enableAutomaticKitScan=*/false,
+                /*isScanInProgress=*/true, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('blocked-by-concurrent');
+        });
+
+        test('returns no-action when version is current and scanning disabled', () => {
+            const action = kit.determineScanForKitsAction(
+                CURRENT_VERSION, CURRENT_VERSION, /*enableAutomaticKitScan=*/false,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('no-action');
+        });
+
+        test('returns scan when saved version is 0 (falsy value triggers version mismatch)', () => {
+            // kitsVersionSaved=0 is falsy, so (!kitsVersionSaved) is true,
+            // triggering the scan path. This ensures the function handles
+            // edge cases around falsy version numbers correctly.
+            const action = kit.determineScanForKitsAction(
+                0, CURRENT_VERSION, /*enableAutomaticKitScan=*/true,
+                /*isScanInProgress=*/false, /*isAlreadyScanning=*/false, /*isTestMode=*/false);
+            expect(action).to.eq('scan');
+        });
+    });
+
+    suite('shouldKeepUserKitAfterScan', () => {
+        test('preserves compiler kits when stale-kit cleanup is disabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'My Custom GCC',
+                compilers: { C: 'C:/toolchains/gcc.exe' },
+                isTrusted: true
+            };
+
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), false)).to.be.true;
+        });
+
+        test('drops compiler kits not rediscovered when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Old GCC',
+                compilers: { C: 'gcc' },
+                isTrusted: true
+            };
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.false;
+        });
+
+        test('preserves keep:true compiler kits when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Pinned GCC',
+                compilers: { C: 'gcc' },
+                keep: true,
+                isTrusted: true
+            };
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
+        });
+
+        test('preserves non-compiler kits when stale-kit cleanup is enabled', () => {
+            const existingKit: kit.Kit = {
+                name: 'Toolchain only',
+                toolchainFile: 'toolchain.cmake',
+                isTrusted: true
+            };
+            expect(shouldKeepUserKitAfterScan(existingKit, new Set<string>(), true)).to.be.true;
+        });
+    });
+
+    suite('getKitDetect vendor detection from kit name', () => {
+        test('Detect GCC vendor from kit name starting with GCC', async () => {
+            const testKit: kit.Kit = {
+                name: 'GCC 12.2.0 x86_64-linux-gnu',
+                compilers: {
+                    C: '/usr/bin/gcc-12',
+                    CXX: '/usr/bin/g++-12'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('GCC');
+        });
+
+        test('Detect Clang vendor from kit name starting with Clang', async () => {
+            const testKit: kit.Kit = {
+                name: 'Clang 14.0.0 x86_64-pc-linux-gnu',
+                compilers: {
+                    C: '/usr/bin/clang-14',
+                    CXX: '/usr/bin/clang++-14'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('Clang');
+        });
+
+        test('Detect ClangCl vendor from kit name starting with Clang-cl', async () => {
+            const testKit: kit.Kit = {
+                name: 'Clang-cl 14.0.0 (MSVC CLI)',
+                compilers: {
+                    C: 'C:/LLVM/bin/clang-cl.exe',
+                    CXX: 'C:/LLVM/bin/clang-cl.exe'
+                },
+                isTrusted: false
+            };
+            const detect = await kit.getKitDetect(testKit);
+            expect(detect.vendor).to.eq('ClangCl');
+        });
     });
 });

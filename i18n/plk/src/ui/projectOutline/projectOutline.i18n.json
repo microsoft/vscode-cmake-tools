@@ -13,6 +13,7 @@
 	"edit.filter": "Edytuj filtr",
 	"open.file": "Otwórz plik",
 	"references": "Odwołania",
+	"test.tooltip": "Test: {0}",
 	"static.library": "Biblioteka statyczna",
 	"module.library": "Biblioteka modułów",
 	"shared.library": "Biblioteka współdzielona",
