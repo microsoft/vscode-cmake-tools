@@ -1889,7 +1889,9 @@ export class CTestDriver implements vscode.Disposable {
         if (test.children.size > 0) {
             const children = this.testItemCollectionToArray(test.children);
             for (const child of children) {
-                await this.getTestTargets(child, foundTarget, run);
+                if (!await this.getTestTargets(child, foundTarget, run)) {
+                    return false;
+                }
             }
         } else {
             const testProgram = this.testProgram(test.id);
