@@ -1921,7 +1921,7 @@ export class CTestDriver implements vscode.Disposable {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
             const execTargets = await project.executableTargets;
-            const accmulatedTestList: vscode.TestItem[] = [];
+            const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
             for  (const [targetPath, testList] of targets) {
@@ -1930,7 +1930,7 @@ export class CTestDriver implements vscode.Disposable {
                 const normalizedTargetPath = util.platformNormalizePath(targetPath);
                 const execTarget = execTargets.find(t => util.platformNormalizePath(t.path) === normalizedTargetPath);
                 accumulatedTargets.push(execTarget ? execTarget.name : path.parse(targetPath).name);
-                accmulatedTestList.push(...testList);
+                accumulatedTestList.push(...testList);
             }
             try {
                 if (extensionManager !== undefined && extensionManager !== null) {
@@ -1945,7 +1945,7 @@ export class CTestDriver implements vscode.Disposable {
             }
             if (!success) {
                 overallSuccess = false;
-                accmulatedTestList.forEach(test => {
+                accumulatedTestList.forEach(test => {
                     this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
                 });
             }
