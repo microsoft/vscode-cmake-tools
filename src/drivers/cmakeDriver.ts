@@ -148,6 +148,18 @@ export interface InstallPath {
  *
  * This class defines the basis for what a driver must implement to work.
  */
+/**
+ * Compare a new generator name against a cached CMAKE_GENERATOR value.
+ * Returns true when both are defined and differ (i.e. a mismatch that needs cleaning).
+ * Pure function — no I/O — exported for direct unit testing.
+ */
+export function generatorMismatch(newGeneratorName: string | undefined, cachedGeneratorValue: string | undefined): boolean {
+    if (!newGeneratorName || !cachedGeneratorValue) {
+        return false;
+    }
+    return cachedGeneratorValue !== newGeneratorName;
+}
+
 export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Do the configuration process for the current project.
@@ -635,8 +647,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         const cache = await CMakeCache.fromPath(cachePath);
         const cachedGenerator = cache.get('CMAKE_GENERATOR');
-        if (cachedGenerator && cachedGenerator.value !== newGeneratorName) {
-            log.info(localize('generator.changed', 'Generator changed from {0} to {1}; cleaning prior configuration', cachedGenerator.value, newGeneratorName));
+        if (generatorMismatch(newGeneratorName, cachedGenerator?.value)) {
+            log.info(localize('generator.changed', 'Generator changed from {0} to {1}; cleaning prior configuration', cachedGenerator!.value, newGeneratorName));
             return true;
         }
         return false;
@@ -1629,6 +1641,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
             if (!pre_check_ok) {
                 return { exitCode: -2, resultType: ConfigureResultType.Other };
+            }
+
+            // Safety net for the kits/variants path: if a setting change
+            // (cmake.generator / cmake.preferredGenerators) reloaded the driver
+            // without going through setKit(), the cached CMAKE_GENERATOR may
+            // differ from this._generator. Clean the prior configuration here
+            // so CMake doesn't fail with a "generator changed" error.
+            // Presets handle this in setConfigurePreset via configurePresetChangeNeedsClean.
+            if (!this.useCMakePresets
+                && !showCommandOnly
+                && !shouldUseCachedConfiguration
+                && trigger !== ConfigureTrigger.configureWithCache
+                && await this._hasGeneratorChanged(this._generator?.name)) {
+                await this._cleanPriorConfiguration();
             }
 
             let expanded_flags: string[];

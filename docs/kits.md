@@ -150,13 +150,13 @@ The following additional options may be specified:
 
 > The CMake generator to use with this kit if not the default. For Visual Studio kits, this is set during [kit scanning](#scan-for-kits) based on the VS version. When picking a generator, CMake Tools checks these in order:
 >
-> 1. `cmake.generator` from your settings (wins over everything else)
-> 2. `cmake.preferredGenerators` from your settings
-> 3. The kit's `preferredGenerator` (set at scan time for VS kits)
-> 4. Fallback: Ninja, then Unix Makefiles
-> 5. For VS kits without `preferredGenerator`: the derived VS generator (last-resort fallback)
+> 1. `cmake.generator` from your settings — if set, this wins outright; nothing below is consulted.
+> 2. The kit's `preferredGenerator` (set at scan time for VS kits).
+> 3. `cmake.preferredGenerators` from your settings, in order.
+> 4. `Ninja`, then `Unix Makefiles` — only consulted when neither #2 nor #3 produced any candidate (i.e. the kit has no `preferredGenerator` and `cmake.preferredGenerators` is empty).
+> 5. For VS kits that have no `preferredGenerator` of their own: the VS generator derived at runtime from the kit's VS version — pushed to the end of the candidate list, so it's tried after the Ninja/Unix Makefiles fallback when both apply.
 >
-> If a VS kit was scanned before the VS version mapping existed, CMake Tools derives the correct generator at runtime but only as a last resort — Ninja and Unix Makefiles are tried first. To use the VS generator by default, re-run **Scan for Kits** or set `cmake.generator` in your settings.
+> If a VS kit was scanned before the VS version mapping existed, CMake Tools derives the correct generator at runtime (#5) — but only after Ninja and Unix Makefiles. To make the VS generator the unconditional choice, either re-run **Scan for Kits** so the kit gets its own `preferredGenerator`, or set `cmake.generator` in your settings.
 
 `cmakeSettings`
 
