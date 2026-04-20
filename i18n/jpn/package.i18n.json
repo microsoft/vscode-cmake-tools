@@ -193,7 +193,7 @@
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "設定されている場合、この名前付きタスクは、CMake の構成が成功した後に実行されます。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake プロジェクト ディレクトリを開いたときに自動的に構成します。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory または CMakeLists.txt のコンテンツの保存時に、CMake プロジェクトのディレクトリを自動的に構成します。",
-	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "List of VS Code extension IDs that provide or install their own CMake binary. When CMake is not found during automatic configure-on-open and one of these extensions is installed, CMake Tools will briefly poll for CMake availability instead of showing an immediate error. Set to an empty array to disable this behavior.",
+	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "独自の CMake バイナリを提供またはインストールする VS Code 拡張機能の ID 一覧です。「開くときに構成」の実行中に CMake が見つからず、これらの拡張機能のいずれかがインストールされている場合、CMake Tools は即時にエラーを表示するのではなく、CMake の可用性を短期間ポーリングします。この動作を無効にするには、空の配列に設定してください。",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "クリーン構成が呼び出されたときに、ビルド ディレクトリ全体を削除します。",
 	"cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "マルチ構成ジェネレーターでも CMAKE_BUILD_TYPE を設定します。",
 	"cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "キャッシュが存在する場合は、構成プロセスをスキップします。",
