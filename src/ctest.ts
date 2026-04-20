@@ -1923,15 +1923,17 @@ export class CTestDriver implements vscode.Disposable {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
             const execTargets = await project.executableTargets;
+            // Precompute a lookup map from normalized executable path to target name
+            const execPathToName = new Map<string, string>();
+            for (const t of execTargets) {
+                execPathToName.set(util.platformNormalizePath(t.path), t.name);
+            }
             const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
-            for  (const [targetPath, testList] of targets) {
-                // Look up the CMake target name from executable targets by matching
-                // the executable path. Using path.relative() uses the executable instead of the target name
+            for (const [targetPath, testList] of targets) {
                 const normalizedTargetPath = util.platformNormalizePath(targetPath);
-                const execTarget = execTargets.find(t => util.platformNormalizePath(t.path) === normalizedTargetPath);
-                accumulatedTargets.push(execTarget ? execTarget.name : path.parse(targetPath).name);
+                accumulatedTargets.push(execPathToName.get(normalizedTargetPath) ?? path.parse(targetPath).name);
                 accumulatedTestList.push(...testList);
             }
             try {
