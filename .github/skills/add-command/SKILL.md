@@ -100,7 +100,7 @@ For titles containing the product name, use the object form with a translator co
 
 ## Step 3 — Register the command in `src/extension.ts`
 
-Add the method name to the `funs` array (around line 2458). The `register()` helper
+Add the method name to the `funs` array (search for `const funs:` near the end of the file). The `register()` helper
 auto-generates the command ID `cmake.<name>`, wraps it with debug logging, and hands
 the promise to `rollbar.takePromise()` for error tracking.
 
@@ -112,7 +112,7 @@ const funs: (keyof ExtensionManager)[] = [
 ];
 ```
 
-That's it — no manual `registerCommand` call needed. The loop at line 2578 handles it:
+That's it — no manual `registerCommand` call needed. The loop that follows handles registration automatically:
 
 ```typescript
 for (const key of funs) {

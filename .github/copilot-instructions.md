@@ -157,7 +157,9 @@ One entry under the current version in `CHANGELOG.md`, in the appropriate sectio
 
 Currently registered: gcc, gnuld, ghs, diab, msvc, iar, iwyu. Default-enabled: cmake, gcc, gnuld, msvc, ghs, diab.
 
-### Copilot CI environment
+### Copilot CI environment (agent-only)
+
+> **This section applies to the Copilot coding agent, not human contributors.**
 
 In the Copilot agent CI environment, `.npmrc` is renamed to `.npmrc.bak` and `yarn.lock` registry URLs are patched to use the public npm registry. These are environment artifacts:
 - **Never commit** `.npmrc.bak` or the patched `yarn.lock`
