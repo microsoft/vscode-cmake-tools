@@ -4,6 +4,7 @@
 
 Features:
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
+- Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Bug Fixes:
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
@@ -20,7 +21,6 @@ Features:
 - Add "Delete Build Directory and Reconfigure" command that removes the entire build directory before reconfiguring, ensuring a completely clean state. [#4826](https://github.com/microsoft/vscode-cmake-tools/pull/4826)
 - Add `cmake.shell` setting to route CMake/CTest/CPack subprocess invocations through a custom shell (e.g., Git Bash, MSYS2), enabling embedded toolchains that require POSIX path translation on Windows. [#1750](https://github.com/microsoft/vscode-cmake-tools/issues/1750)
 - triple: Add riscv32be riscv64be support. [#4648](https://github.com/microsoft/vscode-cmake-tools/pull/4648) [@lygstate](https://github.com/lygstate)
-- Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 - Add command to clear build diagnostics from the Problems pane. [#4691](https://github.com/microsoft/vscode-cmake-tools/pull/4691)
 - Clear build diagnostics from the Problems pane when a new build starts and populate them incrementally during the build. [#4608](https://github.com/microsoft/vscode-cmake-tools/issues/4608)
 - Add individual CTest test nodes to the Project Outline with inline run/debug buttons, and enable debugging tests from both the Outline and Test Explorer without requiring a launch.json. [#4721](https://github.com/microsoft/vscode-cmake-tools/pull/4721)

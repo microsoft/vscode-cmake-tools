@@ -30,6 +30,7 @@ import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 import { expect } from '@test/util';
 import * as path from 'path';
+import * as sinon from 'sinon';
 
 suite('Utils test', () => {
     test('Split path into elements', () => {
@@ -118,6 +119,36 @@ suite('expandExcludePath tests', () => {
         const folderPath = folder.uri.fsPath;
         const expected = util.lightNormalizePath(path.join(folderPath, '..', 'other'));
         expect(result).to.eq(expected);
+    });
+
+    test('Expand ${workspaceFolder:name} when named folder exists', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const otherBasePath = process.platform === 'win32' ? 'C:\\Projects\\OtherProject' : '/home/user/projects/otherproject';
+        const otherFolder = createMockWorkspaceFolder(otherBasePath, 'OtherProject');
+
+        const stub = sinon.stub(vscode.workspace, 'workspaceFolders').value([folder, otherFolder]);
+        try {
+            const result = util.expandExcludePath('${workspaceFolder:OtherProject}/subdir', folder);
+            const expected = util.lightNormalizePath(path.join(otherFolder.uri.fsPath, 'subdir'));
+            expect(result).to.eq(expected);
+        } finally {
+            stub.restore();
+        }
+    });
+
+    test('Expand ${workspaceFolder:name} is case-insensitive', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const otherBasePath = process.platform === 'win32' ? 'C:\\Projects\\OtherProject' : '/home/user/projects/otherproject';
+        const otherFolder = createMockWorkspaceFolder(otherBasePath, 'OtherProject');
+
+        const stub = sinon.stub(vscode.workspace, 'workspaceFolders').value([folder, otherFolder]);
+        try {
+            const result = util.expandExcludePath('${workspaceFolder:otherproject}/subdir', folder);
+            const expected = util.lightNormalizePath(path.join(otherFolder.uri.fsPath, 'subdir'));
+            expect(result).to.eq(expected);
+        } finally {
+            stub.restore();
+        }
     });
 
     test('${workspaceFolder:name} fallback when folder name not found', () => {
