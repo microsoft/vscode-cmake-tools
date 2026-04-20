@@ -1895,6 +1895,10 @@ export class CTestDriver implements vscode.Disposable {
             }
         } else {
             const testProgram = this.testProgram(test.id);
+            if (!testProgram) {
+                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
+                return false;
+            }
             const folder = this.getTestRootFolder(test);
             const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
