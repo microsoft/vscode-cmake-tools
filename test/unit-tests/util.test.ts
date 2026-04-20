@@ -1,5 +1,12 @@
+/**
+ * Unit tests for utility functions in util.ts
+ */
+
 import * as util from '@cmt/util';
+import * as vscode from 'vscode';
 import { expect } from '@test/util';
+import * as path from 'path';
+import * as sinon from 'sinon';
 
 suite('Utils test', () => {
     test('Split path into elements', () => {
@@ -27,5 +34,134 @@ suite('Utils test', () => {
         for (const test of tests) {
             expect(util.msToString(test[0])).to.eq(test[1]);
         }
+    });
+});
+
+// Shared test helper for creating mock workspace folders
+function createMockWorkspaceFolder(fsPath: string, name: string): vscode.WorkspaceFolder {
+    return {
+        uri: vscode.Uri.file(fsPath),
+        name: name,
+        index: 0
+    };
+}
+
+// Test base path that works on both Windows and Unix
+const testBasePath = process.platform === 'win32' ? 'C:\\Projects\\MyProject' : '/home/user/projects/myproject';
+
+suite('expandExcludePath tests', () => {
+    // Helper to get expected path using the same normalization as the code under test
+    // The expandExcludePath function uses lightNormalizePath which converts backslashes to forward slashes
+    // and vscode.Uri.file().fsPath may return lowercase drive letters on Windows
+    function getExpectedPath(...segments: string[]): string {
+        const folder = createMockWorkspaceFolder(segments[0], 'test');
+        return util.lightNormalizePath(path.join(...segments.map(s => s === segments[0] ? folder.uri.fsPath : s)));
+    }
+
+    test('Expand ${workspaceFolder} variable', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const result = util.expandExcludePath('${workspaceFolder}/subdir', folder);
+        const expected = getExpectedPath(testBasePath, 'subdir');
+        expect(result).to.eq(expected);
+    });
+
+    test('Expand multiple ${workspaceFolder} variables', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const result = util.expandExcludePath('${workspaceFolder}/foo/${workspaceFolder}/bar', folder);
+        // For this case, we need to manually construct the expected path since it contains testBasePath twice
+        const folderPath = folder.uri.fsPath;
+        const expected = util.lightNormalizePath(path.join(folderPath, 'foo', folderPath, 'bar'));
+        expect(result).to.eq(expected);
+    });
+
+    test('Resolve relative path', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const result = util.expandExcludePath('subdir/nested', folder);
+        const expected = getExpectedPath(testBasePath, 'subdir', 'nested');
+        expect(result).to.eq(expected);
+    });
+
+    test('Absolute path remains unchanged', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const absolutePath = process.platform === 'win32' ? 'D:\\Other\\Path' : '/other/path';
+        const result = util.expandExcludePath(absolutePath, folder);
+        const expected = util.lightNormalizePath(absolutePath);
+        expect(result).to.eq(expected);
+    });
+
+    test('Expand ${workspaceFolder} and resolve relative path', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const result = util.expandExcludePath('${workspaceFolder}/../other', folder);
+        const folderPath = folder.uri.fsPath;
+        const expected = util.lightNormalizePath(path.join(folderPath, '..', 'other'));
+        expect(result).to.eq(expected);
+    });
+
+    test('Expand ${workspaceFolder:name} when named folder exists', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const otherBasePath = process.platform === 'win32' ? 'C:\\Projects\\OtherProject' : '/home/user/projects/otherproject';
+        const otherFolder = createMockWorkspaceFolder(otherBasePath, 'OtherProject');
+
+        const stub = sinon.stub(vscode.workspace, 'workspaceFolders').value([folder, otherFolder]);
+        try {
+            const result = util.expandExcludePath('${workspaceFolder:OtherProject}/subdir', folder);
+            const expected = util.lightNormalizePath(path.join(otherFolder.uri.fsPath, 'subdir'));
+            expect(result).to.eq(expected);
+        } finally {
+            stub.restore();
+        }
+    });
+
+    test('Expand ${workspaceFolder:name} is case-insensitive', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const otherBasePath = process.platform === 'win32' ? 'C:\\Projects\\OtherProject' : '/home/user/projects/otherproject';
+        const otherFolder = createMockWorkspaceFolder(otherBasePath, 'OtherProject');
+
+        const stub = sinon.stub(vscode.workspace, 'workspaceFolders').value([folder, otherFolder]);
+        try {
+            const result = util.expandExcludePath('${workspaceFolder:otherproject}/subdir', folder);
+            const expected = util.lightNormalizePath(path.join(otherFolder.uri.fsPath, 'subdir'));
+            expect(result).to.eq(expected);
+        } finally {
+            stub.restore();
+        }
+    });
+
+    test('${workspaceFolder:name} fallback when folder name not found', () => {
+        // When ${workspaceFolder:name} references a folder that doesn't exist in the workspace,
+        // the variable should be left unchanged and then resolved as a relative path
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const input = '${workspaceFolder:NonExistentFolder}/subdir';
+        const result = util.expandExcludePath(input, folder);
+        // If vscode.workspace.workspaceFolders is empty or undefined, or if the folder is not found,
+        // the ${workspaceFolder:NonExistentFolder} variable is left as-is
+        // Then resolvePath treats it as a relative path segment
+        const folderPath = folder.uri.fsPath;
+        const expectedPath = util.lightNormalizePath(path.join(folderPath, '${workspaceFolder:NonExistentFolder}', 'subdir'));
+        expect(result).to.eq(expectedPath);
+    });
+});
+
+suite('expandExcludePaths tests', () => {
+    test('Expand multiple paths', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const paths = [
+            '${workspaceFolder}/subdir1',
+            'relative/path',
+            process.platform === 'win32' ? 'D:\\Absolute\\Path' : '/absolute/path'
+        ];
+        const results = util.expandExcludePaths(paths, folder);
+        const folderPath = folder.uri.fsPath;
+
+        expect(results).to.have.lengthOf(3);
+        expect(results[0]).to.eq(util.lightNormalizePath(path.join(folderPath, 'subdir1')));
+        expect(results[1]).to.eq(util.lightNormalizePath(path.join(folderPath, 'relative', 'path')));
+        expect(results[2]).to.eq(util.lightNormalizePath(process.platform === 'win32' ? 'D:\\Absolute\\Path' : '/absolute/path'));
+    });
+
+    test('Empty array returns empty array', () => {
+        const folder = createMockWorkspaceFolder(testBasePath, 'MyProject');
+        const results = util.expandExcludePaths([], folder);
+        expect(results).to.have.lengthOf(0);
     });
 });
