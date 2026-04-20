@@ -193,7 +193,7 @@
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "若設定，此具名工作將在成功執行 CMake 設定後執行。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "在儲存 cmake.sourceDirectory 或 CMakeLists.txt 內容後，自動設定 CMake 專案目錄。",
-	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "List of VS Code extension IDs that provide or install their own CMake binary. When CMake is not found during automatic configure-on-open and one of these extensions is installed, CMake Tools will briefly poll for CMake availability instead of showing an immediate error. Set to an empty array to disable this behavior.",
+	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "提供或安裝自己 CMake 二進位檔的 VS Code 延伸模組識別碼清單。如果在自動 configure-on-open 期間找不到 CMake，並且安裝了任一延伸模組，則 CMake Tools 將短暫地輪詢 CMake 的可用性，而不是立即顯示錯誤。設定為空陣列即可停用此行為。",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "叫用乾淨的設定時，請刪除整個組建目錄。",
 	"cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "也在多個組態產生器上設定 CMAKE_BUILD_TYPE。",
 	"cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "如果有快取，則跳過設定流程。",
