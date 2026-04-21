@@ -4,6 +4,7 @@
 
 Features:
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
+- Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Improvements:
 - When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)

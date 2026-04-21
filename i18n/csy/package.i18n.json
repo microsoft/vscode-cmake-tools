@@ -193,7 +193,7 @@
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Pokud je nastavená, tato pojmenovaná úloha se spustí po úspěšné konfiguraci CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automaticky nakonfigurovat adresáře projektu CMake, když se uloží obsah cmake.sourceDirectory nebo CMakeLists.txt",
-	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "List of VS Code extension IDs that provide or install their own CMake binary. When CMake is not found during automatic configure-on-open and one of these extensions is installed, CMake Tools will briefly poll for CMake availability instead of showing an immediate error. Set to an empty array to disable this behavior.",
+	"cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "Seznam ID rozšíření VS Code, která poskytují nebo nainstalují vlastní binární soubor CMake. Když se nástroj CMake během automatické konfigurace při otevření nenajde a nainstaluje se jedno z těchto rozšíření, nástroje CMake Tools se budou krátce dotazovat na dostupnost CMake, místo aby se zobrazila okamžitá chyba. Pokud chcete toto chování zakázat, nastavte prázdné pole.",
 	"cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Při vyvolání čisté konfigurace se odstraní celý adresář sestavení.",
 	"cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "Nastavte CMAKE_BUILD_TYPE i pro generátory více konfigurací.",
 	"cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Přeskočit proces konfigurace, pokud je k dispozici mezipaměť",
