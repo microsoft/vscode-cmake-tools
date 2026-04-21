@@ -7,9 +7,13 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Bug Fixes:
-- Fix `cmake.exportCompileCommandsFile` set to `false` still passing `-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=FALSE` instead of omitting the flag entirely, which caused CMake warnings for projects with `LANGUAGES NONE`. [#4893](https://github.com/microsoft/vscode-cmake-tools/issues/4893)
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
+
+## 1.23.52
+
+Bug Fixes:
+- Fix `cmake.exportCompileCommandsFile` set to `false` still passing `-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=FALSE` instead of omitting the flag entirely, which caused CMake warnings for projects with `LANGUAGES NONE`. [#4893](https://github.com/microsoft/vscode-cmake-tools/issues/4893)
 
 ## 1.23
 
