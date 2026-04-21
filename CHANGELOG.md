@@ -10,6 +10,11 @@ Bug Fixes:
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 
+## 1.23.51
+
+Bug Fixes:
+- Fix "Compile File" terminal closing immediately, hiding compilation output. The terminal now stays open until the user presses a key + Fix POSIX shell escape handling in `compile_commands.json` parsing so that escaped quotes (e.g., `\"`) are correctly interpreted when compiling single files. [#4896](https://github.com/microsoft/vscode-cmake-tools/issues/4896)
+
 ## 1.23
 
 Features:

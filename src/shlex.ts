@@ -5,6 +5,11 @@ export interface ShlexOptions {
 /**
  * Splits a string into an iterable of tokens, similar to how a shell would parse arguments.
  * Handles quoting and escaping according to the specified mode ('windows' or 'posix').
+ *
+ * In POSIX mode, backslash escapes the following character outside of quotes (the backslash
+ * is consumed). Inside double quotes, only $, `, ", \, and newline can be escaped.
+ * Inside single quotes, backslash has no special meaning.
+ *
  * @param str The string to split into tokens.
  * @param opt Optional options for splitting. If not provided, defaults to the platform-specific mode ('windows' or 'posix').
  * @returns An iterable of tokens.
@@ -18,20 +23,39 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     const escapeChars = '\\';
     let escapeChar: string | undefined;
     let token: string[] = [];
-    let isSubQuote: boolean = false;
+    let quoteChar: string | undefined;  // Track which quote character we're inside (for POSIX)
 
     for (let i = 0; i < str.length; ++i) {
         const char = str.charAt(i);
 
         if (escapeChar) {
             if (char === '\n') {
-                // Do nothing
-            } else if (escapeChars.includes(char)) {
-                token.push(char);
+                // Line continuation: consume both backslash and newline
+            } else if (opt.mode === 'posix') {
+                // POSIX escape handling
+                if (quoteChar === "'") {
+                    // Inside single quotes: backslash has no special meaning
+                    token.push(escapeChar, char);
+                } else if (quoteChar === '"') {
+                    // Inside double quotes: only certain chars can be escaped
+                    // $, `, ", \, and newline
+                    if (char === '$' || char === '`' || char === '"' || char === '\\') {
+                        token.push(char);
+                    } else {
+                        token.push(escapeChar, char);
+                    }
+                } else {
+                    // Outside quotes: backslash escapes any character
+                    token.push(char);
+                }
             } else {
-                token.push(escapeChar, char);  // Append escape sequence
+                // Windows mode: only backslash can be escaped
+                if (escapeChars.includes(char)) {
+                    token.push(char);
+                } else {
+                    token.push(escapeChar, char);
+                }
             }
-            // We parsed an escape seq. Reset to no escape
             escapeChar = undefined;
             continue;
         }
@@ -42,10 +66,10 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
             continue;
         }
 
-        if (isSubQuote) {
-            if (quoteChars.includes(char)) {
-                // End of sub-quoted token
-                isSubQuote = false;
+        if (quoteChar) {
+            if (char === quoteChar) {
+                // End of quoted section
+                quoteChar = undefined;
                 token.push(char);
                 continue;
             }
@@ -54,13 +78,13 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
         }
 
         if (quoteChars.includes(char)) {
-            // Beginning of a subquoted token
-            isSubQuote = true;
+            // Beginning of a quoted section
+            quoteChar = char;
             token.push(char);
             continue;
         }
 
-        if (!isSubQuote && /[\t \n\r\f]/.test(char)) {
+        if (/[\t \n\r\f]/.test(char)) {
             if (token.length > 0) {
                 yield token.join('');
             }

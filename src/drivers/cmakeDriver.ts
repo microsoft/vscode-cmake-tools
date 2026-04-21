@@ -554,6 +554,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const writeEmitter = new vscode.EventEmitter<string>();
         const closeEmitter = new vscode.EventEmitter<number>();
         let activeProcess: proc.Subprocess | undefined;
+        let processExitCode: number | undefined;
 
         const pty: vscode.Pseudoterminal = {
             onDidWrite: writeEmitter.event,
@@ -569,6 +570,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 activeProcess.result.then(result => {
                     activeProcess = undefined;
                     const retc = result.retc ?? 0;
+                    processExitCode = retc;
                     if (retc !== 0) {
                         writeEmitter.fire(localize('compile.finished.with.error',
                             'Compilation finished with error(s).') + '\r\n');
@@ -576,11 +578,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
                         writeEmitter.fire(localize('compile.finished.successfully',
                             'Compilation finished successfully.') + '\r\n');
                     }
-                    closeEmitter.fire(retc);
+                    // Keep terminal open so user can see the output. Only close when
+                    // user presses a key or closes the terminal manually.
+                    // See https://github.com/microsoft/vscode-cmake-tools/issues/4896
+                    writeEmitter.fire(localize('press.any.key.to.close',
+                        'Press any key to close the terminal...') + '\r\n');
                 }, (e: any) => {
                     activeProcess = undefined;
+                    // Use positive exit code per VS Code PTY API convention
+                    processExitCode = 1;
                     writeEmitter.fire((e?.message ?? String(e)) + '\r\n');
-                    closeEmitter.fire(-1);
+                    writeEmitter.fire(localize('press.any.key.to.close',
+                        'Press any key to close the terminal...') + '\r\n');
                 });
             },
             close: () => {
@@ -589,6 +598,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (activeProcess?.child) {
                     void util.termProc(activeProcess.child);
                     activeProcess = undefined;
+                }
+            },
+            handleInput: (_data: string) => {
+                // Close the terminal when the user presses any key after the
+                // process has finished. If the process is still running, ignore input.
+                if (processExitCode !== undefined) {
+                    closeEmitter.fire(processExitCode);
                 }
             }
         };
