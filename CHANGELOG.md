@@ -3,6 +3,7 @@
 ## 1.23.52
 
 Bug Fixes:
+- Fix "Compile File" terminal closing immediately, hiding compilation output. The terminal now stays open until the user presses a key + Fix POSIX shell escape handling in `compile_commands.json` parsing so that escaped quotes (e.g., `\"`) are correctly interpreted when compiling single files. [#4896](https://github.com/microsoft/vscode-cmake-tools/issues/4896)
 - Fix `cmake.exportCompileCommandsFile` set to `false` still passing `-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=FALSE` instead of omitting the flag entirely, which caused CMake warnings for projects with `LANGUAGES NONE`. [#4893](https://github.com/microsoft/vscode-cmake-tools/issues/4893)
 - Fix regression where Visual Studio kits with an existing Ninja-based build cache would fail due to a generator mismatch. Ninja is now preferred again when available, stale VS kits derive the correct generator at runtime as a fallback, and the build directory is auto-cleaned on generator mismatches. [#4890](https://github.com/microsoft/vscode-cmake-tools/issues/4890)
 
