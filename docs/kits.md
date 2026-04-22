@@ -6,11 +6,12 @@ A _kit_ defines project-agnostic and configuration-agnostic info about how to bu
 - A Visual Studio installation: building for Visual Studio involves more than just finding the necessary compiler executable. Visual C++ requires certain environment variables to be set to tell it how to find and link to the Visual C++ toolchain headers and libraries.
 - A toolchain file: The low-level way to instruct CMake how to compile and link for a target. CMake Tools handles toolchain files using kits.
 
-Kits are mostly CMake-generator-agnostic (a CMake generator writes the input files for the native build system). Visual Studio kits have a preferred generator that will be used as a fallback to ensure a matching MSBuild and .sln generator are used for the Visual C++ compiler.
+Kits are mostly CMake-generator-agnostic (a CMake generator writes the input files for the native build system). The exception is Visual Studio kits: when you [scan for kits](#scan-for-kits), CMake Tools looks up the VS version and sets `preferredGenerator` on the kit to the matching CMake generator (e.g., `"Visual Studio 18 2026"` for VS 2026). If a kit was scanned before CMake Tools added support for that VS version, the extension derives the correct VS generator at runtime as a last-resort fallback — it is tried only after other generators like Ninja. If the version can't be determined, the kit falls through to default generators.
 
 > **Note:**
-> * If you use the [Ninja](https://ninja-build.org/) build system, don't worry about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is present, unless configured otherwise.
+> * If you use the [Ninja](https://ninja-build.org/) build system, don't worry about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is present, unless configured otherwise or the kit has a `preferredGenerator` set at scan time. To explicitly use a specific generator, set `cmake.generator` in your settings.
 > * If you change the active kit while a project is configured, the project configuration will be re-generated with the chosen kit.
+> * When the selected generator doesn't match what's already in an existing `CMakeCache.txt`, CMake Tools cleans the prior configuration instead of letting CMake error out.
 > * Using a kit is recommended but optional. If you don't use a kit, CMake will perform its own automatic detection.
 
 ## How kits are found and defined
@@ -52,7 +53,7 @@ Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 - CMake tools includes `vswhere.exe`, which it uses to find Visual Studio instances installed on the system.
  
-- For each of `x86`, `amd64`, `x86_amd64`, `x86_arm`, `x86_arm64`, `amd64_x86`, `amd64_arm`, and `amd64_arm64`, CMake Tools checks for installed Visual C++ environments. A kit is generated for each existing MSVC toolchain that is found.
+- For each of `x86`, `amd64`, `x86_amd64`, `x86_arm`, `x86_arm64`, `amd64_x86`, `amd64_arm`, and `amd64_arm64`, CMake Tools checks for installed Visual C++ environments. A kit is generated for each existing MSVC toolchain that is found. For known VS versions (2019, 2022, 2026, etc.), the kit gets a `preferredGenerator` pointing at the right CMake generator, like `"Visual Studio 18 2026"`. If the VS version wasn't recognized at scan time, CMake Tools derives the correct generator at runtime as a last-resort fallback. Re-running **Scan for Kits** will set `preferredGenerator` permanently.
 
 **3. Save results to the user-local kits file**
 
@@ -147,7 +148,15 @@ The following additional options may be specified:
 
 `preferredGenerator`
 
-> The CMake generator that should be used with this kit if not the default. CMake Tools will still search in `cmake.preferredGenerators` from `settings.json`, but will fall back to this option if no generator from the user settings is available
+> The CMake generator to use with this kit if not the default. For Visual Studio kits, this is set during [kit scanning](#scan-for-kits) based on the VS version. When picking a generator, CMake Tools checks these in order:
+>
+> 1. `cmake.generator` from your settings — if set, this wins outright; nothing below is consulted.
+> 2. The kit's `preferredGenerator` (set at scan time for VS kits).
+> 3. `cmake.preferredGenerators` from your settings, in order.
+> 4. `Ninja`, then `Unix Makefiles` — only consulted when neither #2 nor #3 produced any candidate (i.e. the kit has no `preferredGenerator` and `cmake.preferredGenerators` is empty).
+> 5. For VS kits that have no `preferredGenerator` of their own: the VS generator derived at runtime from the kit's VS version — pushed to the end of the candidate list, so it's tried after the Ninja/Unix Makefiles fallback when both apply.
+>
+> If a VS kit was scanned before the VS version mapping existed, CMake Tools derives the correct generator at runtime (#5) — but only after Ninja and Unix Makefiles. To make the VS generator the unconditional choice, either re-run **Scan for Kits** so the kit gets its own `preferredGenerator`, or set `cmake.generator` in your settings.
 
 `cmakeSettings`
 
