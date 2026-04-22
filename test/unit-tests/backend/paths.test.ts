@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { expect } from 'chai';
 import * as path from 'path';
 import * as fs from 'fs';
