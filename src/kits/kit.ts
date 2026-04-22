@@ -801,8 +801,8 @@ const VsGenerators: { [key: string]: string } = {
 };
 
 /**
- * Get the CMake generator name for a given Visual Studio version
- * @param version The major version of Visual Studio (e.g., '17' for VS 2022, '18' for VS 2026)
+ * Get the CMake generator name for a given Visual Studio major version.
+ * @param version The major version string (e.g., '17', '18')
  * @returns The CMake generator name, or undefined if the version is not recognized
  */
 export function vsGeneratorForVersion(version: string): string | undefined {
@@ -844,12 +844,10 @@ export async function getVsKitPreferredGenerator(kit: Kit): Promise<CMakeGenerat
     const majorVersion = parseInt(vsInstall.installationVersion);
     const hostArch = kit.visualStudioArchitecture;
     const host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
-    // For VS kits, use the hostArch as the target platform (x64 -> x64)
-    const targetArch = hostArch;
 
     return {
         name: generatorName,
-        platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
+        platform: generatorPlatformFromVSArch[hostArch] as string || hostArch,
         toolset: majorVersion < 15 ? undefined : host
     };
 }

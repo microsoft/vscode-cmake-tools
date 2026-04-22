@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.23.52
+
+Bug Fixes:
+- Fix regression where Visual Studio kits with an existing Ninja-based build cache would fail due to a generator mismatch. Ninja is now preferred again when available, stale VS kits derive the correct generator at runtime as a fallback, and the build directory is auto-cleaned on generator mismatches. [#4890](https://github.com/microsoft/vscode-cmake-tools/issues/4890)
+
 ## 1.23
 
 Features:

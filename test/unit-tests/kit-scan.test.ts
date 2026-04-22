@@ -262,6 +262,133 @@ suite('Kits scan test', () => {
         });
     });
 
+    suite('Kit change detection for generator regression (#4890)', () => {
+        // These tests verify kitChangeNeedsClean correctly detects generator-related
+        // kit changes, which is the safety net for the regression fixed in #4890.
+
+        test('Returns false for null old kit (first kit selection)', () => {
+            const newKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: {
+                    name: 'Visual Studio 18 2026',
+                    platform: 'x64',
+                    toolset: 'host=x64'
+                }
+            };
+            expect(kit.kitChangeNeedsClean(newKit, null)).to.be.false;
+        });
+
+        test('Returns true when preferredGenerator changes from undefined to VS generator', () => {
+            const oldKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true
+                // preferredGenerator is undefined — simulates kit scanned before VS 2026 mapping
+            };
+            const newKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: {
+                    name: 'Visual Studio 18 2026',
+                    platform: 'x64',
+                    toolset: 'host=x64'
+                }
+            };
+            expect(kit.kitChangeNeedsClean(newKit, oldKit)).to.be.true;
+        });
+
+        test('Returns false when kits have identical preferredGenerator', () => {
+            const generator = {
+                name: 'Visual Studio 18 2026',
+                platform: 'x64',
+                toolset: 'host=x64'
+            };
+            const oldKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: { ...generator }
+            };
+            const newKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: { ...generator }
+            };
+            expect(kit.kitChangeNeedsClean(newKit, oldKit)).to.be.false;
+        });
+
+        test('Returns true when switching from VS generator to no generator', () => {
+            const oldKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: {
+                    name: 'Visual Studio 18 2026',
+                    platform: 'x64',
+                    toolset: 'host=x64'
+                }
+            };
+            const newKit: kit.Kit = {
+                name: 'GCC 12.0.0',
+                isTrusted: true
+                // No preferredGenerator — typical GCC kit uses Ninja default
+            };
+            expect(kit.kitChangeNeedsClean(newKit, oldKit)).to.be.true;
+        });
+
+        test('Returns true when generator name changes between VS versions', () => {
+            const oldKit: kit.Kit = {
+                name: 'Visual Studio Community 2022 Release - amd64',
+                visualStudio: 'VisualStudio.17.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: {
+                    name: 'Visual Studio 17 2022',
+                    platform: 'x64',
+                    toolset: 'host=x64'
+                }
+            };
+            const newKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true,
+                preferredGenerator: {
+                    name: 'Visual Studio 18 2026',
+                    platform: 'x64',
+                    toolset: 'host=x64'
+                }
+            };
+            expect(kit.kitChangeNeedsClean(newKit, oldKit)).to.be.true;
+        });
+
+        test('Returns false when both kits have no preferredGenerator', () => {
+            const oldKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true
+            };
+            const newKit: kit.Kit = {
+                name: 'Visual Studio Community 2026 Release - amd64',
+                visualStudio: 'VisualStudio.18.0',
+                visualStudioArchitecture: 'x64',
+                isTrusted: true
+            };
+            expect(kit.kitChangeNeedsClean(newKit, oldKit)).to.be.false;
+        });
+    });
+
     suite('determineScanForKitsAction', () => {
         // Regression tests for https://github.com/microsoft/vscode-cmake-tools/issues/4726
         // Validates that:
