@@ -1569,7 +1569,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const presetCacheVariables = configPreset.cacheVariables ?? {};
         const hasExportCompileCommands = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_EXPORT_COMPILE_COMMANDS')
             || expandedArgs.some(arg => arg.startsWith('-DCMAKE_EXPORT_COMPILE_COMMANDS'));
-        if (!hasExportCompileCommands) {
+        if (!hasExportCompileCommands && exportCompileCommandsFile) {
             const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
             expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
         }
@@ -1893,7 +1893,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Export compile_commands.json
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
         const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
-        settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+        if (exportCompileCommandsFile) {
+            settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+        }
 
         console.assert(!!this._kit);
         if (!this._kit) {
