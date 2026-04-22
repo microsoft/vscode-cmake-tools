@@ -10,10 +10,10 @@ Bug Fixes:
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 
-## 1.23.51
+## 1.23.52
 
 Bug Fixes:
-- Fix regression where Visual Studio kits with an existing Ninja-based build cache would fail after updating CMake Tools, due to a generator mismatch. Ninja is now preferred again when available. For stale VS kits missing `preferredGenerator`, the VS generator is derived at runtime as a last-resort fallback. A safety net auto-cleans the build directory when a generator mismatch with `CMakeCache.txt` is detected — now also covering driver reloads triggered by `cmake.generator` / `cmake.preferredGenerators` setting changes, not just kit switches. [#4890](https://github.com/microsoft/vscode-cmake-tools/issues/4890)
+- Fix regression where Visual Studio kits with an existing Ninja-based build cache would fail due to a generator mismatch. Ninja is now preferred again when available, stale VS kits derive the correct generator at runtime as a fallback, and the build directory is auto-cleaned on generator mismatches. [#4890](https://github.com/microsoft/vscode-cmake-tools/issues/4890)
 
 ## 1.23
 
