@@ -1,0 +1,384 @@
+# Fix Dependabot PR
+#
+# Automates the tedious manual process of rebasing Dependabot dependency-bump PRs,
+# regenerating yarn.lock with Azure DevOps cpp_PublicPackages feed URLs, validating
+# security constraints, and pushing the fixed branch.
+#
+# Usage:
+#   1. Go to Actions → "Fix Dependabot PR" → "Run workflow"
+#   2. Enter the PR number
+#   3. The workflow rebases, regenerates, validates, and pushes
+#
+# Prerequisites:
+#   Add an AZURE_FEED_PAT secret in repo settings with a PAT that has
+#   Packaging (Read) scope for the azure-public Azure DevOps org.
+#   See: https://devdiv.visualstudio.com/DevDiv/_wiki/wikis/DevDiv.wiki/44556
+#
+#   Packages are resolved directly from the Azure feed — no public registry
+#   fallback, no URL patching. This ensures yarn.lock is generated natively
+#   with correct Azure feed URLs and validated integrity hashes.
+#
+# Security:
+#   - Only processes PRs authored by dependabot[bot] from the same repository
+#   - Requires AZURE_FEED_PAT — fails fast if not configured
+#   - Uses --ignore-scripts to prevent untrusted lifecycle script execution
+#   - Validates package.json changes are limited to dependency version fields
+#   - Validates ALL yarn.lock resolved URLs point to Azure feed (positive check)
+#   - Validates ALL entries have integrity hashes
+#   - Restores .npmrc from the base branch (trusted source) before and after install
+#   - Only stages package.json and yarn.lock — blocks unexpected file changes
+#   - Does NOT run repo-controlled scripts — CI handles testing post-push
+
+name: Fix Dependabot PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Dependabot PR number to rebase and fix'
+        required: true
+        type: number
+
+  # ⚠️  DO NOT enable pull_request_target without additional safeguards.
+  #
+  # This workflow checks out the PR branch and runs yarn install on it.
+  # Under pull_request_target, the workflow runs with write-access credentials
+  # in the context of the BASE branch — but after checkout it operates on
+  # UNTRUSTED head-branch content. Even with Dependabot author + same-repo
+  # checks, a compromised Dependabot PR could abuse the privileged context.
+  #
+  # The workflow_dispatch trigger above is safe because a human with repo
+  # access explicitly chooses which PR to process.
+  #
+  # To enable auto-trigger safely, split into two workflows:
+  #   1. An unprivileged pull_request workflow that validates the PR
+  #   2. A privileged workflow_run workflow that does the rebase/push
+  #
+  # pull_request_target:
+  #   types: [opened, synchronize, reopened]
+
+jobs:
+  fix:
+    name: Rebase & Regenerate
+    runs-on: ubuntu-latest
+    # ── Environment protection ──
+    # The 'dependabot-fix' environment gates access to the AZURE_FEED_PAT secret.
+    # Configure this environment in repo Settings → Environments:
+    #   1. Create environment named 'dependabot-fix'
+    #   2. Add AZURE_FEED_PAT as an environment secret (not a repo secret)
+    #   3. Optionally: restrict to specific branches, add required reviewers,
+    #      or limit to specific teams/users
+    #
+    # This way, even repo collaborators with write access must be in the
+    # allowed list to trigger this workflow with the PAT.
+    environment: dependabot-fix
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      # ── Step 1: Identify and validate the PR ──────────────────────────────
+      - name: Validate Dependabot PR
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = Number(context.payload.inputs.pr_number);
+            } else if (context.eventName === 'pull_request_target') {
+              prNumber = context.payload.pull_request.number;
+            }
+
+            if (!prNumber) {
+              core.setFailed('No PR number available');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Security gate: must be Dependabot
+            if (pr.user.login !== 'dependabot[bot]') {
+              core.setFailed(`PR #${prNumber} is not from Dependabot (author: ${pr.user.login}). Refusing to process.`);
+              return;
+            }
+
+            // Security gate: must be same-repo, not a fork
+            if (pr.head.repo.full_name !== pr.base.repo.full_name) {
+              core.setFailed(`PR #${prNumber} is from a fork (${pr.head.repo.full_name}). Refusing to process.`);
+              return;
+            }
+
+            // Must be open
+            if (pr.state !== 'open') {
+              core.setFailed(`PR #${prNumber} is ${pr.state}, not open.`);
+              return;
+            }
+
+            core.setOutput('branch', pr.head.ref);
+            core.setOutput('number', String(prNumber));
+            core.setOutput('title', pr.title);
+            core.setOutput('base', pr.base.ref);
+
+            core.info(`✓ Validated PR #${prNumber}: ${pr.title}`);
+            core.info(`  Branch: ${pr.head.ref} → ${pr.base.ref}`);
+
+      # ── Step 2: Checkout and set up environment ────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # ── Step 3: Restore trusted .npmrc BEFORE any package operations ────────
+      #
+      # The checkout contains the PR branch's .npmrc which could be tampered.
+      # Restore from the base branch immediately so all subsequent steps use
+      # trusted registry configuration.
+      - name: Restore trusted .npmrc
+        env:
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          git checkout "origin/$BASE" -- .npmrc
+          echo "✓ .npmrc restored from origin/$BASE (trusted source)"
+
+      # ── Step 4: Configure Azure feed authentication ────────────────────────
+      - name: Configure Azure feed auth
+        env:
+          AZURE_FEED_PAT: ${{ secrets.AZURE_FEED_PAT }}
+        run: |
+          if [ -z "$AZURE_FEED_PAT" ]; then
+            echo "::error::AZURE_FEED_PAT secret is not configured."
+            echo "::error::This workflow requires a PAT with Packaging (Read) scope for the azure-public org."
+            echo "::error::See: https://devdiv.visualstudio.com/DevDiv/_wiki/wikis/DevDiv.wiki/44556"
+            exit 1
+          fi
+
+          # Append auth tokens to the trusted .npmrc (restored from base branch above)
+          echo "//pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/:_authToken=${AZURE_FEED_PAT}" >> .npmrc
+          echo "//pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/:_authToken=${AZURE_FEED_PAT}" >> .npmrc
+
+          echo "✓ Azure feed authentication configured"
+
+      # ── Step 4: Rebase onto base branch ────────────────────────────────────
+      - name: Rebase onto ${{ steps.pr.outputs.base }}
+        env:
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "$BASE"
+
+          if git rebase "origin/$BASE"; then
+            echo "✓ Rebase completed cleanly"
+          else
+            # Check which files have conflicts
+            CONFLICTS=$(git diff --name-only --diff-filter=U)
+            echo "Conflicts in: $CONFLICTS"
+
+            # Only auto-resolve yarn.lock conflicts
+            NON_LOCK_CONFLICTS=$(echo "$CONFLICTS" | grep -v '^yarn.lock$' || true)
+            if [ -n "$NON_LOCK_CONFLICTS" ]; then
+              echo "::error::Rebase has conflicts beyond yarn.lock: $NON_LOCK_CONFLICTS"
+              echo "::error::Manual resolution required."
+              git rebase --abort
+              exit 1
+            fi
+
+            # Use base branch's yarn.lock as baseline (preserves unrelated updates)
+            echo "Resolving yarn.lock conflict using ${BASE} baseline"
+            git checkout "origin/$BASE" -- yarn.lock
+            git add yarn.lock
+            GIT_EDITOR=true git rebase --continue
+            echo "✓ Rebase completed with yarn.lock conflict resolution"
+          fi
+
+      # ── Step 5: Verify package.json scope ──────────────────────────────────
+      - name: Verify package.json changes
+        env:
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          echo "Files changed vs origin/$BASE:"
+          git diff --name-only "origin/$BASE"
+
+          # Check for unexpected file changes
+          UNEXPECTED=$(git diff --name-only "origin/$BASE" | grep -v '^package.json$' | grep -v '^yarn.lock$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::Dependabot PR changes files beyond package.json/yarn.lock: $UNEXPECTED"
+            echo "::error::This is unusual for a dependency bump. Manual review required."
+            exit 1
+          fi
+
+          echo "✓ Only package.json and yarn.lock changed"
+
+      # ── Step 6: Validate package.json is safe ───────────────────────────────
+      #
+      # Dependabot should only change version fields in dependencies/devDependencies.
+      # If scripts, resolutions, packageManager, or other fields are modified,
+      # the PR may be compromised or unusual — refuse to process.
+      - name: Validate package.json safety
+        env:
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          # Get the diff of package.json only
+          DIFF=$(git diff "origin/$BASE" -- package.json)
+
+          if [ -z "$DIFF" ]; then
+            echo "::error::package.json has no changes — nothing for Dependabot to bump"
+            exit 1
+          fi
+
+          # Check that only safe fields changed (version numbers in deps)
+          # Flag changes to: scripts, resolutions, packageManager, main, bin, etc.
+          DANGEROUS_FIELDS="scripts\|resolutions\|packageManager\|bin\|main\|module\|types\|exports\|publishConfig"
+          DANGEROUS_CHANGES=$(echo "$DIFF" | grep '^[+-]' | grep -v '^[+-][+-][+-]' | grep -i "$DANGEROUS_FIELDS" || true)
+
+          if [ -n "$DANGEROUS_CHANGES" ]; then
+            echo "::error::package.json has changes to potentially dangerous fields:"
+            echo "$DANGEROUS_CHANGES"
+            echo "::error::Manual review required — refusing to auto-process."
+            exit 1
+          fi
+
+          echo "✓ package.json changes are limited to dependency version fields"
+
+      # ── Step 7: Regenerate yarn.lock ───────────────────────────────────────
+      - name: Regenerate yarn.lock
+        run: |
+          # --ignore-scripts prevents untrusted lifecycle scripts from executing.
+          # If a package genuinely needs install scripts, this workflow will succeed
+          # (lockfile is regenerated) but the package may not work at runtime.
+          # CI will catch that in integration tests.
+          yarn install --ignore-scripts
+          echo "✓ yarn.lock regenerated"
+
+      # ── Step 8: Restore .npmrc (remove auth lines before committing) ───────
+      - name: Restore .npmrc (final)
+        env:
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          # Re-restore from base branch to remove any auth lines added earlier
+          git checkout "origin/$BASE" -- .npmrc
+          echo "✓ .npmrc restored to clean state from origin/$BASE"
+
+      # ── Step 9: Validate yarn.lock ─────────────────────────────────────────
+      - name: Validate resolved URLs (positive check)
+        run: |
+          TOTAL=$(grep -c '^  resolved ' yarn.lock)
+          AZURE=$(grep -c 'resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/' yarn.lock)
+
+          echo "Total resolved URLs: $TOTAL"
+          echo "Azure feed URLs:     $AZURE"
+
+          if [ "$TOTAL" -ne "$AZURE" ]; then
+            echo ""
+            echo "::error::Non-Azure URLs found in yarn.lock:"
+            grep '^  resolved ' yarn.lock | grep -v 'pkgs.dev.azure.com/azure-public/VisualCpp/' || true
+            exit 1
+          fi
+
+          echo "✓ All $TOTAL resolved URLs point to Azure feed"
+
+      - name: Validate integrity hashes
+        run: |
+          RESOLVED=$(grep -c '^  resolved ' yarn.lock)
+          INTEGRITY=$(grep -c '^  integrity ' yarn.lock)
+
+          if [ "$RESOLVED" -ne "$INTEGRITY" ]; then
+            echo "::error::Missing integrity hashes — resolved=$RESOLVED but integrity=$INTEGRITY"
+            exit 1
+          fi
+
+          echo "✓ All $RESOLVED entries have integrity hashes"
+
+      # ── Step 12: Smoke check (non-privileged) ────────────────────────────
+      #
+      # NOTE: We intentionally do NOT run `yarn backendTests` here.
+      # Running repo-controlled scripts (even test scripts) in a workflow with
+      # write credentials creates a privilege escalation vector. CI will run the
+      # full test suite after push, with proper isolation.
+      #
+      # If you need a pre-push smoke check and accept the risk for workflow_dispatch
+      # (human-triggered only), uncomment the step below:
+      #
+      # - name: Run backend tests (optional)
+      #   run: yarn backendTests
+
+      # ── Step 11: Commit and push ───────────────────────────────────────────
+      - name: Commit and push
+        env:
+          BRANCH: ${{ steps.pr.outputs.branch }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          # Stage only expected files
+          git add package.json yarn.lock
+
+          # Block unexpected files from being staged
+          UNEXPECTED=$(git diff --cached --name-only | grep -v '^package.json$' | grep -v '^yarn.lock$' || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::Unexpected files staged: $UNEXPECTED"
+            exit 1
+          fi
+
+          # If no changes, we're done
+          if git diff --cached --quiet; then
+            echo "✓ No changes needed — yarn.lock is already up to date"
+            exit 0
+          fi
+
+          git commit -m "chore: rebase and regenerate yarn.lock for PR #${PR_NUMBER}
+
+          Rebased Dependabot branch onto ${BASE} and regenerated yarn.lock
+          with Azure DevOps cpp_PublicPackages feed URLs.
+
+          PR: #${PR_NUMBER} (${PR_TITLE})
+
+          Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>"
+
+          # Re-fetch to ensure our lease basis is current
+          git fetch origin "$BRANCH"
+          git push --force-with-lease
+
+          echo "✓ Pushed updated branch: $BRANCH"
+
+      # ── Summary ────────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          BRANCH: ${{ steps.pr.outputs.branch }}
+          BASE: ${{ steps.pr.outputs.base }}
+        run: |
+          {
+            echo "## Fix Dependabot PR"
+            echo ""
+            echo "| Detail | Value |"
+            echo "|--------|-------|"
+            echo "| **PR** | #${PR_NUMBER} — ${PR_TITLE} |"
+            echo "| **Branch** | \`${BRANCH}\` → \`${BASE}\` |"
+            echo "| **Registry** | Azure DevOps cpp_PublicPackages |"
+            echo "| **Status** | ${{ job.status }} |"
+            echo ""
+            if [ "${{ job.status }}" = "success" ]; then
+              echo "✅ Branch rebased and yarn.lock regenerated with Azure feed URLs."
+            else
+              echo "❌ Workflow failed — check logs above for details."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
