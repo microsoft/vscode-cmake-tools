@@ -16,6 +16,7 @@ The following concepts will help you understand how CMake Tools interacts with C
     |Generator |Description|
     |---------|---------|
     |Ninja | Emits files for the [Ninja build tool](https://ninja-build.org). This is the generator CMake Tools tries first, unless configured otherwise. See [cmake.preferredGenerators](cmake-settings.md#cmake-settings). |
+    |FASTBuild | Emits files for the [FASTBuild build tool](https://www.fastbuild.org/). Requires CMake 4.2+. |
     |Makefile |  Emits a `Makefile` for the project that can be built via `make`.|
     |Visual Studio     | Emits visual studio solutions and project files. There are many different Visual Studio generators, so it is recommended to let CMake Tools automatically determine the appropriate generator.|
 

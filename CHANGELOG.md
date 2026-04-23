@@ -1,5 +1,18 @@
 # What's New?
 
+## 1.24
+
+Features:
+- Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
+- Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
+
+Improvements:
+- When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
+
+Bug Fixes:
+- Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
+- Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
+
 ## 1.23
 
 Features:
@@ -48,10 +61,11 @@ Improvements:
 - Add `cmake.removeStaleKitsOnScan` setting to optionally remove stale compiler kits from the kit picker after a "Scan for Kits" when they are no longer rediscovered. This is useful after compiler upgrades that leave older versions outside `PATH`. Set `"keep": true` in a kit entry to prevent automatic removal. [#3852](https://github.com/microsoft/vscode-cmake-tools/issues/3852)
 - Add `pr-readiness` Copilot skill to verify PRs have a descriptive title, meaningful description, and a properly formatted CHANGELOG entry. [#4862](https://github.com/microsoft/vscode-cmake-tools/pull/4862)
 - Updated IntelliSense tooltips with changes from CMake 4.3.1. [#4872](https://github.com/microsoft/vscode-cmake-tools/pull/4872)
-- When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
+- Make it easier for a new developer of CMake Tools to run tests. [#4620](https://github.com/microsoft/vscode-cmake-tools/pull/4620) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
 - Fix stale C/C++ custom-configuration entries persisting after reconfigure/preset switches, which could cause Go to Definition/IntelliSense to surface symbols from inactive sources in the same folder. [#4472](https://github.com/microsoft/vscode-cmake-tools/issues/4472)
+- Fix IntelliSense not updating when switching the active project in multi-project workspaces with multiple `cmake.sourceDirectory` entries. [#4390](https://github.com/microsoft/vscode-cmake-tools/issues/4390)
 - Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
 - Import the `EXTERNAL_INCLUDE` environment variable from the VS developer environment so that MSVC's external-header diagnostic suppression works correctly. [#4217](https://github.com/microsoft/vscode-cmake-tools/issues/4217)
 - Fix test presets not automatically switching when the build preset changes in multi-config generator setups (e.g., Ninja Multi-Config). The extension now auto-selects a compatible test preset after a build preset change, and properly considers build type when guessing the test preset. [#4395](https://github.com/microsoft/vscode-cmake-tools/issues/4395)
@@ -71,6 +85,7 @@ Bug Fixes:
 - Fix configure/build sometimes using stale preset values when unsaved changes to included preset files are auto-saved before configure. The extension now explicitly refreshes presets from disk after saving, instead of relying solely on the asynchronous file watcher. [#4502](https://github.com/microsoft/vscode-cmake-tools/issues/4502)
 - Fix overly aggressive preset reloading on every build/debug/launch. Preset reapplication now only runs when `cmake.configureOnEdit` is enabled and preset files had unsaved changes, instead of unconditionally re-reading all preset files. [#4792](https://github.com/microsoft/vscode-cmake-tools/issues/4792)
 - Reduce overly verbose logging when CMake configure or build fails. The Output panel no longer floods with duplicated output, and the channel is only revealed on error rather than unconditionally. [#4749](https://github.com/microsoft/vscode-cmake-tools/issues/4749)
+- Fix building a target no longer revealing the output panel. The build now respects the `cmake.revealLog` setting to show the output channel at the start of a build. [#4885](https://github.com/microsoft/vscode-cmake-tools/issues/4885)
 - Fix Test Results panel not hyperlinking file paths for GoogleTest failures. The default `cmake.ctest.failurePatterns` now includes a pattern matching GoogleTest's `file:line: Failure` output format. [#4589](https://github.com/microsoft/vscode-cmake-tools/issues/4589)
 - Fix wrong path created for artifact when parsing code model using CMake File API. [#3015](https://github.com/microsoft/vscode-cmake-tools/issues/3015)
 - Fix garbled characters (Mojibake) in the Output panel when MSVC outputs UTF-8 (e.g., with `/utf-8`) on non-UTF-8 Windows systems. When `cmake.outputLogEncoding` is `auto`, the build output is now validated as UTF-8 before falling back to the system code page. [#4520](https://github.com/microsoft/vscode-cmake-tools/issues/4520)
