@@ -35,13 +35,14 @@ Azure feed with proper authentication:
 
 Workflow file: [`.github/workflows/fix-dependabot.yml`](../../workflows/fix-dependabot.yml)
 
-## Security rules (still apply regardless of method)
+## Security rules
 
 - `.npmrc` must always point to the Azure DevOps feed — never modify it
 - All `resolved` URLs in `yarn.lock` must point to the Azure feed
-- All `yarn.lock` entries must have `integrity` hashes
 - Only the Dependabot-targeted package(s) should change in `package.json`
-- Never run `yarn install` without `--ignore-scripts` on untrusted dependency updates
+- Use `--ignore-scripts` when running `yarn install` on dependency updates
+
+See [SECURITY.md](SECURITY.md) for the full threat model.
 
 ## If the workflow is unavailable
 
