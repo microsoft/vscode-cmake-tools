@@ -2663,7 +2663,7 @@
         },
         "cmake.ctest.neverDebugTestsWithLaunchConfiguration": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "%cmake-tools.configuration.cmake.ctest.neverDebugTestsWithLaunchConfiguration.description%",
           "scope": "resource"
         },

@@ -309,17 +309,19 @@ You can substitute the value of any variable in the CMake cache by adding a `com
 
 ## Debugging tests
 
-You can also construct launch.json configurations that allow you to debug tests in the Test Explorer.
+By default, debugging a test from the Test Explorer works the same way as debugging an executable from the Project Outline — CMake Tools automatically generates a debug configuration from the CMake cache without requiring a `launch.json` file.
 
-> **Note:**
-> These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
+The auto-generated debug configuration respects `cmake.debugConfig` settings (such as custom `type`, `MIMode`, or `miDebuggerPath`). Test arguments, working directory, and environment variables are automatically resolved from CTest test properties.
 
-The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
-the `args` field, `cmake.testWorkingDirectory` for the `cwd` field, and `cmake.testEnvironment` for the `environment` field.
+### Using a launch.json for test debugging
 
-`cmake.testEnvironment` resolves to the environment variables set via the CTest `ENVIRONMENT` test property (e.g., from `set_tests_properties(... PROPERTIES ENVIRONMENT "A=B;C=D")`). It is replaced with an array of `{ "name": "...", "value": "..." }` objects suitable for launch.json.
+If you prefer to debug tests using a custom `launch.json` configuration, set `cmake.ctest.neverDebugTestsWithLaunchConfiguration` to `false` in your workspace settings. When disabled, CMake Tools shows a picker that lets you choose between quick debugging (without launch configuration) and any available `launch.json` configurations.
 
-A couple of examples:
+You can construct launch configurations using the following CMake Tools variables:
+- `${cmake.testProgram}` — the test executable path
+- `${cmake.testArgs}` — the test command-line arguments
+- `${cmake.testWorkingDirectory}` — the test working directory
+- `${cmake.testEnvironment}` — the test environment variables (from CTest `ENVIRONMENT` property)
 
 ### gdb
 ```jsonc
