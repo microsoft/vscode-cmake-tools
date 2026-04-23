@@ -1942,9 +1942,11 @@ export class CTestDriver implements vscode.Disposable {
                 }
                 const buildResult = await project.build(accumulatedTargets, false, false);
                 if (buildResult.exitCode !== 0) {
+                    log.error(localize('build.targets.failed.with.code', 'Building targets [{0}] failed with exit code {1}.', accumulatedTargets.join(', '), buildResult.exitCode));
                     success = false;
                 }
             } catch (e) {
+                log.error(localize('build.targets.threw', 'Building targets [{0}] threw an error: {1}', accumulatedTargets.join(', '), (e as Error)?.message ?? String(e)));
                 success = false;
             }
             if (!success) {
