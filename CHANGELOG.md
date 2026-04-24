@@ -6,6 +6,9 @@ Features:
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
+Improvements:
+- Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
+
 Bug Fixes:
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
