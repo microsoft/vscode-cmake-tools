@@ -67,12 +67,12 @@ export const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
  * Friendly display names for known vendor extensions. Used to show a nicer
- * progress message (e.g., "Waiting for STM32 for VS Code..." instead of
+ * progress message (e.g., "Waiting for STM32Cube for VS Code..." instead of
  * "Waiting for stmicroelectronics.stm32-vscode-extension...").
  * Extensions not in this map fall back to their raw ID.
  */
 const vendorExtensionLabels: ReadonlyMap<string, string> = new Map([
-    ['stmicroelectronics.stm32-vscode-extension', 'STM32 for VS Code'],
+    ['stmicroelectronics.stm32-vscode-extension', 'STM32Cube for VS Code'],
     ['espressif.esp-idf-extension', 'ESP-IDF'],
     ['NXPSemiconductors.mcuxpresso', 'MCUXpresso'],
     ['nordic-semiconductor.nrf-connect', 'nRF Connect']
