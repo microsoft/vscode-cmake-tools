@@ -67,12 +67,12 @@ export const hideBuildCommandKey = 'cmake:hideBuildCommand';
 
 /**
  * Friendly display names for known vendor extensions. Used to show a nicer
- * progress message (e.g., "Waiting for STM32 for VS Code..." instead of
+ * progress message (e.g., "Waiting for STM32Cube for VS Code..." instead of
  * "Waiting for stmicroelectronics.stm32-vscode-extension...").
  * Extensions not in this map fall back to their raw ID.
  */
 const vendorExtensionLabels: ReadonlyMap<string, string> = new Map([
-    ['stmicroelectronics.stm32-vscode-extension', 'STM32 for VS Code'],
+    ['stmicroelectronics.stm32-vscode-extension', 'STM32Cube for VS Code'],
     ['espressif.esp-idf-extension', 'ESP-IDF'],
     ['NXPSemiconductors.mcuxpresso', 'MCUXpresso'],
     ['nordic-semiconductor.nrf-connect', 'nRF Connect']
@@ -843,7 +843,9 @@ export class ExtensionManager implements vscode.Disposable {
                     const delayMs = cmakeNotFoundRetryDelaysMs[
                         Math.min(attempt, cmakeNotFoundRetryDelaysMs.length - 1)
                     ];
-                    await new Promise<void>(resolve => setTimeout(resolve, delayMs));
+
+                    // Wait for delayMs or cmake.cmakePath change
+                    await this.waitForDelayOrCmakePathChange(delayMs);
 
                     // Lightweight probe: just check if cmake is available now.
                     // This does NOT enter the driverStrand, does NOT show popups,
@@ -871,6 +873,31 @@ export class ExtensionManager implements vscode.Disposable {
             log.warning(localize('cmake.retry.exhausted', 'CMake not found after {0} retries', cmakeNotFoundMaxRetries));
         }
         await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project);
+    }
+
+    private async waitForDelayOrCmakePathChange(delay: number): Promise<void> {
+        return new Promise<void>(resolve => {
+            let settled = false;
+
+            const finish = () => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                clearTimeout(timeout);
+                sub.dispose();
+                resolve();
+            };
+
+            const timeout = setTimeout(() => {
+                finish();
+            }, delay);
+
+            const sub = this.workspaceConfig.onChange('cmakePath', () => {
+                log.info(localize('cmake.configuration.change.detected', 'Detected change in CMake configuration while waiting for CMake to become available.'));
+                finish();
+            });
+        });
     }
 
     private async onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
