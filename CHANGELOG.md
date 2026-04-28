@@ -11,6 +11,7 @@ Improvements:
 
 Bug Fixes:
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
+- Skip the automatic post-build CTest discovery when `cmake.ctest.testExplorerIntegrationEnabled` is `false`. [#4909](https://github.com/microsoft/vscode-cmake-tools/issues/4909)
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 
