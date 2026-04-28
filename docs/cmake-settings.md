@@ -39,7 +39,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.ctest.allowParallelJobs` | If `true`, allow running test jobs in parallel. When `false`, tests run sequentially in alphabetical order, matching the Test Explorer display order. | `false` | no |
 | `cmake.ctest.debugLaunchTarget` | Target to debug during CTest execution. | `null` | no |
 | `cmake.ctest.parallelJobs` | Specify the number of jobs to run in parallel for ctest. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable test parallelism. | `0` | no |
-| `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. | `true` | no |
+| `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. When `false`, the automatic CTest discovery that runs after each build is also skipped; the post-configure refresh and the manual `cmake.refreshTests` command still run. | `true` | no |
 | `cmake.ctest.testSuiteDelimiter` | Character(s) that separate test suite name components. | `null` | no |
 | `cmake.ctestArgs` | An array of additional arguments to pass to CTest. | `[]` | yes |
 | `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. | `["-T", "test", "--output-on-failure"]` | no |
