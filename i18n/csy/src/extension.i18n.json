@@ -17,6 +17,7 @@
 	"cmake.retry.not.yet": "CMake ještě není k dispozici (pokus {0}/{1})",
 	"cmake.retry.configuring": "CMake je teď k dispozici – konfiguruje se projekt",
 	"cmake.retry.exhausted": "CMake se po {0} opakovaných pokusech nenašel",
+	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
 	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu",
 	"failed.to.open.cache.file.on.code.model.update": "Nepovedlo se otevřít soubor mezipaměti CMake při aktualizaci kódu modelu.",
 	"update.code.model.for.cpptools": "Aktualizovat model kódu pro cpptools",

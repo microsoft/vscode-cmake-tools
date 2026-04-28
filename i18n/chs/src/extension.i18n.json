@@ -17,6 +17,7 @@
 	"cmake.retry.not.yet": "CMake 尚不可用(尝试 {0}/{1})",
 	"cmake.retry.configuring": "CMake 现已可用 - 正在配置项目",
 	"cmake.retry.exhausted": "重试 {0} 次后未找到 CMake",
+	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
 	"update.code.model.for.list.modifier": "更新自动列表文件修饰符的代码模型",
 	"failed.to.open.cache.file.on.code.model.update": "未能在代码模型更新时打开 CMake 缓存文件",
 	"update.code.model.for.cpptools": "更新 cpptools 的代码模型",

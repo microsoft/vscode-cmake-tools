@@ -17,6 +17,7 @@
 	"cmake.retry.not.yet": "CMake пока недоступен (попытка {0}/{1})",
 	"cmake.retry.configuring": "CMake теперь доступен — настройка проекта",
 	"cmake.retry.exhausted": "CMake не найден после {0} повторных попыток",
+	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
 	"update.code.model.for.list.modifier": "Обновить модель кода для автоматического модификатора списка файлов",
 	"failed.to.open.cache.file.on.code.model.update": "Не удалось открыть файл кэша CMake при обновлении модели кода.",
 	"update.code.model.for.cpptools": "Обновление модели кода для cpptools",

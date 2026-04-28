@@ -17,6 +17,7 @@
 	"cmake.retry.not.yet": "CMake noch nicht verfügbar (Versuch {0}/{1})",
 	"cmake.retry.configuring": "CMake ist jetzt verfügbar – Projekt konfigurieren",
 	"cmake.retry.exhausted": "CMake nach {0} Wiederholungen nicht gefunden",
+	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
 	"update.code.model.for.list.modifier": "Codemodell für automatischen Listendateimodifizierer aktualisieren",
 	"failed.to.open.cache.file.on.code.model.update": "Fehler beim Öffnen der CMake-Cachedatei für das Codemodellupdate.",
 	"update.code.model.for.cpptools": "Codemodell für cpptools aktualisieren",
