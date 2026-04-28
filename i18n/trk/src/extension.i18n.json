@@ -17,6 +17,7 @@
 	"cmake.retry.not.yet": "CMake henüz kullanılamıyor (deneme {0}/{1})",
 	"cmake.retry.configuring": "CMake artık kullanılabilir — proje yapılandırılıyor",
 	"cmake.retry.exhausted": "{0} denemeden sonra CMake bulunamadı",
+	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
 	"update.code.model.for.list.modifier": "Otomatik liste dosyası değiştiricisi için kod modelini güncelleştir",
 	"failed.to.open.cache.file.on.code.model.update": "Kod modeli güncelleştirmesinde CMake önbellek dosyası açılamadı",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
