@@ -52,6 +52,18 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
                 // Windows mode: only backslash can be escaped
                 if (escapeChars.includes(char)) {
                     token.push(char);
+                } else if (!quoteChar && /[\t \r\f]/.test(char)) {
+                    // Backslash followed by whitespace outside quotes:
+                    // backslash is a literal character; whitespace must terminate the token.
+                    // Without this, e.g. "/Fd...\ /FS" would be merged into a single token
+                    // because the space would be consumed as part of the escape sequence,
+                    // causing cl.exe to receive a malformed PDB path and lose the next flag.
+                    // See https://github.com/microsoft/vscode-cmake-tools/issues/4902
+                    token.push(escapeChar);
+                    yield token.join('');
+                    token = [];
+                    escapeChar = undefined;
+                    continue;
                 } else {
                     token.push(escapeChar, char);
                 }
