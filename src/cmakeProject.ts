@@ -39,7 +39,7 @@ import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
-import { ConfigurationWebview } from '@cmt/ui/cacheView';
+import { ConfigurationWebview, IOption } from '@cmt/ui/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
 import * as preset from '@cmt/presets/preset';
@@ -2461,6 +2461,192 @@ export class CMakeProject {
             .then(doc => void vscode.window.showTextDocument(doc));
     }
 
+    private getPresetCacheVariableType(option: IOption, presetCacheVariable: preset.CacheVarType | undefined): string {
+        if (option.type === 'Bool') {
+            return 'BOOL';
+        }
+
+        if (presetCacheVariable && typeof presetCacheVariable === 'object' && 'type' in presetCacheVariable && util.isString((presetCacheVariable as any).type) && (presetCacheVariable as any).type.toUpperCase() !== 'BOOL') {
+            return (presetCacheVariable as any).type;
+        }
+
+        return 'STRING';
+    }
+
+    private getPresetCacheVariableValue(option: IOption): string {
+        return util.isBoolean(option.value) ? (option.value ? 'TRUE' : 'FALSE') : String(option.value);
+    }
+
+    private getPresetCacheVariableRawValue(cacheVariable: preset.CacheVarType | undefined): string | undefined {
+        if (util.isString(cacheVariable)) {
+            return cacheVariable;
+        }
+
+        if (cacheVariable === true) {
+            return 'TRUE';
+        }
+
+        if (cacheVariable && typeof cacheVariable === 'object' && 'value' in cacheVariable) {
+            const value = cacheVariable.value;
+            if (util.isBoolean(value)) {
+                return value ? 'TRUE' : 'FALSE';
+            }
+            if (util.isString(value)) {
+                return value;
+            }
+        }
+
+        return undefined;
+    }
+
+    private findPresetDefinitionByName(name: string): preset.ConfigurePreset | undefined {
+        const userPreset = preset.userConfigurePresets(this.folderPath, true).find(configurePreset => configurePreset.name === name);
+        if (userPreset) {
+            return userPreset;
+        }
+        return preset.configurePresets(this.folderPath, true).find(configurePreset => configurePreset.name === name);
+    }
+
+    private resolvePresetVariableOrigin(
+        presetName: string,
+        variableName: string,
+        visited: Set<string> = new Set()
+    ): { presetName: string; isUserPreset: boolean; presetValue?: string } | undefined {
+        if (visited.has(presetName)) {
+            return undefined;
+        }
+        visited.add(presetName);
+
+        const configurePreset = this.findPresetDefinitionByName(presetName);
+        if (!configurePreset) {
+            return undefined;
+        }
+
+        const cacheVariable = configurePreset.cacheVariables?.[variableName];
+        if (cacheVariable !== undefined) {
+            const isUserPreset = configurePreset.isUserPreset ?? configurePreset.__file?.__path?.endsWith('CMakeUserPresets.json') ?? false;
+            return {
+                presetName: configurePreset.name,
+                isUserPreset,
+                presetValue: this.getPresetCacheVariableRawValue(cacheVariable)
+            };
+        }
+
+        if (configurePreset.inherits) {
+            const parents = util.isString(configurePreset.inherits) ? [configurePreset.inherits] : configurePreset.inherits;
+            if (parents) {
+                for (const parent of parents) {
+                    const origin = this.resolvePresetVariableOrigin(parent, variableName, visited);
+                    if (origin) {
+                        return origin;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    private async getCacheOptionPresetMetadata(options: IOption[]): Promise<Map<string, { presetSource: string; differsFromPresetValue?: boolean }>> {
+        const metadata = new Map<string, { presetSource: string; differsFromPresetValue?: boolean }>();
+        if (!this.useCMakePresets || !this.configurePreset) {
+            return metadata;
+        }
+
+        const activePresetName = this.configurePreset.name;
+        for (const option of options) {
+            const origin = this.resolvePresetVariableOrigin(activePresetName, option.key);
+            if (!origin) {
+                continue;
+            }
+
+            const sourceKind = origin.isUserPreset
+                ? localize('preset.source.user', 'User preset')
+                : localize('preset.source.project', 'Project preset');
+
+            let differsFromPresetValue: boolean | undefined;
+            if (origin.presetValue !== undefined) {
+                if (option.type === 'Bool') {
+                    differsFromPresetValue = util.isTruthy(String(option.value)) !== util.isTruthy(origin.presetValue);
+                } else {
+                    differsFromPresetValue = String(option.value) !== origin.presetValue;
+                }
+            }
+
+            metadata.set(option.key, {
+                presetSource: `${sourceKind}: ${origin.presetName}`,
+                differsFromPresetValue
+            });
+        }
+
+        return metadata;
+    }
+
+    private async updatePresetBackedCacheVariableOverrides(dirtyOptions: IOption[]): Promise<void> {
+        if (!this.useCMakePresets || !this.configurePreset || dirtyOptions.length === 0) {
+            return;
+        }
+
+        const presetCacheVariables = this.configurePreset.cacheVariables;
+        if (!presetCacheVariables) {
+            return;
+        }
+
+        const presetBackedOptions = dirtyOptions.filter(option => Object.prototype.hasOwnProperty.call(presetCacheVariables, option.key));
+        if (presetBackedOptions.length === 0) {
+            return;
+        }
+
+        const userPresets = preset.getOriginalUserPresetsFile(this.folderPath)
+            ?? { version: preset.getOriginalPresetsFile(this.folderPath)?.version ?? 8 };
+        userPresets.configurePresets = userPresets.configurePresets ?? [];
+
+        const currentPreset = this.configurePreset;
+        let targetPreset = currentPreset.isUserPreset
+            ? userPresets.configurePresets.find(configurePreset => configurePreset.name === currentPreset.name)
+            : undefined;
+
+        if (!targetPreset) {
+            const defaultOverrideName = `${currentPreset.name}__cacheEditorOverride`;
+            let overrideName = defaultOverrideName;
+            let suffix = 1;
+            const allPresetNames = new Set(preset.allConfigurePresets(this.folderPath, true).map(configurePreset => configurePreset.name));
+
+            while (allPresetNames.has(overrideName) && !userPresets.configurePresets.find(configurePreset => configurePreset.name === overrideName)) {
+                overrideName = `${defaultOverrideName}_${suffix++}`;
+            }
+
+            targetPreset = userPresets.configurePresets.find(configurePreset => configurePreset.name === overrideName);
+            if (!targetPreset) {
+                targetPreset = {
+                    name: overrideName,
+                    hidden: true,
+                    inherits: currentPreset.name,
+                    cacheVariables: {}
+                };
+                userPresets.configurePresets.push(targetPreset);
+            }
+        }
+
+        targetPreset.cacheVariables = targetPreset.cacheVariables ?? {};
+
+        for (const option of presetBackedOptions) {
+            const presetCacheVariable = presetCacheVariables[option.key];
+            targetPreset.cacheVariables[option.key] = {
+                type: this.getPresetCacheVariableType(option, presetCacheVariable),
+                value: this.getPresetCacheVariableValue(option)
+            };
+        }
+
+        this.presetsController.suppressWatcherReapply = true;
+        await this.presetsController.updatePresetsFile(userPresets, true, false);
+        await this.presetsController.reapplyPresets();
+
+        if (targetPreset.name !== currentPreset.name) {
+            await this.presetsController.setConfigurePreset(targetPreset.name);
+        }
+    }
+
     /**
    * Implementation of `cmake.EditCacheUI`
    */
@@ -2472,9 +2658,10 @@ export class CMakeProject {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
-                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
-            });
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async dirtyOptions => {
+                await this.updatePresetBackedCacheVariableOverrides(dirtyOptions);
+                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            }, async options => this.getCacheOptionPresetMetadata(options));
             await this.cacheEditorWebview.initPanel();
 
             this.cacheEditorWebview.panel.onDidDispose(() => {

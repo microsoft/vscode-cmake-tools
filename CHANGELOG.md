@@ -73,6 +73,7 @@ Improvements:
 - Make it easier for a new developer of CMake Tools to run tests. [#4620](https://github.com/microsoft/vscode-cmake-tools/pull/4620) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix cache edits from "Edit Cache (UI)" being overwritten in presets mode when the edited variable is defined by the active configure preset. The extension now writes an override into CMakeUserPresets.json and reconfigures with that user preset so the change persists.
 - Fix stale C/C++ custom-configuration entries persisting after reconfigure/preset switches, which could cause Go to Definition/IntelliSense to surface symbols from inactive sources in the same folder. [#4472](https://github.com/microsoft/vscode-cmake-tools/issues/4472)
 - Fix IntelliSense not updating when switching the active project in multi-project workspaces with multiple `cmake.sourceDirectory` entries. [#4390](https://github.com/microsoft/vscode-cmake-tools/issues/4390)
 - Fix `tasks.json` schema validation rejecting valid CMake task commands `package` and `workflow`. [#4167](https://github.com/microsoft/vscode-cmake-tools/issues/4167)
