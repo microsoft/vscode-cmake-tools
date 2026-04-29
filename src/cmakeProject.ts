@@ -1212,6 +1212,17 @@ export class CMakeProject {
         }
         this.cTestController.clearTests(drv);
 
+        // Subscribe to code model changes so that updated presets
+        // (e.g. a new CMAKE_MAKE_PROGRAM) are picked up immediately,
+        // regardless of whether the driver was created via
+        // getCMakeDriverInstance or reloadCMakeDriver.
+        if (this.codeModelDriverSub) {
+            this.codeModelDriverSub.dispose();
+        }
+        if (!(drv instanceof CMakeLegacyDriver)) {
+            this.codeModelDriverSub = drv.onCodeModelChanged(cm => this._codeModelContent.set(cm));
+        }
+
         // All set up. Fulfill the driver promise.
         return drv;
     }
@@ -1568,14 +1579,6 @@ export class CMakeProject {
                     return null;
                 }
 
-                if (this.codeModelDriverSub) {
-                    this.codeModelDriverSub.dispose();
-                }
-                const drv = await this.cmakeDriver;
-                console.assert(drv !== null, 'Null driver immediately after creation?');
-                if (drv && !(drv instanceof CMakeLegacyDriver)) {
-                    this.codeModelDriverSub = drv.onCodeModelChanged(cm => this._codeModelContent.set(cm));
-                }
             }
 
             return this.cmakeDriver;
