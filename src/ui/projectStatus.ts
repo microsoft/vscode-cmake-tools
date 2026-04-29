@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import CMakeProject from '@cmt/cmakeProject';
@@ -186,6 +187,7 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
     private testNode: TestNode | undefined;
     private packageNode: PackageNode | undefined;
     private workflowNode: WorkflowNode | undefined;
+    private launchNode: LaunchNode | undefined;
 
     get onDidChangeTreeData(): vscode.Event<Node | undefined> {
         return this._onDidChangeTreeData.event;
@@ -336,12 +338,13 @@ class TreeDataProvider implements vscode.TreeDataProvider<Node>, vscode.Disposab
                 nodes.push(debugNode);
             }
             if (!this.isLaunchButtonHidden) {
-                const launchNode = new LaunchNode();
-                await launchNode.initialize();
+                this.launchNode?.dispose();
+                this.launchNode = new LaunchNode();
+                await this.launchNode.initialize();
                 if (this.isBusy) {
-                    launchNode.convertToStopCommand();
+                    this.launchNode.convertToStopCommand();
                 }
-                nodes.push(launchNode);
+                nodes.push(this.launchNode);
             }
             return nodes;
         }
@@ -786,6 +789,10 @@ class LaunchNode extends Node {
         return [this.launchTarget!];
     }
 
+    dispose(): void {
+        this.launchTarget?.dispose();
+    }
+
 }
 
 class FolderNode extends Node {
@@ -1083,6 +1090,8 @@ class DebugTarget extends Node {
 
 class LaunchTarget extends Node {
 
+    protected disposables: vscode.Disposable[] = [];
+
     async initialize(): Promise<void> {
         if (!treeDataProvider.cmakeProject) {
             return;
@@ -1092,6 +1101,14 @@ class LaunchTarget extends Node {
         this.tooltip = title;
         this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         this.contextValue = 'launchTarget';
+        this.updateLaunchConfigDescription();
+
+        // Subscribe to launchConfig changes to update description reactively
+        this.disposables.push(
+            treeDataProvider.cmakeProject.workspaceContext.config.onChange('launchConfig', () => {
+                void treeDataProvider.refresh(this);
+            })
+        );
     }
 
     async refresh() {
@@ -1099,6 +1116,24 @@ class LaunchTarget extends Node {
             return;
         }
         this.label = treeDataProvider.cmakeProject.launchTargetName || await treeDataProvider.cmakeProject.allTargetName;
+        this.updateLaunchConfigDescription();
+    }
+
+    private updateLaunchConfigDescription(): void {
+        const launchCfg = treeDataProvider.cmakeProject?.workspaceContext.config.launchConfig;
+        if (launchCfg?.task) {
+            const taskName = typeof launchCfg.task === 'string' ? launchCfg.task : launchCfg.task.name;
+            this.description = localize('projectStatus.launchConfig.viaTask', '(via task: {0})', taskName);
+        } else if (launchCfg?.program) {
+            const base = path.basename(launchCfg.program);
+            this.description = localize('projectStatus.launchConfig.viaProgram', '(via program: {0})', base);
+        } else {
+            this.description = '';
+        }
+    }
+
+    dispose(): void {
+        vscode.Disposable.from(...this.disposables).dispose();
     }
 }
 
