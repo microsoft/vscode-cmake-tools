@@ -178,6 +178,44 @@ export function resolvePath(inpath: string, base: string) {
 }
 
 /**
+ * Expands a path that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * Note: The ${workspaceFolder:name} lookup is case-insensitive, consistent with VS Code's
+ * behavior on Windows/macOS file systems.
+ * @param inputPath The path to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved path
+ */
+export function expandExcludePath(inputPath: string, workspaceFolder: vscode.WorkspaceFolder): string {
+    let expandedPath = inputPath;
+
+    // First expand ${workspaceFolder} to the current workspace folder path
+    expandedPath = expandedPath.replace(/\$\{workspaceFolder\}/g, workspaceFolder.uri.fsPath);
+
+    // Then expand ${workspaceFolder:name} to the specific workspace folder path
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        expandedPath = expandedPath.replace(/\$\{workspaceFolder:(.+?)\}/g, (match, folderName) => {
+            const folder = vscode.workspace.workspaceFolders!.find(f => f.name.toLowerCase() === folderName.toLowerCase());
+            return folder ? folder.uri.fsPath : match;
+        });
+    }
+
+    // Finally resolve relative paths to absolute paths based on the workspace folder
+    return resolvePath(expandedPath, workspaceFolder.uri.fsPath);
+}
+
+/**
+ * Expands an array of paths that may contain ${workspaceFolder} or ${workspaceFolder:name} variables,
+ * and resolves relative paths to absolute paths based on the provided workspace folder.
+ * @param paths The paths to expand
+ * @param workspaceFolder The workspace folder to use for expansion and resolving relative paths
+ * @returns The expanded and resolved paths
+ */
+export function expandExcludePaths(paths: string[], workspaceFolder: vscode.WorkspaceFolder): string[] {
+    return paths.map(p => expandExcludePath(p, workspaceFolder));
+}
+
+/**
  * Split a path into its elements.
  * @param p The path to split
  */
@@ -783,6 +821,15 @@ export function platformPathEquivalent(a: string, b: string): boolean {
 }
 
 /**
+ * Normalizes a URI's file-system path according to the platform's case and Unicode normalization rules.
+ * @param uri The URI whose fsPath to normalize.
+ * @returns The normalized path string.
+ */
+export function platformNormalizeUri(uri: vscode.Uri): string {
+    return platformNormalizePath(uri.fsPath);
+}
+
+/**
  * Sets a context value in the VS Code context.
  * @param key The context key to set.
  * @param value The value to set for the context key.
@@ -790,6 +837,23 @@ export function platformPathEquivalent(a: string, b: string): boolean {
  */
 export function setContextValue(key: string, value: any): Thenable<void> {
     return vscode.commands.executeCommand('setContext', key, value);
+}
+
+/**
+ * Shows a Quick Pick with typed payload items and returns the selected payload.
+ * @param items The Quick Pick items, each with an associated payload value.
+ * @param options Standard VS Code Quick Pick options.
+ * @returns The payload of the selected item, or null if the user cancelled.
+ */
+export async function quickPick<T>(
+    items: (vscode.QuickPickItem & { payload: T })[],
+    options: vscode.QuickPickOptions
+): Promise<T | null> {
+    const selected = await vscode.window.showQuickPick(items, options);
+    if (!selected) {
+        return null;
+    }
+    return selected.payload;
 }
 
 export interface ProgressReport {

@@ -1017,7 +1017,17 @@ export class CTestDriver implements vscode.Disposable {
                 parentSuiteItem = suiteItem;
             }
         }
-        const testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        const existing = parentSuiteItem.children.get(testName);
+        let testItem: vscode.TestItem;
+        if (existing && existing.uri?.toString() === uri?.toString()) {
+            testItem = existing;
+            if (testItem.label !== testLabel) {
+                testItem.label = testLabel;
+            }
+        } else {
+            // Create or recreate testItem if the uri is stale or it does not already exist
+            testItem = initializedTestExplorer.createTestItem(testName, testLabel, uri);
+        }
         return { test: testItem, parentSuite: parentSuiteItem };
     }
 
@@ -1030,13 +1040,14 @@ export class CTestDriver implements vscode.Disposable {
             log.error(localize('folder.not.found.in.test.explorer', 'Folder is not found in Test Explorer: {0}', sourceDir));
             return;
         }
-        // Clear all children and re-add later
-        testExplorerRoot.children.replace([]);
+
+        // Keep track of all currently active test ids to remove the invalid ones afterwards
+        const activeTestIDs = new Set<string>();
 
         if (!ctestArgs) {
             // Happens when testPreset is not selected
             const testItem = initializedTestExplorer.createTestItem(testPresetRequired, localize('test.preset.required', 'Select a test preset to discover tests'));
-            testExplorerRoot.children.add(testItem);
+            testExplorerRoot.children.replace([testItem]);
             return;
         }
 
@@ -1044,6 +1055,7 @@ export class CTestDriver implements vscode.Disposable {
             // Legacy CTest tests
             for (const test of this.legacyTests) {
                 testExplorerRoot.children.add(initializedTestExplorer.createTestItem(test.name, test.name));
+                activeTestIDs.add(test.name);
             }
         } else if (testType === "CTestInfo" && this.tests !== undefined) {
             if (this.tests && this.tests.kind === 'ctestInfo') {
@@ -1077,12 +1089,24 @@ export class CTestDriver implements vscode.Disposable {
                     if (testTags.length !== 0) {
                         testItem.tags = [...testItem.tags, ...testTags];
                     }
-
                     parentSuiteItem.children.add(testItem);
+                    activeTestIDs.add(testItem.id);
                 });
             };
         }
 
+        const removeDeletedTests = (collection: vscode.TestItemCollection) => {
+            collection.forEach((item: vscode.TestItem, collection: vscode.TestItemCollection) => {
+                if (item.children.size > 0) {
+                    removeDeletedTests(item.children);
+                }
+                if (item.children.size === 0 && !activeTestIDs.has(item.id)) {
+                    collection.delete(item.id);
+                }
+            });
+        };
+
+        removeDeletedTests(testExplorerRoot.children);
     }
 
     /**

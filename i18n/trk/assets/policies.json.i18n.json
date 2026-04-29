@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy, Python::Development.Module'a bağımlı değildir.",
 	"assets/policies.json.CMP0202": "PDB dosya adları her zaman hedefin yapılandırma başına POSTFIX'ini içerir.",
 	"assets/policies.json.CMP0203": "_WINDLL, MSVC ABI hedefleyen paylaşılan kitaplıklar için tanımlanmıştır.",
-	"assets/policies.json.CMP0204": "MSVC ABI hedeflenirken her zaman bir karakter kümesi tanımlanır."
+	"assets/policies.json.CMP0204": "MSVC ABI hedeflenirken her zaman bir karakter kümesi tanımlanır.",
+	"assets/policies.json.CMP0205": "COPY_ON_ERROR komutunu içeren dosya, dizin içeriğini kopyalar.",
+	"assets/policies.json.CMP0206": "CPack Arşiv Oluşturucusu varsayılan olarak UID 0 ve GID 0 değerini alır.",
+	"assets/policies.json.CMP0207": "Dosya eşleşmeden önce yolları normalleştirir.",
+	"assets/policies.json.CMP0208": "Dışarı aktarma boş bağımsız değişkenlere izin vermez.",
+	"assets/policies.json.CMP0209": "Arabirim üst bilgisi kümelerinin yürütülebilir dosyaları dışarı aktarmalar olmadan denetlediğini doğrulayın.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS tüm hedef türlerine bağlantı bayrakları ekler."
 }

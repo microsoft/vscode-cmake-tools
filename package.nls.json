@@ -1,4 +1,6 @@
 {
+    "cmake-tools.command.cmake.addFileToCMakeLists.title": "Add File to CMake Lists",
+    "cmake-tools.command.cmake.removeFileFromCMakeLists.title": "Remove File from CMake Lists",
     "cmake-tools.command.cmake.openCMakePresets.title": "Open CMakePresets.json",
     "cmake-tools.command.cmake.addConfigurePreset.title": "Add Configure Preset",
     "cmake-tools.command.cmake.addBuildPreset.title": "Add Build Preset",
@@ -270,8 +272,10 @@
     "cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directories where Emscripten may be installed.",
     "cmake-tools.configuration.cmake.mergedCompileCommands.description": "Recursively collect and merge all compile_commands.json found in the cmake.buildDirectory.",
     "cmake-tools.configuration.cmake.copyCompileCommands.description": "Copy compile_commands.json to this location after a successful configure.",
+    "cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
     "cmake-tools.configuration.cmake.configureOnOpen.description": "Automatically configure CMake project directories when they are opened.",
     "cmake-tools.configuration.cmake.configureOnEdit.description": "Automatically configure CMake project directories when cmake.sourceDirectory or CMakeLists.txt content are saved.",
+    "cmake-tools.configuration.cmake.cmakeProviderExtensions.description": "List of VS Code extension IDs that provide or install their own CMake binary. When CMake is not found during automatic configure-on-open and one of these extensions is installed, CMake Tools will briefly poll for CMake availability instead of showing an immediate error. Set to an empty array to disable this behavior.",
     "cmake-tools.configuration.cmake.deleteBuildDirOnCleanConfigure.description": "Delete the entire build directory when a clean configure is invoked.",
     "cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description": "Set CMAKE_BUILD_TYPE also on multi config generators.",
     "cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Skip over the configure process if cache is present.",
@@ -378,7 +382,9 @@
         ]
     },
     "cmake-tools.configuration.cmake.enableAutomaticKitScan.description": "Enable automatic scanning for kits when a kit isn't selected. This will only take affect when CMake Presets aren't being used.",
+    "cmake-tools.configuration.cmake.removeStaleKitsOnScan.description": "Remove compiler-based kits from the user kits file during a full kit scan when they are no longer rediscovered. Set \"keep\": true in a kit entry to preserve it.",
     "cmake-tools.configuration.cmake.enableLanguageServices.description": "Enable language services for CMake files. This will enable syntax highlighting, code completion, and other features.",
+    "cmake-tools.configuration.cmake.languageServerOnlyMode.description": "Enable language-server-only mode for CMake files. This keeps CMake language services active while disabling CMake project, build, test, and kit integration.",
     "cmake-tools.configuration.cmake.preRunCoverageTarget.description": "Target to build before running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.postRunCoverageTarget.description": "Target to build after running tests with coverage using the test explorer",
     "cmake-tools.configuration.cmake.coverageInfoFiles.description": "LCOV coverage info files to be processed after running tests with coverage using the test explorer.",
@@ -425,6 +431,7 @@
     },
     "cmake-tools.configuration.cmake.launchBehavior.newTerminal.markdownDescriptions": "A new terminal instance is created and the target is launched in it. Existing terminals are not automatically cleaned up.",
     "cmake-tools.configuration.cmake.loadCompileCommands.description": "Controls whether the extension reads compile_commands.json to enable single file compilation.",
+    "cmake-tools.configuration.cmake.outlineViewType.description": "Project Outline View's type. Available options are: \"list\" and \"tree\".",
     "cmake-tools.command.cmake.projectStatus.update.title": "Refresh the project status",
     "cmake-tools.command.cmake.pinnedCommands.add.title": "Add a CMake command to pin",
     "cmake-tools.command.cmake.pinnedCommands.remove.title": "Unpin Command",
@@ -435,5 +442,58 @@
     "cmake-tools.debugger.label": "CMake Debugger",
     "cmake-tools.command.cmake.appendBuildDirectoryToWorkspace.title": "Append Build Directory to Current Workspace",
     "cmake-tools.command.workbench.action.tasks.configureTaskRunner.title":"Configure Task",
-    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task"
+    "cmake-tools.command.workbench.action.tasks.runTask.title":"Run Task",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.description": "Add source files to CMake lists when they are created.",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.no.description": "Do not automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description": "Automatically add source files to CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.description": "Remove source files from CMake lists when they are deleted.",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.no.description": "Do not automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description": "Automatically remove source files from CMake lists",
+    "cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description": "Show a preview panel of proposed changes to apply",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.markdownDescription": {
+        "message": "How to choose which `set()` or `list(APPEND/PREPEND/INSERT)` command invocation to edit when adding source files to CMake lists.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.never.description": "Do not look for variable modification command invocations, only look for source command invocations.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description": {
+        "message": "Present a Quick Pick with options from the first `CMakeLists.txt` found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description": {
+        "message": "Present a Quick Pick with options from all `CMakeLists.txt` files found when searching up from the location of the new source file.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription": {
+        "message": "Variables to add source files to. Variables appearing earlier in this list will be given higher priority. Only used if `#cmake.modifyLists.variableSelection#` is not `never`. Supports glob patterns.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.description": "How to choose which target to add new source files to when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description": "Present a Quick Pick with targets whose source directories are closest to location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description": "Present a Quick Pick with targets whose source directories contain the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.description": "How to choose which of a target's source command invocations to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description": "Present a Quick Pick with options from the CMake list file in the parent directory closest to the location of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description": "Present a Quick Pick with options from all CMake list files in the parent directories of the new source file.",
+    "cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription": {
+        "message": "Commands to treat as target source commands when adding source files CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns.\n\nIf you are using the File API (see `#cmake.cmakeCommunicationMode#`), user-defined functions and macros which call the commands in this list are detected automatically and added to it.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.description": "How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choose the best candidate automatically.",
+    "cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Present a Quick Pick with options from the selected target source command invocation.",
+    "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns.",
+    "update.code.model.for.list.modifier": "Update code model for automatic list file modifier"
 }

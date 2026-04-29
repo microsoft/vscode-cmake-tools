@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import { readKitsFile, getShellScriptEnvironment } from '@cmt/kits/kit';
+import { readKitsFile, getShellScriptEnvironment, effectiveKitEnvironment } from '@cmt/kits/kit';
 import { expect } from '@test/util';
 import * as path from 'path';
 import paths from '@cmt/paths';
@@ -92,5 +92,58 @@ suite('Kits test', () => {
             expect(env_vars_arr).to.deep.include(['TESTVAR12', 'abc']);
             expect(env_vars_arr).to.deep.include(['TESTVAR13', 'cde']);
         }
+    });
+
+    test('Test environmentVariables expand using environmentSetupScript output', async () => {
+        const fname_extension = process.platform === 'win32' ? 'bat' : 'sh';
+        const fname = `cmake-kit-test-${Math.random().toString()}.${fname_extension}`;
+        const script_path = path.join(paths.tmpDir, fname);
+        const pathSeparator = process.platform === 'win32' ? ';' : ':';
+        const basePath = process.platform === 'win32' ? 'C:\\base-path' : '/base-path';
+        const scriptPath = process.platform === 'win32' ? 'C:\\script-path' : '/script-path';
+        const appendedPath = process.platform === 'win32' ? 'C:\\env-var-path' : '/env-var-path';
+
+        process.env.PATH = basePath;
+
+        if (process.platform === 'win32') {
+            await fs.writeFile(script_path, `set "PATH=${scriptPath};%PATH%"`);
+        } else {
+            await fs.writeFile(script_path, `export PATH="${scriptPath}:$PATH"`);
+        }
+
+        const kit = {
+            name: 'Test Kit 3',
+            environmentSetupScript: script_path,
+            environmentVariables: {
+                PATH: `\${env:PATH}${pathSeparator}${appendedPath}`
+            },
+            isTrusted: true
+        };
+
+        const setupOnlyKit = {
+            name: 'Test Kit 3 setup-only',
+            environmentSetupScript: script_path,
+            isTrusted: true
+        };
+
+        const setup_env_vars = await getShellScriptEnvironment(setupOnlyKit);
+        expect(setup_env_vars).to.not.be.undefined;
+
+        const env_vars = await effectiveKitEnvironment(kit);
+        await fs.unlink(script_path);
+
+        const normalizePathList = (value: string | undefined): string[] => {
+            expect(value).to.not.eq(undefined);
+            const parts = (value ?? '').split(pathSeparator);
+            if (process.platform !== 'win32') {
+                return parts;
+            }
+
+            // cmd/set can emit PATH entries with different slash and drive-letter casing.
+            return parts.map(part => path.win32.normalize(part).toLowerCase());
+        };
+
+        expect(normalizePathList(setup_env_vars?.PATH)).to.deep.eq(normalizePathList(`${scriptPath}${pathSeparator}${basePath}`));
+        expect(normalizePathList(env_vars.PATH)).to.deep.eq(normalizePathList(`${scriptPath}${pathSeparator}${basePath}${pathSeparator}${appendedPath}`));
     });
 });

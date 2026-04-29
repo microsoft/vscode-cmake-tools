@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy ist nicht von Python::Development.Module abhängig.",
 	"assets/policies.json.CMP0202": "PDB-Dateinamen enthalten immer das pro Konfiguration festgelegte POSTFIX des Ziels.",
 	"assets/policies.json.CMP0203": "_WINDLL ist für freigegebene Bibliotheken definiert, die auf die MSVC-ABI abzielen.",
-	"assets/policies.json.CMP0204": "Beim Ziel auf die MSVC-ABI wird immer ein Zeichensatz definiert."
+	"assets/policies.json.CMP0204": "Beim Ziel auf die MSVC-ABI wird immer ein Zeichensatz definiert.",
+	"assets/policies.json.CMP0205": "Datei mit COPY_ON_ERROR kopiert Verzeichnisinhalt.",
+	"assets/policies.json.CMP0206": "Der CPack-Archivgenerator verwendet standardmäßig UID 0 und GID 0.",
+	"assets/policies.json.CMP0207": "Datei normalisiert Pfade vor dem Abgleich.",
+	"assets/policies.json.CMP0208": "Export erlaubt keine leeren Argumente.",
+	"assets/policies.json.CMP0209": "Die Überprüfung von Schnittstellenheader-Sets prüft ausführbare Dateien ohne Exporte.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS fügt allen Zieltypen Linkflags hinzu."
 }

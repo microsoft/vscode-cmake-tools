@@ -57,6 +57,33 @@ Add the following to your `.vscode/settings.json`:
 
 Then run **CMake: Debug Target** from the command palette. CMake Tools will automatically fill in `program`, `cwd`, and `name` from the selected target, and apply your settings on top. Any property recognized by the debug adapter can be added to `cmake.debugConfig`.
 
+### Use Natvis without a launch.json
+
+If you use the cpptools debug adapters (`cppvsdbg` or `cppdbg`), you can provide custom Natvis files directly in `cmake.debugConfig` via `visualizerFile`.
+
+Add this to your `.vscode/settings.json`:
+
+```jsonc
+{
+    "cmake.debugConfig": {
+        "visualizerFile": "${workspaceFolder}/.vscode/types.natvis"
+    }
+}
+```
+
+You can also specify multiple Natvis files:
+
+```jsonc
+{
+    "cmake.debugConfig": {
+        "visualizerFile": [
+            "${workspaceFolder}/.vscode/base.natvis",
+            "${workspaceFolder}/.vscode/project.natvis"
+        ]
+    }
+}
+```
+
 If you omit `type`, CMake Tools falls back to the original behavior: auto-detecting `cppdbg` or `cppvsdbg` from the CMake cache.
 
 ## Debug using a launch.json file

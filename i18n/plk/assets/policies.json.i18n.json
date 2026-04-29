@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy nie zależy od python::D evelopment.Module.",
 	"assets/policies.json.CMP0202": "Nazwy plików PDB zawsze zawierają POSTFIX na konfigurację w miejscu docelowym.",
 	"assets/policies.json.CMP0203": "_WINDLL jest zdefiniowana dla bibliotek udostępnionych przeznaczonych dla usługi MSVC ABI.",
-	"assets/policies.json.CMP0204": "Zestaw znaków jest zawsze definiowany podczas określania MSVC ABI."
+	"assets/policies.json.CMP0204": "Zestaw znaków jest zawsze definiowany podczas określania MSVC ABI.",
+	"assets/policies.json.CMP0205": "plik z COPY_ON_ERROR kopiuje zawartość katalogu.",
+	"assets/policies.json.CMP0206": "Generator archiwum CPack domyślnie ma wartość UID 0 i GID 0.",
+	"assets/policies.json.CMP0207": "plik normalizuje ścieżki przed dopasowaniem.",
+	"assets/policies.json.CMP0208": "eksport nie zezwala na puste argumenty.",
+	"assets/policies.json.CMP0209": "Sprawdź, czy zestawy nagłówków interfejsu sprawdzają pliki wykonywalne bez eksportowania.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS dodaje flagi linku do wszystkich typów docelowych."
 }

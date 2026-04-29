@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy не зависит от Python::Development.Module.",
 	"assets/policies.json.CMP0202": "Имена PDB-файлов всегда включают постфикс конкретной конфигурации целевого объекта.",
 	"assets/policies.json.CMP0203": "Макрос _WINDLL определен для общих библиотек, целевым объектом которых является MSVC ABI.",
-	"assets/policies.json.CMP0204": "Набор символов всегда определяется, когда целевым объектом является MSVC ABI."
+	"assets/policies.json.CMP0204": "Набор символов всегда определяется, когда целевым объектом является MSVC ABI.",
+	"assets/policies.json.CMP0205": "файл с COPY_ON_ERROR копирует содержимое каталога.",
+	"assets/policies.json.CMP0206": "Генератор архивов CPack по умолчанию использует UID 0 и GID 0.",
+	"assets/policies.json.CMP0207": "файл нормализует пути перед сопоставлением.",
+	"assets/policies.json.CMP0208": "экспорт не допускает пустых аргументов.",
+	"assets/policies.json.CMP0209": "Убедитесь, что наборы заголовков интерфейса проверяют исполняемые файлы без экспорта.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS добавляет флаги компоновки для всех типов целевых объектов."
 }

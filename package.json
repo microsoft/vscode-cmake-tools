@@ -764,6 +764,16 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.addFileToCMakeLists",
+        "title": "%cmake-tools.command.cmake.addFileToCMakeLists.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.removeFileFromCMakeLists",
+        "title": "%cmake-tools.command.cmake.removeFileFromCMakeLists.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.debugTarget",
         "title": "%cmake-tools.command.cmake.debugTarget.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -998,6 +1008,8 @@
               "configure",
               "install",
               "test",
+              "package",
+              "workflow",
               "clean",
               "cleanRebuild"
             ],
@@ -3096,6 +3108,12 @@
           "description": "%cmake-tools.configuration.cmake.copyCompileCommands.description%",
           "scope": "resource"
         },
+        "cmake.postConfigureTask": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.postConfigureTask.description%",
+          "scope": "resource"
+        },
         "cmake.configureOnOpen": {
           "type": "boolean",
           "default": true,
@@ -3106,6 +3124,20 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
+          "scope": "resource"
+        },
+        "cmake.cmakeProviderExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "stmicroelectronics.stm32-vscode-extension",
+            "espressif.esp-idf-extension",
+            "NXPSemiconductors.mcuxpresso",
+            "nordic-semiconductor.nrf-connect"
+          ],
+          "description": "%cmake-tools.configuration.cmake.cmakeProviderExtensions.description%",
           "scope": "resource"
         },
         "cmake.deleteBuildDirOnCleanConfigure": {
@@ -3279,6 +3311,16 @@
             "hidden"
           ],
           "scope": "window"
+        },
+        "cmake.outlineViewType": {
+          "type": "string",
+          "enum": [
+            "list",
+            "tree"
+          ],
+          "default": "list",
+          "description": "%cmake-tools.configuration.cmake.outlineViewType.description%",
+          "scope": "resource"
         },
         "cmake.options.advanced": {
           "type": "object",
@@ -4100,10 +4142,22 @@
           "description": "%cmake-tools.configuration.cmake.enableAutomaticKitScan.description%",
           "scope": "resource"
         },
+        "cmake.removeStaleKitsOnScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.removeStaleKitsOnScan.description%",
+          "scope": "window"
+        },
         "cmake.enableLanguageServices": {
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.enableLanguageServices.description%",
+          "scope": "machine"
+        },
+        "cmake.languageServerOnlyMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.languageServerOnlyMode.description%",
           "scope": "machine"
         },
         "cmake.preRunCoverageTarget": {
@@ -4133,10 +4187,146 @@
             "description": "%cmake-tools.configuration.cmake.useFolderPropertyInBuildTargetDropdown.description%",
             "scope": "resource"
         },
-        "cmake.setBuildTargetSameAsLaunchTarget": {
+"cmake.setBuildTargetSameAsLaunchTarget": {
           "type": "boolean",
           "default": false,
           "description": "%cmake-tools.configuration.cmake.setBuildTargetSameAsLaunchTarget.description%",
+          "scope": "resource"
+        },
+        "cmake.modifyLists.addNewSourceFiles": {
+          "type": "string",
+          "default": "ask",
+          "enum": [
+            "no",
+            "yes",
+            "ask"
+          ],
+          "description": "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.description%",
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.no.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.yes.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.addNewSourceFiles.ask.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.removeDeletedSourceFiles": {
+          "type": "string",
+          "default": "ask",
+          "enum": [
+            "no",
+            "yes",
+            "ask"
+          ],
+          "description": "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.description%",
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.no.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.yes.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.removeDeletedSourceFiles.ask.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.variableSelection": {
+          "type": "string",
+          "enum": [
+            "never",
+            "auto",
+            "askFirstParentDir",
+            "askParentDirs"
+          ],
+          "default": "never",
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.variableSelection.markdownDescription%",
+          "markdownEnumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.never.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askFirstParentDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.variableSelection.askParentDirs.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.sourceVariables": {
+          "type": "array",
+          "items": {
+              "type": "string"
+          },
+          "default": [
+            "SRC",
+            "SRCS",
+            "SOURCES",
+            "SOURCE_FILES",
+            "*_SRC",
+            "*_SRCS",
+            "*_SOURCES",
+            "*_SOURCE_FILES"
+          ],
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceVariables.markdownDescription%",
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "askNearestSourceDir",
+            "askParentSourceDirs"
+          ],
+          "default": "askParentSourceDirs",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.targetSelection.description%",
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askNearestSourceDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetSelection.askParentSourceDirs.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetCommandInvocationSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "askFirstParentDir",
+            "askParentDirs"
+          ],
+          "default": "askParentDirs",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.description%",
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askFirstParentDir.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.targetCommandInvocationSelection.askParentDirs.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.targetSourceCommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "target_sources",
+            "add_executable",
+            "add_library"
+          ],
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.targetSourceCommands.markdownDescription%",
+          "scope": "resource"
+        },
+        "cmake.modifyLists.scopeSelection": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ask"
+          ],
+          "default": "ask",
+          "description": "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.description%",
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description%",
+            "%cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description%"
+          ],
+          "scope": "resource"
+        },
+        "cmake.modifyLists.sourceListKeywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "%cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription%",
           "scope": "resource"
         }
       }
@@ -4225,11 +4415,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema://schemas/CMakePresets-v10-schema.json"
+        "url": "cmake-tools-schema://schemas/CMakePresets-v11-schema.json"
       }
     ]
   },
@@ -4246,6 +4436,7 @@
     "translations-import": "gulp translations-import",
     "package": "vsce package --yarn -o cmake-tools.vsix",
     "pretest": "tsc -p test.tsconfig.json",
+    "pretest-buildfakebin": "cmake -DCMAKE_INSTALL_PREFIX=test/fakebin -DCMAKE_BUILD_TYPE=Release -S test/fakeOutputGenerator -B test/fakeOutputGenerator/build && cmake --build test/fakeOutputGenerator/build && cmake --install test/fakeOutputGenerator/build && cmake -E rm -rf test/fakeOutputGenerator/build",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
@@ -4253,7 +4444,7 @@
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
-    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register ./test/unit-tests/backend/**/*.test.ts",
+    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register -r test/unit-tests/backend/setup-vscode-mock.ts ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2"
   },
   "devDependencies": {
@@ -4277,7 +4468,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/eslint-plugin-tslint": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
-    "@vscode/test-electron": "^2.3.8",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.1.0",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
@@ -4306,7 +4497,7 @@
     "tsconfig-paths": "^3.11.0",
     "tslint": "^6.1.3",
     "typescript": "^4.1.5",
-    "vscode-cmake-tools": "^1.5.0",
+    "vscode-cmake-tools": "^1.6.0",
     "vscode-nls-dev": "^3.3.2",
     "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4"
@@ -4315,7 +4506,6 @@
     "@friedemannsommer/lcov-parser": "^5.0.0",
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^8.18.0",
-    "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.1.1",
     "json5": "^2.2.2",
@@ -4332,7 +4522,7 @@
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
     "uuid": "~8.3.2",
-    "lodash": "^4.17.23"
+    "lodash": "^4.18.1"
   },
   "resolutions": {
     "ansi-regex": "^5.0.1",
@@ -4348,7 +4538,8 @@
     "js-yaml": "^4.1.1",
     "tmp": "^0.2.4",
     "jws": "^4.0.1",
-    "serialize-javascript": "^7.0.4"
+    "serialize-javascript": "^7.0.4",
+    "**/minimatch/brace-expansion": "^1.1.13"
   },
   "packageManager": "yarn@1.22.19"
 }

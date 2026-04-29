@@ -208,5 +208,11 @@
 	"assets/policies.json.CMP0201": "Python::NumPy ne dépend pas de Python::Development.Module.",
 	"assets/policies.json.CMP0202": "Les noms de fichiers PDB incluent toujours le POSTFIX par configuration de leur cible.",
 	"assets/policies.json.CMP0203": "_WINDLL est défini pour les bibliothèques partagées ciblant l’ABI MSVC.",
-	"assets/policies.json.CMP0204": "Un jeu de caractères est toujours défini lorsque l’ABI MSVC est ciblé."
+	"assets/policies.json.CMP0204": "Un jeu de caractères est toujours défini lorsque l’ABI MSVC est ciblé.",
+	"assets/policies.json.CMP0205": "Le fichier avec COPY_ON_ERROR copie le contenu du répertoire.",
+	"assets/policies.json.CMP0206": "Le générateur d’archives CPack utilise par défaut UID 0 et GID 0.",
+	"assets/policies.json.CMP0207": "Le fichier normalise les chemins avant la correspondance.",
+	"assets/policies.json.CMP0208": "L’exportation n’autorise pas les arguments vides.",
+	"assets/policies.json.CMP0209": "Vérifie les ensembles d’en-têtes d’interface pour les exécutables sans exportations.",
+	"assets/policies.json.CMP0210": "CMAKE_<LANG>_LINK_FLAGS ajoute des options de liaison à tous les types de cibles."
 }

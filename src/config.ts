@@ -164,6 +164,24 @@ export interface FailurePattern {
 
 export type FailurePatternsConfig = (FailurePattern | string)[] | string;
 
+export type ModifyListsActionMode = 'no' | 'yes' | 'ask';
+export type ModifyListsVariableSelection = 'never' | 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsTargetSelection = 'auto' | 'askNearestSourceDir' | 'askParentSourceDirs';
+export type ModifyListsTargetCommandInvocationSelection = 'auto' | 'askFirstParentDir' | 'askParentDirs';
+export type ModifyListsScopeSelection = 'auto' | 'ask';
+
+export interface ModifyListsSettings {
+    addNewSourceFiles: ModifyListsActionMode;
+    removeDeletedSourceFiles: ModifyListsActionMode;
+    variableSelection: ModifyListsVariableSelection;
+    sourceVariables: string[];
+    targetSelection: ModifyListsTargetSelection;
+    targetCommandInvocationSelection: ModifyListsTargetCommandInvocationSelection;
+    targetSourceCommands: string[];
+    scopeSelection: ModifyListsScopeSelection;
+    sourceListKeywords: string[];
+}
+
 export interface ExtensionConfigurationSettings {
     autoSelectActiveFolder: boolean;
     defaultActiveFolder: string | null;
@@ -205,9 +223,11 @@ export interface ExtensionConfigurationSettings {
     emscriptenSearchDirs: string[];
     mergedCompileCommands: string | null;
     copyCompileCommands: string | null;
+    postConfigureTask: string | null;
     loadCompileCommands: boolean;
     configureOnOpen: boolean;
     configureOnEdit: boolean;
+    cmakeProviderExtensions: string[];
     deleteBuildDirOnCleanConfigure: boolean;
     skipConfigureIfCachePresent: boolean | null;
     useCMakeServer: boolean;
@@ -230,7 +250,9 @@ export interface ExtensionConfigurationSettings {
     automaticReconfigure: boolean;
     pinnedCommands: string[];
     enableAutomaticKitScan: boolean;
+    removeStaleKitsOnScan: boolean;
     enableLanguageServices: boolean;
+    languageServerOnlyMode: boolean;
     preRunCoverageTarget: string | null;
     postRunCoverageTarget: string | null;
     coverageInfoFiles: string[];
@@ -238,6 +260,8 @@ export interface ExtensionConfigurationSettings {
     setBuildTargetSameAsLaunchTarget: boolean;
     additionalBuildProblemMatchers: BuildProblemMatcherConfig[];
     shell: string | null;
+    modifyLists: ModifyListsSettings;
+    outlineViewType: string;
 }
 
 type EmittersOf<T> = {
@@ -481,6 +505,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get configureOnEdit() {
         return this.configData.configureOnEdit;
     }
+    get cmakeProviderExtensions(): string[] {
+        return this.configData.cmakeProviderExtensions;
+    }
     get deleteBuildDirOnCleanConfigure() {
         return this.configData.deleteBuildDirOnCleanConfigure;
     }
@@ -577,6 +604,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get copyCompileCommands(): string | null {
         return this.configData.copyCompileCommands;
     }
+    get postConfigureTask(): string | null {
+        return this.configData.postConfigureTask;
+    }
     get loadCompileCommands(): boolean {
         return this.configData.loadCompileCommands;
     }
@@ -623,8 +653,16 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.enableAutomaticKitScan;
     }
 
+    get removeStaleKitsOnScan(): boolean {
+        return this.configData.removeStaleKitsOnScan;
+    }
+
     get enableLanguageServices(): boolean {
         return this.configData.enableLanguageServices;
+    }
+
+    get languageServerOnlyMode(): boolean {
+        return this.configData.languageServerOnlyMode;
     }
 
     get preRunCoverageTarget(): string | null {
@@ -649,6 +687,14 @@ export class ConfigurationReader implements vscode.Disposable {
 
     get setBuildTargetSameAsLaunchTarget(): boolean {
         return this.configData.setBuildTargetSameAsLaunchTarget;
+    }
+
+    get modifyLists(): ModifyListsSettings {
+        return this.configData.modifyLists;
+    }
+
+    get outlineViewType(): string {
+        return this.configData.outlineViewType;
     }
 
     private readonly emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -692,9 +738,11 @@ export class ConfigurationReader implements vscode.Disposable {
         emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
         mergedCompileCommands: new vscode.EventEmitter<string | null>(),
         copyCompileCommands: new vscode.EventEmitter<string | null>(),
+        postConfigureTask: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
+        cmakeProviderExtensions: new vscode.EventEmitter<string[]>(),
         deleteBuildDirOnCleanConfigure: new vscode.EventEmitter<boolean>(),
         skipConfigureIfCachePresent: new vscode.EventEmitter<boolean | null>(),
         useCMakeServer: new vscode.EventEmitter<boolean>(),
@@ -717,6 +765,7 @@ export class ConfigurationReader implements vscode.Disposable {
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),
         enableAutomaticKitScan: new vscode.EventEmitter<boolean>(),
+        removeStaleKitsOnScan: new vscode.EventEmitter<boolean>(),
         enableLanguageServices: new vscode.EventEmitter<boolean>(),
         preRunCoverageTarget: new vscode.EventEmitter<string | null>(),
         postRunCoverageTarget: new vscode.EventEmitter<string | null>(),
@@ -724,7 +773,10 @@ export class ConfigurationReader implements vscode.Disposable {
         useFolderPropertyInBuildTargetDropdown: new vscode.EventEmitter<boolean>(),
         additionalBuildProblemMatchers: new vscode.EventEmitter<BuildProblemMatcherConfig[]>(),
         shell: new vscode.EventEmitter<string | null>(),
-        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>()
+        setBuildTargetSameAsLaunchTarget: new vscode.EventEmitter<boolean>(),
+        languageServerOnlyMode: new vscode.EventEmitter<boolean>(),
+        modifyLists: new vscode.EventEmitter<ModifyListsSettings>(),
+        outlineViewType: new vscode.EventEmitter<string>()
     };
 
     /**
