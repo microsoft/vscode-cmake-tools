@@ -8,6 +8,7 @@ Features:
 
 Improvements:
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
+- Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
 
 Bug Fixes:
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
