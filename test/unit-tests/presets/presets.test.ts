@@ -1,4 +1,4 @@
-import { buildArgs, Condition, configureArgs, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
+import { buildArgs, Condition, configureArgs, evaluateCondition, getArchitecture, getToolset, hasVsDevEnvSignals } from '@cmt/presets/preset';
 import { expect } from '@test/util';
 import * as os from "os";
 
@@ -273,5 +273,46 @@ suite('Preset tests', () => {
         const args = buildArgs(preset, undefined, undefined, 0);
         expect(args).to.include('-j');
         expect(args).to.not.include('--parallel');
+    });
+
+    test('hasVsDevEnvSignals detects Visual Studio generator', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Visual Studio 17 2022' })).to.eq(true);
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Visual Studio 16 2019' })).to.eq(true);
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Visual Studio 15 2017' })).to.eq(true);
+    });
+
+    test('hasVsDevEnvSignals detects external toolset strategy', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', toolset: { value: 'v143', strategy: 'external' } })).to.eq(true);
+    });
+
+    test('hasVsDevEnvSignals detects external architecture strategy', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', architecture: { value: 'x64', strategy: 'external' } })).to.eq(true);
+    });
+
+    test('hasVsDevEnvSignals returns false for Ninja with no MSVC signals', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja' })).to.eq(false);
+    });
+
+    test('hasVsDevEnvSignals returns false for no generator and no strategy', () => {
+        expect(hasVsDevEnvSignals({ name: 'test' })).to.eq(false);
+    });
+
+    test('hasVsDevEnvSignals returns false for set strategy (non-external)', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', toolset: { value: 'v143', strategy: 'set' } })).to.eq(false);
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', architecture: { value: 'x64', strategy: 'set' } })).to.eq(false);
+    });
+
+    test('hasVsDevEnvSignals returns false for string toolset and architecture', () => {
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', toolset: 'v143' })).to.eq(false);
+        expect(hasVsDevEnvSignals({ name: 'test', generator: 'Ninja', architecture: 'x64' })).to.eq(false);
+    });
+
+    test('hasVsDevEnvSignals detects combined external toolset and architecture', () => {
+        expect(hasVsDevEnvSignals({
+            name: 'test',
+            generator: 'Ninja',
+            toolset: { value: 'v143', strategy: 'external' },
+            architecture: { value: 'x64', strategy: 'external' }
+        })).to.eq(true);
     });
 });
