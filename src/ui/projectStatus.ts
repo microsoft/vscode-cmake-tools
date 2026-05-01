@@ -1132,6 +1132,7 @@ class LaunchTarget extends Node {
         }
     }
 
+    /** Releases the `config.onChange('launchConfig', ...)` subscription registered in `initialize()`. */
     dispose(): void {
         vscode.Disposable.from(...this.disposables).dispose();
     }
