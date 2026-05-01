@@ -17,7 +17,7 @@
 	"cmake.retry.not.yet": "CMake はまだ利用できません (試行回数 {0}/{1})",
 	"cmake.retry.configuring": "CMake が利用可能になりました — プロジェクトを構成しています",
 	"cmake.retry.exhausted": "{0} 回再試行後しましたが、CMake が見つかりません",
-	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
+	"cmake.configuration.change.detected": "CMake が使用可能になるのを待っている間に CMake 構成の変更が検出されました。",
 	"update.code.model.for.list.modifier": "自動リスト ファイル修飾子のコード モデルを更新する",
 	"failed.to.open.cache.file.on.code.model.update": "コード モデルの更新時に CMake キャッシュ ファイルを開くことができませんでした",
 	"update.code.model.for.cpptools": "cpptools のコード モデルの更新",
