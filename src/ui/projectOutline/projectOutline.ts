@@ -471,7 +471,7 @@ export class TargetNode extends BaseNode {
             }
             item.iconPath = new vscode.ThemeIcon(iconForTargetType(this._type));
             item.id = this.id;
-            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';
+            const canBuild = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY';
             const canRun = this._type === 'UTILITY';
             item.contextValue = [
                 `nodeType=target`,
