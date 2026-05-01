@@ -911,6 +911,7 @@ export class CMakeProject {
         this.termCloseSub.dispose();
         this.launchTaskEndSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
+        this.launchTerminals.clear();
         this.launchTaskExecutions.forEach(exec => exec.terminate());
         this.launchTaskExecutions.clear();
         for (const sub of [
@@ -3537,6 +3538,10 @@ export class CMakeProject {
      * `presentation.panel`/`isBackground` settings.
      */
     private async runLaunchAsTask(_executable: ExecutableTarget, cfg: LaunchConfig): Promise<void> {
+        if (cfg.args?.length || cfg.cwd || cfg.environment?.length) {
+            log.warning(localize('launchConfig.task.ignoredFields',
+                'cmake.launchConfig: args, cwd, and environment are ignored in task mode. These settings only apply when using "program".'));
+        }
         const ref: { name: string; type?: string } =
             typeof cfg.task === 'string' ? { name: cfg.task } : cfg.task!;
         const all = await vscode.tasks.fetchTasks(ref.type ? { type: ref.type } : undefined);
