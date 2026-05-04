@@ -1950,13 +1950,13 @@ export class ExtensionManager implements vscode.Disposable {
         try {
             const project = this.getActiveProject();
             if (!project) {
-                vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
+                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
                 return;
             }
             return project.runTest(testName);
         } catch (err) {
             log.error(`Error running test from CodeLens: ${err}`);
-            vscode.window.showErrorMessage(localize('test.run.error', 'Failed to run test: {0}', String(err)));
+            void vscode.window.showErrorMessage(localize('test.run.error', 'Failed to run test: {0}', String(err)));
         }
     }
 
@@ -1968,13 +1968,13 @@ export class ExtensionManager implements vscode.Disposable {
         try {
             const project = this.getActiveProject();
             if (!project) {
-                vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
+                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
                 return;
             }
             return project.debugCTest(testName);
         } catch (err) {
             log.error(`Error debugging test from CodeLens: ${err}`);
-            vscode.window.showErrorMessage(localize('test.debug.error', 'Failed to debug test: {0}', String(err)));
+            void vscode.window.showErrorMessage(localize('test.debug.error', 'Failed to debug test: {0}', String(err)));
         }
     }
 
