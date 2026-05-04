@@ -7,6 +7,8 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Improvements:
+- Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
+- Add inline "Run" and "Debug" CodeLens buttons in source editors for tests discovered by CTest, allowing tests to be executed directly from their source locations. [#4451](https://github.com/microsoft/vscode-cmake-tools/issues/4451)
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
 - Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
 
