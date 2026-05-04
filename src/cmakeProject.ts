@@ -3544,10 +3544,13 @@ export class CMakeProject {
         }
         const ref: { name: string; type?: string } =
             typeof cfg.task === 'string' ? { name: cfg.task } : cfg.task!;
-        const all = await vscode.tasks.fetchTasks(ref.type ? { type: ref.type } : undefined);
+        // Always fetch all tasks — passing { type: 'shell' } or { type: 'process' }
+        // to fetchTasks() returns nothing because those are built-in execution
+        // types, not contributed task-provider types.
+        const all = await vscode.tasks.fetchTasks();
         const matches = all.filter(t =>
             t.name === ref.name &&
-            (!ref.type || t.definition.type === ref.type) &&
+            (!ref.type || t.definition.type === ref.type || t.source === ref.type) &&
             (t.scope === vscode.TaskScope.Global ||
              t.scope === vscode.TaskScope.Workspace ||
              t.scope === this.workspaceFolder));
