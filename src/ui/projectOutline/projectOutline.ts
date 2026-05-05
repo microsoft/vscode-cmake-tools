@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as codeModel from '@cmt/drivers/codeModel';
 import rollbar from '@cmt/rollbar';
-import { lexicographicalCompare, splitPath } from '@cmt/util';
+import { lexicographicalCompare, platformNormalizePath, splitPath } from '@cmt/util';
 import CMakeProject from '@cmt/cmakeProject';
 import { populateViewCodeModel } from '@cmt/ui/projectOutline/targetsViewCodeModel';
 import { fs } from '@cmt/pr';
@@ -19,7 +19,7 @@ interface NamedItem {
 /**
  * Base class of nodes in all tree nodes
  */
-abstract class BaseNode {
+export abstract class BaseNode {
     constructor(public readonly id: string) {}
 
     /**
@@ -33,6 +33,56 @@ abstract class BaseNode {
     abstract getTreeItem(): vscode.TreeItem;
 
     abstract getOrderTuple(): string[];
+}
+
+/**
+ * Filter node that appears at the top of the tree to show and edit the current filter
+ */
+export class FilterNode extends BaseNode {
+    constructor(private searchTerm: string) {
+        super('cmake.outline.filter');
+    }
+
+    getChildren(): BaseNode[] {
+        return [];
+    }
+
+    getOrderTuple(): string[] {
+        return ['0-filter']; // Ensures it appears first
+    }
+
+    updateSearchTerm(term: string) {
+        this.searchTerm = term;
+    }
+
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(
+            this.searchTerm ? localize('filter.active', 'Filter: "{0}"', this.searchTerm) : localize('filter.none', 'Filter: (none)'),
+            vscode.TreeItemCollapsibleState.None
+        );
+        item.id = this.id;
+        item.tooltip = this.searchTerm ?
+            localize('filter.tooltip.edit', 'Click to edit filter or clear with X button') :
+            localize('filter.tooltip.set', 'Click to set a filter for the project outline');
+        item.contextValue = 'filter';
+
+        // Add appropriate icon and command
+        if (this.searchTerm) {
+            item.iconPath = new vscode.ThemeIcon('filter-filled');
+            item.description = localize('filter.char.count', '({0} chars)', this.searchTerm.length);
+        } else {
+            item.iconPath = new vscode.ThemeIcon('filter');
+            item.description = localize('filter.click.to.filter', 'Click to filter');
+        }
+
+        item.command = {
+            command: 'cmake.outline.search',
+            title: localize('edit.filter', 'Edit Filter'),
+            arguments: []
+        };
+
+        return item;
+    }
 }
 
 /**
@@ -303,6 +353,53 @@ export class ReferenceNode extends BaseNode {
     }
 }
 
+/**
+ * Represents an individual CTest test case under an executable target in the project outline.
+ */
+export class CTestTestNode extends BaseNode {
+    constructor(
+        readonly targetId: string,
+        readonly testName: string,
+        readonly folder: vscode.WorkspaceFolder,
+        readonly sourceDir: string,
+        readonly sourceFilePath?: string,
+        readonly sourceFileLine?: number
+    ) {
+        super(`${targetId}::test::${testName}`);
+    }
+
+    get name() {
+        return this.testName;
+    }
+
+    getChildren(): BaseNode[] {
+        return [];
+    }
+
+    getOrderTuple(): string[] {
+        return ['test:' + this.testName];
+    }
+
+    getTreeItem(): vscode.TreeItem {
+        const item = new vscode.TreeItem(this.testName);
+        item.id = this.id;
+        item.iconPath = new vscode.ThemeIcon('beaker');
+        item.contextValue = 'nodeType=test';
+        item.tooltip = localize('test.tooltip', 'Test: {0}', this.testName);
+        if (this.sourceFilePath) {
+            const uri = vscode.Uri.file(this.sourceFilePath);
+            const line = this.sourceFileLine ? this.sourceFileLine - 1 : 0;
+            const position = new vscode.Position(line, 0);
+            item.command = {
+                title: localize('open.file', 'Open file'),
+                command: 'vscode.open',
+                arguments: [uri, { selection: new vscode.Range(position, position) }]
+            };
+        }
+        return item;
+    }
+}
+
 export class TargetNode extends BaseNode {
     constructor(readonly prefix: string, readonly projectName: string, cm: codeModel.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
         // id: {prefix}::target_name:artifact_name:target_path
@@ -319,6 +416,11 @@ export class TargetNode extends BaseNode {
     private _isDefault = false;
     private _isLaunch = false;
     private _fsPath: string = '';
+    private _testNodes: CTestTestNode[] = [];
+
+    get artifactPath(): string {
+        return this._fsPath;
+    }
 
     getOrderTuple() {
         return [this.name];
@@ -328,7 +430,7 @@ export class TargetNode extends BaseNode {
     private readonly _referencesNode = new ReferencesNode(this.id);
 
     getChildren() {
-        return [this._referencesNode, ...this._rootDir.getChildren()];
+        return [this._referencesNode, ...this._rootDir.getChildren(), ...this._testNodes];
     }
     getTreeItem() {
         try {
@@ -459,6 +561,12 @@ export class TargetNode extends BaseNode {
             editor.revealRange(new vscode.Range(pos, pos.translate(2)));
             editor.selection = new vscode.Selection(pos, pos);
         }
+    }
+
+    updateTests(tests: { name: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        this._testNodes = tests.map(test =>
+            new CTestTestNode(this.id, test.name, this.folder, this.sourceDir, test.sourceFilePath, test.sourceFileLine)
+        );
     }
 }
 
@@ -605,10 +713,6 @@ export class WorkspaceFolderNode extends BaseNode {
 
     private readonly _projects = new Map<string, Map<string, ProjectNode>>();
 
-    private getNode(cmakeProject: CMakeProject, modelProjectName: string) {
-        return this._projects.get(cmakeProject.folderPath)?.get(modelProjectName);
-    }
-
     private setNode(cmakeProject: CMakeProject, modelProjectName: string, node: ProjectNode) {
         let sub_map = this._projects.get(cmakeProject.folderPath);
         if (!sub_map) {
@@ -629,20 +733,37 @@ export class WorkspaceFolderNode extends BaseNode {
             return;
         }
 
-        if (model.configurations[0].projects.length === 0) {
+        const configuration = model.configurations[0];
+        if (configuration.projects.length === 0) {
             this.removeNodes(cmakeProject);
             ctx.nodesToUpdate.push(this);
             return;
         }
 
-        const projectOutlineModel = populateViewCodeModel(model);
-        const rootProject = projectOutlineModel.project;
-        let item = this.getNode(cmakeProject, rootProject.name);
-        if (!item) {
-            item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
+        const outlineViewType = cmakeProject.workspaceContext.config.outlineViewType;
+
+        // Always remove existing nodes first to ensure clean state when
+        // switching between view types or when projects change.
+        this.removeNodes(cmakeProject);
+
+        if (outlineViewType === "tree") {
+            // Tree mode: create a separate ProjectNode for each CMake project,
+            // restoring the pre-1.15 hierarchical outline.
+            for (const project of configuration.projects) {
+                const item = new ProjectNode(project.name, this.wsFolder, project.sourceDirectory);
+                this.setNode(cmakeProject, project.name, item);
+                item.update(project, ctx);
+            }
+        } else {
+            // List mode (default): flatten all projects into a single node.
+            const projectOutlineModel = populateViewCodeModel(model);
+            const rootProject = projectOutlineModel.project;
+            const item = new ProjectNode(rootProject.name, this.wsFolder, cmakeProject.folderPath);
             this.setNode(cmakeProject, rootProject.name, item);
+            item.update(rootProject, ctx);
         }
-        item.update(rootProject, ctx);
+
+        ctx.nodesToUpdate.push(this);
     }
 
     getChildren() {
@@ -651,6 +772,56 @@ export class WorkspaceFolderNode extends BaseNode {
             children.push(...sub_map.values());
         }
         return children.sort((a, b) => lexicographicalCompare(a.getOrderTuple(), b.getOrderTuple()));
+    }
+
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        const sub_map = this._projects.get(cmakeProject.folderPath);
+        if (!sub_map) {
+            return;
+        }
+
+        // Collect all TargetNodes and build a map: normalized artifact path → TargetNode
+        const targetsByPath = new Map<string, TargetNode>();
+        const collectTargets = (node: BaseNode) => {
+            if (node instanceof TargetNode) {
+                if (node.artifactPath) {
+                    targetsByPath.set(platformNormalizePath(node.artifactPath), node);
+                }
+            }
+            for (const child of node.getChildren()) {
+                collectTargets(child);
+            }
+        };
+        for (const project of sub_map.values()) {
+            collectTargets(project);
+        }
+
+        // Group tests by their executable path (matching to targets)
+        const testsByTarget = new Map<TargetNode, { name: string; sourceFilePath?: string; sourceFileLine?: number }[]>();
+        for (const test of tests) {
+            const normalizedExe = platformNormalizePath(test.executablePath);
+            const target = targetsByPath.get(normalizedExe);
+            if (target) {
+                let arr = testsByTarget.get(target);
+                if (!arr) {
+                    arr = [];
+                    testsByTarget.set(target, arr);
+                }
+                arr.push({ name: test.name, sourceFilePath: test.sourceFilePath, sourceFileLine: test.sourceFileLine });
+            }
+        }
+
+        // Clear tests from targets that no longer have any
+        for (const target of targetsByPath.values()) {
+            if (!testsByTarget.has(target)) {
+                target.updateTests([]);
+            }
+        }
+
+        // Update each target with its tests
+        for (const [target, targetTests] of testsByTarget) {
+            target.updateTests(targetTests);
+        }
     }
 }
 
@@ -662,6 +833,85 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
 
     private readonly _folders = new Map<string, WorkspaceFolderNode>();
     private _selected_workspace?: WorkspaceFolderNode;
+    private _searchTerm: string = '';
+    private readonly _filterNode = new FilterNode('');
+    private _bookmarksProvider?: any;
+
+    public async setSearchTerm(term: string) {
+        this._searchTerm = term;
+        this._filterNode.updateSearchTerm(term);
+        await vscode.commands.executeCommand(
+            'setContext',
+            'cmake:outlineFiltered',
+            !!this._searchTerm
+        );
+        this._changeEvent.fire(null);
+    }
+
+    public getSearchTerm(): string {
+        return this._searchTerm;
+    }
+
+    private _filter(node: BaseNode): boolean {
+        if (!this._searchTerm) {
+            return true;
+        }
+
+        // Always show FilterNode
+        if (node instanceof FilterNode) {
+            return true;
+        }
+
+        return this._nodeContainsMatch(node);
+    }
+
+    private _nodeContainsMatch(node: BaseNode): boolean {
+        const searchLower = this._searchTerm.toLowerCase();
+
+        // Check if this node itself matches
+        if (this._nodeMatchesFilter(node, searchLower)) {
+            return true;
+        }
+
+        // Check if any child contains a match
+        return node.getChildren().some(child => this._nodeContainsMatch(child));
+    }
+
+    private _nodeMatchesFilter(node: BaseNode, searchLower: string): boolean {
+        if (node instanceof TargetNode) {
+            return node.name.toLowerCase().includes(searchLower);
+        }
+
+        if (node instanceof DirectoryNode) {
+            return node.pathPart.toLowerCase().includes(searchLower);
+        }
+
+        if (node instanceof SourceFileNode) {
+            return node.name.toLowerCase().includes(searchLower);
+        }
+
+        if (node instanceof CTestTestNode) {
+            return node.testName.toLowerCase().includes(searchLower);
+        }
+
+        // Project and workspace nodes don't match directly
+        return false;
+    }
+
+    public setBookmarksProvider(provider: any) {
+        this._bookmarksProvider = provider;
+    }
+
+    public isNodeBookmarked(node: BaseNode): boolean {
+        if (!this._bookmarksProvider) {
+            return false;
+        }
+        return this._bookmarksProvider.isBookmarked(node.id);
+    }
+
+    public refresh(node?: BaseNode) {
+        this._changeEvent.fire(node ?? null);
+    }
 
     addAllCurrentFolders() {
         for (const wsf of vscode.workspace.workspaceFolders || []) {
@@ -703,18 +953,38 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
         this._changeEvent.fire(null);
     }
 
+    updateTests(cmakeProject: CMakeProject, tests: { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[]) {
+        const folder = cmakeProject.workspaceContext.folder;
+        const existing = this._folders.get(folder.uri.fsPath);
+        if (!existing) {
+            return;
+        }
+
+        existing.updateTests(cmakeProject, tests);
+        this._changeEvent.fire(null);
+    }
+
     getChildren(node?: BaseNode): BaseNode[] {
         try {
+            let children: BaseNode[] = [];
             if (node) {
-                return node.getChildren();
-            }
-            // Request for root nodes
-            if (this._folders.size === 1) {
-                for (const folder of this._folders.values()) {
-                    return folder.getChildren();
+                children = node.getChildren();
+            } else {
+                // Request for root nodes - include filter node at the top
+                if (this._folders.size === 1) {
+                    for (const folder of this._folders.values()) {
+                        children = [this._filterNode, ...folder.getChildren()];
+                        break; // Only process the first (and only) folder
+                    }
+                } else if (this._folders.size > 1) {
+                    children = [this._filterNode, ...this._folders.values()];
+                } else {
+                    // No folders, just return the filter node
+                    children = [this._filterNode];
                 }
             }
-            return [...this._folders.values()];
+            // Apply filtering - the _filter method will handle showing children of matching nodes
+            return children.filter((child) => child instanceof FilterNode || this._filter(child));
         } catch (e) {
             rollbar.error(localize('error.rendering.children.nodes', 'Error while rendering children nodes'));
             return [];
@@ -740,6 +1010,40 @@ export class ProjectOutline implements vscode.TreeDataProvider<BaseNode> {
     }
 
     async getTreeItem(node: BaseNode) {
-        return node.getTreeItem();
+        const item = node.getTreeItem();
+
+        if (this.isNodeBookmarked(node)) {
+            const existing = item.contextValue ?? "";
+            item.contextValue = existing ? `${existing};bookmarked=true` : "bookmarked=true";
+        }
+
+        return item;
+    }
+
+    /** Find a TargetNode anywhere in the outline by its stable id. */
+    public findTargetNodeById(id: string): TargetNode | undefined {
+        const dfs = (node: BaseNode): TargetNode | undefined => {
+            if (node instanceof TargetNode && node.id === id) {
+                return node;
+            }
+            for (const child of node.getChildren()) {
+                const found = dfs(child);
+                if (found) {
+                    return found;
+                }
+            }
+            return undefined;
+        };
+
+        for (const folder of this._folders.values()) {
+            // Traverse children under each folder without applying global filtering
+            for (const child of folder.getChildren()) {
+                const found = dfs(child);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+        return undefined;
     }
 }

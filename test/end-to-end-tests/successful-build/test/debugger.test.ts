@@ -16,7 +16,7 @@ suite('Debug/Launch interface', () => {
         cmakeProject = await CMakeProject.create(testEnv.wsContext, "${workspaceFolder}/");
         await cmakeProject.setKit(await getFirstSystemKit());
         testEnv.projectFolder.buildDirectory.clear();
-        expect(await cmakeProject.build()).to.be.eq(0);
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0);
     });
 
     teardown(async function (this: Mocha.Context) {
@@ -107,6 +107,109 @@ suite('Debug/Launch interface', () => {
         expect(await cmakeProject.getLaunchTargetName()).to.be.eq(path.parse(executablesTargets[0].path).name);
     });
 
+    test('Test launchTargetPath with explicit targetName resolves correct path', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetPath(targetName)).to.be.eq(executablesTargets[0].path);
+    });
+
+    test('Test launchTargetPath with explicit targetName does NOT change active target', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        // Clear any existing launch target by not setting one
+        const beforeTarget = await cmakeProject.getCurrentLaunchTarget();
+
+        // Resolve a named target
+        await cmakeProject.launchTargetPath(executablesTargets[0].name);
+
+        // Active target should remain unchanged
+        const afterTarget = await cmakeProject.getCurrentLaunchTarget();
+        expect(afterTarget).to.deep.eq(beforeTarget);
+    });
+
+    test('Test getLaunchTargetPath with explicit targetName resolves correct path', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.getLaunchTargetPath(targetName)).to.be.eq(executablesTargets[0].path);
+    });
+
+    test('Test launchTargetPath with invalid targetName returns null', async () => {
+        expect(await cmakeProject.launchTargetPath('nonexistent_target')).to.be.null;
+    });
+
+    test('Test getLaunchTargetPath with invalid targetName returns null', async () => {
+        expect(await cmakeProject.getLaunchTargetPath('nonexistent_target')).to.be.null;
+    });
+
+    test('Test launchTargetDirectory with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetDirectory(targetName)).to.be.eq(path.dirname(executablesTargets[0].path));
+    });
+
+    test('Test launchTargetFilename with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetFilename(targetName)).to.be.eq(path.basename(executablesTargets[0].path));
+    });
+
+    test('Test launchTargetNameForSubstitution with explicit targetName', async () => {
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        expect(await cmakeProject.launchTargetNameForSubstitution(targetName)).to.be.eq(path.parse(executablesTargets[0].path).name);
+    });
+
+    test('Test build on launch with explicit targetName honors buildBeforeRun', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: true });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        const launchProgramPath = await cmakeProject.launchTargetPath(targetName);
+        expect(launchProgramPath).to.be.not.null;
+        const validPath: string = launchProgramPath!;
+
+        // Remove the binary
+        fs.unlinkSync(validPath);
+        expect(fs.existsSync(validPath)).to.be.false;
+
+        // buildBeforeRun should rebuild it
+        await cmakeProject.launchTargetPath(targetName);
+        expect(fs.existsSync(validPath)).to.be.true;
+    }).timeout(60000);
+
+    test('Test build on launch with explicit targetName skips build when disabled', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: false });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+
+        const targetName = executablesTargets[0].name;
+        const launchProgramPath = await cmakeProject.launchTargetPath(targetName);
+        expect(launchProgramPath).to.be.not.null;
+        const validPath: string = launchProgramPath!;
+
+        // Remove the binary
+        fs.unlinkSync(validPath);
+        expect(fs.existsSync(validPath)).to.be.false;
+
+        // buildBeforeRun is off, so it should NOT rebuild
+        await cmakeProject.launchTargetPath(targetName);
+        expect(fs.existsSync(validPath)).to.be.false;
+    }).timeout(60000);
+
     test('Test build on launch (default)', async () => {
         testEnv.config.updatePartial({ buildBeforeRun: undefined });
 
@@ -191,23 +294,28 @@ suite('Debug/Launch interface', () => {
 
         const terminal = await cmakeProject.launchTarget();
         expect(terminal).to.be.not.null;
-        expect(terminal!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
-        const start = new Date();
-        // Needed to get launch target result
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            // Use creationOptions.name — terminal.name may be dynamically
+            // overridden by the shell process title in newer VS Code versions.
+            expect(terminal!.creationOptions.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
-        const elapsed = (new Date().getTime() - start.getTime()) / 1000;
-        console.log(`Waited ${elapsed} seconds for output file to appear`);
+            const start = new Date();
+            // Needed to get launch target result
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const exists = fs.existsSync(createdFileOnExecution);
-        // Check that it is compiled as a new file
-        expect(exists).to.be.true;
+            const elapsed = (new Date().getTime() - start.getTime()) / 1000;
+            console.log(`Waited ${elapsed} seconds for output file to appear`);
 
-        terminal?.dispose();
+            const exists = fs.existsSync(createdFileOnExecution);
+            // Check that it is compiled as a new file
+            expect(exists).to.be.true;
+        } finally {
+            terminal?.dispose();
 
-        // Needed to ensure things get disposed
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+            // Needed to ensure things get disposed
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is enabled', async () => {
@@ -238,17 +346,23 @@ suite('Debug/Launch interface', () => {
 
         const term2 = await cmakeProject.launchTarget();
         expect(term2).to.be.not.null;
-        expect(term2!.name).to.eq(
-            `CMake/Launch - ${executablesTargets[0].name}`
-        );
 
-        const term2Pid = await term2?.processId;
-        expect(term1Pid).to.not.eq(term2Pid);
-        term1?.dispose();
-        term2?.dispose();
+        try {
+            // Use creationOptions.name — terminal.name may be dynamically
+            // overridden by the shell process title in newer VS Code versions.
+            expect(term2!.creationOptions.name).to.eq(
+                `CMake/Launch - ${executablesTargets[0].name}`
+            );
 
-        // Needed to ensure things get disposed
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+            const term2Pid = await term2?.processId;
+            expect(term1Pid).to.not.eq(term2Pid);
+        } finally {
+            term1?.dispose();
+            term2?.dispose();
+
+            // Needed to ensure things get disposed
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is disabled', async () => {

@@ -22,7 +22,7 @@
 	"dismiss": "Закрыть",
 	"task.not.compatible.with.preset.setting": "Выбранная задача запрашивает CMakePreset, но рабочая область не настроена для CMakePresets.",
 	"workspace.is": "Рабочая область: {0}",
-	"cmake.tools.not.found": "Средства CMake не найдены.",
+	"cmake.tools.not.found": "Расширение CMake Tools не найдено.",
 	"task.failed": "Сбой задачи",
 	"config.started": "Задача config запущена...",
 	"configure.on.edit": "При выполнении задач настройки с использованием предустановок установка для configureOnEdit значения ИСТИНА потенциально может перезаписать конфигурации задач.",

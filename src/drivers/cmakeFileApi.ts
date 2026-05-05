@@ -8,6 +8,7 @@
 
 import * as cache from '@cmt/cache';
 import {
+    BacktraceGraph,
     CodeModelConfiguration,
     CodeModelContent,
     CodeModelFileGroup,
@@ -171,6 +172,10 @@ export namespace CodeModelKind {
         name: string;
     }
 
+    export interface DebuggerInfo {
+        workingDirectory?: string;
+    }
+
     export interface TargetObject {
         name: string;
         type: string;
@@ -183,6 +188,8 @@ export namespace CodeModelKind {
         folder?: Folder;
         isGeneratorProvided?: boolean;
         install?: InstallInfo;
+        debugger?: DebuggerInfo;
+        backtraceGraph?: BacktraceGraph;
     }
 }
 
@@ -200,6 +207,7 @@ export namespace Toolchains {
 
     export interface Compiler {
         path?: string;
+        commandFragment?: string;
         id?: string;
         version?: string;
         target?: string;
@@ -284,7 +292,13 @@ export async function loadIndexFile(replyPath: string): Promise<Index.IndexFile 
 
     const indexFiles = files.filter(filename => filename.startsWith('index-')).sort();
     if (indexFiles.length === 0) {
-        throw Error('No index file found.');
+        const errorFiles = files.filter(filename => filename.startsWith('error-')).sort();
+        if (errorFiles.length > 0) {
+            log.error('Error during cmake configure, no index file found.');
+        } else {
+            log.error('No index file found.');
+        }
+        return null;
     }
     const indexFilePath = path.join(replyPath, indexFiles[indexFiles.length - 1]);
     const fileContent = await tryReadFile(indexFilePath);
@@ -421,7 +435,8 @@ async function convertTargetObjectFileToExtensionTarget(buildDirectory: string, 
         targetType: targetObject.type,
         folder: targetObject.folder,
         type: 'rich' as 'rich',
-        installPaths: installPaths
+        installPaths: installPaths,
+        debuggerWorkingDirectory: targetObject.debugger?.workingDirectory
     } as RichTarget;
 }
 
@@ -484,7 +499,7 @@ function convertToExtCodeModelFileGroup(targetObject: CodeModelKind.TargetObject
     const targetRootSource = convertToAbsolutePath(targetObject.paths.source, rootPaths.source);
     targetObject.sources.forEach(sourceFile => {
         const fileAbsolutePath = convertToAbsolutePath(sourceFile.path, rootPaths.source);
-        const fileRelativePath = path.relative(targetRootSource, fileAbsolutePath).replace('\\', '/');
+        const fileRelativePath = path.relative(targetRootSource, fileAbsolutePath).replace(/\\/g, '/');
         if (sourceFile.compileGroupIndex !== undefined) {
             fileGroup[sourceFile.compileGroupIndex].sources.push(fileRelativePath);
         } else {
@@ -526,12 +541,13 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sourceDirectory: convertToAbsolutePath(targetObject.paths.source, rootPaths.source),
         fullName: targetObject.nameOnDisk,
         artifacts: targetObject.artifacts ? targetObject.artifacts.map(
-            a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), rootPaths.build))
+            a => convertToAbsolutePath(a.path, rootPaths.build))
             : [],
         fileGroups,
         sysroot,
         folder: targetObject.folder,
         dependencies: targetObject.dependencies,
+        backtraceGraph: targetObject.backtraceGraph,
         install: targetObject.install,
         isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
@@ -588,11 +604,15 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
+            const tc: CodeModelToolchain = { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions };
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
-            } else {
-                acc.set(el.language, { path: el.compiler.path });
+                tc.target = el.compiler.target;
             }
+            if (el.compiler.commandFragment) {
+                // available (optional) since toolchains object version 1.1 (CMake 4.3)
+                tc.commandFragment = el.compiler.commandFragment;
+            }
+            acc.set(el.language, tc);
         }
         return acc;
     }, new Map<string, CodeModelToolchain>());

@@ -37,7 +37,7 @@ suite('Environment', () => {
         });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[configureEnvironment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[configureEnvironment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
@@ -49,7 +49,7 @@ suite('Environment', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[configureEnvironment] unexpected cache entry value type');
 
         // Build
-        expect(await cmakeProject.build()).to.be.eq(0, '[configureEnvironment] build failed');
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0, '[configureEnvironment] build failed');
         const result = await testEnv.result.getResultAsJson();
         expect(result['configure-env']).to.eq('', '[configureEnvironment] env-var got passed to compiler');
     }).timeout(100000);
@@ -59,7 +59,7 @@ suite('Environment', () => {
         testEnv.config.updatePartial({ buildEnvironment: { _BUILD_ENV: '${workspaceRootFolderName}' } });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[buildEnvironment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[buildEnvironment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
@@ -70,7 +70,7 @@ suite('Environment', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[buildEnvironment] unexpected cache entry value type');
 
         // Build
-        expect(await cmakeProject.build()).to.be.eq(0, '[buildEnvironment] build failed');
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0, '[buildEnvironment] build failed');
         const result = await testEnv.result.getResultAsJson();
         expect(result['build-env'])
             .to.eq(path.basename(testEnv.projectFolder.location), '[buildEnvironment] substitution incorrect');
@@ -81,7 +81,7 @@ suite('Environment', () => {
         testEnv.config.updatePartial({ environment: { _ENV: '${workspaceRootFolderName}' } });
 
         // Configure
-        expect((await cmakeProject.configure()).result).to.be.eq(0, '[environment] configure failed');
+        expect((await cmakeProject.configure()).exitCode).to.be.eq(0, '[environment] configure failed');
         expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
         const cache = await CMakeCache.fromPath(await cmakeProject.cachePath);
 
@@ -93,7 +93,7 @@ suite('Environment', () => {
         expect(typeof cacheEntry.value).to.eq('string', '[environment] unexpected cache entry value type');
 
         // Build
-        expect(await cmakeProject.build()).to.be.eq(0, '[environment] build failed');
+        expect((await cmakeProject.build()).exitCode).to.be.eq(0, '[environment] build failed');
         const result = await testEnv.result.getResultAsJson();
         expect(result['env']).to.eq(path.basename(testEnv.projectFolder.location), '[environment] substitution incorrect');
     }).timeout(100000);

@@ -22,7 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "c++23" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | "gnu++23" | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
 type IntelliSenseMode = "linux-clang-x86" | "linux-clang-x64" | "linux-clang-arm" | "linux-clang-arm64" | "linux-gcc-x86" | "linux-gcc-x64" | "linux-gcc-arm" | "linux-gcc-arm64" | "macos-clang-x86" | "macos-clang-x64" | "macos-clang-arm" | "macos-clang-arm64" | "macos-gcc-x86" | "macos-gcc-x64" | "macos-gcc-arm" | "macos-gcc-arm64" | "windows-clang-x86" | "windows-clang-x64" | "windows-clang-arm" | "windows-clang-arm64" | "windows-gcc-x86" | "windows-gcc-x64" | "windows-gcc-arm" | "windows-gcc-arm64" | "windows-msvc-x86" | "windows-msvc-x64" | "windows-msvc-arm" | "windows-msvc-arm64" | "msvc-x86" | "msvc-x64" | "msvc-arm" | "msvc-arm64" | "gcc-x86" | "gcc-x64" | "gcc-arm" | "gcc-arm64" | "clang-x86" | "clang-x64" | "clang-arm" | "clang-arm64" | undefined;
 
 export interface DiagnosticsCpptools {
@@ -64,15 +64,11 @@ interface TargetDefaults {
     defines?: string[];
 }
 
-function parseCppStandard(std: string, canUseGnu: boolean, canUseCxx23: boolean): StandardVersion {
+function parseCppStandard(std: string, canUseGnu: boolean): StandardVersion {
     const isGnu = canUseGnu && std.startsWith('gnu');
-    if (std.endsWith('++23') || std.endsWith('++2b') || std.endsWith('++latest')) {
-        if (canUseCxx23) {
-            return isGnu ? 'gnu++23' : 'c++23';
-        } else {
-            return isGnu ? 'gnu++20' : 'c++20';
-        }
-    } else if (std.endsWith('++20') || std.endsWith('++2a')) {
+    if (std === 'c++latest' || std.endsWith('++26') || std.endsWith('++2c') ||
+        std.endsWith('++23') || std.endsWith('++2b') ||
+        std.endsWith('++20') || std.endsWith('++2a')) {
         return isGnu ? 'gnu++20' : 'c++20';
     } else if (std.endsWith('++17') || std.endsWith('++1z')) {
         return isGnu ? 'gnu++17' : 'c++17';
@@ -98,7 +94,7 @@ function parseCStandard(std: string, canUseGnu: boolean): StandardVersion {
         return isGnu ? 'gnu99' : 'c99';
     } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(std)) {
         return isGnu ? 'gnu11' : 'c11';
-    } else if (/(c|gnu)(17|18|2x|iso9899:(2017|2018))/.test(std)) {
+    } else if (/(c|gnu)(17|18|23|2x|iso9899:(2017|2018|2024))/.test(std)) {
         if (canUseGnu) {
             // cpptools supports 'c17' in same version it supports GNU std.
             return isGnu ? 'gnu17' : 'c17';
@@ -155,7 +151,6 @@ function parseTargetArch(target: string): Architecture {
 export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], lang?: string): CompileFlagInformation {
     const requireStandardTarget = (cptVersion < cpptools.Version.v5);
     const canUseGnuStd = (cptVersion >= cpptools.Version.v4);
-    const canUseCxx23 = (cptVersion >= cpptools.Version.v6);
     // No need to parse language standard for CppTools API v6 and above
     const extractStdFlag = (cptVersion < cpptools.Version.v6);
     const iter = args[Symbol.iterator]();
@@ -206,7 +201,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
         } else if (extractStdFlag && (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:'))) {
             const std = value.substring(5);
             if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
-                const s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
+                const s = parseCppStandard(std, canUseGnuStd);
                 if (!s) {
                     log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
                 } else {
@@ -220,7 +215,7 @@ export function parseCompileFlags(cptVersion: cpptools.Version, args: string[], 
                     standard = s;
                 }
             } else if (lang === undefined) {
-                let s = parseCppStandard(std, canUseGnuStd, canUseCxx23);
+                let s = parseCppStandard(std, canUseGnuStd);
                 if (!s) {
                     s = parseCStandard(std, canUseGnuStd);
                 }
@@ -316,6 +311,27 @@ export function getIntelliSenseMode(cptVersion: cpptools.Version, compilerPath: 
 }
 
 /**
+ * Try to find a target configuration with some populated properties.
+ *
+ * All targets get defaults for `compilerPath`, `compilerArgs`, and
+ * `compilerFragments`, even `UTILITY` targets defined with
+ * `add_custom_command()` that provide no other useful configuration, so if
+ * possible, return one with more than just those populated.
+ */
+function fallbackConfiguration(configurations: Map<string, cpptools.SourceFileConfigurationItem> | undefined) {
+    if (!configurations) {
+        return undefined;
+    }
+    for (const item of configurations.values()) {
+        const { configuration: { includePath, defines, intelliSenseMode, standard } } = item;
+        if (includePath.length || defines.length || intelliSenseMode || standard) {
+            return item;
+        }
+    }
+    return configurations.values().next().value;
+}
+
+/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -347,10 +363,22 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private getConfiguration(uri: vscode.Uri): cpptools.SourceFileConfigurationItem | undefined {
         const normalizedPath = util.platformNormalizePath(uri.fsPath);
         const configurations = this.fileIndex.get(normalizedPath);
+
+        // If we have an active folder, only provide configurations for files
+        // that belong to that folder's project. This ensures IntelliSense
+        // reflects the active project in multi-project workspaces.
+        if (this.activeFolder) {
+            const activeFolderFiles = this.fileIndexByFolder.get(this.activeFolder);
+            if (!activeFolderFiles?.has(normalizedPath)) {
+                // This file is not part of the active folder's project
+                return undefined;
+            }
+        }
+
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
-            return configurations?.values().next().value; // Any value is fine if the target doesn't match
+            return fallbackConfiguration(configurations);
         }
     }
 
@@ -415,12 +443,46 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private readonly fileIndex = new Map<string, Map<string, cpptools.SourceFileConfigurationItem>>();
 
     /**
+     * Track indexed files per workspace folder so stale entries can be evicted
+     * when a folder is reconfigured (e.g. switching presets).
+     */
+    private readonly fileIndexByFolder = new Map<string, Set<string>>();
+
+    /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private activeTarget: string | null = null;
 
+    /**
+     * The active folder path. When set, IntelliSense configurations from this folder
+     * are preferred over configurations from other folders for shared source files.
+     */
+    private activeFolder: string | null = null;
+
+    /**
+     * Set the active folder for IntelliSense configuration resolution.
+     * When a file exists in multiple project folders, configurations from
+     * the active folder will be preferred.
+     * @param folder The folder path, or null to clear
+     */
+    setActiveFolder(folder: string | null) {
+        this.activeFolder = folder ? util.platformNormalizePath(folder) : null;
+    }
+
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
+
+    private clearConfigurationDataForFolder(folder: string) {
+        const normalizedFolder = util.platformNormalizePath(folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
+        if (indexedFiles) {
+            for (const filePath of indexedFiles) {
+                this.fileIndex.delete(filePath);
+            }
+            this.fileIndexByFolder.delete(normalizedFolder);
+        }
+        this.workspaceBrowseConfigurations.delete(normalizedFolder);
+    }
 
     /**
      * Create a source file configuration for the given file group.
@@ -437,8 +499,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         let compilerToolchains: CodeModelToolchain | undefined;
         if ("toolchains" in opts.codeModelContent) {
             compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
-            || opts.codeModelContent.toolchains?.get('CXX')
-            || opts.codeModelContent.toolchains?.get('C');
+                || opts.codeModelContent.toolchains?.get('CXX')
+                || opts.codeModelContent.toolchains?.get('C');
         }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
@@ -454,22 +516,34 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
-        let compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments) : [];
+        const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments).slice(0) : [];
         const getAsFlags = (fragments?: string[]) => {
             if (!fragments) {
                 return [];
             }
             return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
         };
-        let flags: string[] = [];
+        const flags: string[] = [];
         let extraDefinitions: string[] = [];
         let standard: StandardVersion;
         let targetArch: Architecture;
         let intelliSenseMode: IntelliSenseMode;
         let defines = (fileGroup.defines || target.defines || []);
-        if (!useFragments) {
+        if (useFragments) {
+            if (compilerToolchains?.commandFragment) {
+                compileCommandFragments.unshift(compilerToolchains.commandFragment);
+            }
+        } else {
+            if (compilerToolchains?.commandFragment) {
+                // This is incorrect: shlex.split() does not do what one would
+                // expect, it treats quotes and backslashes differently than a
+                // shell would. But maybe it's good enough for a legacy codepath,
+                // what are the chances that anyone has old CppTools but new
+                // CMake Tools and new CMake?
+                flags.push(...shlex.split(compilerToolchains.commandFragment));
+            }
             // Send the intelliSenseMode and standard only for CppTools API v5 and below.
-            flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
+            flags.push(...getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments));
             ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
             defines = defines.concat(extraDefinitions);
             intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
@@ -496,7 +570,6 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         }
         if (targetFromToolchains) {
             if (useFragments) {
-                compileCommandFragments = compileCommandFragments.slice(0);
                 compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
@@ -536,9 +609,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
+        const normalizedFolder = util.platformNormalizePath(options.folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
             const normalizedAbsolutePath = util.platformNormalizePath(absolutePath);
+            indexedFiles?.add(normalizedAbsolutePath);
             if (this.fileIndex.has(normalizedAbsolutePath)) {
                 this.fileIndex.get(normalizedAbsolutePath)!.set(target.name, {
                     uri: vscode.Uri.file(absolutePath).toString(),
@@ -577,6 +653,10 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         this.buildTypesSeen.clear();
         this.targets = [];
 
+        const normalizedFolder = util.platformNormalizePath(opts.folder);
+        this.clearConfigurationDataForFolder(normalizedFolder);
+        this.fileIndexByFolder.set(normalizedFolder, new Set<string>());
+
         let hadMissingCompilers = false;
         this.workspaceBrowseConfiguration = { browsePath: [] };
         this.activeTarget = opts.activeTarget;
@@ -603,7 +683,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                         target.fileGroups?.reverse();
                         const grps = target.fileGroups || [];
                         const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-                        const compileCommandFragments = [...util.first(grps, grp => grp.compileCommandFragments || [])];
+                        const compileCommandFragments = [...util.first(grps.filter(grp => grp.language !== 'RC'), grp => grp.compileCommandFragments || [])];
                         const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
                         const sysroot = target.sysroot;
                         this.targets.push({ name: target.name, type: target.type });

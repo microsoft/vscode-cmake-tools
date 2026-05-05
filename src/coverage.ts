@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as logging from '@cmt/logging';
-import { demangle } from 'demangler-js';
 import { platformNormalizePath } from './util';
 
 const { lcovParser } = require("@friedemannsommer/lcov-parser");
@@ -63,8 +62,7 @@ export async function handleCoverageInfoFiles(run: vscode.TestRun, coverageInfoF
 
             const declarations: vscode.DeclarationCoverage[] = [];
             for (const declaration of section.functions.details) {
-                const demangledName = demangle(declaration.name);
-                declarations.push(new vscode.DeclarationCoverage(demangledName, declaration.hit,
+                declarations.push(new vscode.DeclarationCoverage(declaration.name, declaration.hit,
                     new vscode.Position(declaration.line - 1, 0)));
             }
 

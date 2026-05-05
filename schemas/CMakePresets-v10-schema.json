@@ -111,28 +111,7 @@
                                     },
                                     "intelliSenseMode": {
                                         "type": "string",
-                                        "description": "An optional key that indicates the preferred IntelliSense mode. Mode used for computing IntelliSense information in Visual Studio and Visual Studio Code.",
-                                        "enum": [
-                                            "windows-msvc-x86",
-                                            "windows-msvc-x64",
-                                            "windows-msvc-arm",
-                                            "windows-msvc-arm64",
-                                            "android-clang-x86",
-                                            "android-clang-x64",
-                                            "android-clang-arm",
-                                            "android-clang-arm64",
-                                            "ios-clang-x86",
-                                            "ios-clang-x64",
-                                            "ios-clang-arm",
-                                            "ios-clang-arm64",
-                                            "windows-clang-x86",
-                                            "windows-clang-x64",
-                                            "windows-clang-arm",
-                                            "windows-clang-arm64",
-                                            "linux-gcc-x86",
-                                            "linux-gcc-x64",
-                                            "linux-gcc-arm"
-                                        ]
+                                        "description": "An optional key that indicates the preferred IntelliSense mode. Mode used for computing IntelliSense information in Visual Studio and Visual Studio Code."
                                     },
                                     "intelliSenseOptions": {
                                         "type": "object",
@@ -184,7 +163,8 @@
                                         "type": "string",
                                         "description": "A command line tool (specified as a command line program + arguments, e.g. \"gencache.bat debug\") to generate the CMake cache. This command will run from the shell in the preset’s specified environment when cache generation is invoked. This key is only supported by the \"Open Existing Cache\" scenario in Visual Studio."
                                     }
-                                }
+                                },
+                                "additionalProperties": true
                             },
                             "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
                                 "type": "object",
@@ -297,7 +277,8 @@
                                         "default": false,
                                         "description": "If true, Visual Studio will always use the WSL1 toolset when targeting WSL from Visual Studio. The WSL1 toolset executes all commands locally and relies on Windows drives mounted under the /mnt folder to access local source files from WSL. These operations may be slower with WSL2."
                                     }
-                                }
+                                },
+                                "additionalProperties": true
                             }
                         }
                     },
@@ -385,6 +366,9 @@
                         "type": "object",
                         "description": "An optional map of cache variables. The key is the variable name (which must not be an empty string). Cache variables are inherited through the inherits field, and the preset's variables will be the union of its own cacheVariables and the cacheVariables from all its parents. If multiple presets in this union define the same variable, the standard rules of inherits are applied.",
                         "properties": {
+                            "$comment": {
+                                "$ref": "#/definitions/$comment"
+                            },
                             "CMAKE_C_COMPILER": {
                                 "anyOf": [
                                     {
@@ -398,6 +382,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -422,6 +409,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -446,6 +436,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -470,6 +463,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -496,6 +492,9 @@
                                     {
                                         "type": "object",
                                         "properties": {
+                                            "$comment": {
+                                                "$ref": "#/definitions/$comment"
+                                            },
                                             "type": {
                                                 "type": "string"
                                             },
@@ -533,6 +532,9 @@
                                     "type": "object",
                                     "description": "An object representing the type and value of the variable.",
                                     "properties": {
+                                        "$comment": {
+                                            "$ref": "#/definitions/$comment"
+                                        },
                                         "type": {
                                             "type": "string",
                                             "description": "An optional string representing the type of the variable. It should be BOOL, FILEPATH, PATH, STRING, or INTERNAL."

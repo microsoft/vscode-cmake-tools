@@ -60,6 +60,7 @@ export class ProjectController implements vscode.Disposable {
     private activePackagePresetSub: vscode.Disposable = new DummyDisposable();
     private activeWorkflowPresetSub: vscode.Disposable = new DummyDisposable();
     private isBusySub = new DummyDisposable();
+    private useCMakePresetsChangedSub: vscode.Disposable = new DummyDisposable();
     private projectSubscriptions: vscode.Disposable[] = [
         this.targetNameSub,
         this.variantNameSub,
@@ -70,7 +71,8 @@ export class ProjectController implements vscode.Disposable {
         this.activeTestPresetSub,
         this.activePackagePresetSub,
         this.activeWorkflowPresetSub,
-        this.isBusySub
+        this.isBusySub,
+        this.useCMakePresetsChangedSub
     ];
 
     get onBeforeAcknowledgeFolder() {
@@ -148,6 +150,7 @@ export class ProjectController implements vscode.Disposable {
             this.activePackagePresetSub = new DummyDisposable();
             this.activeWorkflowPresetSub = new DummyDisposable();
             this.isBusySub = new DummyDisposable();
+            this.useCMakePresetsChangedSub = new DummyDisposable();
         } else {
             this.targetNameSub = project.onTargetNameChanged(FireNow, () => void this.projectStatus.refresh());
             this.variantNameSub = project.onActiveVariantNameChanged(FireNow, () => void this.projectStatus.refresh());
@@ -159,6 +162,7 @@ export class ProjectController implements vscode.Disposable {
             this.activePackagePresetSub = project.onActivePackagePresetChanged(FireNow, () => void this.projectStatus.refresh());
             this.activeWorkflowPresetSub = project.onActiveWorkflowPresetChanged(FireNow, () => void this.projectStatus.refresh());
             this.isBusySub = project.onIsBusyChanged(FireNow, (isBusy) => void this.projectStatus.setIsBusy(isBusy));
+            this.useCMakePresetsChangedSub = project.onUseCMakePresetsChanged(() => void this.updateUsePresetsState(project));
             await setContextAndStore(ext.hideBuildCommandKey, project.hideBuildButton);
             await setContextAndStore(ext.hideDebugCommandKey, project.hideDebugButton);
             await setContextAndStore(ext.hideLaunchCommandKey, project.hideLaunchButton);
@@ -352,7 +356,7 @@ export class ProjectController implements vscode.Disposable {
         } else {
             // Load for the workspace.
             const workspaceContext = DirectoryContext.createForDirectory(folder, new StateManager(this.extensionContext, folder));
-            const excludedFolders = workspaceContext.config.exclude;
+            const excludedFolders = util.expandExcludePaths(workspaceContext.config.exclude, folder);
 
             if (excludedFolders.findIndex((f) => util.normalizePath(f, { normCase: 'always'}) === util.normalizePath(folder.uri.fsPath, { normCase: 'always' })) === -1) {
                 projects = await this.acknowledgeFolder(folder, workspaceContext);
@@ -554,6 +558,8 @@ export class ProjectController implements vscode.Disposable {
     private async updateUsePresetsState(project?: CMakeProject): Promise<void> {
         const state: boolean = project?.useCMakePresets || false;
         await setContextAndStore('useCMakePresets', state);
+        const useCMakePresetsSetting = project?.workspaceContext.config.useCMakePresets;
+        await setContextAndStore('cmake:addPresetCommandsAvailable', useCMakePresetsSetting !== 'never' && useCMakePresetsSetting !== undefined);
         await this.projectStatus.refresh();
         const statusBar: StatusBar | undefined = getStatusBar();
         if (statusBar) {
@@ -583,8 +589,11 @@ export class ProjectController implements vscode.Disposable {
         for (const folder of this.folderToProjectsMap.keys()) {
             const folderPath = util.normalizePath(folder.uri.fsPath, { normCase: 'always' });
 
+            // Expand the excluded folders paths with variable substitution and relative path resolution
+            const expandedExcludedFolders = util.expandExcludePaths(excludedFolders, folder);
+
             // Check if the folder is in the ignored folders list
-            const isIgnored = excludedFolders.some((ignoredFolder) => {
+            const isIgnored = expandedExcludedFolders.some((ignoredFolder) => {
                 const normalizedIgnoredFolder = util.normalizePath(ignoredFolder, { normCase: 'always' });
                 return folderPath === normalizedIgnoredFolder;
             });
@@ -629,6 +638,9 @@ export class ProjectController implements vscode.Disposable {
     private async doCMakeFileChangeReconfigure(uri: vscode.Uri): Promise<void> {
         const activeProject: CMakeProject | undefined = this.getActiveCMakeProject();
         if (activeProject) {
+            if (activeProject.workspaceContext.config.languageServerOnlyMode) {
+                return;
+            }
             const isFileInsideActiveProject: boolean = util.isFileInsideFolder(uri, activeProject.isMultiProjectFolder ? activeProject.folderPath : activeProject.workspaceFolder.uri.fsPath);
             // A save of settings.json triggers the doSave event (doSaveTextDocument or onDidRenameFile)
             // before the settings update event (onDidChangeConfiguration).

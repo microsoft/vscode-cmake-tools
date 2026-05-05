@@ -22,7 +22,7 @@
 	"dismiss": "Odrzuć",
 	"task.not.compatible.with.preset.setting": "Wybrane zadanie żąda obiektu CMakePreset, ale obszar roboczy nie jest skonfigurowany dla obiektów CMakePresets",
 	"workspace.is": "Obszar roboczy to {0}",
-	"cmake.tools.not.found": "Nie znaleziono narzędzia CMake.",
+	"cmake.tools.not.found": "Nie znaleziono narzędzi CMake Tools.",
 	"task.failed": "Zadanie nie powiodło się.",
 	"config.started": "Rozpoczęto zadanie konfiguracji...",
 	"configure.on.edit": "W przypadku uruchamiania konfigurowania zadań przy użyciu ustawień wstępnych ustawienie opcji configureOnEdit na wartość true może potencjalnie zastąpić konfiguracje zadań.",

@@ -43,10 +43,13 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
                 concreteArgs.push(debuggerInformation.dapLog);
             }
 
-            cmakeLogger.info(localize('run.script', "Executing CMake script: \"{0}\"", scriptPath));
+            cmakeLogger.info(localize('run.script', "Executing CMake script: {0}", scriptPath));
 
             const env = EnvironmentUtils.merge([process.env, EnvironmentUtils.create(scriptEnv)]);
-            const child = proc.execute(cmakeExe.path, concreteArgs, outputConsumer, { environment: env});
+            const commandShell = process.platform === 'win32' ? proc.determineShell(cmakeExe.path) : false;
+            const configShell = cmakeProject.workspaceContext.config.shell;
+            const shell = (commandShell || undefined) ?? configShell ?? undefined;
+            const child = proc.execute(cmakeExe.path, concreteArgs, outputConsumer, { environment: env, shell });
 
             while (
                 !outputConsumer.stateMessages.includes(
@@ -62,9 +65,9 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
 
             const result = await child.result;
             if (result.retc === 0) {
-                cmakeLogger.info(localize('run.script.successful', "CMake script: \"{0}\" completed successfully.", scriptPath));
+                cmakeLogger.info(localize('run.script.successful', "CMake script: {0} completed successfully.", scriptPath));
             } else {
-                cmakeLogger.info(localize('run.script.failed', "CMake script: \"{0}\" completed unsuccessfully.", scriptPath));
+                cmakeLogger.info(localize('run.script.failed', "CMake script: {0} completed unsuccessfully.", scriptPath));
                 throw new Error("HEY");
             }
         } else {

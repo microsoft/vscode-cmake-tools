@@ -11,5 +11,9 @@ async function cmakeFileApiDriverFactory(cmake: CMakeExecutable, config: Configu
     return d;
 }
 
-makeDriverTestsuite('FileAPI', cmakeFileApiDriverFactory);
-makeCodeModelDriverTestsuite('FileAPI', cmakeFileApiDriverFactory);
+function driverSupportsCMake(cmake: CMakeExecutable) {
+    return cmake.isFileApiModeSupported ?? false;
+}
+
+makeDriverTestsuite('FileAPI', cmakeFileApiDriverFactory, driverSupportsCMake);
+makeCodeModelDriverTestsuite('FileAPI', cmakeFileApiDriverFactory, driverSupportsCMake);
