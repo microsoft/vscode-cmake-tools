@@ -38,6 +38,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
         debugConfig: {},
+        launchConfig: undefined,
         defaultVariants: {},
         ctestArgs: [],
         cpackArgs: [],
@@ -202,5 +203,38 @@ suite('Configuration', () => {
         expect(conf.removeStaleKitsOnScan).to.be.false;
         conf.updatePartial({ removeStaleKitsOnScan: true });
         expect(conf.removeStaleKitsOnScan).to.be.true;
+    });
+
+    test('launchConfig defaults to undefined', () => {
+        const conf = createConfig({});
+        expect(conf.launchConfig).to.equal(undefined);
+    });
+
+    test('launchConfig round-trips a populated value', () => {
+        const conf = createConfig({
+            launchConfig: {
+                program: '/usr/bin/openocd',
+                args: ['-f', 'board.cfg'],
+                cwd: '/tmp',
+                environment: [{ name: 'FOO', value: 'BAR' }]
+            }
+        });
+        expect(conf.launchConfig?.program).to.equal('/usr/bin/openocd');
+        expect(conf.launchConfig?.args).to.deep.equal(['-f', 'board.cfg']);
+        expect(conf.launchConfig?.cwd).to.equal('/tmp');
+        expect(conf.launchConfig?.environment).to.deep.equal([{ name: 'FOO', value: 'BAR' }]);
+    });
+
+    test('launchConfig onChange fires on update', async () => {
+        const conf = createConfig({ launchConfig: { task: 'initial' } });
+        let observed: any = null;
+        await new Promise<void>(resolve => {
+            conf.onChange('launchConfig', cfg => {
+                observed = cfg;
+                resolve();
+            });
+            conf.updatePartial({ launchConfig: { task: 'flash' } });
+        });
+        expect(observed?.task).to.equal('flash');
     });
 });
