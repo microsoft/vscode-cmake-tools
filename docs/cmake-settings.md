@@ -213,6 +213,10 @@ Each matcher entry has the following properties:
 | `message` | integer | no | `3` | Capture group index for the diagnostic message. |
 | `code` | integer | no | — | Capture group index for a diagnostic code. |
 
+| `cmake.ctest.failurePatterns` | Regular expressions for searching CTest output for additional details about failures. All patterns are tried and test failure details from each are collected.  Patterns must have at minimum one capture group to match the name of the `file` where the failure occurred. They can optionally also capture `line`, `message`, `expected`, and `actual`.  For example, to match a failure line like `path/to/file:47: text of error message`, this pattern matcher could be used: ```json {   "regexp": "(.+):(\\d+): ?(.*)",   "file": 1,   "line": 2,   "message": 3 } ```  | See package.json | no |
+| `cmake.ctest.neverDebugTestsWithLaunchConfiguration` | When set to true, always debug tests without a launch configuration, bypassing the quick pick menu. Default is false. | `false` | no |
+| `cmake.ctest.testSuiteDelimiterMaxOccurrence` | Maximum number of times the delimiter may be used to split the name of the test. `0` means no limit. | `0` | no |
+| `cmake.useFolderPropertyInBuildTargetDropdown` | Controls if the default build target dropdown is grouped by the CMake folder groups. | `false` | no |
 ### Examples
 
 **clang-tidy** (`/path/file.cpp:10:5: warning: some message [check-name]`):
