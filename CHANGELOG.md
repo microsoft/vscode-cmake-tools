@@ -15,6 +15,7 @@ Bug Fixes:
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
+- Fix GNU LD diagnostic regex incorrectly matching CMake status lines (e.g., Zephyr build output) as linker errors in the Problems panel. [#4910](https://github.com/microsoft/vscode-cmake-tools/issues/4910)
 
 ## 1.23.52
 
