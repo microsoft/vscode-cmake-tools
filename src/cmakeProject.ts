@@ -2387,7 +2387,9 @@ export class CMakeProject {
                             // remain from a previous build that had parsing enabled.
                             collections.build.clear();
                         }
-                        await this.cTestController.refreshTests(drv!);
+                        if (drv!.config.testExplorerIntegrationEnabled) {
+                            await this.cTestController.refreshTests(drv!);
+                        }
                         await this.refreshCompileDatabase(drv!.expansionOptions);
                         return {
                             exitCode: rc === null ? -1 : rc,
