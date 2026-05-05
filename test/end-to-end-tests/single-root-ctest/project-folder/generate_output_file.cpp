@@ -115,7 +115,9 @@ int main(int, char **)
     for (auto const& dir_entry : std::filesystem::directory_iterator{test_dir})
     {
         std::cout << "Test file " << dir_entry.path() << " detected!" << std::endl;
-        test_files.emplace_back(dir_entry.path());
+        // .string() is required for cross-platform: on Windows path::string_type is std::wstring,
+        // which has no implicit conversion to std::string.
+        test_files.emplace_back(dir_entry.path().string());
     }
 
     return generate_output_file(test_files);

@@ -15,9 +15,9 @@
     },
     {
       "name": "WindowsBase",
-      "description": "Sets compilers for linux based systems",
+      "description": "Sets compilers for windows based systems",
       "hidden": true,
-      "generator": "Visual Studio 16 2019",
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",

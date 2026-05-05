@@ -96,6 +96,7 @@ function(register_test)
   build_test_exe_name(${test_source}) # => returns test_exe
   message(STATUS "--> Creating test executable ${test_exe} with source ${test_source}")
   add_executable(${test_exe} ${test_source})
+  set_target_properties(${test_exe} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
   target_link_libraries(${test_exe} PRIVATE TestUtils GetTestDir)
   add_test(NAME "${register_test_TEST_NAME}" COMMAND "${test_exe}")
   set_tests_properties("${register_test_TEST_NAME}" PROPERTIES FIXTURES_REQUIRED GENOUT)

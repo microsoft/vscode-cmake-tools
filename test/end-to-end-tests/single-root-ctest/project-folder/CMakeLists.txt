@@ -5,7 +5,8 @@ add_library(TestUtils SHARED)
 target_sources(TestUtils PRIVATE test_utils.cpp)
 target_include_directories(TestUtils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(TestUtils PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED
-                                                           ON)
+                                                           ON
+                                           WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 set(TESTS_DIR
     ""
