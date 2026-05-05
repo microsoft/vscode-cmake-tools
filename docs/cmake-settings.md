@@ -41,8 +41,8 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.ctest.parallelJobs` | Specify the number of jobs to run in parallel for ctest. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable test parallelism. | `0` | no |
 | `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. | `true` | no |
 | `cmake.ctest.testSuiteDelimiter` | Character(s) that separate test suite name components. | `null` | no |
-| `cmake.ctestArgs` | An array of additional arguments to pass to CTest. | `[]` | yes |
-| `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. | `["-T", "test", "--output-on-failure"]` | no |
+| `cmake.ctestArgs` | An array of additional arguments to pass to CTest. Supports `${testName}` for per-test expansion (see [Variable substitution](#variable-substitution)). | `[]` | yes |
+| `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. Supports `${testName}` for per-test expansion (see [Variable substitution](#variable-substitution)). | `["-T", "test", "--output-on-failure"]` | no |
 | `cmake.ctestPath` | Path to CTest executable. | `null` | no |
 | `cmake.debugConfig`| The debug configuration to use when debugging a target. When `type` is specified, automatic debugger detection is skipped and a custom debug adapter can be used. Additional properties required by the debug adapter can be added freely. See [Debug and launch](debug-launch.md#customize-the-debug-adapter) for examples, including Natvis via `visualizerFile` without a `launch.json`. | `null` (no values) | yes |
 | `cmake.defaultActiveFolder`| The name of active folder, which be used as default (Only works when `cmake.autoSelectActiveFolder` is disabled). | `""` | no |
@@ -141,6 +141,7 @@ The following built-in variables are expanded in supported `cmake.*` settings on
 |`${buildKitVersionMajor}`| The current CMake kit major version. For example: `7`|
 |`${buildKitVersionMinor}`| The current CMake kit minor version. For example: `3`|
 |`${generator}`| The name of the CMake generator. For example: `Ninja`|
+|`${testName}`| The name of the current CTest test. Only expanded in `cmake.ctestArgs` and `cmake.ctestDefaultArgs` when running a single test (non-parallel mode or single-test selection). When multiple tests run in a batch, the variable is not expanded and a warning is logged.|
 |`${projectName}`|**DEPRECATED**. Expands to the constant string `"ProjectName"` CMake does not consider there to be just one project name to use. The concept of a single project does not work in CMake. Use `${workspaceRootFolderName}`, instead.|
 |`${userHome}`|  The full path to the current user's home directory. |
 

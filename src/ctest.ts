@@ -11,7 +11,7 @@ import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { testArgs, TestPreset } from '@cmt/presets/preset';
-import { expandString } from '@cmt/expand';
+import { expandString, ExpansionOptions } from '@cmt/expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
@@ -446,11 +446,44 @@ export class CTestDriver implements vscode.Disposable {
         return items;
     };
 
-    private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[] | undefined> {
+    /**
+     * Check whether any of the user's ctestArgs or ctestDefaultArgs contain ${testName}.
+     */
+    private hasTestNameVariable(): boolean {
+        const allArgs = [...this.ws.config.ctestDefaultArgs, ...this.ws.config.ctestArgs];
+        return allArgs.some(arg => arg.includes('${testName}'));
+    }
+
+    private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, testName?: string): Promise<string[] | undefined> {
         let ctestArgs: string[];
-        const opts = driver.expansionOptions;
-        const initialArgs = await Promise.all(this.ws.config.ctestDefaultArgs.map(async (value) => expandString(value, driver.expansionOptions)));
-        const additionalArgs = await Promise.all(this.ws.config.ctestArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+        const opts: ExpansionOptions = testName !== undefined
+            ? { ...driver.expansionOptions, vars: { ...driver.expansionOptions.vars, testName } }
+            : driver.expansionOptions;
+
+        // When testName is not provided, filter out args containing ${testName} to avoid
+        // passing literal "${testName}" to ctest (e.g., during test discovery or batch runs).
+        // Also removes the preceding flag arg (e.g., "--output-log") to avoid dangling flags.
+        const testNamePlaceholder = '${testName}';
+        const filterTestNameArgs = (args: string[]): string[] => {
+            if (testName !== undefined) {
+                return args;
+            }
+            const filtered: string[] = [];
+            for (let i = 0; i < args.length; i++) {
+                if (args[i].includes(testNamePlaceholder)) {
+                    // Also remove preceding flag arg if it starts with '-'
+                    if (filtered.length > 0 && filtered[filtered.length - 1].startsWith('-')) {
+                        filtered.pop();
+                    }
+                } else {
+                    filtered.push(args[i]);
+                }
+            }
+            return filtered;
+        };
+
+        const initialArgs = await Promise.all(filterTestNameArgs(this.ws.config.ctestDefaultArgs).map(async (value) => expandString(value, opts)));
+        const additionalArgs = await Promise.all(filterTestNameArgs(this.ws.config.ctestArgs).map(async (value) => expandString(value, opts)));
 
         ctestArgs = initialArgs.slice(0);
 
@@ -529,7 +562,12 @@ export class CTestDriver implements vscode.Disposable {
             return { exitCode: -2 };
         }
 
-        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
+        // Pass testName when exactly one test is targeted
+        const singleTestName = testsToRun && testsToRun.length === 1 ? testsToRun[0] : undefined;
+        if (singleTestName === undefined && this.hasTestNameVariable() && testsToRun && testsToRun.length > 1) {
+            log.warning(localize('testName.not.supported.multiple', '${testName} variable in ctest args is not supported when running multiple tests. The variable will not be expanded.'));
+        }
+        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset, singleTestName) || [];
         if (testsToRun && testsToRun.length > 0) {
             ctestArgs.push("-R");
             const superset = this.getTestNames() || [];
@@ -695,6 +733,7 @@ export class CTestDriver implements vscode.Disposable {
         await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, testsToRun, customizedTask);
 
         if (!this.ws.config.ctestAllowParallelJobs) {
+            const usesTestName = this.hasTestNameVariable();
             for (const driver of driverMap.values()) {
                 // Sort tests alphabetically by label to match the Test Explorer display order.
                 driver.tests.sort((a, b) => (a.label).localeCompare(b.label));
@@ -706,8 +745,12 @@ export class CTestDriver implements vscode.Disposable {
 
                     run.started(test);
 
+                    // Re-expand args with ${testName} when the variable is used
+                    const baseArgs = usesTestName
+                        ? (await this.getCTestArgs(driver.driver, customizedTask, undefined, test.id) || [])
+                        : driver.ctestArgs;
                     const superset = this.getTestNames() || [];
-                    const _ctestArgs = driver.ctestArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
+                    const _ctestArgs = baseArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
 
                     const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, cancellation, customizedTask, consumer);
 
@@ -731,15 +774,10 @@ export class CTestDriver implements vscode.Disposable {
             /**
              * For each unique driver (i.e., driver.sourceDir), run the tests.
              */
+            const usesTestName = this.hasTestNameVariable();
             for (const driver of driverMap.values()) {
                 const uniqueDriver: CMakeDriver = driver.driver;
                 const uniqueCtestPath: string = driver.ctestPath;
-                const uniqueCtestArgs: string[] = driver.ctestArgs;
-
-                // Check if the user (or us programmatically) have already added a -j flag. If not, add it by default for parallel jobs.
-                if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
-                    uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
-                }
 
                 // If we have the test explorer enabled and this method was called from a test explorer entry point,
                 // then there may be a scenario when the user requested only a subset of tests to be ran.
@@ -750,6 +788,25 @@ export class CTestDriver implements vscode.Disposable {
                     targetTests = driver.tests;
                 } else if (testsToRun && testsToRun.length > 0) {
                     targetTests = driver.tests.filter(t => testsToRun.includes(t.id));
+                }
+
+                const effectiveTestCount = targetTests ? targetTests.length : driver.tests.length;
+
+                // When ${testName} is used and exactly one test is targeted, expand with its name
+                let uniqueCtestArgs: string[];
+                if (usesTestName && effectiveTestCount === 1) {
+                    const singleTestName = targetTests ? targetTests[0].id : driver.tests[0].id;
+                    uniqueCtestArgs = await this.getCTestArgs(uniqueDriver, customizedTask, undefined, singleTestName) || [];
+                } else if (usesTestName && effectiveTestCount > 1) {
+                    log.warning(localize('testName.not.supported.parallel', '${testName} variable in ctest args is not supported when running multiple tests in parallel. The variable will not be expanded.'));
+                    uniqueCtestArgs = driver.ctestArgs.slice();
+                } else {
+                    uniqueCtestArgs = driver.ctestArgs.slice();
+                }
+
+                // Check if the user (or us programmatically) have already added a -j flag. If not, add it by default for parallel jobs.
+                if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
+                    uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
                 }
 
                 if (targetTests) {
