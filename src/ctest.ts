@@ -532,7 +532,7 @@ export class CTestDriver implements vscode.Disposable {
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
         if (testsToRun && testsToRun.length > 0) {
             ctestArgs.push("-R");
-            const superset = this.getTestNames() || [];
+            const superset = this.getTestNamesForSourceDir(driver.sourceDir) || [];
             const testsNamesRegex = getMinimalRegexFragments(superset, testsToRun).join('|');
             ctestArgs.push(testsNamesRegex);
         }
@@ -706,7 +706,7 @@ export class CTestDriver implements vscode.Disposable {
 
                     run.started(test);
 
-                    const superset = this.getTestNames() || [];
+                    const superset = this.getTestNamesForSourceDir(driver.driver.sourceDir) || [];
                     const _ctestArgs = driver.ctestArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
 
                     const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, cancellation, customizedTask, consumer);
@@ -746,7 +746,8 @@ export class CTestDriver implements vscode.Disposable {
                 // In this case, we should specifically use the -R flag to select the exact tests.
                 // Otherwise, we can leave it to the -T flag to run all tests.
                 let targetTests: vscode.TestItem[] | undefined;
-                if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && this._tests && this._tests.tests.length !== driver.tests.length) {
+                const allTestNamesForDriver = this.getTestNamesForSourceDir(uniqueDriver.sourceDir);
+                if (entryPoint === RunCTestHelperEntryPoint.TestExplorer && testExplorer && allTestNamesForDriver && allTestNamesForDriver.length !== driver.tests.length) {
                     targetTests = driver.tests;
                 } else if (testsToRun && testsToRun.length > 0) {
                     targetTests = driver.tests.filter(t => testsToRun.includes(t.id));
@@ -754,7 +755,7 @@ export class CTestDriver implements vscode.Disposable {
 
                 if (targetTests) {
                     uniqueCtestArgs.push("-R");
-                    const superset = this.getTestNames() || [];
+                    const superset = allTestNamesForDriver || [];
                     const targets = targetTests.map(t => {
                         run.started(t);
                         return t.id;
@@ -1194,6 +1195,32 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         return undefined;
+    }
+
+    /**
+     * Returns all leaf test names for a specific project (sourceDir) from the test explorer tree.
+     * In multi-project workspaces, this ensures the superset used for regex computation
+     * contains only tests belonging to the correct project, avoiding overly broad matches.
+     */
+    private getTestNamesForSourceDir(sourceDir: string): string[] | undefined {
+        if (!testExplorer) {
+            return this.getTestNames();
+        }
+        const normalizedSourceDir = util.platformNormalizePath(sourceDir);
+        const projectRoot = testExplorer.items.get(normalizedSourceDir);
+        if (!projectRoot) {
+            return this.getTestNames();
+        }
+        const names: string[] = [];
+        const collectLeafNames = (item: vscode.TestItem) => {
+            if (item.children.size === 0) {
+                names.push(item.id);
+            } else {
+                item.children.forEach(child => collectLeafNames(child));
+            }
+        };
+        projectRoot.children.forEach(child => collectLeafNames(child));
+        return names.length > 0 ? names : this.getTestNames();
     }
 
     /**
