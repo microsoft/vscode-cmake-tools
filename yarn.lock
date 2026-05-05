@@ -7890,10 +7890,10 @@ vinyl@^3.0.0, vinyl@^3.0.1:
     replace-ext "^2.0.0"
     teex "^1.0.1"
 
-vscode-cmake-tools@^1.6.0:
-  version "1.6.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.6.0.tgz#cc2d373f54b68e6198f1de6589b1aa4e379f6def"
-  integrity sha1-zC03P1S2jmGY8d5libGqTjefbe8=
+vscode-cmake-tools@^1.7.0:
+  version "1.7.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.7.0.tgz#b715911af6442e39f851e8b51cff5d98bc50d672"
+  integrity sha1-txWRGvZELjn4Uei1HP9dmLxQ1nI=
 
 vscode-cpptools@^7.1.1:
   version "7.1.1"
