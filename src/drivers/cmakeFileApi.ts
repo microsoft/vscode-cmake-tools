@@ -612,6 +612,9 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
                 // available (optional) since toolchains object version 1.1 (CMake 4.3)
                 tc.commandFragment = el.compiler.commandFragment;
             }
+            if (el.compiler.implicit?.includeDirectories) {
+                tc.implicitIncludes = el.compiler.implicit.includeDirectories;
+            }
             acc.set(el.language, tc);
         }
         return acc;
