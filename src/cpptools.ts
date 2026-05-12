@@ -514,6 +514,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
 
         const targetFromToolchains = compilerToolchains?.target;
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
+        const compilerImplicitIncludes = compilerToolchains?.implicitIncludes?.map(util.platformNormalizePath) || [];
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
         const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments).slice(0) : [];
@@ -573,6 +574,28 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                 compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
+            }
+        }
+        if (compilerImplicitIncludes.length > 0) {
+            // Extract the stem from compiler path.
+            const compilerId = compilerPath.toLocaleLowerCase()
+                .match(/(?:^|[-\/\\])(cl|clang-cl|clang\+\+|clang|g\+\+|gcc)(?:$|[-.])/)?.[1] || "";
+
+            const includeFlag = {
+                "cl": "/external:I",
+                "clang-cl": "-imsvc",
+                "clang++": "-isystem",
+                "clang": "-isystem",
+                "g++": "-isystem",
+                "gcc": "-isystem"
+            }[compilerId] || "-I";
+
+            for (const implicitInclude of compilerImplicitIncludes) {
+                if (useFragments) {
+                    compileCommandFragments.push(`${includeFlag}${shlex.quote(implicitInclude)}`);
+                } else {
+                    flags.push(`${includeFlag}${implicitInclude}`);
+                }
             }
         }
 
