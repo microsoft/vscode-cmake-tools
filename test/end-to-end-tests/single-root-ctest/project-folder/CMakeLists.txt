@@ -14,6 +14,7 @@ set(TESTS_DIR
 # Will generate a file get_test_dir.h with the content of get_test_dir.h.in It's
 # goal is to provide a function that returns the directory where the tests will
 # be executed
+file(TO_CMAKE_PATH "${TESTS_DIR}" TESTS_DIR_FOR_CPP)
 configure_file("get_test_dir.h.in" "get_test_dir.h" @ONLY)
 add_library(GetTestDir INTERFACE)
 target_include_directories(GetTestDir INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
@@ -25,7 +26,7 @@ target_link_libraries(GenerateOutputFile PRIVATE GetTestDir)
 set_target_properties(GenerateOutputFile PROPERTIES CXX_STANDARD 17
                                                     CXX_STANDARD_REQUIRED ON)
 
-enable_testing()
+include(CTest)
 
 # The generation of json readable output file must occur after each test run
 # Declares a fixture that will be executed after each test run

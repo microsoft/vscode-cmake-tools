@@ -6,7 +6,7 @@
       "description": "Sets compilers for linux based systems",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${workspaceFolder}/build",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "gcc",
@@ -18,7 +18,7 @@
       "description": "Sets compilers for windows based systems",
       "hidden": true,
       "generator": "Visual Studio 17 2022",
-      "binaryDir": "${workspaceFolder}/build",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe"
@@ -29,7 +29,7 @@
       "description": "Configures 2 tests that end successfully",
       "hidden": true,
       "cacheVariables": {
-        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_DIR": "${sourceDir}/build/vscode-cmake-tools-tests",
         "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt",
         "TESTS_NAMES": "Suite1.TestA;Suite2.TestB",
         "TESTS_SUCCESS": "true;true"
@@ -40,7 +40,7 @@
       "description": "Configures 2 tests that end successfully and 1 that fails",
       "hidden": true,
       "cacheVariables": {
-        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_DIR": "${sourceDir}/build/vscode-cmake-tools-tests",
         "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt;test_c.txt",
         "TESTS_NAMES": "Suite1.TestA;Suite2.TestB;Suite2.TestC",
         "TESTS_SUCCESS": "true;false;true"
@@ -51,7 +51,7 @@
       "description": "Configures 3 tests that fail",
       "hidden": true,
       "cacheVariables": {
-        "TESTS_DIR": "${workspaceFolder}/build/vscode-cmake-tools-tests",
+        "TESTS_DIR": "${sourceDir}/build/vscode-cmake-tools-tests",
         "TESTS_OUTPUT_FILES": "test_a.txt;test_b.txt;test_c.txt",
         "TESTS_NAMES": "Suite1.TestA;Suite2.TestB;Suite2.TestC",
         "TESTS_SUCCESS": "false;false;false"

@@ -10,7 +10,7 @@
 function(generate_test_source_file output_file_path test_success)
   get_filename_component(output_file_name ${output_file_path} NAME_WE)
   # Declare variables used in the template file (test.cpp.in)
-  set(test_filename ${output_file_path})
+  file(TO_CMAKE_PATH "${output_file_path}" test_filename)
   set(success ${test_success})
   # Generate test source file
   set(test_source "${output_file_name}.cpp")

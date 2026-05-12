@@ -55,8 +55,7 @@ async function getSpecificPreset(presets_content: any, preset_name: string) {
 async function cleanUpTestResultFiles(test_env: DefaultEnvironment, configure_preset: string) {
     const used_preset = await getSpecificPreset(await getCMakePresetsAsJson(test_env), configure_preset);
     expect(used_preset['cacheVariables']['TESTS_DIR']).to.not.eq('', "Unable to find the TESTS_DIR cache variable in the configure preset!");
-    // The TESTS_DIR cache variable contains the literal "${workspaceFolder}/build/vscode-cmake-tools-tests";
-    // ${workspaceFolder} is a CMake/preset macro that is not expanded during JSON parse, so resolve it relative to
+    // TESTS_DIR contains a CMake preset macro that is not expanded during JSON parse, so resolve it relative to
     // the project folder to get a real filesystem path.
     const test_dir_path = path.join(test_env.projectFolder.location, 'build', 'vscode-cmake-tools-tests');
     await fs.rmdir(test_dir_path);
@@ -90,20 +89,54 @@ async function commonSetup(configure_preset: string) {
     const exe_res = 'output_test.txt';
 
     const test_env: DefaultEnvironment = new DefaultEnvironment('test/end-to-end-tests/single-root-ctest/project-folder', build_loc, exe_res);
-    test_env.projectFolder.buildDirectory.clear();
+    try {
+        test_env.projectFolder.buildDirectory.clear();
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
+        await waitForSettingsChange();
+
+        const platformPrefix = process.platform === 'win32' ? 'Windows-' : 'Linux-';
+        const configurePreset = platformPrefix + configure_preset;
+        // Force a real preset switch in case VS Code restored this preset before the driver existed.
+        const alternateConfigurePreset = platformPrefix + (configure_preset === '2Successes' ? '2Successes1Failure' : '2Successes');
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', alternateConfigurePreset);
+        await vscode.commands.executeCommand('cmake.setConfigurePreset', configurePreset);
+        await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+        await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+        await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
+        await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+
+        expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
+        expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+
+        return test_env;
+    } catch (e) {
+        test_env.teardown();
+        throw e;
+    }
+}
+
+async function waitForSettingsChange() {
+    // Let VS Code fire the configuration-change event before awaiting CMake Tools' tracked handlers.
+    await new Promise(resolve => setTimeout(resolve, 250));
     await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+}
 
-    await vscode.commands.executeCommand('cmake.setConfigurePreset', process.platform === 'win32' ? 'Windows-' + configure_preset : 'Linux-' + configure_preset);
-    await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
-    await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
-    await vscode.commands.executeCommand('cmake.setPackagePreset', '__defaultPackagePreset__');
-    await vscode.commands.executeCommand('cmake.setWorkflowPreset', '__defaultWorkflowPreset__');
+async function updateCTestConfigurationValue<T>(ctestConfiguration: vscode.WorkspaceConfiguration, key: string, value: T | undefined) {
+    const currentValue = ctestConfiguration.get<T | null>(key);
+    if (currentValue === value || (currentValue === null && value === undefined)) {
+        return;
+    }
 
-    await vscode.commands.executeCommand('cmake.build');
+    await ctestConfiguration.update(key, value);
+    await waitForSettingsChange();
+}
 
-    return test_env;
+async function updateCTestConfiguration(allowParallelJobs: boolean, testSuiteDelimiter: string | undefined) {
+    const ctestConfiguration = vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri);
+
+    await updateCTestConfigurationValue(ctestConfiguration, 'allowParallelJobs', allowParallelJobs);
+    await updateCTestConfigurationValue(ctestConfiguration, 'testSuiteDelimiter', testSuiteDelimiter);
 }
 
 suite('Ctest: 2 successfull tests', () => {
@@ -130,9 +163,7 @@ suite('Ctest: 2 successfull tests', () => {
     });
 
     test('Run ctest without parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.be.eq(0);
 
@@ -142,9 +173,7 @@ suite('Ctest: 2 successfull tests', () => {
     }).timeout(100000);
 
     test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.be.eq(0);
 
@@ -154,9 +183,7 @@ suite('Ctest: 2 successfull tests', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.be.eq(0);
 
@@ -166,9 +193,7 @@ suite('Ctest: 2 successfull tests', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.be.eq(0);
 
@@ -202,9 +227,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
     });
 
     test('Run ctest without parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -215,9 +238,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
     }).timeout(100000);
 
     test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -228,9 +249,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -241,9 +260,7 @@ suite('Ctest: 2 successfull tests 1 failing test', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -278,9 +295,7 @@ suite('Ctest: 3 failing tests', () => {
     });
 
     test('Run ctest without parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -291,9 +306,7 @@ suite('Ctest: 3 failing tests', () => {
     }).timeout(100000);
 
     test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', false);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(false, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -304,9 +317,7 @@ suite('Ctest: 3 failing tests', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', undefined);
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, undefined);
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 
@@ -317,9 +328,7 @@ suite('Ctest: 3 failing tests', () => {
     }).timeout(100000);
 
     test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('allowParallelJobs', true);
-        await vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri).update('testSuiteDelimiter', "\\.");
-        await vscode.commands.executeCommand('cmake.getSettingsChangePromise');
+        await updateCTestConfiguration(true, "\\.");
         const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
         expect(ctestResult?.exitCode).to.not.eq(0);
 

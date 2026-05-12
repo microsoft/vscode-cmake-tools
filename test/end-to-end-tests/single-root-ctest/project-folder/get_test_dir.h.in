@@ -2,5 +2,5 @@
 
 std::filesystem::path get_test_dir()
 {
-  return {"@TESTS_DIR@"};
+  return {"@TESTS_DIR_FOR_CPP@"};
 }
