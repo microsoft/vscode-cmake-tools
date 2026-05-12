@@ -7,6 +7,7 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Improvements:
+- Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
 - Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
