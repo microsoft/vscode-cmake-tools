@@ -17,7 +17,7 @@
 	"cmake.retry.not.yet": "CMake를 아직 사용할 수 없음(시도 {0}/{1})",
 	"cmake.retry.configuring": "CMake가 이제 사용 가능해졌어요 — 프로젝트를 구성하는 중입니다.",
 	"cmake.retry.exhausted": "{0}번 재시도했지만 CMake를 찾을 수 없음",
-	"cmake.configuration.change.detected": "Detected change in CMake configuration while waiting for CMake to become available.",
+	"cmake.configuration.change.detected": "CMake가 사용 가능해질 때까지 기다리는 동안 CMake 구성에 변경 내용이 감지되었습니다.",
 	"update.code.model.for.list.modifier": "자동 목록 파일 수정기에 대한 코드 모델 업데이트",
 	"failed.to.open.cache.file.on.code.model.update": "코드 모델 업데이트에서 CMake 캐시 파일을 열지 못함",
 	"update.code.model.for.cpptools": "cpptools에 대한 코드 모델 업데이트",
