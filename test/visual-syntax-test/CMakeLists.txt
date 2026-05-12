@@ -290,3 +290,185 @@ endfunction()
 macro(my_macro ARG)
   message(STATUS "Macro: ${ARG}")
 endmacro()
+
+# ============================================================================
+# PR #4527 additions — knownVariables extensions
+# ============================================================================
+
+# Bare variable references (should highlight as support.type.variable.cmake)
+${CMAKE_MSVC_RUNTIME_LIBRARY}
+${CMAKE_INTERPROCEDURAL_OPTIMIZATION}
+${CMAKE_UNITY_BUILD}
+${CMAKE_UNITY_BUILD_BATCH_SIZE}
+${CMAKE_UNITY_BUILD_MODE}
+${CMAKE_COMPILE_WARNING_AS_ERROR}
+${CMAKE_COLOR_DIAGNOSTICS}
+${CMAKE_LINK_WHAT_YOU_USE}
+${CMAKE_VERIFY_INTERFACE_HEADER_SETS}
+${CMAKE_OPTIMIZE_DEPENDENCIES}
+${CMAKE_BUILD_RPATH}
+${CMAKE_BUILD_RPATH_USE_ORIGIN}
+${CMAKE_CXX_COMPILER_VERSION}
+${CMAKE_CXX_EXTENSIONS}
+${CMAKE_CXX_STANDARD_REQUIRED}
+
+# Variables used in set()/message() context
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_UNITY_BUILD ON)
+set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)
+set(CMAKE_UNITY_BUILD_MODE BATCH)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+set(CMAKE_LINK_WHAT_YOU_USE TRUE)
+set(CMAKE_VERIFY_INTERFACE_HEADER_SETS ON)
+set(CMAKE_OPTIMIZE_DEPENDENCIES TRUE)
+set(CMAKE_BUILD_RPATH "/opt/lib")
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
+message(STATUS "CXX compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "CXX extensions: ${CMAKE_CXX_EXTENSIONS}")
+message(STATUS "CXX standard required: ${CMAKE_CXX_STANDARD_REQUIRED}")
+
+# Regex-generalized family coverage
+message(STATUS "C compiler version: ${CMAKE_C_COMPILER_VERSION}")
+message(STATUS "Fortran simulate ID: ${CMAKE_Fortran_SIMULATE_ID}")
+message(STATUS "CXX frontend variant: ${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}")
+message(STATUS "C simulate version: ${CMAKE_C_SIMULATE_VERSION}")
+message(STATUS "CXX compile features: ${CMAKE_CXX_COMPILE_FEATURES}")
+
+# ============================================================================
+# PR #4527 additions — scopedPropertyCommand coverage
+# ============================================================================
+
+# set_property with GLOBAL scope and property names
+set_property(GLOBAL PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_property(GLOBAL PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(GLOBAL APPEND PROPERTY COMPILE_OPTIONS "-Wall")
+
+# get_property with TARGET scope
+get_property(result TARGET MyApp PROPERTY COMPILE_FEATURES)
+get_property(result TARGET MyApp PROPERTY INTERFACE_LINK_LIBRARIES)
+
+# set_target_properties with multiple properties
+set_target_properties(MyApp PROPERTIES
+  OUTPUT_NAME "myapp"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  UNITY_BUILD ON
+  UNITY_BUILD_MODE BATCH
+  LINK_WHAT_YOU_USE TRUE
+  VERIFY_INTERFACE_HEADER_SETS ON
+  OPTIMIZE_DEPENDENCIES TRUE
+  FOLDER "Apps"
+  LINKER_LANGUAGE CXX
+  VERSION "1.0.0"
+  SOVERSION "1"
+  INSTALL_RPATH "/opt/lib"
+  INSTALL_RPATH_USE_LINK_PATH TRUE
+  SKIP_BUILD_RPATH FALSE
+  BUILD_WITH_INSTALL_RPATH FALSE
+  AUTOMOC ON
+  AUTOUIC ON
+  AUTORCC ON
+  MACOSX_BUNDLE TRUE
+  MACOSX_RPATH TRUE
+  WIN32_EXECUTABLE TRUE
+  FRAMEWORK FALSE
+  ENABLE_EXPORTS ON
+)
+
+# set_source_files_properties with SOURCE scope keywords
+set_source_files_properties(main.cpp PROPERTIES
+  GENERATED FALSE
+  LANGUAGE CXX
+  HEADER_FILE_ONLY FALSE
+  COMPILE_FLAGS "-O2"
+  COMPILE_DEFINITIONS "USE_FEATURE=1"
+  OBJECT_DEPENDS "header.h"
+  WRAP_EXCLUDE TRUE
+  SYMBOLIC FALSE
+)
+
+# define_property with INHERITED
+define_property(TARGET PROPERTY MY_CUSTOM_PROP
+  BRIEF_DOCS "A custom property"
+  FULL_DOCS "Full documentation for custom property"
+  INHERITED
+)
+
+# get_directory_property
+get_directory_property(dir_defs COMPILE_DEFINITIONS)
+get_directory_property(dir_opts DIRECTORY "${CMAKE_SOURCE_DIR}" COMPILE_OPTIONS)
+
+# set_tests_properties with test properties
+set_tests_properties(my_test PROPERTIES
+  TIMEOUT 120
+  WILL_FAIL FALSE
+  COST 10
+  LABELS "unit;fast"
+  PASS_REGULAR_EXPRESSION "PASSED"
+  FAIL_REGULAR_EXPRESSION "FAILED"
+  FIXTURES_REQUIRED "db_fixture"
+  FIXTURES_SETUP "setup_fixture"
+  FIXTURES_CLEANUP "cleanup_fixture"
+  RESOURCE_LOCK "gpu"
+  PROCESSORS 4
+  RUN_SERIAL TRUE
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
+
+# get_test_property
+get_test_property(my_test TIMEOUT test_timeout)
+
+# More property coverage: archive, PDB, import, compatibility, VS
+set_target_properties(MyLib PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  ARCHIVE_OUTPUT_NAME "mylib"
+  PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb"
+  PDB_NAME "mylib"
+  DEBUG_POSTFIX "d"
+  IMPORT_PREFIX ""
+  IMPORT_SUFFIX ".lib"
+  IMPORTED TRUE
+  DEFINE_SYMBOL "MYLIB_EXPORTS"
+  STATIC_LIBRARY_FLAGS "/LTCG"
+  COMPATIBLE_INTERFACE_BOOL "POSITION_INDEPENDENT_CODE"
+  COMPATIBLE_INTERFACE_STRING "LINKER_LANGUAGE"
+  NO_SONAME TRUE
+  HAS_CXX TRUE
+  GNUtoMS ON
+  INTERFACE_COMPILE_DEFINITIONS "MYLIB_SHARED"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  INTERFACE_LINK_LIBRARIES "dep_lib"
+  INTERFACE_COMPILE_OPTIONS "-fPIC"
+  INTERFACE_COMPILE_FEATURES "cxx_std_17"
+  INTERFACE_SOURCES "extra.cpp"
+  INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "/usr/include"
+  INTERFACE_POSITION_INDEPENDENT_CODE ON
+  INTERFACE_HEADER_SETS "default"
+  PRECOMPILE_HEADERS "<vector>;pch.h"
+  HEADER_SETS "default"
+  EXCLUDE_FROM_ALL TRUE
+  INSTALL_NAME_DIR "/opt/lib"
+  PREFIX "lib"
+  SUFFIX ".so"
+  OSX_ARCHITECTURES "arm64;x86_64"
+  MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/Info.plist"
+  MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/Framework.plist"
+  MACOSX_PACKAGE_LOCATION "Resources"
+  XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Apple Development"
+  VS_GLOBAL_KEYWORD "ManagedCProj"
+  VS_DOTNET_REFERENCES "System;System.Core"
+  VS_WINRT_EXTENSIONS TRUE
+  VS_WINRT_REFERENCES "Windows"
+  MAP_IMPORTED_CONFIG_DEBUG "Release"
+  BUNDLE_EXTENSION "plugin"
+  LINK_SEARCH_END_STATIC TRUE
+  LINK_SEARCH_START_STATIC FALSE
+  LINK_OPTIONS "-Wl,--as-needed"
+  LINK_DEPENDS "${CMAKE_SOURCE_DIR}/version.lds"
+  SOURCES "lib.cpp"
+  COMPILE_DEFINITIONS_DEBUG "DEBUG=1"
+  LINK_FLAGS_RELEASE "/OPT:REF"
+)

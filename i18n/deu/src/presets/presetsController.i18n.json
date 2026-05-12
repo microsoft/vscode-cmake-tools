@@ -116,7 +116,7 @@
 	"use.kits.variants": "Verwenden von Kits und Varianten",
 	"edit.presets": "Lokalisieren",
 	"presets.version.error": "CMakePresets Version 1 wird nicht unterstützt. Wie möchten Sie fortfahren?",
-	"select.preset.file": "Select which presets file to add the new preset to",
+	"select.preset.file": "Wählen Sie aus, welcher Voreinstellungsdatei die neue Voreinstellung hinzugefügt werden soll.",
 	"failed.writing.to.file": "Fehler beim Schreiben in Datei {0}",
 	"failed.to.watch": "Watcher konnte nicht für {0}: {1} erstellt werden."
 }

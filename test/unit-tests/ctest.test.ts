@@ -1,4 +1,4 @@
-import { readTestResultsFile, searchOutputForFailures } from "@cmt/ctest";
+import { readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments } from "@cmt/ctest";
 import { expect, getTestResourceFilePath } from "@test/util";
 import { TestMessage } from "vscode";
 
@@ -67,6 +67,38 @@ suite('CTest test', () => {
         assertMessageFields(result6, '/path/to/file', 46, 0, 'the message', undefined, undefined);
     });
 
+    test('Find GoogleTest failure patterns in output', () => {
+        // Default patterns from package.json
+        const defaultPatterns = [
+            { regexp: '(.*?):(\\d+): *(?:error: *)(.*)' },
+            { regexp: '(.*?)\\((\\d+)\\): *(?:error: *)(.*)' },
+            { regexp: '(.*?):(\\d+): *(Failure.*)' }
+        ];
+
+        // GoogleTest failure format
+        const gtestOutput = '/path/to/TestFile.cpp:135: Failure\nValue of: expr\n  Actual: true\nExpected: false\n';
+        const gtestResults = searchOutputForFailures(defaultPatterns, gtestOutput);
+        expect(gtestResults.length).to.eq(1);
+        assertMessageFields(gtestResults[0], '/path/to/TestFile.cpp', 134, 0, 'Failure', undefined, undefined);
+
+        // GCC/Clang error format still works (no regression)
+        const gccOutput = '/path/to/file.cpp:10: error: undefined reference\n';
+        const gccResults = searchOutputForFailures(defaultPatterns, gccOutput);
+        expect(gccResults.length).to.eq(1);
+        assertMessageFields(gccResults[0], '/path/to/file.cpp', 9, 0, 'undefined reference', undefined, undefined);
+
+        // MSVC error format still works (no regression)
+        const msvcOutput = '/project/file.cpp(20): error: something went wrong\n';
+        const msvcResults = searchOutputForFailures(defaultPatterns, msvcOutput);
+        expect(msvcResults.length).to.eq(1);
+        assertMessageFields(msvcResults[0], '/project/file.cpp', 19, 0, 'something went wrong', undefined, undefined);
+
+        // Lines without "Failure" or "error:" should not match
+        const noMatchOutput = '[ RUN      ] MyTest.TestCase\n[  PASSED  ] 1 test.\n';
+        const noMatchResults = searchOutputForFailures(defaultPatterns, noMatchOutput);
+        expect(noMatchResults.length).to.eq(0);
+    });
+
     function assertMessageFields(
         tm: TestMessage,
         file: string, line: number, column: number, message: string,
@@ -79,4 +111,94 @@ suite('CTest test', () => {
         expect(tm.expectedOutput).to.eq(expected);
         expect(tm.actualOutput).to.eq(actual);
     }
+
+    suite('getMinimalRegexFragments', () => {
+        test('no targets', () => {
+            const result = getMinimalRegexFragments(['A', 'B', 'C'], []);
+            expect(result).to.deep.eq([]);
+        });
+
+        test('no forbidden strings', () => {
+            const result = getMinimalRegexFragments(['A', 'B', 'C'], ['A', 'B', 'C']);
+            expect(result).to.deep.eq(['^.']);
+        });
+
+        test('unique prefixes map correctly', () => {
+            const superset = ['Test1', 'Test2', 'OtherTest'];
+            // Target is a unique subset
+            const result = getMinimalRegexFragments(superset, ['Test1', 'OtherTest']);
+            // Test1 -> T e s t 1 (at '1', no other forbidden string shares this prefix since Test2 diverges at 1)
+            // OtherTest -> O (matches nothing forbidden immediately)
+            // wait, forbidden is ['Test2']
+            // For 'Test1': prefix 'Test1' -> forbidden count 0. Wait, 'T' matches 'Test2', 'e', 's', 't', '1'. 'Test1' is the prefix!
+            expect(result.length).to.eq(2);
+            expect(result).to.include('^Test1');
+            expect(result).to.include('^O');
+        });
+
+        test('swallowed target case (prefix of forbidden string)', () => {
+            const superset = ['Test', 'Test.1', 'Test.2'];
+            const targets = ['Test'];
+            // Since 'Test' is a prefix of 'Test.1', it never finds a prefix that has forbiddenCount 0.
+            // It parses all characters of 'Test' and then uses an end anchor.
+            const result = getMinimalRegexFragments(superset, targets);
+            expect(result).to.deep.eq(['^Test$']);
+        });
+
+        test('handles regex special characters properly', () => {
+            const superset = ['Test[A]', 'Test[B]'];
+            const targets = ['Test[A]'];
+            // Forbidden is ['Test[B]']
+            // 'Test[' is shared. 'Test[A' is unique.
+            const result = getMinimalRegexFragments(superset, targets);
+            expect(result).to.deep.eq(['^Test\\[A']);
+        });
+
+        test('removes redundant fragments', () => {
+            // Targets: ['A', 'AB']
+            // Forbidden: ['B']
+            // 'A' -> 'A', AB -> 'A'
+            // "A" covers "AB", so "AB" is redundant.
+            const result = getMinimalRegexFragments(['A', 'AB', 'B'], ['A', 'AB']);
+            // forbidden: 'B'. root has 'B'.
+            // 'A' char 'A' -> forbidden 0 -> 'A'
+            // 'AB' char 'A' -> forbidden 0 -> 'A'
+            // result ['^A']
+            expect(result).to.deep.eq(['^A']);
+        });
+
+        test('complex edge cases: nested suites, swallowed prefixes, special characters', () => {
+            const superset = [
+                'Suite',            // Target: gets swallowed by prefix sharing with forbidden
+                'Suite.Test1',      // Target: logically nested
+                'Suite.Test2',      // Target: logically nested
+                'Suite.Test3',      // Forbidden
+                'OtherSuite.Test1', // Target
+                'OtherSuite.Test2', // Target
+                'O[ther]',          // Forbidden: share 'O' prefix
+                'A+B.Test',         // Target: gets swallowed + special chars
+                'A+B.Test2'         // Forbidden
+            ];
+
+            const targets = [
+                'Suite',
+                'Suite.Test1',
+                'Suite.Test2',
+                'OtherSuite.Test1',
+                'OtherSuite.Test2',
+                'A+B.Test'
+            ];
+
+            const result = getMinimalRegexFragments(superset, targets);
+
+            expect(result).to.have.members([
+                '^Suite$',
+                '^Suite\\.Test1',
+                '^Suite\\.Test2',
+                '^Ot',
+                '^A\\+B\\.Test$'
+            ]);
+            expect(result.length).to.eq(5);
+        });
+    });
 });

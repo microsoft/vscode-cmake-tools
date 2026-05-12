@@ -183,6 +183,9 @@ export class CMakeServerDriver extends CMakeDriver {
             } catch (e) {
                 if (e instanceof ServerError) {
                     log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
+                    if (e.stack) {
+                        log.debug(e.stack);
+                    }
                     return 1;
                 } else {
                     throw e;

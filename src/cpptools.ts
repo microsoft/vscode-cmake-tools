@@ -323,7 +323,7 @@ function fallbackConfiguration(configurations: Map<string, cpptools.SourceFileCo
         return undefined;
     }
     for (const item of configurations.values()) {
-        const { configuration: { includePath, defines, intelliSenseMode, standard} } = item;
+        const { configuration: { includePath, defines, intelliSenseMode, standard } } = item;
         if (includePath.length || defines.length || intelliSenseMode || standard) {
             return item;
         }
@@ -363,6 +363,18 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private getConfiguration(uri: vscode.Uri): cpptools.SourceFileConfigurationItem | undefined {
         const normalizedPath = util.platformNormalizePath(uri.fsPath);
         const configurations = this.fileIndex.get(normalizedPath);
+
+        // If we have an active folder, only provide configurations for files
+        // that belong to that folder's project. This ensures IntelliSense
+        // reflects the active project in multi-project workspaces.
+        if (this.activeFolder) {
+            const activeFolderFiles = this.fileIndexByFolder.get(this.activeFolder);
+            if (!activeFolderFiles?.has(normalizedPath)) {
+                // This file is not part of the active folder's project
+                return undefined;
+            }
+        }
+
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
@@ -431,12 +443,46 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
     private readonly fileIndex = new Map<string, Map<string, cpptools.SourceFileConfigurationItem>>();
 
     /**
+     * Track indexed files per workspace folder so stale entries can be evicted
+     * when a folder is reconfigured (e.g. switching presets).
+     */
+    private readonly fileIndexByFolder = new Map<string, Set<string>>();
+
+    /**
      * If a source file configuration exists for the active target, we will prefer that one when asked.
      */
     private activeTarget: string | null = null;
 
+    /**
+     * The active folder path. When set, IntelliSense configurations from this folder
+     * are preferred over configurations from other folders for shared source files.
+     */
+    private activeFolder: string | null = null;
+
+    /**
+     * Set the active folder for IntelliSense configuration resolution.
+     * When a file exists in multiple project folders, configurations from
+     * the active folder will be preferred.
+     * @param folder The folder path, or null to clear
+     */
+    setActiveFolder(folder: string | null) {
+        this.activeFolder = folder ? util.platformNormalizePath(folder) : null;
+    }
+
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
+
+    private clearConfigurationDataForFolder(folder: string) {
+        const normalizedFolder = util.platformNormalizePath(folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
+        if (indexedFiles) {
+            for (const filePath of indexedFiles) {
+                this.fileIndex.delete(filePath);
+            }
+            this.fileIndexByFolder.delete(normalizedFolder);
+        }
+        this.workspaceBrowseConfigurations.delete(normalizedFolder);
+    }
 
     /**
      * Create a source file configuration for the given file group.
@@ -453,8 +499,8 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         let compilerToolchains: CodeModelToolchain | undefined;
         if ("toolchains" in opts.codeModelContent) {
             compilerToolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
-            || opts.codeModelContent.toolchains?.get('CXX')
-            || opts.codeModelContent.toolchains?.get('C');
+                || opts.codeModelContent.toolchains?.get('CXX')
+                || opts.codeModelContent.toolchains?.get('C');
         }
         // If none of those work, fall back to the same order, but in the cache.
         const compilerCache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
@@ -478,15 +524,27 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
             }
             return [...util.flatMap(fragments, fragment => shlex.split(fragment))];
         };
-        let flags: string[] = [];
+        const flags: string[] = [];
         let extraDefinitions: string[] = [];
         let standard: StandardVersion;
         let targetArch: Architecture;
         let intelliSenseMode: IntelliSenseMode;
         let defines = (fileGroup.defines || target.defines || []);
-        if (!useFragments) {
+        if (useFragments) {
+            if (compilerToolchains?.commandFragment) {
+                compileCommandFragments.unshift(compilerToolchains.commandFragment);
+            }
+        } else {
+            if (compilerToolchains?.commandFragment) {
+                // This is incorrect: shlex.split() does not do what one would
+                // expect, it treats quotes and backslashes differently than a
+                // shell would. But maybe it's good enough for a legacy codepath,
+                // what are the chances that anyone has old CppTools but new
+                // CMake Tools and new CMake?
+                flags.push(...shlex.split(compilerToolchains.commandFragment));
+            }
             // Send the intelliSenseMode and standard only for CppTools API v5 and below.
-            flags = getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments);
+            flags.push(...getAsFlags(fileGroup.compileCommandFragments || target.compileCommandFragments));
             ({ extraDefinitions, standard, targetArch } = parseCompileFlags(this.cpptoolsVersion, flags, lang));
             defines = defines.concat(extraDefinitions);
             intelliSenseMode = getIntelliSenseMode(this.cpptoolsVersion, compilerPath, targetArchFromToolchains ?? targetArch);
@@ -574,9 +632,12 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private updateFileGroup(sourceDir: string, fileGroup: CodeModelFileGroup, options: CodeModelParams, target: TargetDefaults, sysroot?: string) {
         const configuration = this.buildConfigurationData(fileGroup, options, target, sysroot);
+        const normalizedFolder = util.platformNormalizePath(options.folder);
+        const indexedFiles = this.fileIndexByFolder.get(normalizedFolder);
         for (const src of fileGroup.sources) {
             const absolutePath = path.isAbsolute(src) ? src : path.join(sourceDir, src);
             const normalizedAbsolutePath = util.platformNormalizePath(absolutePath);
+            indexedFiles?.add(normalizedAbsolutePath);
             if (this.fileIndex.has(normalizedAbsolutePath)) {
                 this.fileIndex.get(normalizedAbsolutePath)!.set(target.name, {
                     uri: vscode.Uri.file(absolutePath).toString(),
@@ -614,6 +675,10 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         this.responses.clear();
         this.buildTypesSeen.clear();
         this.targets = [];
+
+        const normalizedFolder = util.platformNormalizePath(opts.folder);
+        this.clearConfigurationDataForFolder(normalizedFolder);
+        this.fileIndexByFolder.set(normalizedFolder, new Set<string>());
 
         let hadMissingCompilers = false;
         this.workspaceBrowseConfiguration = { browsePath: [] };

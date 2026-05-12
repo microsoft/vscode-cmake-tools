@@ -21,6 +21,20 @@ export enum StateMessage {
  * in conjunction with `proc.execute`.
  */
 export class CMakeOutputConsumer extends CommandConsumer {
+    /**
+     * Matches CMake stdout lines that originate from CMake's own built-in
+     * modules (compiler detection, ABI probing, feature enumeration, etc.).
+     * These are logged at `debug` so they stay hidden at the default logging
+     * level — keeping the Output panel concise — while remaining one
+     * setting-change away.
+     *
+     * Everything else (user `message(STATUS "…")` calls, lifecycle milestones
+     * such as "Configuring done" / "Generating done", etc.) is logged at
+     * `info` so it is always visible.
+     */
+    private static readonly _cmakeInternalNoiseRe =
+        /^-- +(?:The \w+ compiler identification is |Check for working \w+ compiler[: ]|Detecting \w+ compiler ABI info|Detecting \w+ compile features)/;
+
     constructor(readonly sourceDir: string, readonly logger?: Logger) {
         super();
     }
@@ -46,12 +60,18 @@ export class CMakeOutputConsumer extends CommandConsumer {
     private readonly _stateMessages: StateMessage[] = [];
 
     /**
-     * Simply writes the line of output to the log
+     * Writes the line of output to the log at a tiered level:
+     * - CMake internal noise (compiler detection, ABI probing, etc.) → debug
+     * - All other CMake stdout (user STATUS messages, milestones, etc.) → info
      * @param line Line of output
      */
     output(line: string) {
         if (this.logger) {
-            this.logger.info(line);
+            if (CMakeOutputConsumer._cmakeInternalNoiseRe.test(line)) {
+                this.logger.debug(line);
+            } else {
+                this.logger.info(line);
+            }
         }
         super.output(line);
         this._parseDiags(line);
@@ -88,7 +108,7 @@ export class CMakeOutputConsumer extends CommandConsumer {
     error(line: string) {
         // First, just log the line
         if (this.logger) {
-            this.logger.error(line);
+            this.logger.warning(line);
         }
         super.error(line);
         this._parseDiags(line);
@@ -106,10 +126,10 @@ export class CMakeOutputConsumer extends CommandConsumer {
         // Switch on the state to implement our crude FSM
         switch (this._errorState.state) {
             case 'init': {
-                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+) \((.*?)\):/;
+                const re = /CMake (.*?)(?: \(dev\))? at (.*?):(\d+)(?: \((.*?)\))?:/;
                 const result = re.exec(line);
                 if (result) {
-                    // We have encountered and error
+                    // We have encountered an error
                     const [full, level, filename, linestr, command] = result;
                     const lineno = oneLess(linestr);
                     const diagmap: { [k: string]: vscode.DiagnosticSeverity } = {
@@ -118,7 +138,8 @@ export class CMakeOutputConsumer extends CommandConsumer {
                         Error: vscode.DiagnosticSeverity.Error
                     };
                     const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), full, diagmap[level]);
-                    vsdiag.source = `CMake (${command})`;
+                    vsdiag.source = 'cmake';
+                    vsdiag.code = command ? command : undefined;
                     vsdiag.relatedInformation = [];
                     const filepath = util.resolvePath(filename, this.sourceDir);
                     this._errorState.diag = {

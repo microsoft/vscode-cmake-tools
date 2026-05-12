@@ -46,7 +46,10 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
             cmakeLogger.info(localize('run.script', "Executing CMake script: {0}", scriptPath));
 
             const env = EnvironmentUtils.merge([process.env, EnvironmentUtils.create(scriptEnv)]);
-            const child = proc.execute(cmakeExe.path, concreteArgs, outputConsumer, { environment: env});
+            const commandShell = process.platform === 'win32' ? proc.determineShell(cmakeExe.path) : false;
+            const configShell = cmakeProject.workspaceContext.config.shell;
+            const shell = (commandShell || undefined) ?? configShell ?? undefined;
+            const child = proc.execute(cmakeExe.path, concreteArgs, outputConsumer, { environment: env, shell });
 
             while (
                 !outputConsumer.stateMessages.includes(

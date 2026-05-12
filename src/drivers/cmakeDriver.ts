@@ -32,7 +32,7 @@ import * as codeModel from '@cmt/drivers/codeModel';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { CMakeTask, CMakeTaskProvider, CustomBuildTaskTerminal } from '@cmt/cmakeTaskProvider';
 import { getValue } from '@cmt/presets/preset';
-import { CacheEntry } from '@cmt/cache';
+import { CacheEntry, CMakeCache } from '@cmt/cache';
 import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
@@ -95,6 +95,10 @@ export interface ExecutableTarget {
      * The install locations of the target.
      */
     isInstallTarget?: boolean;
+    /**
+     * The working directory for the debugger, from the DEBUGGER_WORKING_DIRECTORY target property.
+     */
+    debuggerWorkingDirectory?: string;
 }
 
 /**
@@ -124,6 +128,7 @@ export interface RichTarget {
     targetType: string;
     folder?: CodeModelKind.TargetObject;
     installPaths?: InstallPath[];
+    debuggerWorkingDirectory?: string;
 }
 
 export type Target = NamedTarget | RichTarget;
@@ -143,6 +148,18 @@ export interface InstallPath {
  *
  * This class defines the basis for what a driver must implement to work.
  */
+/**
+ * Compare a new generator name against a cached CMAKE_GENERATOR value.
+ * Returns true when both are defined and differ (i.e. a mismatch that needs cleaning).
+ * Pure function — no I/O — exported for direct unit testing.
+ */
+export function generatorMismatch(newGeneratorName: string | undefined, cachedGeneratorValue: string | undefined): boolean {
+    if (!newGeneratorName || !cachedGeneratorValue) {
+        return false;
+    }
+    return cachedGeneratorValue !== newGeneratorName;
+}
+
 export abstract class CMakeDriver implements vscode.Disposable {
     /**
      * Do the configuration process for the current project.
@@ -234,17 +251,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         private readonly usingFileApi: boolean = false
     ) {
         this.sourceDir = this.sourceDirUnexpanded;
-        // We have a cache of file-compilation terminals. Wipe them out when the
-        // user closes those terminals.
-        vscode.window.onDidCloseTerminal(closed => {
-            for (const [key, term] of this._compileTerms) {
-                if (term === closed) {
-                    log.debug(localize('user.closed.file.compilation.terminal', 'User closed a file compilation terminal'));
-                    this._compileTerms.delete(key);
-                    break;
-                }
-            }
-        });
     }
 
     /**
@@ -269,9 +275,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     dispose() {
         log.debug(localize('disposing.base.cmakedriver', 'Disposing base CMakeDriver'));
-        for (const term of this._compileTerms.values()) {
-            term.dispose();
-        }
         for (const sub of [this._settingsSub, this._argsSub, this._envSub, this._buildArgsSub, this._buildEnvSub, this._testArgsSub, this._testEnvSub, this._packEnvSub, this._packArgsSub, this._generalEnvSub]) {
             sub.dispose();
         }
@@ -514,26 +517,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
     getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): Environment {
         const cur_env = process.env;
         const kit_env = (this.config.ignoreKitEnv) ? EnvironmentUtils.create() : this._kitEnvironmentVariables;
-        return EnvironmentUtils.merge([cur_env, kit_env, opts?.environment]);
+        const cmakeToolsEnv = EnvironmentUtils.create({ VSCODE_CMAKE_TOOLS: "1" });
+        return EnvironmentUtils.merge([cur_env, kit_env, cmakeToolsEnv, opts?.environment]);
     }
 
     executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
-        const exec_options = { ...options, environment };
+        // On Windows, command-type-specific detection (e.g. .cmd → cmd, .ps1 → powershell)
+        // must take precedence over config.shell to avoid routing commands through
+        // an incompatible shell (e.g. .cmd files through Git Bash).
+        const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
+        const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
+        const exec_options = { ...options, environment, shell };
         return proc.execute(command, args, consumer, exec_options);
     }
-
-    /**
-     * File compilation terminals. This is a map, rather than a single terminal
-     * instance for two reasons:
-     *
-     * 1. Different compile commands may require different environment variables.
-     * 2. Different compile commands may require different working directories.
-     *
-     * The key of each terminal is generated deterministically in `runCompileCommand()`
-     * based on the CWD and environment of the compile command.
-     */
-    private readonly _compileTerms = new Map<string, vscode.Terminal>();
 
     /**
      * Launch the given compilation command in an embedded terminal.
@@ -543,30 +540,93 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const env = await this.getCMakeBuildCommandEnvironment();
 
         if (this.useCMakePresets && this._buildPreset && checkBuildOverridesPresent(this.config)) {
-            log.info(localize('compile.with.overrides', 'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.', this._buildPreset.displayName ?? this._buildPreset.name));
+            log.info(localize('compile.with.overrides',
+                'NOTE: You are compiling with preset {0}, but there are some overrides being applied from your VS Code settings.',
+                this._buildPreset.displayName ?? this._buildPreset.name));
         }
 
-        const key = `${cmd.directory}${JSON.stringify(env)}`;
-        let existing = this._compileTerms.get(key);
-        if (existing && this.config.clearOutputBeforeBuild) {
-            this._compileTerms.delete(key);
-            existing.dispose();
-            existing = undefined;
-        }
-        if (!existing) {
-            const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+        const args = cmd.arguments;
+        if (!args || args.length === 0) {
+            // Fallback: no structured args available — send the raw command string via terminal.
+            // This path should never be reached because CompilationDatabase always populates arguments.
             const term = vscode.window.createTerminal({
                 name: localize('file.compilation', 'File Compilation'),
                 cwd: cmd.directory,
-                env,
-                shellPath
+                env
             });
-            this._compileTerms.set(key, term);
-            existing = term;
+            term.show();
+            term.sendText(cmd.command, true);
+            return term;
         }
-        existing.show();
-        existing.sendText(cmd.command + '\r\n');
-        return existing;
+
+        // Spawn the compiler directly via proc.execute() to avoid the PTY 4096-byte
+        // input-buffer truncation bug (https://github.com/microsoft/vscode-cmake-tools/issues/4836).
+        // We open a Pseudoterminal so output appears in the Terminal panel without any
+        // shell intermediary — args are passed as an array straight to child_process.spawn.
+        const writeEmitter = new vscode.EventEmitter<string>();
+        const closeEmitter = new vscode.EventEmitter<number>();
+        let activeProcess: proc.Subprocess | undefined;
+        let processExitCode: number | undefined;
+
+        const pty: vscode.Pseudoterminal = {
+            onDidWrite: writeEmitter.event,
+            onDidClose: closeEmitter.event,
+            open: () => {
+                const executable = args[0];
+                const execArgs = args.slice(1);
+                writeEmitter.fire(proc.buildCmdStr(executable, execArgs) + '\r\n');
+                activeProcess = proc.execute(executable, execArgs, {
+                    output: (line: string) => writeEmitter.fire(line + '\r\n'),
+                    error: (line: string) => writeEmitter.fire(line + '\r\n')
+                }, { cwd: cmd.directory, environment: env });
+                activeProcess.result.then(result => {
+                    activeProcess = undefined;
+                    const retc = result.retc ?? 0;
+                    processExitCode = retc;
+                    if (retc !== 0) {
+                        writeEmitter.fire(localize('compile.finished.with.error',
+                            'Compilation finished with error(s).') + '\r\n');
+                    } else {
+                        writeEmitter.fire(localize('compile.finished.successfully',
+                            'Compilation finished successfully.') + '\r\n');
+                    }
+                    // Keep terminal open so user can see the output. Only close when
+                    // user presses a key or closes the terminal manually.
+                    // See https://github.com/microsoft/vscode-cmake-tools/issues/4896
+                    writeEmitter.fire(localize('press.any.key.to.close',
+                        'Press any key to close the terminal...') + '\r\n');
+                }, (e: any) => {
+                    activeProcess = undefined;
+                    // Use positive exit code per VS Code PTY API convention
+                    processExitCode = 1;
+                    writeEmitter.fire((e?.message ?? String(e)) + '\r\n');
+                    writeEmitter.fire(localize('press.any.key.to.close',
+                        'Press any key to close the terminal...') + '\r\n');
+                });
+            },
+            close: () => {
+                // Terminate the compiler process if the user closes the terminal
+                // while compilation is still running, to avoid orphaned processes.
+                if (activeProcess?.child) {
+                    void util.termProc(activeProcess.child);
+                    activeProcess = undefined;
+                }
+            },
+            handleInput: (_data: string) => {
+                // Close the terminal when the user presses any key after the
+                // process has finished. If the process is still running, ignore input.
+                if (processExitCode !== undefined) {
+                    closeEmitter.fire(processExitCode);
+                }
+            }
+        };
+
+        const term = vscode.window.createTerminal({
+            name: localize('file.compilation', 'File Compilation'),
+            pty
+        });
+        term.show();
+        return term;
     }
 
     /**
@@ -591,12 +651,52 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
+     * Check if the generator to be used differs from what is cached in CMakeCache.txt.
+     */
+    protected async _hasGeneratorChanged(newGeneratorName: string | undefined): Promise<boolean> {
+        if (!newGeneratorName) {
+            return false;
+        }
+        const cachePath = this.cachePath;
+        if (!await fs.exists(cachePath)) {
+            return false;
+        }
+        const cache = await CMakeCache.fromPath(cachePath);
+        const cachedGenerator = cache.get('CMAKE_GENERATOR');
+        if (generatorMismatch(newGeneratorName, cachedGenerator?.value)) {
+            log.info(localize('generator.changed', 'Generator changed from {0} to {1}; cleaning prior configuration', cachedGenerator!.value, newGeneratorName));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove the entire build directory.
+     */
+    protected async _cleanBuildDirectory() {
+        const build_dir = this.binaryDir;
+        if (await fs.exists(build_dir)) {
+            log.info(localize('removing', 'Removing {0}', encodeURI(build_dir)));
+            await fs.rmdir(build_dir);
+        }
+    }
+
+    /**
      * Change the current configure preset. This lets the driver reload, if necessary.
      * @param configurePreset The new configure preset
      */
     async setConfigurePreset(configurePreset: preset.ConfigurePreset | null): Promise<void> {
         if (configurePreset) {
             log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
+
+            // Skip the full doSetConfigurePreset (which unconditionally sets
+            // _needsReconfigure = true) when the expanded preset hasn't changed
+            // and the CMake cache still exists on disk.
+            // This avoids unnecessary reconfigures when reapplyPresets() is called
+            // but preset files on disk are identical (see #4502).
+            if (this._configurePreset && lodash.isEqual(configurePreset, this._configurePreset) && await fs.exists(this.cachePath)) {
+                return;
+            }
 
             const newBinaryDir = configurePreset.binaryDir;
             const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
@@ -734,7 +834,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return;
         }
 
-        log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
+        let switch_to_kit_info = localize('switching.to.kit', 'Switching to kit: {0}', kit.name);
+        if (Array.isArray(kit.visualStudioArguments)) {
+            switch_to_kit_info += ` visualStudioArguments: ${JSON.stringify(kit.visualStudioArguments)}`;
+        }
+        log.info(switch_to_kit_info);
 
         const oldBinaryDir = this.binaryDir;
         const needsCleanIfKitChange = kitChangeNeedsClean(kit, this._kit);
@@ -743,7 +847,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this._refreshExpansions();
             const scope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : undefined;
             const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory(this.isMultiProject, scope), this.expansionOptions));
-            if (needsCleanIfKitChange && (newBinaryDir === oldBinaryDir)) {
+            const generatorChanged = await this._hasGeneratorChanged(this._generator?.name);
+            if ((needsCleanIfKitChange || generatorChanged) && (newBinaryDir === oldBinaryDir)) {
                 await this._cleanPriorConfiguration();
             }
         });
@@ -755,15 +860,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
         this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
-        // Place a kit preferred generator at the front of the list
-        // For VS kits that don't have preferredGenerator (e.g., scanned before a VS version was added),
-        // try to derive it from the VS installation.
-        let kitPreferredGenerator = kit.preferredGenerator;
-        if (!kitPreferredGenerator && kit.visualStudio) {
-            kitPreferredGenerator = await getVsKitPreferredGenerator(kit);
-        }
-        if (kitPreferredGenerator) {
-            preferredGenerators.unshift(kitPreferredGenerator);
+        // Place a kit preferred generator at the front of the list.
+        if (kit.preferredGenerator) {
+            preferredGenerators.unshift(kit.preferredGenerator);
         }
 
         // If no preferred generator is defined by the current kit or the user settings,
@@ -775,6 +874,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         ) {
             preferredGenerators.push({ name: "Ninja" });
             preferredGenerators.push({ name: "Unix Makefiles" });
+        }
+
+        // For VS kits that don't have preferredGenerator (e.g., scanned before
+        // a VS version was added), derive the VS generator as a last-resort
+        // fallback so it is tried only after Ninja / Unix Makefiles.
+        if (!kit.preferredGenerator && kit.visualStudio) {
+            const derived = await getVsKitPreferredGenerator(kit);
+            if (derived) {
+                preferredGenerators.push(derived);
+            }
         }
 
         // Use the "best generator" logic only if the user did not define a particular
@@ -1006,7 +1115,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     isCommonGenerator(genName: string): boolean {
         return genName === 'Ninja' || genName === 'Ninja Multi-Config' ||
             genName === 'MinGW Makefiles' || genName === 'NMake Makefiles' ||
-            genName === 'Unix Makefiles' || genName === 'MSYS Makefiles';
+            genName === 'Unix Makefiles' || genName === 'MSYS Makefiles' ||
+            genName === 'FASTBuild';
     }
 
     /**
@@ -1021,6 +1131,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const generator_present = await (async (): Promise<boolean> => {
                 if (gen_name === 'Ninja' || gen_name === 'Ninja Multi-Config') {
                     return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
+                }
+                if (gen_name === 'FASTBuild') {
+                    return this.testHaveCommand('fbuild');
                 }
                 if (gen_name === 'MinGW Makefiles') {
                     return platform === 'win32' && this.testHaveCommand('mingw32-make');
@@ -1094,6 +1207,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this.isConfigInProgress = false;
 
         return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
+    }
+
+    /**
+     * Perform a full clean configure. Deletes the entire build directory before running the config.
+     * @param consumer The output consumer
+     */
+    public async fullCleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, cancelInformation?: ConfigureCancelInformation): Promise<ConfigureResult> {
+        if (this.isConfigInProgress) {
+            await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ForcedCancel };
+        }
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
+            await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+            return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
+        }
+        this.isConfigInProgress = true;
+        await this._cleanBuildDirectory();
+        this.isConfigInProgress = false;
+
+        return this.configure(trigger, extra_args, consumer, cancelInformation);
     }
 
     async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
@@ -1396,6 +1529,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         "Unix Makefiles",
         "Ninja",
         "Ninja Multi-Config",
+        "FASTBuild",
         "Watcom WMake",
         "CodeBlocks - MinGW Makefiles",
         "CodeBlocks - NMake Makefiles",
@@ -1456,7 +1590,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const presetCacheVariables = configPreset.cacheVariables ?? {};
         const hasExportCompileCommands = Object.prototype.hasOwnProperty.call(presetCacheVariables, 'CMAKE_EXPORT_COMPILE_COMMANDS')
             || expandedArgs.some(arg => arg.startsWith('-DCMAKE_EXPORT_COMPILE_COMMANDS'));
-        if (!hasExportCompileCommands) {
+        if (!hasExportCompileCommands && exportCompileCommandsFile) {
             const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
             expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
         }
@@ -1523,6 +1657,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
             if (!pre_check_ok) {
                 return { exitCode: -2, resultType: ConfigureResultType.Other };
+            }
+
+            // Safety net for the kits/variants path: if a setting change
+            // (cmake.generator / cmake.preferredGenerators) reloaded the driver
+            // without going through setKit(), the cached CMAKE_GENERATOR may
+            // differ from this._generator. Clean the prior configuration here
+            // so CMake doesn't fail with a "generator changed" error.
+            // Presets handle this in setConfigurePreset via configurePresetChangeNeedsClean.
+            if (!this.useCMakePresets
+                && !showCommandOnly
+                && !shouldUseCachedConfiguration
+                && trigger !== ConfigureTrigger.configureWithCache
+                && await this._hasGeneratorChanged(this._generator?.name)) {
+                await this._cleanPriorConfiguration();
             }
 
             let expanded_flags: string[];
@@ -1634,6 +1782,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 if (this._kit?.visualStudioArchitecture) {
                     telemetryProperties.VisualStudioArchitecture =
                         this._kit?.visualStudioArchitecture;
+                }
+                if (Array.isArray(this._kit?.visualStudioArguments)) {
+                    telemetryProperties.VisualStudioArguments = JSON.stringify(this._kit?.visualStudioArguments);
                 }
             }
 
@@ -1763,7 +1914,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Export compile_commands.json
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
         const exportCompileCommandsFile: boolean = exportCompileCommandsSetting === undefined ? true : (exportCompileCommandsSetting || false);
-        settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+        if (exportCompileCommandsFile) {
+            settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+        }
 
         console.assert(!!this._kit);
         if (!this._kit) {
@@ -1782,7 +1935,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         if (this._kit.cmakeSettings) {
             util.objectPairs(this._kit.cmakeSettings)
-                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+                .forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
         }
 
         return util.objectPairs(settingMap).map(([key, value]) => {
@@ -1952,7 +2105,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         } else {
             buildPreset.__targets = buildPreset.targets;
         }
-        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs);
+        const args = preset.buildArgs(buildPreset, this.config.buildArgs, this.config.buildToolArgs, this.config.numJobsForPreset);
         const initialEnvironment = EnvironmentUtils.create(buildPreset.environment);
         const build_env = await this.getCMakeBuildCommandEnvironment(initialEnvironment);
         const expanded_args_promises = args.map(async (value: string) => expand.expandString(value, { ...this.expansionOptions, envOverride: build_env }));
@@ -2036,7 +2189,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const buildcmd = await this.getCMakeBuildCommand(targets);
         if (buildcmd) {
             let outputEnc = this.config.outputLogEncoding;
-            if (outputEnc === 'auto') {
+            const isAutoEncoding = outputEnc === 'auto';
+            if (isAutoEncoding) {
                 if (process.platform === 'win32') {
                     outputEnc = await codepages.getWindowsCodepage();
                 } else {
@@ -2047,13 +2201,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
             if (useBuildTask) {
                 const task: CMakeTask | undefined = await CMakeTaskProvider.findBuildTask(this.workspaceFolder, this._buildPreset?.name, targets, this.expansionOptions);
                 if (task) {
-                    const resolvedTask: CMakeTask | undefined = await CMakeTaskProvider.resolveInternalTask(task);
-                    if (resolvedTask) {
-                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolvedTask));
+                    const resolved = await CMakeTaskProvider.resolveInternalTask(task);
+                    if (resolved) {
+                        await this.cmakeBuildRunner.setBuildProcessForTask(await vscode.tasks.executeTask(resolved.task), resolved.exitCodePromise);
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();

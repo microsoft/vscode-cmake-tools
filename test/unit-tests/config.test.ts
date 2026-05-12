@@ -32,7 +32,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
             testSuiteDelimiter: '',
             testSuiteDelimiterMaxOccurrence: 0,
             failurePatterns: [],
-            debugLaunchTarget: null
+            debugLaunchTarget: null,
+            neverDebugTestsWithLaunchConfiguration: null
         },
         parseBuildDiagnostics: true,
         enabledOutputParsers: [],
@@ -54,6 +55,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         loadCompileCommands: true,
         configureOnOpen: true,
         configureOnEdit: true,
+        cmakeProviderExtensions: [],
         deleteBuildDirOnCleanConfigure: false,
         skipConfigureIfCachePresent: null,
         useCMakeServer: true,
@@ -81,11 +83,29 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         ignoreCMakeListsMissing: false,
         automaticReconfigure: false,
         enableAutomaticKitScan: true,
+        removeStaleKitsOnScan: false,
         enableLanguageServices: true,
+        languageServerOnlyMode: false,
         preRunCoverageTarget: null,
         postRunCoverageTarget: null,
         coverageInfoFiles: [],
-        useFolderPropertyInBuildTargetDropdown: true
+        useFolderPropertyInBuildTargetDropdown: true,
+        postConfigureTask: null,
+        additionalBuildProblemMatchers: [],
+        shell: null,
+        setBuildTargetSameAsLaunchTarget: false,
+        outlineViewType: "list",
+        modifyLists: {
+            addNewSourceFiles: 'ask',
+            removeDeletedSourceFiles: 'ask',
+            variableSelection: 'never',
+            sourceVariables: [],
+            targetSelection: 'askParentSourceDirs',
+            targetCommandInvocationSelection: 'askParentDirs',
+            targetSourceCommands: ['target_sources', 'add_executable', 'add_library'],
+            scopeSelection: 'ask',
+            sourceListKeywords: []
+        }
     });
     ret.updatePartial(conf);
     return ret;
@@ -153,5 +173,34 @@ suite('Configuration', () => {
         const conf = createConfig({ parallelJobs: 5 });
         conf.updatePartial({ buildDirectory: 'Foo' });
         expect(conf.parallelJobs).to.eq(5);
+    });
+
+    test('Read shell as null by default', () => {
+        const conf = createConfig({});
+        expect(conf.shell).to.be.null;
+    });
+
+    test('Read shell as string when set', () => {
+        const conf = createConfig({ shell: 'C:\\Program Files\\Git\\bin\\bash.exe' });
+        expect(conf.shell).to.eq('C:\\Program Files\\Git\\bin\\bash.exe');
+    });
+
+    test('Update shell setting', () => {
+        const conf = createConfig({ shell: null });
+        expect(conf.shell).to.be.null;
+        conf.updatePartial({ shell: '/usr/bin/bash' });
+        expect(conf.shell).to.eq('/usr/bin/bash');
+    });
+
+    test('Read removeStaleKitsOnScan as false by default', () => {
+        const conf = createConfig({});
+        expect(conf.removeStaleKitsOnScan).to.be.false;
+    });
+
+    test('Update removeStaleKitsOnScan setting', () => {
+        const conf = createConfig({ removeStaleKitsOnScan: false });
+        expect(conf.removeStaleKitsOnScan).to.be.false;
+        conf.updatePartial({ removeStaleKitsOnScan: true });
+        expect(conf.removeStaleKitsOnScan).to.be.true;
     });
 });

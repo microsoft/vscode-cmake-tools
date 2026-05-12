@@ -21,11 +21,11 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    fs.rmSync(build_dir, {recursive: true, force: true});
+    fs.rmSync(build_dir, { recursive: true, force: true });
     return !fs.existsSync(build_dir);
 }
 
-export function makeDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>, driverSupportsCMake: (cmake: CMakeExecutable) => boolean) {
     let driver: CMakeDriver | null = null;
 
     suite(`CMake ${driverName} driver tests`, () => {
@@ -51,7 +51,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 name: 'Visual Studio Community 2022 - amd64',
                 visualStudio: 'VisualStudio.17.0',
                 visualStudioArchitecture: 'x64',
-                preferredGenerator: {name: 'Visual Studio 17 2022', platform: 'x64'}
+                preferredGenerator: { name: 'Visual Studio 17 2022', platform: 'x64' }
             } as Kit;
         } else {
             secondaryKit = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' }, isTrusted: true } as Kit;
@@ -81,9 +81,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             }
         });
 
-        test(`All target for ${ninjaKitDefault.name}`, async () => {
+        test(`All target for ${ninjaKitDefault.name}`, async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             const allTargetName = driver.allTargetName;
@@ -92,25 +95,34 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
         }).timeout(60000 * 2);
 
-        test('Check binary dir', async () => {
+        test('Check binary dir', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             expect(driver.binaryDir).to.endsWith('test/unit-tests/driver/workspace/test_project/build');
         }).timeout(60000);
 
-        test('Configure fails', async () => {
+        test('Configure fails', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, badCommandWorkspaceFolder, async () => true, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(1);
         }).timeout(90000);
 
-        test('Build', async () => {
+        test('Build', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(0);
@@ -126,9 +138,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(fs.existsSync(targetInRuntimeOutputDir!.path)).to.be.true;
         }).timeout(90000);
 
-        test('Configure fails on invalid preferred generator', async () => {
+        test('Configure fails on invalid preferred generator', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             const kit = { name: 'GCC', preferredGenerator: { name: 'invalid Name' } } as Kit;
 
@@ -137,14 +152,17 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
                 expect(false, 'configure did not detect the invalid generator').to.be.true;
             } catch (e) {
                 if (!(e instanceof NoGeneratorError)) {
-                    expect(false, `configure threw the wrong Error type: ${typeof(e)}`).to.be.true;
+                    expect(false, `configure threw the wrong Error type: ${typeof (e)}`).to.be.true;
                 }
             }
         }).timeout(60000);
 
-        test('Test compiler name reporting for telemetry', async () => {
+        test('Test compiler name reporting for telemetry', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
 
             // A few path examples that would exercise through the telemetry reporting rules:
@@ -168,9 +186,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(compilerInfo.name).to.be.eq("other-arm64");
         }).timeout(90000);
 
-        test('Set kit without a preferred generator', async () => {
+        test('Set kit without a preferred generator', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
 
@@ -187,9 +208,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(kit1).to.be.equal(kit2);
         }).timeout(90000);
 
-        test('Try build on empty dir', async () => {
+        test('Try build on empty dir', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -202,9 +226,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(60000);
 
-        test('No parallel configuration', async () => {
+        test('No parallel configuration', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -221,9 +248,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No parallel clean configuration', async () => {
+        test('No parallel clean configuration', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -241,9 +271,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No parallel builds', async () => {
+        test('No parallel builds', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -263,9 +296,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No build parallel to configure', async () => {
+        test('No build parallel to configure', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -285,9 +321,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No configure parallel to build', async () => {
+        test('No configure parallel to build', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -307,9 +346,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No build parallel to clean configuration', async () => {
+        test('No build parallel to clean configuration', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -328,9 +370,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('No clean configuration parallel to build', async () => {
+        test('No clean configuration parallel to build', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             let called = false;
             const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -349,9 +394,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(called).to.be.true;
         }).timeout(90000);
 
-        test('Test pre-configured workspace', async () => {
+        test('Test pre-configured workspace', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => true, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
@@ -372,9 +420,12 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitBaseline.preferredGenerator!.name);
         }).timeout(60000);
 
-        test('Test generator switch', async () => {
+        test('Test generator switch', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
@@ -382,7 +433,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             // Change the generator from Ninja to 'Visual Studio 17 2022'/'Unix Makefiles'.
             if (process.platform === 'win32') {
-                await driver.setKit(secondaryKit, [{name: 'Visual Studio 17 2022', platform: 'x64'}]);
+                await driver.setKit(secondaryKit, [{ name: 'Visual Studio 17 2022', platform: 'x64' }]);
             } else {
                 await driver.setKit(secondaryKit, [{ name: 'Unix Makefiles' }]);
             }
@@ -398,42 +449,54 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
         }).timeout(90000);
 
-        test('Test Visual Studio kit with wrong all target name', async () => {
+        test('Test Visual Studio kit with wrong all target name', async function () {
             if (process.platform !== 'win32') {
                 return;
             }
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, secondaryKit, defaultWorkspaceFolder, async () => true, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             expect(await driver.build(['all'])).to.be.eq(0, 'Automatic correction of all target failed');
         }).timeout(90000);
 
-        test('Test Ninja kit with wrong all target name', async () => {
+        test('Test Ninja kit with wrong all target name', async function () {
             if (process.platform !== 'win32') {
                 return;
             }
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, []);
             expect(await driver.build(['ALL_BUILD'])).to.be.eq(0, 'Automatic correction of ALL_BUILD target failed');
         }).timeout(90000);
 
-        test('Test extra arguments on configure', async () => {
+        test('Test extra arguments on configure', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             await driver.configure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
             expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')?.value).to.be.eq('Hallo');
         }).timeout(90000);
 
-        test('Test extra arguments on clean and configure', async () => {
+        test('Test extra arguments on clean and configure', async function () {
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable)) {
+                this.skip();
+            }
 
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
