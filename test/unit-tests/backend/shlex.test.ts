@@ -31,6 +31,40 @@ suite('shlex testing (backend)', () => {
             }
         });
 
+        test('Windows trailing backslash before space terminates token (issue #4902)', () => {
+            // Minimal case: backslash before space outside quotes is literal,
+            // and the space must still act as a delimiter.
+            expect(splitWin('foo\\ bar')).to.deep.equal(['foo\\', 'bar']);
+        });
+
+        test('Windows /Fd<dir>\\ /FS compile command (issue #4902)', () => {
+            // Reproduces the exact compile_commands.json shape that breaks
+            // "Compile Active File" with MSVC + Ninja Multi-Config when no
+            // COMPILE_PDB_NAME is set. CMake emits /Fd<dir>\ (trailing backslash)
+            // followed by /FS; cl.exe must receive these as two separate args.
+            const cmd = 'cl.exe /nologo /FdCMakeFiles\\INPUT_TESTS.dir\\RelWithDebInfo\\ /FS /c foo.cpp';
+            expect(splitWin(cmd)).to.deep.equal([
+                'cl.exe',
+                '/nologo',
+                '/FdCMakeFiles\\INPUT_TESTS.dir\\RelWithDebInfo\\',
+                '/FS',
+                '/c',
+                'foo.cpp'
+            ]);
+        });
+
+        test('Windows backslash runs before space (issue #4902 edge cases)', () => {
+            // Existing Windows-mode behavior collapses pairs of backslashes (\\ -> \),
+            // and a trailing odd backslash before whitespace is now preserved literally.
+            expect(splitWin('foo\\ bar')).to.deep.equal(['foo\\', 'bar']);   // 1 backslash
+            expect(splitWin('foo\\\\ bar')).to.deep.equal(['foo\\', 'bar']); // 2 -> collapses to 1, space delimits
+            expect(splitWin('foo\\\\\\ bar')).to.deep.equal(['foo\\\\', 'bar']); // 3 -> 1 (collapsed pair) + 1 literal trailing
+        });
+
+        test('Windows backslash before tab also terminates token', () => {
+            expect(splitWin('foo\\\tbar')).to.deep.equal(['foo\\', 'bar']);
+        });
+
         test('Windows mode: backslash only escapes backslash, not quotes', () => {
             // -DAWESOME=\"\\\"'fo o' bar\\\"\" should preserve all escapes
             const cmd = `-DAWESOME=\"\\\"'fo o' bar\\\"\"`;

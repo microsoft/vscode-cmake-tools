@@ -52,6 +52,14 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
                 // Windows mode: only backslash can be escaped
                 if (escapeChars.includes(char)) {
                     token.push(char);
+                } else if (!quoteChar && /[\t \r\f]/.test(char)) {
+                    // Backslash followed by whitespace outside quotes: backslash is literal,
+                    // whitespace terminates the token. See issue #4902.
+                    token.push(escapeChar);
+                    yield token.join('');
+                    token = [];
+                    escapeChar = undefined;
+                    continue;
                 } else {
                     token.push(escapeChar, char);
                 }
