@@ -54,11 +54,14 @@ async function getSpecificPreset(presets_content: any, preset_name: string) {
  */
 async function cleanUpTestResultFiles(test_env: DefaultEnvironment, configure_preset: string) {
     const used_preset = await getSpecificPreset(await getCMakePresetsAsJson(test_env), configure_preset);
-    expect(used_preset['cacheVariables']['TESTS_DIR']).to.not.eq('', "Unable to find the TESTS_DIR cache variable in the configure preset!");
-    // TESTS_DIR contains a CMake preset macro that is not expanded during JSON parse, so resolve it relative to
-    // the project folder to get a real filesystem path.
-    const test_dir_path = path.join(test_env.projectFolder.location, 'build', 'vscode-cmake-tools-tests');
-    await fs.rmdir(test_dir_path);
+    const tests_dir_macro: string | undefined = used_preset?.['cacheVariables']?.['TESTS_DIR'];
+    expect(tests_dir_macro).to.be.a('string').and.not.eq('', "Unable to find the TESTS_DIR cache variable in the configure preset!");
+    // TESTS_DIR uses ${sourceDir}, which CMake expands to the directory containing CMakePresets.json
+    // (i.e. the project folder). Resolve it manually so we don't drift from the preset when the path changes.
+    const test_dir_path = path.normalize(tests_dir_macro!.replace('${sourceDir}', test_env.projectFolder.location));
+    if (await fs.exists(test_dir_path)) {
+        await fs.rmdir(test_dir_path);
+    }
     const output_test_path: string = path.join(test_env.projectFolder.location, test_env.buildLocation, test_env.executableResult);
     if (await fs.exists(output_test_path)) {
         await fs.unlink(output_test_path);
@@ -139,7 +142,65 @@ async function updateCTestConfiguration(allowParallelJobs: boolean, testSuiteDel
     await updateCTestConfigurationValue(ctestConfiguration, 'testSuiteDelimiter', testSuiteDelimiter);
 }
 
-suite('Ctest: 2 successfull tests', () => {
+interface CTestConfigSnapshot {
+    allowParallelJobs: boolean | undefined;
+    testSuiteDelimiter: string | undefined;
+}
+
+/**
+ * Captures the workspace-folder values of `cmake.ctest.allowParallelJobs` and
+ * `cmake.ctest.testSuiteDelimiter` so they can be restored after the test mutations,
+ * leaving the project's checked-in `.vscode/settings.json` untouched.
+ */
+async function snapshotCTestConfiguration(): Promise<CTestConfigSnapshot> {
+    const ctestConfiguration = vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri);
+    return {
+        allowParallelJobs: ctestConfiguration.inspect<boolean>('allowParallelJobs')?.workspaceFolderValue,
+        testSuiteDelimiter: ctestConfiguration.inspect<string>('testSuiteDelimiter')?.workspaceFolderValue
+    };
+}
+
+/**
+ * Restores `cmake.ctest.*` to the values captured by `snapshotCTestConfiguration`. Passing
+ * `undefined` to `update` clears the workspace-folder override so the project's checked-in
+ * settings.json value takes effect again.
+ */
+async function restoreCTestConfiguration(snapshot: CTestConfigSnapshot) {
+    const ctestConfiguration = vscode.workspace.getConfiguration('cmake.ctest', vscode.workspace.workspaceFolders![0].uri);
+    await ctestConfiguration.update('allowParallelJobs', snapshot.allowParallelJobs);
+    await ctestConfiguration.update('testSuiteDelimiter', snapshot.testSuiteDelimiter);
+    await waitForSettingsChange();
+}
+
+// Snapshot captured once before any suite runs and restored once after every suite has finished.
+// We intentionally avoid per-suite restoration: changing `cmake.ctest.*` triggers the extension's
+// `refreshTests` cascade (see src/extension.ts), which attempts a build. Doing that in `suiteTeardown`
+// (after `testEnv.teardown()`) leaves file handles dangling that cause `EBUSY` during the next suite's
+// `BuildDirectoryHelper.clear()` on Windows. Restoring once at the very end bounds the cascade to a
+// shutdown phase where no later suite is affected.
+let initialCTestConfigSnapshot: CTestConfigSnapshot;
+
+suite('CTest end-to-end tests', () => {
+    suiteSetup(async function (this: Mocha.Context) {
+        this.timeout(30000);
+        initialCTestConfigSnapshot = await snapshotCTestConfiguration();
+    });
+
+    suiteTeardown(async function (this: Mocha.Context) {
+        this.timeout(30000);
+        // The settings change fired by the restore triggers `refreshTests` -> `preTest` -> build.
+        // Because every suite has torn down its test environment by this point, the build can fail.
+        // The on-disk `settings.json` was already updated by `cfg.update` above, so the cascade outcome
+        // is irrelevant during shutdown — swallow it here, scoped to this teardown, so it cannot mask
+        // failures elsewhere.
+        try {
+            await restoreCTestConfiguration(initialCTestConfigSnapshot);
+        } catch {
+            // Intentional: best-effort during global teardown.
+        }
+    });
+
+    suite('Ctest: 2 successfull tests', () => {
     let testEnv: DefaultEnvironment;
     const usedConfigPreset: string = "2Successes";
 
@@ -337,4 +398,5 @@ suite('Ctest: 3 failing tests', () => {
         expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
         expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
     }).timeout(100000);
+});
 });
