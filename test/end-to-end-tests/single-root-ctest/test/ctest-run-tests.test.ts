@@ -201,202 +201,202 @@ suite('CTest end-to-end tests', () => {
     });
 
     suite('Ctest: 2 successfull tests', () => {
-    let testEnv: DefaultEnvironment;
-    const usedConfigPreset: string = "2Successes";
+        let testEnv: DefaultEnvironment;
+        const usedConfigPreset: string = "2Successes";
 
-    suiteSetup(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        testEnv = await commonSetup(usedConfigPreset);
+        suiteSetup(async function (this: Mocha.Context) {
+            this.timeout(100000);
+            testEnv = await commonSetup(usedConfigPreset);
+        });
+
+        setup(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        teardown(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        suiteTeardown(async () => {
+            if (testEnv) {
+                testEnv.teardown();
+            }
+        });
+
+        test('Run ctest without parallel jobs', async () => {
+            await updateCTestConfiguration(false, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.be.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(false, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.be.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs', async () => {
+            await updateCTestConfiguration(true, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.be.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(true, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.be.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
+        }).timeout(100000);
     });
 
-    setup(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+    suite('Ctest: 2 successfull tests 1 failing test', () => {
+        let testEnv: DefaultEnvironment;
+        const usedConfigPreset: string = "2Successes1Failure";
+
+        suiteSetup(async function (this: Mocha.Context) {
+            this.timeout(100000);
+            testEnv = await commonSetup(usedConfigPreset);
+        });
+
+        setup(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        teardown(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        suiteTeardown(async () => {
+            if (testEnv) {
+                testEnv.teardown();
+            }
+        });
+
+        test('Run ctest without parallel jobs', async () => {
+            await updateCTestConfiguration(false, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(false, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs', async () => {
+            await updateCTestConfiguration(true, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(true, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
+        }).timeout(100000);
     });
 
-    teardown(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+    suite('Ctest: 3 failing tests', () => {
+        let testEnv: DefaultEnvironment;
+        const usedConfigPreset: string = "3Failures";
+
+        suiteSetup(async function (this: Mocha.Context) {
+            this.timeout(100000);
+            testEnv = await commonSetup(usedConfigPreset);
+        });
+
+        setup(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        teardown(async function (this: Mocha.Context) {
+            await cleanUpTestResultFiles(testEnv, usedConfigPreset);
+        });
+
+        suiteTeardown(async () => {
+            if (testEnv) {
+                testEnv.teardown();
+            }
+        });
+
+        test('Run ctest without parallel jobs', async () => {
+            await updateCTestConfiguration(false, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(false, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs', async () => {
+            await updateCTestConfiguration(true, undefined);
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
+        }).timeout(100000);
+
+        test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
+            await updateCTestConfiguration(true, "\\.");
+            const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
+            expect(ctestResult?.exitCode).to.not.eq(0);
+
+            const result = await testEnv.result.getResultAsJson();
+            expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
+            expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
+            expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
+        }).timeout(100000);
     });
-
-    suiteTeardown(async () => {
-        if (testEnv) {
-            testEnv.teardown();
-        }
-    });
-
-    test('Run ctest without parallel jobs', async () => {
-        await updateCTestConfiguration(false, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.be.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(false, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.be.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs', async () => {
-        await updateCTestConfiguration(true, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.be.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(true, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.be.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('OK', "Test_b result not found in output");
-    }).timeout(100000);
-});
-
-suite('Ctest: 2 successfull tests 1 failing test', () => {
-    let testEnv: DefaultEnvironment;
-    const usedConfigPreset: string = "2Successes1Failure";
-
-    suiteSetup(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        testEnv = await commonSetup(usedConfigPreset);
-    });
-
-    setup(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
-    });
-
-    teardown(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
-    });
-
-    suiteTeardown(async () => {
-        if (testEnv) {
-            testEnv.teardown();
-        }
-    });
-
-    test('Run ctest without parallel jobs', async () => {
-        await updateCTestConfiguration(false, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(false, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs', async () => {
-        await updateCTestConfiguration(true, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(true, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('OK', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('OK', "Test_c result not found in output");
-    }).timeout(100000);
-});
-
-suite('Ctest: 3 failing tests', () => {
-    let testEnv: DefaultEnvironment;
-    const usedConfigPreset: string = "3Failures";
-
-    suiteSetup(async function (this: Mocha.Context) {
-        this.timeout(100000);
-        testEnv = await commonSetup(usedConfigPreset);
-    });
-
-    setup(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
-    });
-
-    teardown(async function (this: Mocha.Context) {
-        await cleanUpTestResultFiles(testEnv, usedConfigPreset);
-    });
-
-    suiteTeardown(async () => {
-        if (testEnv) {
-            testEnv.teardown();
-        }
-    });
-
-    test('Run ctest without parallel jobs', async () => {
-        await updateCTestConfiguration(false, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest without parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(false, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs', async () => {
-        await updateCTestConfiguration(true, undefined);
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
-    }).timeout(100000);
-
-    test('Run ctest with parallel jobs. Use test suite delimiter', async () => {
-        await updateCTestConfiguration(true, "\\.");
-        const ctestResult = await vscode.commands.executeCommand<CommandResult>('cmake.ctest');
-        expect(ctestResult?.exitCode).to.not.eq(0);
-
-        const result = await testEnv.result.getResultAsJson();
-        expect(result['test_a']).to.eq('KO', "Test_a result not found in output");
-        expect(result['test_b']).to.eq('KO', "Test_b result not found in output");
-        expect(result['test_c']).to.eq('KO', "Test_c result not found in output");
-    }).timeout(100000);
-});
 });
