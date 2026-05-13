@@ -6,7 +6,7 @@
 'use strict';
 
 const gulp = require('gulp');
-const eslint = require('gulp-eslint');
+const eslint = require('gulp-eslint-new');
 const fs = require('fs');
 const nls = require('vscode-nls-dev');
 const path = require('path');
@@ -318,7 +318,7 @@ const lintReporter = results => {
 gulp.task('lint', function () {
     // Un-comment these parts for applying auto-fix.
     return gulp.src(allTypeScript)
-        .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true */}))
+        .pipe(eslint({ overrideConfigFile: ".eslintrc.js" /*, fix: true */}))
         .pipe(eslint.format(lintReporter, process.stderr))
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());

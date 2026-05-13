@@ -3,6 +3,18 @@ You can create a configure task from the VS Code command pallette by running the
 
 ![Configure a task](images/configure_task.png)
 
+## Variable substitution in `tasks.json`
+
+When authoring generic VS Code shell/process tasks, `${buildKit}` and `${generator}` are not expanded because those are CMake Tools setting substitutions, not VS Code task variables.
+
+Use command substitutions in `tasks.json` instead:
+
+- `${command:cmake.buildKit}` for the active kit name.
+- `${command:cmake.buildType}` for the active build type.
+- `${command:cmake.tasksBuildCommand}` for a full CMake build command.
+
+If you use `${config:cmake.configureArgs}` in `tasks.json`, VS Code returns the configured value as-is. CMake Tools substitution is not applied again in that context.
+
 By selecting "CMake: configure" template, if you are not using presets, this task will be generated in `tasks.json` file: 
 
 

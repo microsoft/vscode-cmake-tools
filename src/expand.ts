@@ -149,6 +149,9 @@ export async function expandString<T>(input: string | T, opts: ExpansionOptions,
         return replaceAll(result, '${dollar}', '$');
     } catch (e) {
         log.warning(localize('exception.expanding.string.full', 'Exception while expanding string {0}: {1}', inputString, errorToString(e)));
+        if (e instanceof Error && e.stack) {
+            log.debug(e.stack);
+        }
         errorHandler?.tempErrorList.push([localize('exception.expanding.string', 'Exception expanding string'), inputString]);
     }
 
@@ -269,6 +272,9 @@ async function expandStringHelper(input: string, opts: ExpansionOptions, errorHa
             subs.set(full, `${result}`);
         } catch (e) {
             log.warning(localize('exception.executing.command.full', 'Exception while executing command {0} for string: {1} {2}', command, input, errorToString(e)));
+            if (e instanceof Error && e.stack) {
+                log.debug(e.stack);
+            }
             errorHandler?.tempErrorList.push([localize('exception.executing.command', 'Exception executing command'), input]);
         }
     }

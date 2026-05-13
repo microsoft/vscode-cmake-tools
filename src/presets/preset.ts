@@ -2297,7 +2297,16 @@ export function testArgs(preset: TestPreset): string[] {
     if (preset.execution) {
         preset.execution.stopOnFailure && result.push('--stop-on-failure');
         preset.execution.enableFailover && result.push('-F');
-        (preset.execution.jobs !== undefined) && result.push('--parallel', preset.execution.jobs.toString());
+        if (preset.execution.jobs !== undefined) {
+            // v11+: jobs can be an empty string meaning --parallel with no value (auto-detect).
+            // The API type currently declares jobs as number; will be updated to number | string.
+            const jobs = preset.execution.jobs as number | string;
+            if (jobs === '') {
+                result.push('--parallel');
+            } else {
+                result.push('--parallel', jobs.toString());
+            }
+        }
         preset.execution.resourceSpecFile && result.push('--resource-spec-file', preset.execution.resourceSpecFile);
         preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
         preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);

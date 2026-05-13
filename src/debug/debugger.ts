@@ -29,6 +29,7 @@ export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
  * interface that maps to cmake.debugConfig.
  */
 export interface CppDebugConfiguration {
+    type?: string;
     symbolSearchPath?: string;
     additionalSOLibSearchPath?: string;
     externalConsole?: boolean;
@@ -46,6 +47,7 @@ export interface CppDebugConfiguration {
     launchCompleteCommand?: string;
     dumpPath?: string;
     coreDumpPath?: string;
+    [key: string]: any;
 }
 
 export interface DebuggerLogging {
@@ -288,6 +290,6 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 }
 
 export async function checkDebugger(debuggerPath: string): Promise<boolean> {
-    const res = await proc.execute(debuggerPath, ['--version'], null, { shell: true }).result;
+    const res = await proc.execute(debuggerPath, ['--version'], null, {}).result;
     return res.retc === 0;
 }

@@ -8,6 +8,7 @@
 
 import * as cache from '@cmt/cache';
 import {
+    BacktraceGraph,
     CodeModelConfiguration,
     CodeModelContent,
     CodeModelFileGroup,
@@ -188,6 +189,7 @@ export namespace CodeModelKind {
         isGeneratorProvided?: boolean;
         install?: InstallInfo;
         debugger?: DebuggerInfo;
+        backtraceGraph?: BacktraceGraph;
     }
 }
 
@@ -205,6 +207,7 @@ export namespace Toolchains {
 
     export interface Compiler {
         path?: string;
+        commandFragment?: string;
         id?: string;
         version?: string;
         target?: string;
@@ -544,6 +547,7 @@ async function loadCodeModelTarget(rootPaths: CodeModelKind.PathInfo, jsonFile: 
         sysroot,
         folder: targetObject.folder,
         dependencies: targetObject.dependencies,
+        backtraceGraph: targetObject.backtraceGraph,
         install: targetObject.install,
         isGeneratorProvided: targetObject.isGeneratorProvided
     } as CodeModelTarget;
@@ -600,11 +604,18 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
+            const tc: CodeModelToolchain = { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions };
             if (el.compiler.target) {
-                acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
-            } else {
-                acc.set(el.language, { path: el.compiler.path });
+                tc.target = el.compiler.target;
             }
+            if (el.compiler.commandFragment) {
+                // available (optional) since toolchains object version 1.1 (CMake 4.3)
+                tc.commandFragment = el.compiler.commandFragment;
+            }
+            if (el.compiler.implicit?.includeDirectories) {
+                tc.implicitIncludes = el.compiler.implicit.includeDirectories;
+            }
+            acc.set(el.language, tc);
         }
         return acc;
     }, new Map<string, CodeModelToolchain>());

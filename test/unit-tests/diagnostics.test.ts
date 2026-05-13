@@ -1364,10 +1364,10 @@ suite('Diagnostics', () => {
         consumer.dispose();
     });
 
-    test('CMakeOutputConsumer logs milestone stdout at info and routine stdout at debug', () => {
+    test('CMakeOutputConsumer logs internal noise at debug and user STATUS / milestones at info', () => {
         const spy = new SpyLogger();
         const consumerWithLogger = new CMakeOutputConsumer('dummyPath', spy);
-        // Routine CMake status lines → debug
+        // CMake internal noise → debug
         consumerWithLogger.output('-- The C compiler identification is GNU 9.3.0');
         consumerWithLogger.output('-- Detecting CXX compiler ABI info');
         // Milestone lines → info
@@ -1375,19 +1375,24 @@ suite('Diagnostics', () => {
         consumerWithLogger.output('-- Generating done');
         consumerWithLogger.output('-- Build files have been written to: /path/to/build');
         consumerWithLogger.output('-- Configuring incomplete, errors occurred!');
+        // User message(STATUS "...") → info
+        consumerWithLogger.output('-- Using config: Release');
+        consumerWithLogger.output('-- My project version is 1.2.3');
 
         const infoCalls = spy.calls.filter(c => c.level === 'info');
         const debugCalls = spy.calls.filter(c => c.level === 'debug');
         const traceCalls = spy.calls.filter(c => c.level === 'trace');
-        // 4 milestones at info
-        expect(infoCalls.length).to.eq(4);
+        // 4 milestones + 2 user STATUS lines at info
+        expect(infoCalls.length).to.eq(6);
         expect(infoCalls.map(c => c.args[0])).to.deep.eq([
             '-- Configuring done',
             '-- Generating done',
             '-- Build files have been written to: /path/to/build',
-            '-- Configuring incomplete, errors occurred!'
+            '-- Configuring incomplete, errors occurred!',
+            '-- Using config: Release',
+            '-- My project version is 1.2.3'
         ]);
-        // 2 routine lines at debug
+        // 2 internal noise lines at debug
         expect(debugCalls.length).to.eq(2);
         // Nothing at trace
         expect(traceCalls.length).to.eq(0);

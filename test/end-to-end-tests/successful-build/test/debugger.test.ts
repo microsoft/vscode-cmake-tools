@@ -294,23 +294,28 @@ suite('Debug/Launch interface', () => {
 
         const terminal = await cmakeProject.launchTarget();
         expect(terminal).to.be.not.null;
-        expect(terminal!.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
-        const start = new Date();
-        // Needed to get launch target result
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            // Use creationOptions.name — terminal.name may be dynamically
+            // overridden by the shell process title in newer VS Code versions.
+            expect(terminal!.creationOptions.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
-        const elapsed = (new Date().getTime() - start.getTime()) / 1000;
-        console.log(`Waited ${elapsed} seconds for output file to appear`);
+            const start = new Date();
+            // Needed to get launch target result
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const exists = fs.existsSync(createdFileOnExecution);
-        // Check that it is compiled as a new file
-        expect(exists).to.be.true;
+            const elapsed = (new Date().getTime() - start.getTime()) / 1000;
+            console.log(`Waited ${elapsed} seconds for output file to appear`);
 
-        terminal?.dispose();
+            const exists = fs.existsSync(createdFileOnExecution);
+            // Check that it is compiled as a new file
+            expect(exists).to.be.true;
+        } finally {
+            terminal?.dispose();
 
-        // Needed to ensure things get disposed
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+            // Needed to ensure things get disposed
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is enabled', async () => {
@@ -341,17 +346,23 @@ suite('Debug/Launch interface', () => {
 
         const term2 = await cmakeProject.launchTarget();
         expect(term2).to.be.not.null;
-        expect(term2!.name).to.eq(
-            `CMake/Launch - ${executablesTargets[0].name}`
-        );
 
-        const term2Pid = await term2?.processId;
-        expect(term1Pid).to.not.eq(term2Pid);
-        term1?.dispose();
-        term2?.dispose();
+        try {
+            // Use creationOptions.name — terminal.name may be dynamically
+            // overridden by the shell process title in newer VS Code versions.
+            expect(term2!.creationOptions.name).to.eq(
+                `CMake/Launch - ${executablesTargets[0].name}`
+            );
 
-        // Needed to ensure things get disposed
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+            const term2Pid = await term2?.processId;
+            expect(term1Pid).to.not.eq(term2Pid);
+        } finally {
+            term1?.dispose();
+            term2?.dispose();
+
+            // Needed to ensure things get disposed
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
     }).timeout(60000);
 
     test('Test launch same target multiple times when newTerminal run is disabled', async () => {
