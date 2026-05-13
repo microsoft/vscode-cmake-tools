@@ -1869,38 +1869,10 @@ export class CTestDriver implements vscode.Disposable {
             return true;
         }
 
-        // Folder => status
-        const builtFolder = new Map<string, number>();
-        let status: number = 0;
         const foundTarget = new Map<CMakeProject, Map<string, vscode.TestItem[]>>();
         for (const test of tests) {
             if (!await this.getTestTargets(test, foundTarget, run)) {
                 return false;
-            }
-            const folder = this.getTestRootFolder(test);
-            if (!builtFolder.has(folder)) {
-                const project = await this.projectController?.getProjectForFolder(folder);
-                if (!project) {
-                    status = 1;
-                } else {
-                    try {
-                        if (extensionManager !== undefined && extensionManager !== null) {
-                            extensionManager.cleanOutputChannel();
-                        }
-                        const buildResult = await project.build(undefined, false, false);
-                        if (buildResult.exitCode !== 0) {
-                            status = 2;
-                        }
-                    } catch (e) {
-                        status = 2;
-                    }
-                }
-            }
-            builtFolder.set(folder, status);
-            if (status === 1) {
-                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-            } else if (status === 2) {
-                this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
             }
         }
 
@@ -1954,18 +1926,31 @@ export class CTestDriver implements vscode.Disposable {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
             const execTargets = await project.executableTargets;
-            // Precompute a lookup map from normalized executable path to target name
+            // Precompute a lookup map from normalized executable path to target name, excluding install targets
             const execPathToName = new Map<string, string>();
             for (const t of execTargets) {
-                execPathToName.set(util.platformNormalizePath(t.path), t.name);
+                if (!t.isInstallTarget) {
+                    execPathToName.set(util.platformNormalizePath(t.path), t.name);
+                }
             }
             const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
             for (const [targetPath, testList] of targets) {
                 const normalizedTargetPath = util.platformNormalizePath(targetPath);
-                accumulatedTargets.push(execPathToName.get(normalizedTargetPath) ?? path.parse(targetPath).name);
+                const targetName = execPathToName.get(normalizedTargetPath);
+                if (targetName) {
+                    accumulatedTargets.push(targetName);
+                } else {
+                    // Test command is not a known CMake executable target (e.g. python, mpiexec, cmake -E).
+                    // Skip it from the targeted build list — it doesn't need to be built by CMake.
+                    log.info(localize('test.target.not.resolved', 'Test program \'{0}\' is not a known CMake executable target; skipping from build.', targetPath));
+                }
                 accumulatedTestList.push(...testList);
+            }
+            if (accumulatedTargets.length === 0) {
+                // No CMake targets to build — all tests use non-CMake commands.
+                continue;
             }
             try {
                 if (extensionManager !== undefined && extensionManager !== null) {
