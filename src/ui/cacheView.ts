@@ -18,8 +18,8 @@ export interface IOption {
     choices: string[];
     value: string | boolean; // value from the cache file or changed in the UI
     dirty: boolean; // if the variable was edited in the UI
-  presetSource?: string; // where this variable is defined in presets
-  differsFromPresetValue?: boolean; // true if cache value differs from preset value
+    presetSource?: string; // where this variable is defined in presets
+    differsFromPresetValue?: boolean; // true if cache value differs from preset value
 }
 
 /**
@@ -53,9 +53,9 @@ export class ConfigurationWebview {
     private options: IOption[] = [];
 
     constructor(
-      protected cachePath: string,
-      protected save: (dirtyOptions: IOption[]) => Promise<void>,
-      protected getPresetOptionMetadata?: (options: IOption[]) => Promise<Map<string, { presetSource: string; differsFromPresetValue?: boolean }>>
+        protected cachePath: string,
+        protected save: (dirtyOptions: IOption[]) => Promise<void>,
+        protected getPresetOptionMetadata?: (options: IOption[]) => Promise<Map<string, { presetSource: string; differsFromPresetValue?: boolean }>>
     ) {
         this.panel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
@@ -78,11 +78,11 @@ export class ConfigurationWebview {
             // Start configure after persisting the edited values.
             await this.save(dirtyOptions);
             this.isDirty = false;
-        // Force a post-configure refresh so the editor reflects cache changes immediately.
-        this.options = await this.getConfigurationOptions();
-        if (this.panel.visible) {
-          await this.renderWebview(this.panel, false);
-        }
+            // Force a post-configure refresh so the editor reflects cache changes immediately.
+            this.options = await this.getConfigurationOptions();
+            if (this.panel.visible) {
+                await this.renderWebview(this.panel, false);
+            }
         }
     }
 
@@ -243,14 +243,14 @@ export class ConfigurationWebview {
         }
 
         if (this.getPresetOptionMetadata) {
-          const metadataByKey = await this.getPresetOptionMetadata(options);
-          for (const option of options) {
-            const metadata = metadataByKey.get(option.key);
-            if (metadata) {
-              option.presetSource = metadata.presetSource;
-              option.differsFromPresetValue = metadata.differsFromPresetValue;
+            const metadataByKey = await this.getPresetOptionMetadata(options);
+            for (const option of options) {
+                const metadata = metadataByKey.get(option.key);
+                if (metadata) {
+                    option.presetSource = metadata.presetSource;
+                    option.differsFromPresetValue = metadata.differsFromPresetValue;
+                }
             }
-          }
         }
 
         return options;
@@ -557,7 +557,7 @@ export class ConfigurationWebview {
 
             let sourceText = option.presetSource || notSetInPresetsText;
             if (option.presetSource && option.differsFromPresetValue !== undefined) {
-              sourceText = `${sourceText} | ${option.differsFromPresetValue ? differsFromPresetText : matchesPresetText}`;
+                sourceText = `${sourceText} | ${option.differsFromPresetValue ? differsFromPresetText : matchesPresetText}`;
             }
 
             return `<tr class="content-tr">
