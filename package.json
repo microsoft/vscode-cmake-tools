@@ -4443,6 +4443,7 @@
     "integrationTests": "yarn run pretest && node ./out/test/integration-tests/runTest.js",
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
+    "endToEndTestsSingleRootCTest": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-ctest/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
     "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register -r test/unit-tests/backend/setup-vscode-mock.ts ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2"
@@ -4521,7 +4522,7 @@
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
-    "uuid": "~8.3.2",
+    "uuid": "~14.0.0",
     "lodash": "^4.18.1"
   },
   "resolutions": {
