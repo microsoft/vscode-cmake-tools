@@ -82,14 +82,22 @@
                         "oneOf": [
                             {
                                 "type": "string",
-                                "description": "Value for the CMake Setting. Semicolons in strings are escaped."
+                                "description": "Value for the CMake Setting. Semicolons are passed through verbatim and treated by CMake as list separators."
+                            },
+                            {
+                                "type": "boolean",
+                                "description": "Boolean value for the CMake Setting. Emitted as -D<key>:BOOL=TRUE/FALSE."
+                            },
+                            {
+                                "type": "number",
+                                "description": "Numeric value for the CMake Setting. Emitted as -D<key>:STRING=<number>."
                             },
                             {
                                 "type": "array",
                                 "items": {
                                     "type": "string"
                                 },
-                                "description": "Values joined with semicolons to form a CMake list without escaping."
+                                "description": "Array of strings joined with semicolons to form a CMake list."
                             }
                         ]
                     }
