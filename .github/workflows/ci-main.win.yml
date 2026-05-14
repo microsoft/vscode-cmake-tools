@@ -42,11 +42,7 @@ jobs:
             ninjaVersion: 1.10.1
 
       - name: Build fake compilers for tests
-        uses: urkle/action-cmake-build@v1.0.0
-        with:
-          source-dir: ${{ github.workspace }}/test/fakeOutputGenerator
-          configure-options: -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/test/fakebin
-          install-build: true
+        run: yarn pretest-buildfakebin
 
       - name: Run backend tests
         run: yarn backendTests
@@ -65,6 +61,9 @@ jobs:
 
       - name: Run single root test
         run: yarn endToEndTestsSingleRoot
+
+      - name: Run single root test for ctest
+        run: yarn endToEndTestsSingleRootCTest
 
       - name: Run multi root test
         run: yarn endToEndTestsMultiRoot

@@ -1,4 +1,4 @@
-import { buildArgs, Condition, configureArgs, evaluateCondition, getArchitecture, getToolset } from '@cmt/presets/preset';
+import { buildArgs, Condition, configureArgs, evaluateCondition, getArchitecture, getToolset, getVsDevEnvAutoDetectionInfo } from '@cmt/presets/preset';
 import { expect } from '@test/util';
 import * as os from "os";
 
@@ -273,5 +273,41 @@ suite('Preset tests', () => {
         const args = buildArgs(preset, undefined, undefined, 0);
         expect(args).to.include('-j');
         expect(args).to.not.include('--parallel');
+    });
+
+    test('VS dev env auto-detection probes cl for Ninja presets without explicit compilers', () => {
+        const autoDetection = getVsDevEnvAutoDetectionInfo({
+            name: 'test',
+            generator: 'Ninja'
+        });
+
+        expect(autoDetection.compilerName).to.eq('cl');
+        expect(autoDetection.generatorIsNinja).to.eq(true);
+    });
+
+    test('VS dev env auto-detection preserves explicit supported compilers', () => {
+        const autoDetection = getVsDevEnvAutoDetectionInfo({
+            name: 'test',
+            generator: 'Ninja',
+            cacheVariables: {
+                CMAKE_CXX_COMPILER: 'clang-cl.exe'
+            }
+        });
+
+        expect(autoDetection.compilerName).to.eq('clang-cl');
+        expect(autoDetection.generatorIsNinja).to.eq(true);
+    });
+
+    test('VS dev env auto-detection does not override explicit unsupported compilers', () => {
+        const autoDetection = getVsDevEnvAutoDetectionInfo({
+            name: 'test',
+            generator: 'Ninja',
+            cacheVariables: {
+                CMAKE_C_COMPILER: 'gcc'
+            }
+        });
+
+        expect(autoDetection.compilerName).to.eq(undefined);
+        expect(autoDetection.generatorIsNinja).to.eq(true);
     });
 });

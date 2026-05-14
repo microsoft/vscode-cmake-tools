@@ -7,15 +7,21 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Improvements:
+- Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
+- When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
+- Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
 - Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
+- Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
 - Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
+- Fix Windows presets auto-detection so Ninja configure presets without explicit compiler cache variables can still bootstrap the Visual Studio developer environment when appropriate.
 - Fix `CMAKE_MAKE_PROGRAM` and other cache variables using stale values when presets are edited without restarting VS Code. The `onCodeModelChanged` subscription is now established in `startNewCMakeDriver` so it applies to both initial creation and driver reloads. [#4864](https://github.com/microsoft/vscode-cmake-tools/issues/4864)
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
+- Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
 
 ## 1.23.52
 
@@ -62,6 +68,7 @@ Improvements:
 - Improve CMake syntax highlighting with command-scoped keyword rules, expanded variable recognition, and better generator-expression support. Remove obsolete deprecated-keyword entries that caused false positives on user-defined names. [#4709](https://github.com/microsoft/vscode-cmake-tools/issues/4709) [#4508](https://github.com/microsoft/vscode-cmake-tools/issues/4508) [#4613](https://github.com/microsoft/vscode-cmake-tools/issues/4613)
 - Add MSVC linker error problem matching to the Problems pane. [#4675](https://github.com/microsoft/vscode-cmake-tools/pull/4675) [@bradphelan](https://github.com/bradphelan)
 - Use environment variables from `cmake.environment` and `cmake.configureEnvironment` when expanding `$penv{}` macros in CMake Presets `include` paths. [#3578](https://github.com/microsoft/vscode-cmake-tools/issues/3578)
+- Provide CMAKE_LANG_IMPLICIT_INCLUDE_DIRECTORIES as system includes. [#4718](https://github.com/microsoft/vscode-cmake-tools/pull/4718)
 - Allow preset modification commands to target CMakeUserPresets.json. The target file is determined by the focused editor, or by prompting the user when both files exist. [#4564](https://github.com/microsoft/vscode-cmake-tools/issues/4564)
 - Display info tooltip when hovering over CMake policy identifiers (e.g., `CMP0177`), showing the CMake version that introduced the policy, a short description, and a link to the official documentation. [#4544](https://github.com/microsoft/vscode-cmake-tools/issues/4544)
 - Append `cmake` to diagnostics that this extension contributes to the Problems Pane. [PR #4766](https://github.com/microsoft/vscode-cmake-tools/pull/4766)
