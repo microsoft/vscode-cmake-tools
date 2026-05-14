@@ -17,7 +17,24 @@ import Ajv, { ValidateFunction } from 'ajv';
  * heavier integration-test harness.
  */
 
-const SCHEMA_PATH = path.resolve(__dirname, '..', '..', '..', 'schemas', 'kits-schema.json');
+// Walk up from `__dirname` to locate `schemas/kits-schema.json`. This keeps the
+// test invariant under both invocation modes: `yarn backendTests` runs ts-node
+// directly from `test/unit-tests/backend/`, while `yarn unitTests` runs the
+// compiled file from `out/test/unit-tests/backend/` — the two modes have
+// different relative depths to the repo root.
+function findSchemaPath(): string {
+    let dir = __dirname;
+    while (dir !== path.dirname(dir)) {
+        const candidate = path.join(dir, 'schemas', 'kits-schema.json');
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+        dir = path.dirname(dir);
+    }
+    throw new Error(`Could not locate schemas/kits-schema.json walking up from ${__dirname}`);
+}
+
+const SCHEMA_PATH = findSchemaPath();
 
 function loadKitsSchemaValidator(): ValidateFunction {
     const schemaData = JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf8'));
