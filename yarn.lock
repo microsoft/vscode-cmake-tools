@@ -3251,9 +3251,9 @@ fast-levenshtein@^2.0.6:
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
 
 fast-uri@^3.0.1:
-  version "3.1.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fast-uri/-/fast-uri-3.1.0.tgz#66eecff6c764c0df9b762e62ca7edcfb53b4edfa"
-  integrity sha1-Zu7P9sdkwN+bdi5iyn7c+1O07fo=
+  version "3.1.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/fast-uri/-/fast-uri-3.1.2.tgz#8af3d4fc9d3e71b11572cc2673b514a7d1a8c8ec"
+  integrity sha1-ivPU/J0+cbEVcswmc7UUp9GoyOw=
 
 fastest-levenshtein@^1.0.12:
   version "1.0.12"
@@ -7762,10 +7762,15 @@ util-deprecate@^1.0.1, util-deprecate@~1.0.1:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/util-deprecate/-/util-deprecate-1.0.2.tgz"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
 
-uuid@^8.3.0, uuid@~8.3.2:
+uuid@^8.3.0:
   version "8.3.2"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/uuid/-/uuid-8.3.2.tgz"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
+
+uuid@~14.0.0:
+  version "14.0.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/uuid/-/uuid-14.0.0.tgz#0af883220163d264ffe0c084f6b8a89b9666966d"
+  integrity sha1-CviDIgFj0mT/4MCE9riom5Zmlm0=
 
 v8flags@^3.2.0:
   version "3.2.0"
@@ -7890,10 +7895,10 @@ vinyl@^3.0.0, vinyl@^3.0.1:
     replace-ext "^2.0.0"
     teex "^1.0.1"
 
-vscode-cmake-tools@^1.6.0:
-  version "1.6.0"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.6.0.tgz#cc2d373f54b68e6198f1de6589b1aa4e379f6def"
-  integrity sha1-zC03P1S2jmGY8d5libGqTjefbe8=
+vscode-cmake-tools@^1.7.0:
+  version "1.7.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/vscode-cmake-tools/-/vscode-cmake-tools-1.7.0.tgz#b715911af6442e39f851e8b51cff5d98bc50d672"
+  integrity sha1-txWRGvZELjn4Uei1HP9dmLxQ1nI=
 
 vscode-cpptools@^7.1.1:
   version "7.1.1"
