@@ -15,6 +15,7 @@ Improvements:
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
 - Fix Windows presets auto-detection so Ninja configure presets without explicit compiler cache variables can still bootstrap the Visual Studio developer environment when appropriate.
 - Fix `CMAKE_MAKE_PROGRAM` and other cache variables using stale values when presets are edited without restarting VS Code. The `onCodeModelChanged` subscription is now established in `startNewCMakeDriver` so it applies to both initial creation and driver reloads. [#4864](https://github.com/microsoft/vscode-cmake-tools/issues/4864)
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
