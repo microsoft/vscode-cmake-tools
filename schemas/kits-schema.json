@@ -90,7 +90,7 @@
                             },
                             {
                                 "type": "number",
-                                "description": "Numeric value for the CMake Setting. Emitted as -D<key>:STRING=<number>."
+                                "description": "Numeric value for the CMake Setting. Emitted as -D<key>:STRING=<number>. Note: JSON numbers cannot preserve trailing zeros (1.10 ≡ 1.1) or very large/small magnitudes; quote as a string when exact text matters."
                             },
                             {
                                 "type": "array",

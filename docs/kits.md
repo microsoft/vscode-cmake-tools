@@ -198,7 +198,16 @@ The following additional options may be specified:
 > }
 > ```
 >
-> **Windows path tip:** Prefer forward slashes in path lists. A backslash immediately before `;` (e.g. `"C:\\foo\\;C:\\bar"`) is interpreted by CMake as an *escaped* semicolon, which would collapse the two paths into a single element.
+> **Windows path tip:** Prefer forward slashes in path lists. If you must use backslashes, take care that none of them sit immediately before a `;` — JSON parses `\\` as one `\`, so the string CMake actually receives ends in `\;`, which CMake treats as an *escaped* semicolon and collapses the surrounding paths into a single element:
+>
+> ```jsonc
+> // JSON you write in cmake-kits.json:
+> "CMAKE_PREFIX_PATH": "C:\\foo\\;C:\\bar"
+> // String CMake receives:  C:\foo\;C:\bar
+> // CMake parses as:        ONE element (because \; is an escaped separator)
+> ```
+>
+> Use forward slashes (`"C:/foo;C:/bar"`) or an array (`["C:/foo", "C:/bar"]`) to avoid the trap.
 
 `environmentVariables`
 
