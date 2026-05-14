@@ -7,6 +7,7 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 
 Improvements:
+- Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
 - When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
 - Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics

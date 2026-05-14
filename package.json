@@ -3200,6 +3200,12 @@
           "description": "%cmake-tools.configuration.cmake.enableTraceLogging.description%",
           "scope": "window"
         },
+        "cmake.showTimestampsInOutput": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.showTimestampsInOutput.description%",
+          "scope": "window"
+        },
         "cmake.loggingLevel": {
           "type": "string",
           "default": "info",
