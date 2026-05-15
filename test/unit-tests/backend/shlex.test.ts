@@ -9,6 +9,14 @@ function splitUnix(str: string): string[] {
     return [...shlex.split(str, { mode: 'posix' })];
 }
 
+function splitCommandWin(str: string): string[] {
+    return [...shlex.splitCommandLine(str, { mode: 'windows' })];
+}
+
+function splitCommandUnix(str: string): string[] {
+    return [...shlex.splitCommandLine(str, { mode: 'posix' })];
+}
+
 suite('shlex testing (backend)', () => {
     suite('Windows shell splitting', () => {
         test('Basic token splitting', () => {
@@ -195,6 +203,42 @@ suite('shlex testing (backend)', () => {
         test('UNC paths in Windows mode', () => {
             // In Windows mode, \\ becomes \ (backslash escapes backslash)
             expect(splitWin('"\\\\server\\share\\file.cpp"')).to.deep.equal(['"\\server\\share\\file.cpp"']);
+        });
+    });
+
+    suite('Command line splitting for direct execution', () => {
+        test('Windows quoted paths and escaped quotes are converted to raw argv (issue #4935)', () => {
+            expect(splitCommandWin('"C:\\Program Files\\LLVM\\bin\\clang++.exe" -DCMAKE_INTDIR=\\\"RelWithDebInfo\\\" /Fo"build dir\\main.obj" -c "C:\\src dir\\main.cpp"')).to.deep.equal([
+                'C:\\Program Files\\LLVM\\bin\\clang++.exe',
+                '-DCMAKE_INTDIR="RelWithDebInfo"',
+                '/Fobuild dir\\main.obj',
+                '-c',
+                'C:\\src dir\\main.cpp'
+            ]);
+        });
+
+        test('Windows trailing backslash before whitespace stays literal and does not merge flags (issue #4902)', () => {
+            expect(splitCommandWin('cl.exe /nologo /FdCMakeFiles\\INPUT_TESTS.dir\\RelWithDebInfo\\ /FS /c foo.cpp')).to.deep.equal([
+                'cl.exe',
+                '/nologo',
+                '/FdCMakeFiles\\INPUT_TESTS.dir\\RelWithDebInfo\\',
+                '/FS',
+                '/c',
+                'foo.cpp'
+            ]);
+        });
+
+        test('Windows UNC paths keep leading double backslashes', () => {
+            expect(splitCommandWin('"\\\\server\\share\\file.cpp"')).to.deep.equal(['\\\\server\\share\\file.cpp']);
+        });
+
+        test('POSIX escaped quotes remain literal in argv (issue #4896)', () => {
+            expect(splitCommandUnix('/usr/bin/clang++ -DIMGUI_USER_CONFIG=\\"frontends/sdl/imgui/sa2_imconfig.h\\" -c main.cpp')).to.deep.equal([
+                '/usr/bin/clang++',
+                '-DIMGUI_USER_CONFIG="frontends/sdl/imgui/sa2_imconfig.h"',
+                '-c',
+                'main.cpp'
+            ]);
         });
     });
 });

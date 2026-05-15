@@ -15,6 +15,7 @@ Improvements:
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix `CMake: Compile Active File` with Ninja Multi-Config on Windows by unescaping `compile_commands.json` command strings into raw argv before spawning the compiler, so defines such as `-DCMAKE_INTDIR=\"RelWithDebInfo\"` are passed correctly. [#4935](https://github.com/microsoft/vscode-cmake-tools/issues/4935)
 - Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
 - Fix Windows presets auto-detection so Ninja configure presets without explicit compiler cache variables can still bootstrap the Visual Studio developer environment when appropriate.
 - Fix `cmake-kits.json` `cmakeSettings` rejecting boolean values. The JSON schema and the `Kit.cmakeSettings` TypeScript type now accept `boolean` (and `number`) again, so `"BUILD_TESTING": true` produces `-DBUILD_TESTING:BOOL=TRUE` and is shown as a checkbox in the CMake Cache Editor. [#4927](https://github.com/microsoft/vscode-cmake-tools/issues/4927)
