@@ -1917,9 +1917,12 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     refs.add(preset.name);
 
-    // Init env to empty if not specified to avoid null checks later
+    // Init env and variables to empty if not specified to avoid null checks later
     if (!preset.environment) {
         preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    if (!preset.variables) {
+        preset.variables = {};
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
     let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
@@ -1935,6 +1938,14 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
+                // Inherit variables
+                if (parent.variables) {
+                    for (const name in parent.variables) {
+                        if (preset.variables[name] === undefined) {
+                            preset.variables[name] = parent.variables[name];
+                        }
+                    }
+                }
                 // Inherit other fields
                 let key: keyof PackagePreset;
                 for (key in parent) {
