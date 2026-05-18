@@ -482,11 +482,11 @@ suite('shlex testing (backend)', () => {
             }
         });
 
-        test('Windows fuzz set has at least 20 cases (judge revision #1)', () => {
+        test('Windows fuzz set contains at least 20 argv cases', () => {
             expect(windowsFuzz.length).to.be.greaterThanOrEqual(20);
         });
 
-        test('POSIX fuzz set has at least 20 cases (judge revision #1)', () => {
+        test('POSIX fuzz set contains at least 20 argv cases', () => {
             expect(posixFuzz.length).to.be.greaterThanOrEqual(20);
         });
     });
