@@ -13,10 +13,10 @@ import {
     setUserPresetsPlusIncluded
 } from '@cmt/presets/preset';
 
-const folder = 'Q:\\repos\\vscode-cmake-tools-cpack\\test\\package-preset-inheritance';
-const workspaceFolder = 'Q:\\repos\\vscode-cmake-tools-cpack';
+const workspaceFolder = path.join(path.sep, 'cmake-tools-tests');
+const folder = path.join(workspaceFolder, 'test', 'package-preset-inheritance');
 const sourceDir = workspaceFolder;
-const presetsPath = 'Q:\\repos\\vscode-cmake-tools-cpack\\CMakePresets.json';
+const presetsPath = path.join(workspaceFolder, 'CMakePresets.json');
 
 function createPresetsFile(configurePresets: ConfigurePreset[], packagePresets: PackagePreset[]): PresetsFile {
     const presetsFile: PresetsFile = {
