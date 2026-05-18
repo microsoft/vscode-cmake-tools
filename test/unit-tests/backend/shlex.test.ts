@@ -307,9 +307,9 @@ suite('shlex testing (backend)', () => {
     });
 
     // Property-based round-trip tests against CMake's cmSystemTools::EscapeForShell.
-    // The rule from the judge's verdict: stop encoding individual failing cases —
-    // encode the contract that the parser must implement. For any argv that CMake
-    // can plausibly emit, splitCommandLine(escape(argv)) must equal argv.
+    // These tests intentionally encode the parser contract rather than enumerating
+    // individual cases: for any argv that CMake can plausibly emit,
+    // splitCommandLine(escape(argv)) must equal argv.
     //
     // The escape helpers below mirror cmSystemTools::EscapeForShell:
     //   - Windows: MSVCRT-compatible (2n / 2n+1 backslash rule before quotes,
