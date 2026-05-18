@@ -48,8 +48,9 @@ function createConfigurePreset(name: string = 'configureBase'): ConfigurePreset 
 }
 
 function seedPresets(configurePresets: ConfigurePreset[], packagePresets: PackagePreset[]) {
-    setExpandedPresets(folder, createPresetsFile(configurePresets, packagePresets));
-    setPresetsPlusIncluded(folder, createPresetsFile(configurePresets, packagePresets));
+    const presetsFile = createPresetsFile(configurePresets, packagePresets);
+    setExpandedPresets(folder, presetsFile);
+    setPresetsPlusIncluded(folder, presetsFile);
 }
 
 function clearPresets() {
