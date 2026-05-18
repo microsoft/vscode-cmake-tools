@@ -105,7 +105,7 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             const scopedFunctions = ["if", "function", "while", "macro", "foreach"];
             const is_scoped = scopedFunctions.includes(func);
             if (is_scoped) {
-                return new vscode.SnippetString(`${func}(\${1})\n\t\nend${func}(\${1})\n`);
+                return new vscode.SnippetString(`${func}(\${1})\n\t\$0\nend${func}()\n`);
             } else {
                 return new vscode.SnippetString(`${func}(\${1})`);
             }

@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Über \"tasks.json\" statt über internen Prozess erstellen",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codierung der Ausgabe von externen Befehlen (z. B.: cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Hiermit wird die Ablaufverfolgungsprotokollierung in Datei und Konsole aktiviert (große Datenmenge).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Show timestamps and log levels in the CMake output channel. Useful for tracking build durations.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Hiermit wird der aktive Ordner automatisch ausgewählt.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Legen Sie den standardmäßigen aktiven Ordner fest (funktioniert nur, wenn cmake.autoSelectActiveFolder deaktiviert ist).",
 	"cmake-tools.configuration.cmake.exclude.description": "Die Erweiterung ignoriert die in dieser Einstellung aufgeführten Ordner. Die Ordner sollten als absolute Pfade angegeben werden.",
