@@ -203,7 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "İç işlem yerine tasks.json kullanarak derle.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Dış komutlardan (ör. cmake -- build) gelen çıkışın kodlaması.",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Dosya ve konsolda izleme günlüğünü etkinleştirin (çok gürültülü).",
-	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Show timestamps and log levels in the CMake output channel. Useful for tracking build durations.",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "CMake çıktı kanalında zaman damgalarını ve günlük düzeylerini gösterin. Derleme sürelerini izlemek için yararlıdır.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Etkin klasörü otomatik olarak seçin.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Varsayılan etkin klasörü ayarla (yalnızca cmake.autoSelectActiveFolder devre dışı bırakıldığında çalışır).",
 	"cmake-tools.configuration.cmake.exclude.description": "Uygulama, bu ayarda listelenen klasörleri yok sayacaktır. Klasörler mutlak yollar olarak belirtilmelidir.",
