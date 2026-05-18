@@ -203,7 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Сборка с помощью tasks.json вместо внутреннего процесса.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Кодирование выходных данных из внешних команд (например, cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Включение ведения журнала трассировки в файле и в консоли (большое число сообщений).",
-	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Show timestamps and log levels in the CMake output channel. Useful for tracking build durations.",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Отображать метки времени и уровни журнала в канале вывода CMake. Полезно для отслеживания длительности сборки.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Автоматический выбор активной папки.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Настройте активную папку по умолчанию (работает, только если параметр cmake.autoSelectActiveFolder отключен).",
 	"cmake-tools.configuration.cmake.exclude.description": "Расширение будет игнорировать папки, указанные в этом параметре. Папки должны быть указаны в виде абсолютных путей.",
