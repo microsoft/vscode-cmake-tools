@@ -1,3 +1,13 @@
+/**
+ * Shell command line tokenization. Two splitter functions with different contracts:
+ * - {@link split} preserves quote/escape characters in tokens — for consumers that re-quote
+ *   downstream (e.g. `cpptools.ts`).
+ * - {@link splitCommandLine} consumes them, yielding a plain argv array — for direct
+ *   `child_process.spawn()` / `proc.execute()` with `shell: false`.
+ *
+ * Rule of thumb: spawning? `splitCommandLine`. Re-quoting later? `split`.
+ */
+
 export interface ShlexOptions {
     mode: 'windows' | 'posix';
 }
@@ -13,16 +23,14 @@ function isWhitespace(char: string): boolean {
 }
 
 /**
- * Splits a string into an iterable of tokens, similar to how a shell would parse arguments.
- * Handles quoting and escaping according to the specified mode ('windows' or 'posix').
+ * Quote-preserving shell-syntax tokenizer (e.g. `"foo"` yields `"foo"`, not `foo`).
  *
- * In POSIX mode, backslash escapes the following character outside of quotes (the backslash
- * is consumed). Inside double quotes, only $, `, ", \, and newline can be escaped.
- * Inside single quotes, backslash has no special meaning.
+ * Use only when forwarding fragments to a pipeline that re-quotes (e.g. `cpptools.ts`
+ * forwards to the IntelliSense layer). For direct `spawn`/`proc.execute` see
+ * {@link splitCommandLine}.
  *
  * @param str The string to split into tokens.
- * @param opt Optional options for splitting. If not provided, defaults to the platform-specific mode ('windows' or 'posix').
- * @returns An iterable of tokens.
+ * @param opt Splitting options. Defaults to the platform-specific mode (win32 → windows).
  */
 export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     opt = resolveOptions(opt);
@@ -254,13 +262,20 @@ function* splitWindowsCommandLine(str: string): Iterable<string> {
 }
 
 /**
- * Splits a shell command string into raw argv entries suitable for direct execution.
- * Unlike split(), quote characters used only for grouping are removed and platform-specific
- * escape sequences are resolved.
+ * Quote-consuming argv parser — designed as the inverse of CMake's
+ * `cmSystemTools::EscapeForShell` so that `[...splitCommandLine(argv.map(escape).join(' '))]`
+ * round-trips to `argv`. Use for direct `child_process.spawn()` / `proc.execute()` with
+ * `shell: false` (e.g. `compilationDatabase.ts`). For re-quoting consumers see {@link split}.
+ *
+ * - **Windows**: MSVC C runtime "Parsing C++ Command-Line Arguments" rules — the `2n`/`2n+1`
+ *   backslash convention before `"`, with `""` inside a quoted region taken as a literal `"`.
+ *   Backslashes not followed by `"` are preserved (Windows paths survive verbatim).
+ * - **POSIX**: IEEE Std 1003.1-2008 §2.2.1–§2.2.3 — outside quotes, `\` escapes the next
+ *   char; inside single quotes everything is literal; inside double quotes `\` escapes only
+ *   `$`, `` ` ``, `"`, `\`, and newline.
  *
  * @param str The command string to parse into argv entries.
- * @param opt Optional options for splitting. If not provided, defaults to the platform-specific mode ('windows' or 'posix').
- * @returns An iterable of argv entries suitable for proc.execute()/spawn().
+ * @param opt Splitting options. Defaults to the platform-specific mode (win32 → windows).
  */
 export function* splitCommandLine(str: string, opt?: ShlexOptions): Iterable<string> {
     opt = resolveOptions(opt);
