@@ -2006,44 +2006,120 @@ export class CTestDriver implements vscode.Disposable {
         return currentTestItem.id;
     }
 
+    /**
+     * Determine and build all targets needed to rebuild the selected TestItems. Returns a false if anything goes
+     * wrong, and returns an early success if build-before-run is disabled.
+     */
     private async buildTests(tests: vscode.TestItem[], run: vscode.TestRun): Promise<boolean> {
         // If buildBeforeRun is set to false, we skip the build step
         if (!this.ws.config.buildBeforeRun) {
             return true;
         }
 
-        // Folder => status
-        const builtFolder = new Map<string, number>();
-        let status: number = 0;
+        const foundTarget = new Map<CMakeProject, Map<string, vscode.TestItem[]>>();
         for (const test of tests) {
-            const folder = this.getTestRootFolder(test);
-            if (!builtFolder.has(folder)) {
-                const project = await this.projectController?.getProjectForFolder(folder);
-                if (!project) {
-                    status = 1;
-                } else {
-                    try {
-                        if (extensionManager !== undefined && extensionManager !== null) {
-                            extensionManager.cleanOutputChannel();
-                        }
-                        const buildResult = await project.build(undefined, false, false);
-                        if (buildResult.exitCode !== 0) {
-                            status = 2;
-                        }
-                    } catch (e) {
-                        status = 2;
-                    }
-                }
-            }
-            builtFolder.set(folder, status);
-            if (status === 1) {
-                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
-            } else if (status === 2) {
-                this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
+            if (!await this.getTestTargets(test, foundTarget, run)) {
+                return false;
             }
         }
 
-        return Array.from(builtFolder.values()).filter(v => v !== 0).length === 0;
+        return this.buildTestTargets(foundTarget, run);
+    }
+
+    /**
+     * Given the TestItem, determine the owning CMakeProject and build targets to build the tests. If the given
+     * TestItem is a suite, then recurse. Information is passed back through the foundTarget parameter. A failure to
+     * identify the project of the test will result in a ctest error and a false value being returned.
+     */
+    private async getTestTargets(test: vscode.TestItem, foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
+        if (test.children.size > 0) {
+            const children = this.testItemCollectionToArray(test.children);
+            for (const child of children) {
+                if (!await this.getTestTargets(child, foundTarget, run)) {
+                    return false;
+                }
+            }
+        } else {
+            const testProgram = this.testProgram(test.id);
+            if (!testProgram) {
+                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
+                return false;
+            }
+            const folder = this.getTestRootFolder(test);
+            const project = await this.projectController?.getProjectForFolder(folder);
+            if (!project) {
+                this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                return false;
+            }
+            if (!foundTarget.has(project)) {
+                foundTarget.set(project, new Map<string, vscode.TestItem[]>([[testProgram, [test]]]));
+            } else {
+                const prj = foundTarget.get(project)!;
+                if (!prj.has(testProgram)) {
+                    prj.set(testProgram, [test]);
+                } else {
+                    prj.get(testProgram)!.push(test);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Build the targets provided in foundTarget. CMake will be invoked once per CMakeProject for efficiency. On error,
+     * the associated tests will be flagged with a ctest error and a false value will be returned.
+     */
+    private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
+        let overallSuccess = true;
+        for (const [project, targets] of foundTarget) {
+            const execTargets = await project.executableTargets;
+            // Precompute a lookup map from normalized executable path to target name, excluding install targets
+            const execPathToName = new Map<string, string>();
+            for (const t of execTargets) {
+                if (!t.isInstallTarget) {
+                    execPathToName.set(util.platformNormalizePath(t.path), t.name);
+                }
+            }
+            const accumulatedTestList: vscode.TestItem[] = [];
+            const accumulatedTargets: string[] = [];
+            let success: boolean = true;
+            for (const [targetPath, testList] of targets) {
+                const normalizedTargetPath = util.platformNormalizePath(targetPath);
+                const targetName = execPathToName.get(normalizedTargetPath);
+                if (targetName) {
+                    accumulatedTargets.push(targetName);
+                } else {
+                    // Test command is not a known CMake executable target (e.g. python, mpiexec, cmake -E).
+                    // Skip it from the targeted build list — it doesn't need to be built by CMake.
+                    log.info(localize('test.target.not.resolved', 'Test program \'{0}\' is not a known CMake executable target; skipping from build.', targetPath));
+                }
+                accumulatedTestList.push(...testList);
+            }
+            if (accumulatedTargets.length === 0) {
+                // No CMake targets to build — all tests use non-CMake commands.
+                continue;
+            }
+            try {
+                if (extensionManager !== undefined && extensionManager !== null) {
+                    extensionManager.cleanOutputChannel();
+                }
+                const buildResult = await project.build(accumulatedTargets, false, false);
+                if (buildResult.exitCode !== 0) {
+                    log.error(localize('build.targets.failed.with.code', 'Building targets [{0}] failed with exit code {1}.', accumulatedTargets.join(', '), buildResult.exitCode));
+                    success = false;
+                }
+            } catch (e) {
+                log.error(localize('build.targets.threw', 'Building targets [{0}] threw an error: {1}', accumulatedTargets.join(', '), (e as Error)?.message ?? String(e)));
+                success = false;
+            }
+            if (!success) {
+                overallSuccess = false;
+                accumulatedTestList.forEach(test => {
+                    this.ctestErrored(test, run, { message: localize('build.failed', 'Build failed') });
+                });
+            }
+        };
+        return overallSuccess;
     }
 
     /**

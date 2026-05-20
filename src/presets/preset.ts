@@ -861,6 +861,11 @@ export interface VsDevEnvOptions {
     compilerName?: string; // Only will have a value when `useVsDeveloperEnvironmentMode` is "auto"
 }
 
+export interface VsDevEnvAutoDetectionInfo {
+    compilerName?: string;
+    generatorIsNinja: boolean;
+}
+
 /**
  * @param opts Options to control the behavior of obtaining the VS developer environment.
  * @returns Either the VS developer environment or undefined if it could not be obtained.
@@ -961,6 +966,23 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
     }
 }
 
+export function getVsDevEnvAutoDetectionInfo(preset: ConfigurePreset): VsDevEnvAutoDetectionInfo {
+    const cxxCompilerValue = getStringValueFromCacheVar(preset.cacheVariables?.['CMAKE_CXX_COMPILER']);
+    const cCompilerValue = getStringValueFromCacheVar(preset.cacheVariables?.['CMAKE_C_COMPILER']);
+    const cxxCompiler = cxxCompilerValue?.toLowerCase();
+    const cCompiler = cCompilerValue?.toLowerCase();
+    const explicitCompilerName = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+    const hasExplicitCompiler = cxxCompilerValue !== null || cCompilerValue !== null;
+    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja") ?? false;
+
+    return {
+        // For a Ninja preset with no explicit compiler, probe for cl so auto mode can
+        // bootstrap the VS developer environment on Windows.
+        compilerName: explicitCompilerName || (!hasExplicitCompiler && generatorIsNinja ? 'cl' : undefined),
+        generatorIsNinja
+    };
+}
+
 /**
  * This method tries to apply, based on the useVsDeveloperEnvironment setting value and, in "auto" mode, whether certain preset compilers/generators are used and not found, the VS Dev Env.
  * @param preset Preset to modify the parentEnvironment of. If the developer environment should be applied, the preset.environment is modified by reference.
@@ -979,12 +1001,8 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
     // [Windows Only] We only support VS Dev Env on Windows.
     if (!preset.__parentEnvironment && process.platform === "win32") {
         if (useVsDeveloperEnvironmentMode === "auto") {
-            if (preset.cacheVariables) {
-                const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-                const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-                // The env variables for the supported compilers are the same.
-                const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
-
+            const { compilerName, generatorIsNinja } = getVsDevEnvAutoDetectionInfo(preset);
+            if (compilerName || generatorIsNinja) {
                 // find where.exe using process.env since we're on windows.
                 let whereExecutable;
                 // assume in this call that it exists
@@ -1004,7 +1022,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                     }
                 }
 
-                if (compilerName && whereExecutable) {
+                if (whereExecutable) {
                     // We need to construct and temporarily expand the environment in order to accurately determine if this preset has the compiler / ninja on PATH.
                     // This puts the preset.environment on top of process.env, then expands with process.env as the penv and preset.environment as the envOverride
                     const env = EnvironmentUtils.mergePreserveNull([process.env, preset.environment]);
@@ -1019,25 +1037,24 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
                         }
                     }
 
-                    const compilerLocation = await execute(whereExecutable, [compilerName], null, {
+                    const compilerLocation = compilerName ? await execute(whereExecutable, [compilerName], null, {
                         environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
                         shell: true
-                    }).result;
+                    }).result : undefined;
 
                     // if ninja isn't on path, try to look for it in a VS install
-                    const ninjaLoc = await execute(whereExecutable, ['ninja'], null, {
+                    const ninjaLoc = generatorIsNinja ? await execute(whereExecutable, ['ninja'], null, {
                         environment: EnvironmentUtils.create(presetEnv),
                         silent: true,
                         encoding: 'utf8',
                         shell: true
-                    }).result;
+                    }).result : undefined;
 
-                    const generatorIsNinja = preset.generator?.toLowerCase().includes("ninja");
-                    const shouldInterrogateForNinja = (generatorIsNinja ?? false) && !ninjaLoc.stdout;
+                    const shouldInterrogateForNinja = generatorIsNinja && !ninjaLoc?.stdout;
 
-                    if (!compilerLocation.stdout || shouldInterrogateForNinja) {
+                    if ((compilerName && !compilerLocation?.stdout) || shouldInterrogateForNinja) {
                         developerEnvironment = await getVsDevEnv({
                             preset,
                             shouldInterrogateForNinja,
@@ -1900,9 +1917,12 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
 
     refs.add(preset.name);
 
-    // Init env to empty if not specified to avoid null checks later
+    // Init env and variables to empty if not specified to avoid null checks later
     if (!preset.environment) {
         preset.environment = EnvironmentUtils.createPreserveNull();
+    }
+    if (!preset.variables) {
+        preset.variables = {};
     }
     let inheritedEnv = EnvironmentUtils.createPreserveNull();
     let inheritedParentEnv = EnvironmentUtils.createPreserveNull();
@@ -1918,6 +1938,14 @@ async function getPackagePresetInheritsHelper(folder: string, preset: PackagePre
                 // Inherit environment
                 inheritedEnv = EnvironmentUtils.mergePreserveNull([parent.environment, inheritedEnv]);
                 inheritedParentEnv = EnvironmentUtils.mergePreserveNull([parent.__parentEnvironment, inheritedParentEnv]);
+                // Inherit variables
+                if (parent.variables) {
+                    for (const name in parent.variables) {
+                        if (preset.variables[name] === undefined) {
+                            preset.variables[name] = parent.variables[name];
+                        }
+                    }
+                }
                 // Inherit other fields
                 let key: keyof PackagePreset;
                 for (key in parent) {

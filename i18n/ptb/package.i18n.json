@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Compilar usando o tasks.json em vez do processo interno.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "A codificação da saída de comandos externos (ex.: cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Habilitar o log de rastreamento para arquivo e console (muito ruído).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Mostrar carimbos de data/hora e níveis de log no canal de saída do CMake. Útil para rastrear durações de construção.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Selecionar a pasta ativa automaticamente.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Defina a pasta ativa padrão (só funciona quando cmake.autoSelectActiveFolder está desabilitado).",
 	"cmake-tools.configuration.cmake.exclude.description": "A extensão ignorará as pastas listadas nesta configuração. As pastas devem ser listadas como caminhos absolutos.",

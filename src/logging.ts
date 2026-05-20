@@ -177,7 +177,8 @@ class SingletonLogger {
         });
         // Write to our output channel
         if (levelEnabled(level)) {
-            this._channel.appendLine(user_message);
+            const showTimestamps = vscode.workspace.getConfiguration('cmake').get('showTimestampsInOutput', false);
+            this._channel.appendLine(showTimestamps ? raw_message : user_message);
         }
     }
 
