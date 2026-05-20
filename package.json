@@ -4496,7 +4496,6 @@
     "mocha": "^11.7.5",
     "module-alias": "^2.2.2",
     "node-loader": "^1.0.2",
-    "parse-git-config": "^3.0.0",
     "sinon": "~9.2.4",
     "ts-loader": "^8.0.17",
     "ts-node": "^9.1.1",
