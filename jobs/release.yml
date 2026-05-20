@@ -55,10 +55,10 @@ extends:
   template: azure-pipelines/MicroBuild.1ES.Official.yml@MicroBuildTemplate
   parameters:
     pool:
-      name: VSEngSS-MicroBuild2022-1ES
+      name: VSEngSS-MicroBuild2024-1ES
     sdl:
       sourceAnalysisPool:
-        name: VSEngSS-MicroBuild2022-1ES
+        name: VSEngSS-MicroBuild2024-1ES
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
