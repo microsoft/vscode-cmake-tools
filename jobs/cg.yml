@@ -35,12 +35,12 @@ extends:
   parameters:
     pool:
       name: AzurePipelines-EO
-      image: 1ESPT-Windows2022
+      image: 1ESPT-Windows2024
       os: windows
     sdl:
       sourceAnalysisPool: 
         name: AzurePipelines-EO
-        image: 1ESPT-Windows2022
+        image: 1ESPT-Windows2024
         os: windows
       tsa:
         enabled: true
