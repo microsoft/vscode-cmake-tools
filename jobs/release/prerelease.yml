@@ -20,7 +20,7 @@ extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
-      name: VSEngSS-MicroBuild2024-1ES
+      name: VSEng-MicroBuildVSStable
 
     stages:
     - stage: release
