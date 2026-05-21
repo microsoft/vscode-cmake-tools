@@ -5,6 +5,7 @@
 Features:
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
+- Add `cmake.launchConfig` setting to customize "Run Without Debugging"; supports delegating to a VS Code task or running a custom program (e.g., firmware flash tool). [#4904](https://github.com/microsoft/vscode-cmake-tools/issues/4904)
 
 Improvements:
 - Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)

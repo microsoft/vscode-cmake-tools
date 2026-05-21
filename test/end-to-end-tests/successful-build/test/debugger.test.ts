@@ -402,4 +402,51 @@ suite('Debug/Launch interface', () => {
         // Needed to ensure things get disposed
         await new Promise((resolve) => setTimeout(resolve, 3000));
     }).timeout(60000);
+
+    // --- cmake.launchConfig regression / new-feature coverage (issue #4904) ---
+
+    test('launchConfig empty object falls through to legacy launch path', async () => {
+        // Regression: VS Code materializes object settings as `{}`. The launch
+        // path must gate on `task` / `program` field presence, NOT on object
+        // truthiness, otherwise a stray `"cmake.launchConfig": {}` would break
+        // every user's launch button.
+        testEnv.config.updatePartial({ buildBeforeRun: false, launchConfig: {} });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.not.eq(0);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        const terminal = await cmakeProject.launchTarget();
+        try {
+            expect(terminal).to.be.not.null;
+            expect(terminal!.creationOptions.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
+        } finally {
+            terminal?.dispose();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }).timeout(60000);
+
+    test('launchConfig.program routes through createTerminal lifecycle', async () => {
+        // When `program` is set, we still need a `Terminal` back (so callers
+        // and `cmake.launchBehavior` keep working) and the terminal name should
+        // follow the existing `CMake/Launch - <target>` convention because we
+        // reuse the createTerminal lifecycle.
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.not.eq(0);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        testEnv.config.updatePartial({
+            buildBeforeRun: false,
+            launchConfig: { program: executablesTargets[0].path }
+        });
+
+        const terminal = await cmakeProject.launchTarget();
+        try {
+            expect(terminal).to.be.not.null;
+            expect(terminal!.creationOptions.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
+        } finally {
+            terminal?.dispose();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }).timeout(60000);
 });

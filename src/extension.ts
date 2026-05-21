@@ -2133,7 +2133,6 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     launchTarget(folder?: vscode.WorkspaceFolder, name?: string, sourceDir?: string): Promise<vscode.Terminal | null> {
-        telemetry.logEvent("launch", { all: "false" });
         return this.runCMakeCommand(cmakeProject => cmakeProject.launchTarget(name), folder, undefined, true, sourceDir);
     }
 

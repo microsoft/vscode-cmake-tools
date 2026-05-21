@@ -42,6 +42,7 @@ import * as nls from 'vscode-nls';
 import { ConfigurationWebview } from '@cmt/ui/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
+import { LaunchConfig, selectMode as selectLaunchMode } from '@cmt/launchConfig';
 import * as preset from '@cmt/presets/preset';
 import * as util from '@cmt/util';
 import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
@@ -908,7 +909,11 @@ export class CMakeProject {
         log.debug(localize({key: 'disposing.extension', comment: ["'CMake Tools' shouldn't be localized"]}, 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
+        this.launchTaskEndSub.dispose();
         this.launchTerminals.forEach(term => term.dispose());
+        this.launchTerminals.clear();
+        this.launchTaskExecutions.forEach(exec => exec.terminate());
+        this.launchTaskExecutions.clear();
         for (const sub of [
             this.generatorSub,
             this.preferredGeneratorsSub,
@@ -3405,6 +3410,7 @@ export class CMakeProject {
     }
 
     private launchTerminals = new Map<number, vscode.Terminal>();
+    private launchTaskExecutions = new Map<string, vscode.TaskExecution>();
     private launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
     private launchTerminalPath = '_CMAKE_TOOLS_LAUNCH_TERMINAL_PATH';
     // Watch for the user closing our terminal
@@ -3412,6 +3418,15 @@ export class CMakeProject {
         const processId = await term.processId;
         if (this.launchTerminals.has(processId!)) {
             this.launchTerminals.delete(processId!);
+        }
+    });
+    // Watch for our launched tasks ending so we can drop them from the map.
+    private readonly launchTaskEndSub = vscode.tasks.onDidEndTask(e => {
+        for (const [key, exec] of this.launchTaskExecutions) {
+            if (exec === e.execution) {
+                this.launchTaskExecutions.delete(key);
+                break;
+            }
         }
     });
 
@@ -3464,6 +3479,22 @@ export class CMakeProject {
             return null;
         }
 
+        const launchCfg = this.workspaceContext.config.launchConfig;
+        const mode = selectLaunchMode(launchCfg);
+        telemetry.logEvent('launch', { all: 'false', customSetting: mode });
+
+        if (mode !== 'none') {
+            await this.maybeWarnDebugConfigShadow();
+        }
+
+        if (mode === 'task') {
+            await this.runLaunchAsTask(executable, launchCfg!);
+            return null;
+        }
+        if (mode === 'program') {
+            return this.runLaunchAsProgram(executable, launchCfg!);
+        }
+
         const userConfig = this.workspaceContext.config.debugConfig;
         const terminal: vscode.Terminal = await this.createTerminal(executable);
 
@@ -3498,6 +3529,195 @@ export class CMakeProject {
         this.launchTerminals.set(processId!, terminal);
 
         return terminal;
+    }
+
+    /**
+     * Run the user-supplied VS Code task instead of launching the built target
+     * directly. Returns `null` because there is no `Terminal` to surface — VS
+     * Code's task runner manages presentation according to the task's own
+     * `presentation.panel`/`isBackground` settings.
+     */
+    private async runLaunchAsTask(_executable: ExecutableTarget, cfg: LaunchConfig): Promise<void> {
+        if (cfg.args?.length || cfg.cwd || cfg.environment?.length) {
+            log.warning(localize('launchConfig.task.ignoredFields',
+                'cmake.launchConfig: args, cwd, and environment are ignored in task mode. These settings only apply when using "program".'));
+        }
+        const ref: { name: string; type?: string } =
+            typeof cfg.task === 'string' ? { name: cfg.task } : cfg.task!;
+        // Always fetch all tasks — passing { type: 'shell' } or { type: 'process' }
+        // to fetchTasks() returns nothing because those are built-in execution
+        // types, not contributed task-provider types.
+        const all = await vscode.tasks.fetchTasks();
+        const matches = all.filter(t =>
+            t.name === ref.name &&
+            (!ref.type || t.definition.type === ref.type || t.source === ref.type) &&
+            (t.scope === vscode.TaskScope.Global ||
+             t.scope === vscode.TaskScope.Workspace ||
+             t.scope === this.workspaceFolder));
+        if (matches.length === 0) {
+            void vscode.window.showErrorMessage(
+                localize('launchConfig.task.notFound',
+                    "Task '{0}' referenced by cmake.launchConfig was not found.", ref.name));
+            return;
+        }
+        if (matches.length > 1) {
+            log.warning(
+                localize('launchConfig.task.ambiguous',
+                    "Multiple tasks named '{0}' found; using the first. Specify 'type' in cmake.launchConfig.task to disambiguate.", ref.name));
+        }
+        const chosen = matches[0];
+        const scopeKey = typeof chosen.scope === 'object' && chosen.scope !== null
+            ? (chosen.scope as vscode.WorkspaceFolder).uri.toString()
+            : (chosen.scope ?? 'global').toString();
+        const key = `${scopeKey}::${chosen.definition.type}::${chosen.name}`;
+
+        const behavior = (this.workspaceContext.config.launchBehavior || '').toLowerCase();
+        if (behavior === 'breakandreuseterminal') {
+            const prior = this.launchTaskExecutions.get(key);
+            if (prior) {
+                prior.terminate();
+            }
+        }
+
+        if (ref.type) {
+            log.info(localize('launchConfig.launching.task.withType',
+                "Launching via task '{0}' (type: {1})", chosen.name, ref.type));
+        } else {
+            log.info(localize('launchConfig.launching.task',
+                "Launching via task '{0}'", chosen.name));
+        }
+        let exec: vscode.TaskExecution;
+        try {
+            exec = await vscode.tasks.executeTask(chosen);
+        } catch (e) {
+            const errMsg = e instanceof Error ? e.message : String(e);
+            log.error(localize('launchConfig.task.executeFailed',
+                'Failed to execute task "{0}" referenced by cmake.launchConfig: {1}', chosen.name, errMsg));
+            void vscode.window.showErrorMessage(
+                localize('launchConfig.task.executeFailed',
+                    'Failed to execute task "{0}" referenced by cmake.launchConfig: {1}', chosen.name, errMsg));
+            return;
+        }
+        this.launchTaskExecutions.set(key, exec);
+    }
+
+    /**
+     * Run a custom program in the same terminal lifecycle that the legacy
+     * launch path uses, so `cmake.launchBehavior` (`reuseTerminal` /
+     * `breakAndReuseTerminal` / `newTerminal`) and the `launchTerminals`
+     * dispose hook continue to work transparently.
+     */
+    private async runLaunchAsProgram(executable: ExecutableTarget, cfg: LaunchConfig): Promise<vscode.Terminal | null> {
+        const opts = await this.getExpansionOptions();
+        const program = await expandString(cfg.program!, opts);
+        const args = cfg.args ? await expandStrings(cfg.args, opts) : [];
+        const cwd = cfg.cwd ? await expandString(cfg.cwd, opts) : undefined;
+
+        // Build a synthetic ExecutableTarget so the existing createTerminal()
+        // path produces a terminal whose name/lifecycle key is tied to the
+        // user's program path while still showing the CMake target name.
+        const drv = await this.getCMakeDriverInstance();
+        const launchEnv = await this.getTargetLaunchEnvironment(drv, cfg.environment);
+        const options: vscode.TerminalOptions = {
+            name: `CMake/Launch - ${executable.name}`,
+            env: launchEnv,
+            cwd: cwd || path.dirname(program)
+        };
+        if (options && options.env) {
+            options.env[this.launchTerminalTargetName] = executable.name;
+            options.env[this.launchTerminalPath] = vscode.env.shell;
+        }
+
+        const launchBehavior = (this.workspaceContext.config.launchBehavior || '').toLowerCase();
+        let terminal: vscode.Terminal | undefined;
+        if (launchBehavior !== 'newterminal') {
+            for (const [, t] of this.launchTerminals) {
+                const creationOptions = t.creationOptions! as vscode.TerminalOptions;
+                if (JSON.stringify(creationOptions.env) !== JSON.stringify(options.env) ||
+                    JSON.stringify(creationOptions.cwd) !== JSON.stringify(options.cwd)) {
+                    t.dispose();
+                    break;
+                }
+                if (launchBehavior === 'breakandreuseterminal') {
+                    t.sendText('\u0003');
+                }
+                terminal = t;
+                break;
+            }
+        }
+        if (!terminal) {
+            terminal = vscode.window.createTerminal(options);
+        }
+
+        log.info(localize('launchConfig.launching.program',
+            "Launching custom program '{0}'", program));
+
+        let programPath = shlex.quote(program);
+        if (programPath.startsWith("\"")) {
+            let launchTerminalPath = (terminal.creationOptions as vscode.TerminalOptions).env?.[this.launchTerminalPath];
+            if (process.platform === 'win32') {
+                programPath = programPath.replace(/\\/g, "/");
+                launchTerminalPath = launchTerminalPath?.toLocaleLowerCase();
+                if (launchTerminalPath?.includes("pwsh.exe") || launchTerminalPath?.includes("powershell")) {
+                    programPath = `.${programPath}`;
+                }
+            } else {
+                if (launchTerminalPath?.endsWith("pwsh")) {
+                    programPath = `.${programPath}`;
+                }
+            }
+        }
+
+        terminal.sendText(programPath, false);
+        for (const a of args) {
+            terminal.sendText(` ${shlex.quote(a)}`, false);
+        }
+        terminal.sendText('', true);
+        terminal.show(true);
+
+        const pid = await terminal.processId;
+        if (pid !== undefined) {
+            this.launchTerminals.set(pid, terminal);
+        }
+        return terminal;
+    }
+
+    /**
+     * One-time non-modal warning when `cmake.launchConfig` is set but
+     * `cmake.debugConfig.{args,cwd,environment}` are also populated — those
+     * `debugConfig` fields are silently dropped on the launch path now.
+     * Mirrors the twxs warning pattern at `src/extension.ts:2962-2983`.
+     */
+    private async maybeWarnDebugConfigShadow(): Promise<void> {
+        const ctx = this.workspaceContext.state.extensionContext;
+        const KEY = 'cmake.launchConfig.debugConfigShadowWarned';
+        if (ctx.globalState.get<boolean>(KEY, false)) {
+            return;
+        }
+        const debugCfg = this.workspaceContext.config.debugConfig;
+        const shadowed = !!debugCfg && (
+            (Array.isArray(debugCfg.args) && debugCfg.args.length > 0) ||
+            !!debugCfg.cwd ||
+            (Array.isArray(debugCfg.environment) && debugCfg.environment.length > 0)
+        );
+        if (!shadowed) {
+            return;
+        }
+        const openSettings = localize('launchConfig.debugConfigShadow.openSettings', 'Open Settings');
+        const dontShow = localize('launchConfig.debugConfigShadow.dontShowAgain', "Don't show again");
+        void vscode.window.showWarningMessage(
+            localize('launchConfig.debugConfigShadow.message',
+                'cmake.launchConfig is set, so cmake.debugConfig.args, cmake.debugConfig.cwd, and cmake.debugConfig.environment will be ignored on the Run-Without-Debugging path. (cmake.debugConfig still applies when debugging.)'),
+            openSettings, dontShow
+        ).then(async (selection) => {
+            if (selection === openSettings) {
+                void vscode.commands.executeCommand('workbench.action.openSettings', 'cmake.launchConfig');
+            } else if (selection === dontShow) {
+                await ctx.globalState.update(KEY, true);
+            }
+            // Dismissal (undefined) intentionally does NOT persist —
+            // user may want a reminder next session.
+        });
     }
 
     /**

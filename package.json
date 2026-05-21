@@ -2943,6 +2943,60 @@
           },
           "scope": "resource"
         },
+        "cmake.launchConfig": {
+          "type": "object",
+          "scope": "resource",
+          "markdownDescription": "%cmake-tools.configuration.cmake.launchConfig.markdownDescription%",
+          "additionalProperties": false,
+          "oneOf": [
+            { "required": ["task"] },
+            { "required": ["program"] }
+          ],
+          "properties": {
+            "task": {
+              "description": "%cmake-tools.configuration.cmake.launchConfig.task.description%",
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "type": { "type": "string" }
+                  }
+                }
+              ]
+            },
+            "program": {
+              "type": "string",
+              "description": "%cmake-tools.configuration.cmake.launchConfig.program.description%"
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "%cmake-tools.configuration.cmake.launchConfig.args.description%"
+            },
+            "cwd": {
+              "type": "string",
+              "description": "%cmake-tools.configuration.cmake.launchConfig.cwd.description%"
+            },
+            "environment": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "value"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              },
+              "description": "%cmake-tools.configuration.cmake.launchConfig.environment.description%"
+            }
+          }
+        },
         "cmake.defaultVariants": {
           "type": "object",
           "$schema": "cmake-tools-schema://schemas/variants-schema.json",
