@@ -32,7 +32,7 @@ pr: none
 pool: 
   name: "AzurePipelines-EO"
   demands:
-    - ImageOverride -equals 1ESPT-Windows2022
+    - ImageOverride -equals 1ESPT-Windows2025
 
 name: $(Date:yyMMdd)$(Rev:rrr)
 
