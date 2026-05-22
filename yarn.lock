@@ -383,9 +383,9 @@
     "@nevware21/ts-utils" ">= 0.11.2 < 2.x"
 
 "@nevware21/ts-utils@>= 0.10.4 < 2.x", "@nevware21/ts-utils@>= 0.11.1 < 2.x", "@nevware21/ts-utils@>= 0.11.2 < 2.x", "@nevware21/ts-utils@>= 0.9.4 < 2.x":
-  version "0.11.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@nevware21/ts-utils/-/ts-utils-0.11.2.tgz#5836f338c091f47358298da1f77a67a88219a6a5"
-  integrity sha512-80W8BkS09kkGuUHJX50Fqq+QqAslxUaOQytH+3JhRacXs1EpEt2JOOkYKytqFZAYir3SeH9fahniEaDzIBxlUw==
+  version "0.14.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@nevware21/ts-utils/-/ts-utils-0.14.0.tgz#9e6074ce28f0b1bab7bfdacd1a7760b2ba73688d"
+  integrity sha1-nmB0zijwsbq3v9rNGndgsrpzaI0=
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
