@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Sestavit pomocí souboru tasks.json místo interního procesu",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kódování výstupu z externích příkazů (např. cmake -- build)",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Povolit protokolování trasování do souboru a konzoly (velmi vysoké objemy dat)",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Umožňuje zobrazit časová razítka a úrovně protokolu ve výstupním kanálu CMake. Užitečné pro sledování doby trvání sestavení",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Vybrat aktivní složku automaticky",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Nastavte výchozí aktivní složku (funguje jenom v případě, že je zakázané nastavení cmake.autoSelectActiveFolder).",
 	"cmake-tools.configuration.cmake.exclude.description": "Rozšíření bude ignorovat složky uvedené v tomto nastavení. Složky by měly být uvedeny jako absolutní cesty.",

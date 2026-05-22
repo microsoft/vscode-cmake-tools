@@ -3200,6 +3200,12 @@
           "description": "%cmake-tools.configuration.cmake.enableTraceLogging.description%",
           "scope": "window"
         },
+        "cmake.showTimestampsInOutput": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.showTimestampsInOutput.description%",
+          "scope": "window"
+        },
         "cmake.loggingLevel": {
           "type": "string",
           "default": "info",
@@ -4436,13 +4442,14 @@
     "translations-import": "gulp translations-import",
     "package": "vsce package --yarn -o cmake-tools.vsix",
     "pretest": "tsc -p test.tsconfig.json",
-    "pretest-buildfakebin": "cmake -DCMAKE_INSTALL_PREFIX=test/fakebin -DCMAKE_BUILD_TYPE=Release -S test/fakeOutputGenerator -B test/fakeOutputGenerator/build && cmake --build test/fakeOutputGenerator/build && cmake --install test/fakeOutputGenerator/build && cmake -E rm -rf test/fakeOutputGenerator/build",
+    "pretest-buildfakebin": "cmake -DCMAKE_INSTALL_PREFIX=test/fakebin -DCMAKE_BUILD_TYPE=Release -S test/fakeOutputGenerator -B test/fakeOutputGenerator/build && cmake --build test/fakeOutputGenerator/build --config Release && cmake --install test/fakeOutputGenerator/build --config Release && cmake -E rm -rf test/fakeOutputGenerator/build",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
     "integrationTests": "yarn run pretest && node ./out/test/integration-tests/runTest.js",
     "endToEndTestsSuccessfulBuild": "yarn run pretest && node ./out/test/end-to-end-tests/successful-build/runTest.js",
     "endToEndTestsSingleRoot": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-UI/runTest.js",
+    "endToEndTestsSingleRootCTest": "yarn run pretest && node ./out/test/end-to-end-tests/single-root-ctest/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
     "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 999999 --colors -r ts-node/register -r tsconfig-paths/register -r test/unit-tests/backend/setup-vscode-mock.ts ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2",
@@ -4465,7 +4472,6 @@
     "@types/vscode": "1.88.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
-    "@types/uuid": "~8.3.3",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/eslint-plugin-tslint": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
@@ -4491,7 +4497,6 @@
     "mocha": "^11.7.5",
     "module-alias": "^2.2.2",
     "node-loader": "^1.0.2",
-    "parse-git-config": "^3.0.0",
     "sinon": "~9.2.4",
     "ts-loader": "^8.0.17",
     "ts-node": "^9.1.1",
@@ -4522,10 +4527,11 @@
     "vscode-tas-client": "^0.1.45",
     "which": "~2.0.2",
     "xml2js": "^0.5.0",
-    "uuid": "~8.3.2",
+    "uuid": "~14.0.0",
     "lodash": "^4.18.1"
   },
   "resolutions": {
+    "uuid": "14.0.0",
     "ansi-regex": "^5.0.1",
     "glob-parent": "^6.0.2",
     "hosted-git-info": "^3.0.8",

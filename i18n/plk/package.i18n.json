@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Kompiluj przy użyciu pliku tasks.json zamiast procesu wewnętrznego.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kodowanie danych wyjściowych z poleceń zewnętrznych (np. cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Włącz rejestrowanie śledzenia w pliku i na konsoli (bardzo dużo danych).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Pokaż znaczniki czasu i poziomy dzienników w kanale danych wyjściowych CMake. Przydatne do śledzenia czasu trwania kompilacji.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Wybierz aktywny folder automatycznie.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Ustaw domyślny aktywny folder (działa tylko wtedy, gdy właściwość cmake.autoSelectActiveFolder jest wyłączona).",
 	"cmake-tools.configuration.cmake.exclude.description": "Rozszerzenie zignoruje foldery wymienione w tym ustawieniu. Foldery powinny być wymienione jako ścieżki bezwzględne.",

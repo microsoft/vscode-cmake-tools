@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Compila con tasks.json anziché il processo interno.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codifica dell'output di comandi esterni (ad esempio cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Abilita la registrazione traccia in file e console (molto disturbata).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Mostra i timestamp e i livelli di log nel canale di output di CMake. Utile per tenere traccia della durata delle compilazioni.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Seleziona automaticamente la cartella attiva.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Impostare la cartella attiva predefinita (funziona solo quando cmake.autoSelectActiveFolder è disabilitato).",
 	"cmake-tools.configuration.cmake.exclude.description": "L'estensione ignorerà le cartelle indicate in questa impostazione. Le cartelle devono essere elencate come percorsi assoluti.",
