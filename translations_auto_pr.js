@@ -4,7 +4,6 @@ const fs = require("fs-extra");
 const cp = require("child_process");
 const Octokit = require('@octokit/rest')
 const path = require('path');
-const parseGitConfig = require('parse-git-config');
 
 const branchName = 'localization';
 const mergeTo = 'main';
@@ -129,12 +128,17 @@ if (!hasAnyChanges()) {
 // Save existing user name and email, in case already set.
 var existingUserName;
 var existingUserEmail;
-var gitConfigPath = path.resolve(process.cwd(), './.git/config');
-var config = parseGitConfig.sync({ path: gitConfigPath });
 
-if (typeof config === 'object' && config.hasOwnProperty('user')) {
-    existingUserName = config.user.name;
-    existingUserEmail = config.user.email;
+// Use git config commands directly to ensure we are getting and setting the local config
+try {
+    existingUserName = cp.execSync('git config --local user.name', { encoding: 'utf8' }).trim();
+} catch (e) {
+    existingUserName = undefined;
+}
+try {
+    existingUserEmail = cp.execSync('git config --local user.email', { encoding: 'utf8' }).trim();
+} catch (e) {
+    existingUserEmail = undefined;
 }
 if (existingUserName === undefined) {
     console.log(`Existing user name: undefined`);

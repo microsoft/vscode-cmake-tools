@@ -10,7 +10,7 @@ import * as shlex from '@cmt/shlex';
  * child_process.spawn() and has no such limit.
  *
  * These tests validate the data flow:
- *  1. CompilationDatabase splits a command string into an arguments array via shlex
+ *  1. CompilationDatabase splits a command string into an arguments array via shlex.splitCommandLine()
  *  2. runCompileCommand() extracts args[0] as the executable and args.slice(1) as
  *     the spawn arguments
  *  3. The full argument list is preserved regardless of total command length
@@ -28,10 +28,10 @@ function buildCmdStr(command: string, args?: string[]): string {
 
 /**
  * Mirrors the argument-population logic from CompilationDatabase's constructor:
- *   arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)]
+ *   arguments: cur.arguments ? cur.arguments : [...shlex.splitCommandLine(cur.command)]
  */
 function populateArguments(entry: { command: string; arguments?: string[] }): string[] {
-    return entry.arguments ? entry.arguments : [...shlex.split(entry.command)];
+    return entry.arguments ? entry.arguments : [...shlex.splitCommandLine(entry.command)];
 }
 
 /**
@@ -55,7 +55,7 @@ suite('Compile command argument handling (issue #4836)', () => {
             expect(args).to.deep.equal(['/usr/bin/g++', '-o', 'main.o', '-c', 'main.cpp']);
         });
 
-        test('Command string is split via shlex when arguments not provided', () => {
+        test('Command string is split via shlex.splitCommandLine when arguments not provided', () => {
             const entry = {
                 command: '/usr/bin/g++ -DBOOST_THREAD_VERSION=3 -isystem ../extern -g -std=gnu++11 -o out.o -c main.cpp'
             };
@@ -66,13 +66,49 @@ suite('Compile command argument handling (issue #4836)', () => {
             expect(args[args.length - 1]).to.equal('main.cpp');
         });
 
-        test('Command with quoted paths is correctly split', () => {
+        test('Command with quoted paths is converted to raw argv', () => {
             const entry = {
                 command: '"C:\\Program Files\\MSVC\\cl.exe" /nologo /TP "-IC:\\My Project\\include" /Fo"build\\main.obj" /c "C:\\My Project\\main.cpp"'
             };
             const args = populateArguments(entry);
-            expect(args[0]).to.equal('"C:\\Program Files\\MSVC\\cl.exe"');
-            expect(args.length).to.be.greaterThan(1);
+            expect(args).to.deep.equal([
+                'C:\\Program Files\\MSVC\\cl.exe',
+                '/nologo',
+                '/TP',
+                '-IC:\\My Project\\include',
+                '/Fobuild\\main.obj',
+                '/c',
+                'C:\\My Project\\main.cpp'
+            ]);
+        });
+
+        test('Ninja Multi-Config escaped quotes are unescaped before direct spawn (issue #4935)', () => {
+            const entry = {
+                command: '"C:\\Program Files\\LLVM\\bin\\clang++.exe" -DCMAKE_INTDIR=\\\"RelWithDebInfo\\\" "-IC:\\Program Files\\SDK\\include" /Fo"build dir\\main.obj" -c "C:\\src dir\\main.cpp"'
+            };
+            const args = populateArguments(entry);
+            const { executable, execArgs } = extractExecAndArgs(args);
+            expect(executable).to.equal('C:\\Program Files\\LLVM\\bin\\clang++.exe');
+            expect(execArgs).to.deep.equal([
+                '-DCMAKE_INTDIR="RelWithDebInfo"',
+                '-IC:\\Program Files\\SDK\\include',
+                '/Fobuild dir\\main.obj',
+                '-c',
+                'C:\\src dir\\main.cpp'
+            ]);
+        });
+
+        test('POSIX escaped quotes remain literal in argv (issue #4896)', () => {
+            const entry = {
+                command: '/usr/bin/clang++ -DIMGUI_USER_CONFIG=\\"frontends/sdl/imgui/sa2_imconfig.h\\" -c main.cpp'
+            };
+            const args = [...shlex.splitCommandLine(entry.command, { mode: 'posix' })];
+            expect(args).to.deep.equal([
+                '/usr/bin/clang++',
+                '-DIMGUI_USER_CONFIG="frontends/sdl/imgui/sa2_imconfig.h"',
+                '-c',
+                'main.cpp'
+            ]);
         });
     });
 
@@ -125,7 +161,7 @@ suite('Compile command argument handling (issue #4836)', () => {
             };
         }
 
-        test('Command exceeding 4096 chars is fully preserved when split via shlex', () => {
+        test('Command exceeding 4096 chars is fully preserved when split via shlex.splitCommandLine', () => {
             const { command, expectedArgCount } = generateLongCommand(5000);
             // Verify the command actually exceeds 4096 bytes
             expect(command.length).to.be.greaterThan(4096);
@@ -164,7 +200,7 @@ suite('Compile command argument handling (issue #4836)', () => {
 
         test('Pre-split arguments array for a long command bypasses shlex entirely', () => {
             // When compile_commands.json provides "arguments" directly (CMake >= 3.something),
-            // shlex is never invoked. Verify the array passes through untouched.
+            // shlex.splitCommandLine is never invoked. Verify the array passes through untouched.
             const compiler = '/usr/bin/clang++';
             const flags: string[] = [];
             for (let i = 0; i < 200; i++) {
