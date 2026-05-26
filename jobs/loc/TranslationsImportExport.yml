@@ -31,12 +31,12 @@ extends:
   parameters:
     pool:
       name: AzurePipelines-EO
-      image: 1ESPT-Windows2022
+      image: 1ESPT-Windows2025
       os: windows
     sdl:
       sourceAnalysisPool: 
         name: AzurePipelines-EO
-        image: 1ESPT-Windows2022
+        image: 1ESPT-Windows2025
         os: windows
     customBuildTags:
     - ES365AIMigrationTooling

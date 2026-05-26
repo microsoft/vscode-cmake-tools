@@ -1238,6 +1238,15 @@ export class CMakeProject {
     }
     private readonly onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
+    /**
+     * Event fired after CMake configure completes (success or failure).
+     * The event payload contains the configure result including exit code.
+     */
+    get onConfigureResult() {
+        return this._onConfigureResultEmitter.event;
+    }
+    private readonly _onConfigureResultEmitter = new vscode.EventEmitter<ConfigureResult>();
+
     private readonly onTargetChangedEmitter = new vscode.EventEmitter<void>();
     get onTargetChanged() {
         return this.onTargetChangedEmitter.event;
@@ -1764,6 +1773,7 @@ export class CMakeProject {
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
+            this._onConfigureResultEmitter.fire(result);
             debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.with.cache', "Configured CMake with cache. CMake debugger is not supported with cache."));
             return result;
         }
@@ -1772,7 +1782,9 @@ export class CMakeProject {
             const message = localize('no.cache.available', 'Unable to configure with existing cache');
             log.debug(message);
             debuggerInformation?.debuggerStoppedDueToPreconditions(message);
-            return { exitCode: -1, resultType: ConfigureResultType.NoCache };
+            const result: ConfigureResult = { exitCode: -1, resultType: ConfigureResultType.NoCache };
+            this._onConfigureResultEmitter.fire(result);
+            return result;
         }
 
         const res = await vscode.window.withProgress(
@@ -1924,6 +1936,7 @@ export class CMakeProject {
         if (res.exitCode !== 0) {
             log.showChannel(true);
         }
+        this._onConfigureResultEmitter.fire(res);
         return res;
     }
 
