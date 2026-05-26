@@ -86,6 +86,10 @@ class CMakeProjectWrapper implements api.Project {
         return this.project.onSelectedConfigurationChangedApiEvent;
     }
 
+    get onConfigureResult() {
+        return this.project.onConfigureResult;
+    }
+
     get configurePreset() {
         logApiTelemetry('getConfigurePreset');
         return this.project.configurePreset ?? undefined;
