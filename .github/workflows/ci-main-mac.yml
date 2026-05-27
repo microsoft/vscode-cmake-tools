@@ -56,7 +56,7 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: 3.18.3
+          cmakeVersion: 3.31.6
           ninjaVersion: 1.10.1
 
       - name: Remove conflicting system CMake installation
@@ -103,6 +103,7 @@ jobs:
           if-no-files-found: error
 
   test:
+    name: test (${{ matrix.suite.name }})
     needs: build
     runs-on: macos-26
 
@@ -110,14 +111,14 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - { name: backend,             cmd: 'yarn backendTests',                       timeout: 5 }
-          - { name: smoke,               cmd: 'yarn smokeTests-only',                    timeout: 15 }
-          - { name: unit,                cmd: 'yarn unitTests-only',                     timeout: 20 }
-          - { name: integration,         cmd: 'yarn integrationTests-only',              timeout: 15 }
-          # macOS-26 arm64 runners are flaky with cold cmake try-compile (Intel cmake under Rosetta).
-          # Sequential e2e in one job lets early tests warm up the toolchain before harder ones run —
-          # matching the previously-green sequential pipeline on macOS while still parallelizing other suites.
-          - { name: e2e-all,             cmd: 'yarn endToEndTestsSuccessfulBuild-only && yarn endToEndTestsSingleRoot-only && yarn endToEndTestsSingleRootCTest-only && yarn endToEndTestsMultiRoot-only', timeout: 90 }
+          - { name: backend,                 cmd: 'yarn backendTests',                       timeout: 5 }
+          - { name: smoke,                   cmd: 'yarn smokeTests-only',                    timeout: 15 }
+          - { name: unit,                    cmd: 'yarn unitTests-only',                     timeout: 20 }
+          - { name: integration,             cmd: 'yarn integrationTests-only',              timeout: 15 }
+          - { name: e2e-successful,          cmd: 'yarn endToEndTestsSuccessfulBuild-only',  timeout: 25 }
+          - { name: e2e-single-root,         cmd: 'yarn endToEndTestsSingleRoot-only',       timeout: 25 }
+          - { name: e2e-single-root-ctest,   cmd: 'yarn endToEndTestsSingleRootCTest-only',  timeout: 25 }
+          - { name: e2e-multi-root,          cmd: 'yarn endToEndTestsMultiRoot-only',        timeout: 25 }
 
     steps:
       - uses: actions/checkout@v4
@@ -161,7 +162,8 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: 3.18.3
+          # Must match the build job's cmake version. See note there.
+          cmakeVersion: 3.31.6
           ninjaVersion: 1.10.1
 
       - name: Remove conflicting system CMake installation
@@ -180,29 +182,6 @@ jobs:
           path: .vscode-test
           key: vscode-test-${{ runner.os }}-stable
           restore-keys: vscode-test-${{ runner.os }}-
-
-      # macos-26 arm64 ships x86_64 cmake 3.18.3 (no native arm64 build < 3.19.2),
-      # so the first cmake try-compile per runner is flaky under Rosetta JIT cold-start
-      # (testCCompiler.c "no such file or directory"). In the previous single-job pipeline,
-      # earlier unit/integration tests warmed up the toolchain before e2e ran. With the
-      # matrix split, each e2e job is on a cold runner. This step does a trivial throwaway
-      # project configure twice (best-effort) so the toolchain is warm before the suite begins.
-      - name: Warmup CMake toolchain (macOS cold-start mitigation)
-        if: startsWith(matrix.suite.name, 'e2e')
-        shell: bash
-        run: |
-          set +e
-          warmup_dir="$(mktemp -d)"
-          cat > "$warmup_dir/CMakeLists.txt" <<'EOF'
-          cmake_minimum_required(VERSION 3.10)
-          project(warmup LANGUAGES C CXX)
-          EOF
-          echo "--- warmup pass 1 ---"
-          cmake -S "$warmup_dir" -B "$warmup_dir/build1" -G Ninja
-          echo "--- warmup pass 2 ---"
-          cmake -S "$warmup_dir" -B "$warmup_dir/build2" -G Ninja
-          rm -rf "$warmup_dir"
-          exit 0
 
       - name: Run ${{ matrix.suite.name }} tests
         timeout-minutes: ${{ matrix.suite.timeout }}

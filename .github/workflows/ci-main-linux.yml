@@ -101,6 +101,7 @@ jobs:
           if-no-files-found: error
 
   test:
+    name: test (${{ matrix.suite.name }})
     needs: build
     runs-on: ubuntu-latest
 

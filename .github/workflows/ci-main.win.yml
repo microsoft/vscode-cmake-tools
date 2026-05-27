@@ -98,6 +98,7 @@ jobs:
           if-no-files-found: error
 
   test:
+    name: test (${{ matrix.suite.name }})
     needs: build
     runs-on: windows-2022
 
