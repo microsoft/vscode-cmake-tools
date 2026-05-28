@@ -157,7 +157,10 @@ export class KitsController {
         // Load user-kits
         reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-        KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
+        const kits = await readKitsFile(USER_KITS_FILEPATH, project.workspaceContext.folder.uri.fsPath, await project.getExpansionOptions());
+        if (kits !== undefined) {
+            KitsController.userKits = kits;
+        }
 
         // Pruning requires user interaction, so it happens fully async
         KitsController._startPruneOutdatedKitsAsync(await project.getCMakePathofProject());
@@ -173,7 +176,10 @@ export class KitsController {
 
         if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
             // Read default folder kits
-            this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.project.workspaceContext.folder.uri.fsPath, await this.project.getExpansionOptions());
+            const folderKitsResult = await readKitsFile(KitsController._workspaceKitsPath(this.workspaceFolder), this.project.workspaceContext.folder.uri.fsPath, await this.project.getExpansionOptions());
+            if (folderKitsResult !== undefined) {
+                this.folderKits = folderKitsResult;
+            }
 
             // Read additional folder kits
             this.additionalKits = await getAdditionalKits(this.project);
