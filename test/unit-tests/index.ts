@@ -16,7 +16,8 @@ export function run(): Promise<void> {
     const testsRoot = __dirname;
 
     return new Promise((c, e) => {
-        glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+        // Backend tests are covered by the standalone backendTests script; avoid double-running them inside Electron.
+        glob('**/*.test.js', { cwd: testsRoot, ignore: ['backend/**'] }, (err, files) => {
             if (err) {
                 return e(err);
             }
