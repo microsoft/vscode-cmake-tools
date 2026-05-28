@@ -14,7 +14,7 @@ async function main() {
 
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/end-to-end-tests/multi-root-UI/project-workspace.code-workspace');
 
-        const launchArgs = ["--disable-extensions", "--disable-gpu", "--disable-telemetry", "--disable-crash-reporter", testWorkspace];
+        const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
         const extensionTestsEnv: { [key: string]: string | undefined } = {
             "CMT_TESTING": "1",
             "CMT_QUIET_CONSOLE": "1",
