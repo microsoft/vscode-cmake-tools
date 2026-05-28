@@ -18,7 +18,9 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitThis": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "incremental": true,
+        "tsBuildInfoFile": "out/.tsbuildinfo"
     },
     "include": [
         "test/**/*.ts"

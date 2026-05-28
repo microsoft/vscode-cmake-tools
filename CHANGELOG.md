@@ -8,6 +8,8 @@ Features:
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)
 
 Improvements:
+- Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.
+- Further reduce CI pipeline time by splitting each platform pipeline into a build job and a parallel test matrix (backend, smoke, unit, integration, four E2E suites), caching `node_modules` between runs, sharing a single Xvfb instance on Linux, dropping a duplicate backend-test load inside the unit-tests Electron suite, and adding per-step timeouts to prevent silent hangs.
 - Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
 - When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
 - Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
