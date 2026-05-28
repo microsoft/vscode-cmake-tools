@@ -1909,7 +1909,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             log.error(e.message);
             throw e;
         }
-        util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+        util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settingMap[key] = util.cmakeify(value));
 
         // Export compile_commands.json
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");

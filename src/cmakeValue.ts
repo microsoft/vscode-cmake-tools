@@ -13,22 +13,6 @@ export interface CMakeValue {
 }
 
 /**
- * Escape a string so it can be used as a regular expression
- */
-function escapeStringForRegex(str: string): string {
-    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
-}
-
-/**
- * Replace all occurrences of `needle` in `str` with `what`
- */
-function replaceAll(str: string, needle: string, what: string): string {
-    const pattern = escapeStringForRegex(needle);
-    const re = new RegExp(pattern, 'g');
-    return str.replace(re, what);
-}
-
-/**
  * Checks if the given value is a string.
  */
 function isString(x: unknown): x is string {
@@ -39,33 +23,40 @@ function isString(x: unknown): x is string {
  * Converts a given value to a CMake-compatible value.
  *
  * **Semicolon Handling:**
- * - **String values**: Semicolons are escaped (`;` → `\;`) to prevent CMake from
- *   interpreting them as list separators. Use this for single values that happen
- *   to contain semicolons.
- * - **Array values**: Elements are joined with semicolons WITHOUT escaping,
- *   producing a proper CMake list. Use this when you intentionally want a CMake
- *   list (e.g., `LLVM_ENABLE_PROJECTS`).
+ * - **String values**: Passed through verbatim. CMake itself decides whether to
+ *   treat embedded `;` as list separators (this matches CMake conventions and
+ *   how CMake Presets cache variables behave). Users who genuinely need a
+ *   literal `;` inside a single list element can pre-escape it as `\;` in JSON.
+ * - **Array values**: Elements are joined with `;` to form a proper CMake list.
+ *   Use this when you want a declarative, JSON-native way to express a list
+ *   (e.g., `LLVM_ENABLE_PROJECTS`).
  *
  * @param value The value to convert. Can be:
  *   - `boolean`: Converts to CMake BOOL ("TRUE" or "FALSE")
- *   - `string`: Converts to STRING with semicolons escaped
+ *   - `string`: Converts to STRING, passed through unchanged
  *   - `number`: Converts to STRING
- *   - `string[]`: Joins elements with `;` to form a CMake list (no escaping)
+ *   - `string[]`: Joins elements with `;` to form a CMake list
  *   - `CMakeValue`: Passes through unchanged
  * @returns A CMakeValue object with the appropriate type and value.
  * @throws An error if the input value is invalid or cannot be converted.
  *
  * @example
- * // String with semicolon - ESCAPED (for single values containing semicolons)
+ * // String with semicolons — passed through (CMake sees a list)
  * cmakeify("clang;lld")
- * // Returns: { type: 'STRING', value: 'clang\\;lld' }
- * // Produces: -DVAR:STRING=clang\;lld
- *
- * @example
- * // Array - NOT escaped (for CMake lists)
- * cmakeify(["clang", "lld"])
  * // Returns: { type: 'STRING', value: 'clang;lld' }
  * // Produces: -DVAR:STRING=clang;lld (a proper CMake list)
+ *
+ * @example
+ * // Array — joined with semicolons (also a CMake list)
+ * cmakeify(["clang", "lld"])
+ * // Returns: { type: 'STRING', value: 'clang;lld' }
+ * // Produces: -DVAR:STRING=clang;lld
+ *
+ * @example
+ * // Boolean — emitted as CMake BOOL
+ * cmakeify(true)
+ * // Returns: { type: 'BOOL', value: 'TRUE' }
+ * // Produces: -DVAR:BOOL=TRUE
  */
 export function cmakeify(value: (string | boolean | number | string[] | CMakeValue)): CMakeValue {
     const ret: CMakeValue = {
@@ -77,14 +68,15 @@ export function cmakeify(value: (string | boolean | number | string[] | CMakeVal
         ret.value = value ? 'TRUE' : 'FALSE';
     } else if (isString(value)) {
         ret.type = 'STRING';
-        // String values have semicolons escaped to prevent CMake list interpretation
-        ret.value = replaceAll(value, ';', '\\;');
+        // String values are passed through verbatim; CMake treats `;` as a list
+        // separator natively. Users who need a literal `;` can pre-escape as `\;`.
+        ret.value = value;
     } else if (typeof value === 'number') {
         ret.type = 'STRING';
         ret.value = value.toString();
     } else if (value instanceof Array) {
         ret.type = 'STRING';
-        // Array values are joined with semicolons WITHOUT escaping to form CMake lists
+        // Array values are joined with semicolons to form CMake lists.
         ret.value = value.join(';');
     } else if (Object.getOwnPropertyNames(value).filter(e => e === 'type' || e === 'value').length === 2) {
         ret.type = value.type;

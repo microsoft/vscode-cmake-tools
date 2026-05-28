@@ -106,10 +106,12 @@ export interface Kit extends KitDetect {
 
     /**
      * Additional settings to pass to CMake.
-     * Values can be strings or string arrays. String arrays are joined with
-     * semicolons to form CMake lists (without escaping).
+     * Values can be strings, booleans, numbers, or string arrays.
+     * String arrays are joined with semicolons to form CMake lists.
+     * Strings are passed through verbatim; semicolons in strings keep their
+     * natural CMake list-separator semantics.
      */
-    cmakeSettings?: { [key: string]: string | string[] };
+    cmakeSettings?: { [key: string]: string | string[] | boolean | number };
 
     /**
      * Additional environment variables for the kit

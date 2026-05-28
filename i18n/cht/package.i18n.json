@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "使用 tasks.json 而非內部處理序的組建。",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部命令輸出的編譯 (例如 cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "為檔案及主控台啟用追蹤記錄 (雜訊非常多)。",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "在 CMake 輸出通道中顯示時間戳記和記錄層級。適用於追蹤建置持續時間。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "自動選取使用中的資料夾。",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "設定預設作用中資料夾 (只有在 cmake.autoSelectActiveFolder 停用時才有效)。",
 	"cmake-tools.configuration.cmake.exclude.description": "此延伸模組將忽略此設定中列出的資料夾。資料夾應以絕對路徑列出。",

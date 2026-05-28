@@ -203,6 +203,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Effectue une build à l'aide de tasks.json au lieu du processus interne.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Encodage de la sortie à partir de commandes externes (par exemple cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Active la journalisation des traces dans le fichier et la console (très bruyant).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Affichez les horodateurs et les niveaux de journalisation dans le canal de sortie CMake. Utile pour suivre les durées de génération.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Sélectionne le dossier actif automatiquement.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Définir le dossier actif par défaut (fonctionne uniquement lorsque cmake.autoSelectActiveFolder est désactivé).",
 	"cmake-tools.configuration.cmake.exclude.description": "L’extension ignorera les dossiers répertoriés dans ce paramètre. Les dossiers doivent être répertoriés sous forme de chemins absolus.",

@@ -168,27 +168,46 @@ The following additional options may be specified:
 >
 > CMake uses semicolons as list separators. The type of value you use determines how semicolons are handled:
 >
-> - **String values**: Semicolons are **escaped** (`;` → `\;`) to prevent CMake from treating them as list separators. Use this for single values that happen to contain semicolons.
+> - **String values**: Passed through to CMake verbatim. A `;` inside a string keeps its natural CMake list-separator meaning. If you genuinely need a literal `;` inside a single list element, pre-escape it as `\;` in your JSON — CMake Tools no longer transforms strings.
 >
-> - **Array values**: Elements are joined with semicolons **without escaping**, producing a proper CMake list. Use this when you intentionally want to pass a CMake list.
+> - **Array values**: Elements are joined with semicolons to produce a CMake list. This is the declarative, JSON-native way to express a list.
 >
-> **Example - Passing a CMake list (use array notation):**
+> - **Boolean values**: Emitted as a CMake BOOL cache variable, so the CMake Cache Editor renders them as a checkbox.
+>
+> **Example - Passing a CMake list (string notation):**
 > ```jsonc
 > "cmakeSettings": {
->     // Array notation → semicolons NOT escaped → creates CMake list
+>     "CMAKE_PREFIX_PATH": "C:/vcpkg/packages/zlib_x64-windows;C:/vcpkg/packages/curl_x64-windows"
+>     // Produces: -DCMAKE_PREFIX_PATH:STRING=C:/vcpkg/packages/zlib_x64-windows;C:/vcpkg/packages/curl_x64-windows
+> }
+> ```
+>
+> **Example - Passing a CMake list (array notation):**
+> ```jsonc
+> "cmakeSettings": {
 >     "LLVM_ENABLE_PROJECTS": ["clang", "lld"]
 >     // Produces: -DLLVM_ENABLE_PROJECTS:STRING=clang;lld
 > }
 > ```
 >
-> **Example - String with semicolons escaped:**
+> **Example - Boolean value:**
 > ```jsonc
 > "cmakeSettings": {
->     // String notation → semicolons ARE escaped → treated as single value
->     "MY_VAR": "value;with;semicolons"
->     // Produces: -DMY_VAR:STRING=value\;with\;semicolons
+>     "BUILD_TESTING": true
+>     // Produces: -DBUILD_TESTING:BOOL=TRUE
 > }
 > ```
+>
+> **Windows path tip:** Prefer forward slashes in path lists. If you must use backslashes, take care that none of them sit immediately before a `;` — JSON parses `\\` as one `\`, so the string CMake actually receives ends in `\;`, which CMake treats as an *escaped* semicolon and collapses the surrounding paths into a single element:
+>
+> ```jsonc
+> // JSON you write in cmake-kits.json:
+> "CMAKE_PREFIX_PATH": "C:\\foo\\;C:\\bar"
+> // String CMake receives:  C:\foo\;C:\bar
+> // CMake parses as:        ONE element (because \; is an escaped separator)
+> ```
+>
+> Use forward slashes (`"C:/foo;C:/bar"`) or an array (`["C:/foo", "C:/bar"]`) to avoid the trap.
 
 `environmentVariables`
 
