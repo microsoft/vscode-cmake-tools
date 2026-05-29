@@ -1453,7 +1453,7 @@ export async function descriptionForKit(kit: Kit, shortVsName: boolean = false):
     return '';
 }
 
-export async function readKitsFile(filePath: string, workspaceFolder?: string, expansionOptions?: expand.ExpansionOptions): Promise<Kit[]> {
+export async function readKitsFile(filePath: string, workspaceFolder?: string, expansionOptions?: expand.ExpansionOptions): Promise<Kit[] | undefined> {
     const fileStats = await fs.tryStat(filePath);
     if (!fileStats) {
         log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filePath));
@@ -1465,6 +1465,12 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
     }
     log.debug(localize('reading.kits.file', 'Reading kits file {0}', filePath));
     const content_str = await fs.readFile(filePath);
+    // If the file is empty or whitespace-only, it's likely being written to (non-atomic write race).
+    // Return undefined so callers can retain their previous kits in memory.
+    if (!content_str.trim()) {
+        log.debug(localize('kits.file.empty', 'Kits file {0} is empty, likely mid-write. Skipping parse.', filePath));
+        return undefined;
+    }
     let kits_raw: object[] = [];
     try {
         kits_raw = json5.parse(content_str.toLocaleString());
@@ -1473,7 +1479,7 @@ export async function readKitsFile(filePath: string, workspaceFolder?: string, e
         if (e instanceof Error && e.stack) {
             log.debug(e.stack);
         }
-        return [];
+        return undefined;
     }
     const validator = await loadSchema('./schemas/kits-schema.json');
     const is_valid = validator(kits_raw);
@@ -1552,9 +1558,9 @@ export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
  * Get the kits declared for the given workspace directory. Looks in `.vscode/cmake-kits.json`.
  * @param workspaceFolder The path to a VSCode workspace directory
  */
-export function kitsForWorkspaceDirectory(workspaceFolder: string): Promise<Kit[]> {
+export async function kitsForWorkspaceDirectory(workspaceFolder: string): Promise<Kit[]> {
     const ws_kits_file = path.join(workspaceFolder, '.vscode/cmake-kits.json');
-    return readKitsFile(ws_kits_file, workspaceFolder);
+    return await readKitsFile(ws_kits_file, workspaceFolder) ?? [];
 }
 
 /**
@@ -1566,7 +1572,10 @@ export async function getAdditionalKits(project: CMakeProject): Promise<Kit[]> {
 
     let additionalKits: Kit[] = [];
     for (const kitFile of expandedAdditionalKitFiles) {
-        additionalKits = additionalKits.concat(await readKitsFile(kitFile, project.workspaceContext.folder.uri.fsPath, opts));
+        const kits = await readKitsFile(kitFile, project.workspaceContext.folder.uri.fsPath, opts);
+        if (kits) {
+            additionalKits = additionalKits.concat(kits);
+        }
     }
     return additionalKits;
 }
