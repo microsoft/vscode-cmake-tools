@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as api from 'vscode-cmake-tools';
 import CMakeProject from '@cmt/cmakeProject';
 import { ExtensionManager } from '@cmt/extension';
-import { assertNever } from '@cmt/util';
+import { assertNever, checkDirectoryExists, platformNormalizePath } from '@cmt/util';
 import { CTestOutputLogger } from '@cmt/ctest';
 import { logEvent } from './telemetry';
 
@@ -40,7 +40,7 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
 
     async getProject(uri: vscode.Uri): Promise<CMakeProjectWrapper | undefined> {
         logApiTelemetry('getProject');
-        const project: CMakeProject | undefined = await this.manager.projectController.getProjectForFolder(uri.fsPath);
+        const project: CMakeProject | undefined = await this.getProjectForUri(uri);
         return project ? new CMakeProjectWrapper(project) : undefined;
     }
 
@@ -60,6 +60,31 @@ export class CMakeToolsApiImpl implements api.CMakeToolsApi {
             default:
                 assertNever(element);
         }
+    }
+
+    private async getProjectForUri(uri: vscode.Uri): Promise<CMakeProject | undefined> {
+        if (await checkDirectoryExists(uri.fsPath)) {
+            const project = await this.manager.projectController.getProjectForFolder(uri.fsPath);
+            if (project) {
+                return project;
+            }
+        }
+
+        const normalizedPath = platformNormalizePath(uri.fsPath);
+        let bestMatch: CMakeProject | undefined;
+        let bestLength = -1;
+
+        for (const project of this.manager.projectController.getAllCMakeProjects()) {
+            for (const candidate of [project.sourceDir, project.workspaceFolder.uri.fsPath]) {
+                const normalizedCandidate = platformNormalizePath(candidate);
+                if ((normalizedPath === normalizedCandidate || normalizedPath.startsWith(`${normalizedCandidate}/`)) && normalizedCandidate.length > bestLength) {
+                    bestMatch = project;
+                    bestLength = normalizedCandidate.length;
+                }
+            }
+        }
+
+        return bestMatch;
     }
 }
 
