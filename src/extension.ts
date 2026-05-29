@@ -43,6 +43,7 @@ import { CMakeToolsApiImpl } from '@cmt/api';
 import { DirectoryContext } from '@cmt/workspace';
 import { ProjectStatus } from '@cmt/ui/projectStatus';
 import { PinnedCommands } from '@cmt/ui/pinnedCommands';
+import { TestCodeLensProvider } from './ui/testCodeLensProvider';
 import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDebugger/debugAdapterNamedPipeServerDescriptorFactory';
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
@@ -188,6 +189,14 @@ export class ExtensionManager implements vscode.Disposable {
         await getCMakeExecutableInformation(cmakePath, this.workspaceConfig);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
+        if (this.workspaceConfig.testExplorerIntegrationEnabled) {
+            this.extensionContext.subscriptions.push(
+                vscode.languages.registerCodeLensProvider(
+                    [{ language: 'cpp', scheme: 'file' }, { language: 'c', scheme: 'file' }, { language: 'cmake', scheme: 'file' }],
+                    new TestCodeLensProvider(this.projectController)
+                )
+            );
+        }
         this.workspaceConfig.onChange("ctest", async (value) => {
             await util.setContextValue("cmake:testExplorerIntegrationEnabled", value.testExplorerIntegrationEnabled);
             if (!value.testExplorerIntegrationEnabled) {
@@ -196,6 +205,13 @@ export class ExtensionManager implements vscode.Disposable {
             } else {
                 // Attempt to refresh the tests when dynamically re-integrating the test explorer.
                 await getActiveProject()?.refreshTests();
+                // Re-register CodeLens provider when test explorer is re-enabled
+                this.extensionContext.subscriptions.push(
+                    vscode.languages.registerCodeLensProvider(
+                        [{ language: 'cpp', scheme: 'file' }, { language: 'c', scheme: 'file' }, { language: 'cmake', scheme: 'file' }],
+                        new TestCodeLensProvider(this.projectController)
+                    )
+                );
             }
         });
 
@@ -1926,6 +1942,42 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommand(cmakeProject => cmakeProject.debugCTest(testName), folder, undefined, undefined, sourceDir);
     }
 
+    /**
+     * Run a test by name (called from CodeLens).
+     * Finds the active project that contains this test and runs it.
+     */
+    async runTestFromCodeLens(testName: string) {
+        try {
+            const project = this.getActiveProject();
+            if (!project) {
+                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
+                return;
+            }
+            return project.runTest(testName);
+        } catch (err) {
+            log.error(`Error running test from CodeLens: ${err}`);
+            void vscode.window.showErrorMessage(localize('test.run.error', 'Failed to run test: {0}', String(err)));
+        }
+    }
+
+    /**
+     * Debug a test by name (called from CodeLens).
+     * Finds the active project that contains this test and debugs it.
+     */
+    async debugTestFromCodeLens(testName: string) {
+        try {
+            const project = this.getActiveProject();
+            if (!project) {
+                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
+                return;
+            }
+            return project.debugCTest(testName);
+        } catch (err) {
+            log.error(`Error debugging test from CodeLens: ${err}`);
+            void vscode.window.showErrorMessage(localize('test.debug.error', 'Failed to debug test: {0}', String(err)));
+        }
+    }
+
     stop(folder?: vscode.WorkspaceFolder) {
         return this.runCMakeCommand(cmakeProject => cmakeProject.stop(), folder);
     }
@@ -2914,6 +2966,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         }),
         vscode.commands.registerCommand('cmake.outline.runTest', (what: CTestTestNode) => runCommand('runTest', what.folder, what.testName, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.debugTest', (what: CTestTestNode) => runCommand('debugCTest', what.folder, what.testName, what.sourceDir)),
+        vscode.commands.registerCommand('cmake.runTestFromCodeLens', (testName: string) => ext?.runTestFromCodeLens(testName)),
+        vscode.commands.registerCommand('cmake.debugTestFromCodeLens', (testName: string) => ext?.debugTestFromCodeLens(testName)),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         // vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),

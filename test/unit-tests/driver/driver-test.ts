@@ -115,7 +115,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
 
             driver = await driver_generator(executable, config, ninjaKitDefault, badCommandWorkspaceFolder, async () => true, []);
             expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(1);
-        }).timeout(90000);
+        }).timeout(300000); // Increased from 90s → 180s → 300s; macOS-26 arm64 runners can take >3min for this cmake configure-and-fail subprocess
 
         test('Build', async function () {
             const config = ConfigurationReader.create();

@@ -8,14 +8,19 @@ Features:
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)
 
 Improvements:
+- Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.
+- Further reduce CI pipeline time by splitting each platform pipeline into a build job and a parallel test matrix (backend, smoke, unit, integration, four E2E suites), caching `node_modules` between runs, sharing a single Xvfb instance on Linux, dropping a duplicate backend-test load inside the unit-tests Electron suite, and adding per-step timeouts to prevent silent hangs.
 - Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
 - When CMake is invoked prior to running tests, build targets required for the test rather than everything. [#4515](https://github.com/microsoft/vscode-cmake-tools/issues/4515) [@epistax](https://github.com/epistax)
 - Allow building object library targets from the project outline. [#4797](https://github.com/microsoft/vscode-cmake-tools/issues/4797)
+- Add inline "Run" and "Debug" CodeLens buttons in source editors for tests discovered by CTest, allowing tests to be executed directly from their source locations. [#4451](https://github.com/microsoft/vscode-cmake-tools/issues/4451)
 - Improve responsiveness to CMake path changes made by vendor extensions during configure-on-open retry. [#4908](https://github.com/microsoft/vscode-cmake-tools/pull/4908) Contributed by STMicroelectronics
 - Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
+- Auto-generate `docs/cmake-settings.md` from `package.json` via CI so documentation never drifts from actual settings. [#4007](https://github.com/microsoft/vscode-cmake-tools/issues/4007)
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix intermittent `Failed to parse cmake-tools-kits.json` error caused by reading the kits file during a non-atomic write. `readKitsFile` now returns `undefined` when the file is empty or unparseable, and callers retain the previous kits in memory instead of clearing them. The file watcher will re-read once the write completes. [#4833](https://github.com/microsoft/vscode-cmake-tools/issues/4833)
 - Fix `CMake: Compile Active File` by unescaping `compile_commands.json` `command` strings into raw argv before spawning the compiler, so defines such as `-DCMAKE_INTDIR=\"RelWithDebInfo\"` are passed correctly. Originally surfaced on Ninja Multi-Config (Windows); also covers shell-escaped databases from `bear`, `intercept-build`, etc. [#4935](https://github.com/microsoft/vscode-cmake-tools/issues/4935)
 - Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
 - Fix CPack package preset inheritance so child `variables` maps now keep parent-defined `-D` values when the child adds its own package variables. [#4924](https://github.com/microsoft/vscode-cmake-tools/issues/4924)

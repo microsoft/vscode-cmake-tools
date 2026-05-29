@@ -21,7 +21,8 @@ suite('Kits test', () => {
 
     test('Test load of kit from test file', async () => {
         const kits = await readKitsFile(getTestResourceFilePath('test_kit.json'));
-        const names = kits.map(k => k.name);
+        expect(kits).to.not.be.undefined;
+        const names = kits!.map(k => k.name);
         expect(names).to.deep.eq([
             'CompilerKit 1',
             'CompilerKit 2',
@@ -38,10 +39,11 @@ suite('Kits test', () => {
     test('Test use of env var in toolchain kit specified from test file', async () => {
         process.env.CMAKE_TOOLS_TEST_SOME_ENV_VAR = "Test";
         const kits = await readKitsFile(getTestResourceFilePath('test_kit.json'));
+        expect(kits).to.not.be.undefined;
 
-        expect(kits.filter(k => k.name === "ToolchainKit 2")[0].toolchainFile).to.eq("Test/toolchain.cmake");
-        expect(kits.filter(k => k.name === "ToolchainKit 3")[0].toolchainFile).to.eq("test-project-without-cmakelists/toolchain.cmake");
-        expect(kits.filter(k => k.name === "ToolchainKit 4")[0].toolchainFile).to.eq("test-project-without-cmakelists/Test/toolchain.cmake");
+        expect(kits!.filter(k => k.name === "ToolchainKit 2")[0].toolchainFile).to.eq("Test/toolchain.cmake");
+        expect(kits!.filter(k => k.name === "ToolchainKit 3")[0].toolchainFile).to.eq("test-project-without-cmakelists/toolchain.cmake");
+        expect(kits!.filter(k => k.name === "ToolchainKit 4")[0].toolchainFile).to.eq("test-project-without-cmakelists/Test/toolchain.cmake");
     });
 
     test('Test load env vars from shell script', async () => {

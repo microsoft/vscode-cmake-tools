@@ -1,0 +1,38 @@
+name: Auto-generate settings docs
+
+on:
+  pull_request:
+    branches: [ main, 'release/**' ]
+    paths:
+      - 'package.json'
+      - 'package.nls.json'
+      - 'tools/generate-settings-docs.js'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Generate settings docs
+        run: node tools/generate-settings-docs.js
+
+      - name: Commit updated docs if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cmake-settings.md
+          git diff --cached --quiet || git commit -m "docs: auto-update cmake-settings.md [skip ci]"
+          git push
