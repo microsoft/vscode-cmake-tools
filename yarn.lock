@@ -7314,10 +7314,10 @@ timers-ext@^0.1.7:
     es5-ext "~0.10.46"
     next-tick "1"
 
-tmp@^0.2.3, tmp@^0.2.4:
-  version "0.2.4"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tmp/-/tmp-0.2.4.tgz#c6db987a2ccc97f812f17137b36af2b6521b0d13"
-  integrity sha1-xtuYeizMl/gS8XE3s2rytlIbDRM=
+tmp@^0.2.3, tmp@^0.2.6:
+  version "0.2.6"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/tmp/-/tmp-0.2.6.tgz#0dfac10fd09a9319288eb0e8f0ed524604e183b4"
+  integrity sha1-DfrBD9CakxkojrDo8O1SRgThg7Q=
 
 to-absolute-glob@^2.0.0:
   version "2.0.2"
