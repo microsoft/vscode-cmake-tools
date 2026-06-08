@@ -45,9 +45,9 @@ extends:
           ignoreLASTEXITCODE: true
           displayName: 'Set the release name'
         - task: NodeTool@0
-          displayName: 'Use Node 20.x'
+          displayName: 'Use Node 22.x'
           inputs:
-            versionSpec: 20.x
+            versionSpec: 22.x
         - script: npm install -g @vscode/vsce
           displayName: 'install vsce'
         - task: AzureCLI@2
