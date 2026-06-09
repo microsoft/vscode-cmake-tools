@@ -18,6 +18,7 @@
 	"ctest.run.cancelled": "CTest çalıştırması iptal edildi",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
 	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
+	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
 	"folder.not.found.in.test.explorer": "Klasör Test Gezgini'nde bulunamadı: {0}",
 	"test.preset.required": "Testleri keşfetmek için bir test ön ayarı seçin",
 	"ctest.error": "Kullanılabilir test yürütülebilir dosyalarını belirlemek için ctest çalıştırılırken bir hata oluştu",

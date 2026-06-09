@@ -18,6 +18,7 @@
 	"ctest.run.cancelled": "Przebieg narzędzia CTest został anulowany",
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
 	"ctest.finished.with.code": "Narzędzie CTest zakończyło pracę z kodem powrotnym {0}",
+	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
 	"folder.not.found.in.test.explorer": "Nie znaleziono folderu w Eksploratorze testów: {0}",
 	"test.preset.required": "Wybierz ustawienie wstępne testu, aby odnaleźć testy",
 	"ctest.error": "Wystąpił błąd podczas uruchamiania narzędzia ctest w celu określenia dostępnych plików wykonywalnych testu",

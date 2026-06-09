@@ -53,6 +53,7 @@
 	"not.reading.nonexistent.kit": "未读取不存在的工具包文件: {0}",
 	"not.reading.invalid.path": "未读取无效的工具包文件: {0}",
 	"reading.kits.file": "正在读取工具包文件 {0}",
+	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
 	"failed.to.parse": "无法分析 {0}: {1}",
 	"invalid.file.error": "无效的工具包内容 {0} ({1}):",
 	"successfully.loaded.kits": "已成功从 {1} 加载 {0} 工具包",

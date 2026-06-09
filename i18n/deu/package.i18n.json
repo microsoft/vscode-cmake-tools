@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Den besten Kandidaten automatisch auswählen.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Zeigen Sie eine Schnellauswahl mit Optionen aus dem ausgewählten Zielquellbefehlsaufruf an.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Schlüsselwortargumente für benutzerdefinierte Funktionen und Makros, die Listen von Quelldateien einleiten. Wenn diese Option leer gelassen wird, werden alle Argumente berücksichtigt, die nur aus Großbuchstaben und Unterstrichen bestehen. Unterstützt Globmuster.",
-	"update.code.model.for.list.modifier": "Codemodell für automatischen Listendateimodifizierer aktualisieren"
+	"update.code.model.for.list.modifier": "Codemodell für automatischen Listendateimodifizierer aktualisieren",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

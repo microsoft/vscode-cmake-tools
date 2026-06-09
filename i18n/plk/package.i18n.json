@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Wybierz automatycznie najlepszego kandydata.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Zaprezentuj szybkie wybieranie z opcjami z wybranego wywołania polecenia docelowego źródła.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty słów kluczowych dla funkcji i makr zdefiniowanych przez użytkownika, które wprowadzają listy plików źródłowych. Jeśli argument pozostanie pusty, zostaną uwzględnione wszystkie argumenty składające się tylko z wielkich liter i podkreśleń. Obsługuje wzorce globalne.",
-	"update.code.model.for.list.modifier": "Aktualizowanie modelu kodu dla automatycznego modyfikatora pliku listy"
+	"update.code.model.for.list.modifier": "Aktualizowanie modelu kodu dla automatycznego modyfikatora pliku listy",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

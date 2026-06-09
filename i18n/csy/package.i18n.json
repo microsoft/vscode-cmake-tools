@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Automaticky zvolit nejlepšího kandidáta",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Umožňuje zobrazit nabídku rychlého výběru s možnostmi z vybraného volání příkazu pracujícího se zdrojovými soubory cíle.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty klíčových slov u uživatelem definovaných funkcí a maker, které zavádějí seznamy zdrojových souborů Pokud zůstane prázdné, budou zohledněny všechny argumenty složené pouze z velkých písmen a podtržítek. Podporuje vzory glob.",
-	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu"
+	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

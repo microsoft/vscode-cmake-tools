@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "自動選擇最佳候選項目。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "提供 [快速挑選]，其中包含來自所選目標來源命令調用的選項。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "使用者定義函式和巨集的關鍵字引數，用於引入來源檔案的清單。若留空，將會考慮所有僅包含大寫字母與底線的引數。支援 Glob 模式。",
-	"update.code.model.for.list.modifier": "更新自動清單檔案修飾元的程式碼模型"
+	"update.code.model.for.list.modifier": "更新自動清單檔案修飾元的程式碼模型",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

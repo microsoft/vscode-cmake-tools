@@ -38,6 +38,8 @@
 	"cmake.debug.name": "CMake Hata Ayıklayıcısı",
 	"select.a.cmake.project": "CMake projesi seç",
 	"compilation information.not.found": "Bu dosya için derleme bilgileri bulunamıyor",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}",
 	"open.folder": "Klasör Aç",
 	"no.folder.open.for.quickstart": "Açık klasör yok. CMake: Hızlı Başlangıç kullanmak için lütfen bir klasör açın.",
 	"add.config.preset.in.test.mode": "CMakeTools test modunda çalıştırılıyor. addConfigurePreset devre dışı bırakıldı.",
