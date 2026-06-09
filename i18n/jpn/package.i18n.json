@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "最適な候補を自動的に選択します。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "選択したターゲットのソース コマンド呼び出しからのオプションを含むクイック ピックを表示します。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "ソース ファイルの一覧を導入するユーザー定義関数およびマクロへのキーワード引数。空の場合は、大文字とアンダースコアのみで構成されるすべての引数が対象となります。glob パターンをサポートします。",
-	"update.code.model.for.list.modifier": "自動リスト ファイル修飾子のコード モデルを更新する"
+	"update.code.model.for.list.modifier": "自動リスト ファイル修飾子のコード モデルを更新する",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

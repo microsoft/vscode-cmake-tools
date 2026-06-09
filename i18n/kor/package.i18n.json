@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "가장 적합한 후보를 자동으로 선택합니다.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "선택한 대상 원본 명령 호출의 옵션을 사용하여 빠른 선택을 제공합니다.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "원본 파일 목록을 도입하는 사용자 정의 함수 및 매크로에 대한 키워드 인수입니다. 비워 두면 대문자와 밑줄로만 구성된 모든 인수가 고려됩니다. GLOB 패턴을 지원합니다.",
-	"update.code.model.for.list.modifier": "자동 목록 파일 수정기에 대한 코드 모델 업데이트"
+	"update.code.model.for.list.modifier": "자동 목록 파일 수정기에 대한 코드 모델 업데이트",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

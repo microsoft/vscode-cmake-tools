@@ -53,6 +53,7 @@
 	"not.reading.nonexistent.kit": "Bez odczytywania pliku nieistniejących zestawów: {0}",
 	"not.reading.invalid.path": "Nie można odczytać nieprawidłowego pliku zestawów: {0}",
 	"reading.kits.file": "Odczytywanie pliku zestawów {0}",
+	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
 	"failed.to.parse": "Nie można przeanalizować elementu {0}: {1}",
 	"invalid.file.error": "Nieprawidłowa zawartość zestawu {0} ({1}):",
 	"successfully.loaded.kits": "Pomyślnie załadowano zestawy w liczbie {0} ze ścieżki {1}",

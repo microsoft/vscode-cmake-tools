@@ -53,6 +53,7 @@
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"not.reading.invalid.path": "未讀取無效套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",
+	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
 	"failed.to.parse": "無法剖析 {0}: {1}",
 	"invalid.file.error": "套件內容 {0} ({1}) 無效:",
 	"successfully.loaded.kits": "已成功從 {1} 載入 {0} 個套件",

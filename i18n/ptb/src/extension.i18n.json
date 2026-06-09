@@ -38,6 +38,8 @@
 	"cmake.debug.name": "Depurador do CMake",
 	"select.a.cmake.project": "Selecione um projeto cmake",
 	"compilation information.not.found": "Não é possível localizar informações para este arquivo",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}",
 	"open.folder": "Abrir Pasta",
 	"no.folder.open.for.quickstart": "Nenhuma pasta está aberta. Abra uma pasta para usar o CMake: Início rápido.",
 	"add.config.preset.in.test.mode": "Executando o CMakeTools no modo de teste. addConfigurePreset está desabilitado.",

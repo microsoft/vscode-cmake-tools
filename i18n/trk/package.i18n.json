@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "En iyi adayı otomatik olarak seç.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Seçili hedef kaynak komut çağrısından seçeneklerle bir Hızlı Seçim sun.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Kullanıcı tanımlı işlevlere ve makrolara kaynak dosya listeleri ekleyen anahtar kelime bağımsız değişkenleri. Boş bırakılırsa, yalnızca büyük harf ve alt çizgilerden oluşan tüm bağımsız değişkenler dikkate alınır. Glob desenlerini destekler.",
-	"update.code.model.for.list.modifier": "Otomatik liste dosyası değiştiricisi için kod modelini güncelleştir"
+	"update.code.model.for.list.modifier": "Otomatik liste dosyası değiştiricisi için kod modelini güncelleştir",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }
