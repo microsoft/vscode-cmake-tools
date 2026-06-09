@@ -329,5 +329,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "自动选择最佳候选项。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "提供快速选取，其中包含所选目标源命令调用中的选项。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "引入源文件列表的用户定义函数和宏的关键字参数。如果留空，则将考虑仅由大写字母和下划线组成的所有参数。支持 glob 模式。",
-	"update.code.model.for.list.modifier": "更新自动列表文件修饰符的代码模型"
+	"update.code.model.for.list.modifier": "更新自动列表文件修饰符的代码模型",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Failed to run test: {0}",
+	"test.debug.error": "Failed to debug test: {0}"
 }

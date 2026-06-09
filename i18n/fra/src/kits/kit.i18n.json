@@ -53,6 +53,7 @@
 	"not.reading.nonexistent.kit": "Impossible de lire un fichier de kits inexistant : {0}",
 	"not.reading.invalid.path": "Impossible de lire le fichier de kits non valide : {0}",
 	"reading.kits.file": "Lecture du fichier de kits {0}",
+	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
 	"failed.to.parse": "Échec de l'analyse de {0} : {1}",
 	"invalid.file.error": "Contenu du kit non valide {0} ({1}) :",
 	"successfully.loaded.kits": "Chargement réussi de {0} kits à partir de {1}",

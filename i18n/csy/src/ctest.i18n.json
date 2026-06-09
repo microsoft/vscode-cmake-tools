@@ -18,6 +18,7 @@
 	"ctest.run.cancelled": "Spuštění příkazu CTest bylo zrušeno.",
 	"ctest.run.terminated": "Běh CTestu se ukončil.",
 	"ctest.finished.with.code": "CTest skončil s návratovým kódem {0}.",
+	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
 	"folder.not.found.in.test.explorer": "Složka se nenašla v Průzkumníkovi testů: {0}",
 	"test.preset.required": "Výběrem předvolby testu zjistíte testy.",
 	"ctest.error": "Při spouštění nástroje ctest došlo k chybě při zjišťování dostupných spustitelných souborů testů.",

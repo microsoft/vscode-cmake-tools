@@ -53,6 +53,7 @@
 	"not.reading.nonexistent.kit": "Nečte se soubor neexistujících sad: {0}",
 	"not.reading.invalid.path": "Nečíst neplatný soubor sad: {0}",
 	"reading.kits.file": "Čte se soubor sad {0}.",
+	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
 	"failed.to.parse": "Nepovedlo se parsovat {0}: {1}",
 	"invalid.file.error": "Neplatný obsah sady: {0} ({1}):",
 	"successfully.loaded.kits": "Úspěšně se načetly sady ({0}) z místa {1}.",
