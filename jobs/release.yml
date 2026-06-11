@@ -61,6 +61,8 @@ extends:
         name: VSEng-MicroBuildVSStable
     customBuildTags:
     - ES365AIMigrationTooling
+    settings:
+      networkIsolationPolicy: Permissive,CFSClean,CFSClean2,CFSClean3
     stages:
     - stage: verify_parameters
       jobs:

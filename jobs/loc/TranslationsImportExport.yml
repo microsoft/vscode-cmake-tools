@@ -40,6 +40,8 @@ extends:
         os: windows
     customBuildTags:
     - ES365AIMigrationTooling
+    settings:
+      networkIsolationPolicy: Permissive,CFSClean,CFSClean2,CFSClean3
     stages:
     - stage: stage
       jobs:
