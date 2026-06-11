@@ -20,6 +20,7 @@ Improvements:
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix `cmake.configureOnOpen` performing a clean reconfigure (deleting `CMakeCache.txt`) instead of an incremental configure when using `__unspec__` kit with CMake >= 3.15 and no explicit generator setting. [#4956](https://github.com/microsoft/vscode-cmake-tools/issues/4956)
 - Fix `CMake: Compile Active File` by unescaping `compile_commands.json` `command` strings into raw argv before spawning the compiler, so defines such as `-DCMAKE_INTDIR=\"RelWithDebInfo\"` are passed correctly. Originally surfaced on Ninja Multi-Config (Windows); also covers shell-escaped databases from `bear`, `intercept-build`, etc. [#4935](https://github.com/microsoft/vscode-cmake-tools/issues/4935)
 - Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
 - Fix CPack package preset inheritance so child `variables` maps now keep parent-defined `-D` values when the child adds its own package variables. [#4924](https://github.com/microsoft/vscode-cmake-tools/issues/4924)
