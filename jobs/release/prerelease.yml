@@ -52,6 +52,8 @@ extends:
             versionSpec: 22.x
         - script: npm install -g @vscode/vsce
           displayName: 'install vsce'
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
         - task: AzureCLI@2
           displayName: 'Generate AAD_TOKEN'
           inputs:
