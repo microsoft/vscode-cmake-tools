@@ -18,7 +18,7 @@
 	"ctest.run.cancelled": "C-Testlauf wurde abgebrochen.",
 	"ctest.run.terminated": "Der CTest-Testlauf wurde beendet.",
 	"ctest.finished.with.code": "CTest wurde mit Rückgabecode {0} abgeschlossen.",
-	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
+	"failed.to.resolve.doctest.line": "Fehler beim Auflösen der doctest-Quellzeile für {0}: {1}",
 	"folder.not.found.in.test.explorer": "Der Ordner wurde im Test-Explorer nicht gefunden: {0}",
 	"test.preset.required": "Eine Testvoreinstellung zum Ermitteln von Tests auswählen",
 	"ctest.error": "Fehler beim Ausführen von CTest zum Ermitteln verfügbarer ausführbarer Testdateien.",
