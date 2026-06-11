@@ -47,7 +47,7 @@ steps:
     script: |
       if "${{parameters.IsPreRelease}}"=="1" (type nul > "insiders.flag") else (type nul > "release.flag")
 - template: /jobs/shared/install-nuget.yml@self
-- script: nuget restore $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\jobs\signing\packages
+- script: nuget restore $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\jobs\signing\packages -ConfigFile $(Build.SourcesDirectory)\jobs\signing\NuGet.config
   displayName: Restore MicroBuild Core
 - task: CmdLine@2
   displayName: Build files
