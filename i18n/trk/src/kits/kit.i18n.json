@@ -53,7 +53,7 @@
 	"not.reading.nonexistent.kit": "Mevcut olmayan set dosyası okunmuyor: {0}",
 	"not.reading.invalid.path": "Geçersiz setler dosyası okunmuyor: {0}",
 	"reading.kits.file": "{0} set dosyası okunuyor",
-	"kits.file.empty": "Kits file {0} is empty, likely mid-write. Skipping parse.",
+	"kits.file.empty": "{0} Kits dosyası boş, büyük olasılıkla yazma işlemi sürüyor. Ayrıştırma atlanıyor.",
 	"failed.to.parse": "{0} ayrıştırılamadı: {1}",
 	"invalid.file.error": "Geçersiz kit içeriği {0} ({1}):",
 	"successfully.loaded.kits": "{1} konumundaki {0} set başarıyla yüklendi",

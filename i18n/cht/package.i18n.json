@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "安裝 Emscripten 的目錄。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "遞迴收集及合併 cmake.buildDirectory 中找到的所有compile_commands.js。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "若設定，此具名工作將在成功執行 CMake 設定後執行。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "在儲存 cmake.sourceDirectory 或 CMakeLists.txt 內容後，自動設定 CMake 專案目錄。",
@@ -330,8 +331,8 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "提供 [快速挑選]，其中包含來自所選目標來源命令調用的選項。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "使用者定義函式和巨集的關鍵字引數，用於引入來源檔案的清單。若留空，將會考慮所有僅包含大寫字母與底線的引數。支援 Glob 模式。",
 	"update.code.model.for.list.modifier": "更新自動清單檔案修飾元的程式碼模型",
-	"test.codelens.run": "$(run) Run",
-	"test.codelens.debug": "$(debug) Debug",
-	"test.run.error": "Failed to run test: {0}",
-	"test.debug.error": "Failed to debug test: {0}"
+	"test.codelens.run": "$(run) 執行",
+	"test.codelens.debug": "$(debug) 偵錯",
+	"test.run.error": "無法執行測試: {0}",
+	"test.debug.error": "無法對測試進行偵錯: {0}"
 }

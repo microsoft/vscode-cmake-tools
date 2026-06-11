@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Каталоги, где возможна установка Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Рекурсивный сбор и объединение всех compile_commands.json, найденных в cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Копирование сюда файла compile_commands.json после выполнения настройки.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Если эта настройка задана, данная именованная задача будет выполнена после успешной настройки конфигурации CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Автоматическая настройка каталогов проекта CMake при их открытии.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Автоматически настраивать каталоги проекта CMake при сохранении содержимого в каталоге cmake.sourceDirectory или в файле CMakeLists.txt.",
@@ -332,6 +333,6 @@
 	"update.code.model.for.list.modifier": "Обновить модель кода для автоматического модификатора списка файлов",
 	"test.codelens.run": "$(run) Run",
 	"test.codelens.debug": "$(debug) Debug",
-	"test.run.error": "Failed to run test: {0}",
-	"test.debug.error": "Failed to debug test: {0}"
+	"test.run.error": "Не удалось выполнить тесты: {0}",
+	"test.debug.error": "Не удалось выполнить отладку теста: {0}"
 }
