@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný Emscripten",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Rekurzivně shromážděte a slučte všechny soubory compile_commands.json nalezené v adresáři cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Po úspěšné konfiguraci zkopírovat soubor compile_commands.json do tohoto umístění",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Pokud je nastavená, tato pojmenovaná úloha se spustí po úspěšné konfiguraci CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automaticky nakonfigurovat adresáře projektu CMake, když se uloží obsah cmake.sourceDirectory nebo CMakeLists.txt",
@@ -330,8 +331,8 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Umožňuje zobrazit nabídku rychlého výběru s možnostmi z vybraného volání příkazu pracujícího se zdrojovými soubory cíle.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty klíčových slov u uživatelem definovaných funkcí a maker, které zavádějí seznamy zdrojových souborů Pokud zůstane prázdné, budou zohledněny všechny argumenty složené pouze z velkých písmen a podtržítek. Podporuje vzory glob.",
 	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu",
-	"test.codelens.run": "$(run) Run",
-	"test.codelens.debug": "$(debug) Debug",
-	"test.run.error": "Failed to run test: {0}",
-	"test.debug.error": "Failed to debug test: {0}"
+	"test.codelens.run": "$(run) Spustit",
+	"test.codelens.debug": "$(debug) Ladit",
+	"test.run.error": "Spuštění testu se nezdařilo: {0}",
+	"test.debug.error": "Test se nepovedlo ladit: {0}"
 }

@@ -18,7 +18,7 @@
 	"ctest.run.cancelled": "Esecuzione CTest annullata",
 	"ctest.run.terminated": "L'esecuzione di CTest è stata terminata",
 	"ctest.finished.with.code": "CTest terminato. Codice restituito: {0}",
-	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
+	"failed.to.resolve.doctest.line": "Non è possibile risolvere la riga di origine di doctest per {0}: {1}",
 	"folder.not.found.in.test.explorer": "Cartella non trovata in Esplora test: {0}",
 	"test.preset.required": "Selezionare un set di impostazioni di test per individuare i test",
 	"ctest.error": "Si è verificato un errore durante l'esecuzione di CTest per determinare gli eseguibili di test disponibili",

@@ -18,7 +18,7 @@
 	"ctest.run.cancelled": "A execução do teste foi cancelada",
 	"ctest.run.terminated": "A execução do CTest foi terminada",
 	"ctest.finished.with.code": "CTest concluído com código de retorno {0}",
-	"failed.to.resolve.doctest.line": "Failed to resolve doctest source line for {0}: {1}",
+	"failed.to.resolve.doctest.line": "Falha ao resolver a linha de origem do doctest para {0}: {1}",
 	"folder.not.found.in.test.explorer": "A pasta não foi encontrada no Gerenciador de Testes: {0}",
 	"test.preset.required": "Selecione uma predefinição de teste para descobrir testes",
 	"ctest.error": "Houve um erro ao executar o CTest para determinar os executáveis de teste disponíveis",

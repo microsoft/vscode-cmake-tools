@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Os diretórios nos quais o Emscripten pode ser instalado.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Coletar e mesclar recursivamente todos os compile_commands.json encontrados no diretório CMake.BuildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copiar o compile_commands.json neste local após uma configuração bem-sucedida.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Se definido, essa tarefa nomeada será executada após uma configuração bem-sucedida do CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configurar os diretórios de projeto do CMake automaticamente quando eles forem abertos.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configure automaticamente diretórios de projeto do CMake quando o conteúdo de cmake.sourceDirectory ou de CMakeLists.txt forem salvos.",
@@ -330,8 +331,8 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Mostre uma Seleção Rápida com opções da invocação do comando de origem do destino selecionado.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumentos de palavra-chave para macros e funções definidas pelo usuário que introduzem listas de arquivos de origem. Se deixado em branco, todos os argumentos que consistem apenas em letras maiúsculas e sublinhados serão considerados. Dá suporte a padrões glob.",
 	"update.code.model.for.list.modifier": "Atualizar o modelo de código para o modificador automático de arquivo de lista",
-	"test.codelens.run": "$(run) Run",
-	"test.codelens.debug": "$(debug) Debug",
-	"test.run.error": "Failed to run test: {0}",
-	"test.debug.error": "Failed to debug test: {0}"
+	"test.codelens.run": "$(run) Execução",
+	"test.codelens.debug": "$(debug) Depuração",
+	"test.run.error": "Falha ao executar o teste: {0}",
+	"test.debug.error": "Falha ao depurar o teste: {0}"
 }
