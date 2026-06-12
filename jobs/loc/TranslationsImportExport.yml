@@ -58,6 +58,9 @@ extends:
           inputs:
             version: "22.x"
 
+        - script: npm install -g yarn@1.22.19
+          displayName: Use Yarn 1.x (from CFS feed)
+
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
