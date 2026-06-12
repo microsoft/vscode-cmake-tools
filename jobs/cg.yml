@@ -79,8 +79,8 @@ extends:
           inputs:
             version: "22.x"
         
-        - task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
-          displayName: Use Yarn 1.x
+        - script: npm install -g yarn@1.22.19
+          displayName: Use Yarn 1.x (from CFS feed)
         
         - script: npm install -g @vscode/vsce
           displayName: 'install vsce'
