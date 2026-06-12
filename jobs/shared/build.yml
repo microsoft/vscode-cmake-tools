@@ -13,8 +13,8 @@ steps:
   displayName: Use Node 22.x
   inputs:
     versionSpec: 22.x
-- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
-  displayName: Use Yarn 1.x
+- script: npm install -g yarn@1.22.19
+  displayName: Use Yarn 1.x (from CFS feed)
 - task: CmdLine@2
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:

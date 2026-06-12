@@ -331,8 +331,8 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Zaprezentuj szybkie wybieranie z opcjami z wybranego wywołania polecenia docelowego źródła.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty słów kluczowych dla funkcji i makr zdefiniowanych przez użytkownika, które wprowadzają listy plików źródłowych. Jeśli argument pozostanie pusty, zostaną uwzględnione wszystkie argumenty składające się tylko z wielkich liter i podkreśleń. Obsługuje wzorce globalne.",
 	"update.code.model.for.list.modifier": "Aktualizowanie modelu kodu dla automatycznego modyfikatora pliku listy",
-	"test.codelens.run": "$(run) Run",
-	"test.codelens.debug": "$(debug) Debug",
+	"test.codelens.run": "Przebieg $(run)",
+	"test.codelens.debug": "Debugowanie $(debug)",
 	"test.run.error": "Nie można uruchomić testów: {0}",
-	"test.debug.error": "Failed to debug test: {0}"
+	"test.debug.error": "Nie można debugować testu: {0}"
 }
