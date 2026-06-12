@@ -190,7 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory içinde tüm compile_commands.json dosyalarını özyinelemeli olarak topla ve birleştir.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
-	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Ayarlanırsa, bu adlandırılmış görev CMake yapılandırması başlamadan önce yürütülür. Ön yapılandırma görevini tasks.json dosyasındaki diğer görevlerle zincirleme olarak bağlamanın, ön yapılandırma görevinin birden fazla kez çalıştırılmasına yol açabileceğini unutmayın.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Ayarlanırsa, bu adlandırılmış görev başarılı bir CMake yapılandırması sonrasında yürütülür.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory veya CMakeLists.txt içeriği kaydedildiğinde CMake proje dizinlerini otomatik olarak yapılandırın.",

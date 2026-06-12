@@ -190,7 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný Emscripten",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Rekurzivně shromážděte a slučte všechny soubory compile_commands.json nalezené v adresáři cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Po úspěšné konfiguraci zkopírovat soubor compile_commands.json do tohoto umístění",
-	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Pokud je nastaveno, tato pojmenovaná úloha se provede před konfigurací CMake. Vezměte prosím na vědomí, že zřetězení předkonfigurační úlohy s dalšími úlohami v tasks.json může vést k vícenásobnému provedení předkonfigurační úlohy.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Pokud je nastavená, tato pojmenovaná úloha se spustí po úspěšné konfiguraci CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automaticky nakonfigurovat adresáře projektu CMake, když se uloží obsah cmake.sourceDirectory nebo CMakeLists.txt",
