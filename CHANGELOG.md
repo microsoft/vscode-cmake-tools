@@ -34,6 +34,7 @@ Bug Fixes:
 - Fix `CMakeToolsApi.getProject()` treating file URIs as source directories, which could log `"sourceDirectory" is not a directory` during normal API usage from dependent extensions. [#4951](https://github.com/microsoft/vscode-cmake-tools/issues/4951)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
+- Fix broken marketplace badges in `README.md` [#4972](https://github.com/microsoft/vscode-cmake-tools/pull/4972) [@Maxxxxior](https://github.com/Maxxxxior)
 
 ## 1.23.52
 
