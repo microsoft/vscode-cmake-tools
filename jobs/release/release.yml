@@ -20,7 +20,9 @@ extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
-      name: VSEng-MicroBuildVSStable
+      name: AzurePipelines-EO
+      image: 1ESPT-Windows2025
+      os: windows
     settings:
       networkIsolationPolicy: Permissive,CFSClean,CFSClean2,CFSClean3
 
