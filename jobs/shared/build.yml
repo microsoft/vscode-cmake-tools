@@ -13,14 +13,14 @@ steps:
   displayName: Use Node 22.x
   inputs:
     versionSpec: 22.x
-- script: npm install -g yarn@1.22.19
-  displayName: Use Yarn 1.x (from CFS feed)
-  env:
-    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: CmdLine@2
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+- script: npm install -g yarn@1.22.19
+  displayName: Use Yarn 1.x (from CFS feed)
+  env:
+    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - script: npm install -g @vscode/vsce
   displayName: 'install vsce'
   env:

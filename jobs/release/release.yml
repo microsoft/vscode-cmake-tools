@@ -76,6 +76,10 @@ extends:
           displayName: 'Use Node 22.x'
           inputs:
             versionSpec: 22.x
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
         - script: npm install -g @vscode/vsce
           displayName: 'install vsce'
           env:
