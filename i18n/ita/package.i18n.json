@@ -190,7 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directory in cui è possibile installare Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "È possibile raccogliere e unire in modo ricorsivo tutti i file compile_commands.json disponibili in cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copia compile_commands.json in questa posizione dopo una configurazione riuscita.",
-	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Se impostata, questa attività denominata verrà eseguita prima della configurazione di CMake. Si noti che il concatenamento dell'attività di preconfigurazione con altre attività in tasks.json può portare a più esecuzioni dell'attività di preconfigurazione.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Se impostata, questa attività denominata verrà eseguita dopo una configurazione CMake riuscita.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configura automaticamente le directory di progetto di CMake quando vengono aperte.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configura automaticamente le directory del progetto CMake quando si salva cmake.sourceDirectory o il contenuto di CMakeLists.txt.",

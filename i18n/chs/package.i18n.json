@@ -190,7 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "可在其中安装 Emscripten 的目录。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "以递归方式收集和合并在 cmake.buildDirectory 中找到的所有compile_commands.json。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。",
-	"cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "如果设置，此命名任务将在 CMake 配置之前执行。请注意，将预配置任务与 tasks.json 中的其他任务链接可能会导致预配置任务多次执行。",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "如果已设置，则 CMake 配置成功后执行此命名任务。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "在 CMake 项目目录打开时自动对其进行配置。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "保存 cmake.sourceDirectory 或 CMakeLists.txt 内容时，自动配置 CMake 项目目录。",
