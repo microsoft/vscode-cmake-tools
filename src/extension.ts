@@ -1590,14 +1590,17 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForProject(command, project, precheck);
     }
 
-    queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
+    async queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
         const project = this.getProjectFromFolder(folder);
         if (project) {
+            if (!await this.ensureActiveConfigurePresetOrKit(project)) {
+                return null;
+            }
             return query(project);
         }
 
         rollbar.error(localize('invalid.folder', 'Invalid folder.'));
-        return Promise.resolve(null);
+        return null;
     }
 
     cleanConfigure(folder?: vscode.WorkspaceFolder) {

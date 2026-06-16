@@ -18,6 +18,7 @@
 	"ctest.run.cancelled": "Запуск CTest отменен",
 	"ctest.run.terminated": "Запуск CTest был прерван.",
 	"ctest.finished.with.code": "CTest завершила работу с кодом возврата {0}.",
+	"failed.to.resolve.doctest.line": "Не удалось разрешить исходную строку doctest для {0}: {1}",
 	"folder.not.found.in.test.explorer": "Папка не найдена в обозревателе тестов: {0}",
 	"test.preset.required": "Выберите предустановку тестирования для обнаружения тестов",
 	"ctest.error": "Произошла ошибка при запуске CTest для определения доступных исполняемых файлов тестов.",

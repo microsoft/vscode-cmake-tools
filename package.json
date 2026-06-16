@@ -3108,6 +3108,12 @@
           "description": "%cmake-tools.configuration.cmake.copyCompileCommands.description%",
           "scope": "resource"
         },
+        "cmake.preConfigureTask": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.preConfigureTask.description%",
+          "scope": "resource"
+        },
         "cmake.postConfigureTask": {
           "type": "string",
           "default": null,
@@ -4528,7 +4534,7 @@
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
     "string.prototype.matchall": "^4.0.10",
-    "tmp": "^0.2.4",
+    "tmp": "^0.2.7",
     "vscode-cpptools": "^7.1.1",
     "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
@@ -4551,10 +4557,10 @@
     "**/mocha/minimatch": "^3.1.5",
     "**/braces": "^3.0.3",
     "js-yaml": "^4.1.1",
-    "tmp": "^0.2.4",
+    "tmp": "^0.2.7",
     "jws": "^4.0.1",
     "serialize-javascript": "^7.0.4",
     "**/minimatch/brace-expansion": "^1.1.13"
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.22"
 }

@@ -6,6 +6,7 @@ Features:
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)
+- Add `cmake.preConfigureTask` setting to execute a named VS Code task before every CMake configure. [#2449](https://github.com/microsoft/vscode-cmake-tools/issues/2449) [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960) [@erdemiru](https://github.com/erdemiru)
 
 Improvements:
 - Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.
@@ -21,6 +22,8 @@ Improvements:
 
 Bug Fixes:
 - Fix `cmake.configureOnOpen` performing a clean reconfigure (deleting `CMakeCache.txt`) instead of an incremental configure when using `__unspec__` kit with CMake >= 3.15 and no explicit generator setting. [#4956](https://github.com/microsoft/vscode-cmake-tools/issues/4956)
+- Fix `${command:cmake.launchTargetPath}` and related substitution commands (`cmake.launchTargetDirectory`, `cmake.launchTargetFilename`, `cmake.launchTargetName`, `cmake.getLaunchTargetPath`, etc.) showing an error instead of prompting kit or preset selection when none is active. These commands now behave consistently with the build/configure commands by displaying the quick pick dialog.
+- Fix intermittent `Failed to parse cmake-tools-kits.json` error caused by reading the kits file during a non-atomic write. `readKitsFile` now returns `undefined` when the file is empty or unparseable, and callers retain the previous kits in memory instead of clearing them. The file watcher will re-read once the write completes. [#4833](https://github.com/microsoft/vscode-cmake-tools/issues/4833)
 - Fix `CMake: Compile Active File` by unescaping `compile_commands.json` `command` strings into raw argv before spawning the compiler, so defines such as `-DCMAKE_INTDIR=\"RelWithDebInfo\"` are passed correctly. Originally surfaced on Ninja Multi-Config (Windows); also covers shell-escaped databases from `bear`, `intercept-build`, etc. [#4935](https://github.com/microsoft/vscode-cmake-tools/issues/4935)
 - Fix mirrored cursor in CMake control structure snippets. Completing a scoped command (e.g., `function`, `if`, `foreach`) no longer duplicates typed text into the end-statement. [#4480](https://github.com/microsoft/vscode-cmake-tools/issues/4480)
 - Fix CPack package preset inheritance so child `variables` maps now keep parent-defined `-D` values when the child adds its own package variables. [#4924](https://github.com/microsoft/vscode-cmake-tools/issues/4924)
@@ -30,6 +33,7 @@ Bug Fixes:
 - Fix `CMAKE_MAKE_PROGRAM` and other cache variables using stale values when presets are edited without restarting VS Code. The `onCodeModelChanged` subscription is now established in `startNewCMakeDriver` so it applies to both initial creation and driver reloads. [#4864](https://github.com/microsoft/vscode-cmake-tools/issues/4864)
 - Fix Windows backslash handling in token splitting to preserve trailing backslashes before whitespace. This caused "Compile Active File" with MSVC + Ninja Multi-Config to merge adjacent flags (e.g., `/Fd<dir>\ /FS`) into a single malformed argument. [#4902](https://github.com/microsoft/vscode-cmake-tools/issues/4902)
 - Fix kit detection returning "unknown vendor" when using clang-cl compiler. [#4638](https://github.com/microsoft/vscode-cmake-tools/issues/4638)
+- Fix `CMakeToolsApi.getProject()` treating file URIs as source directories, which could log `"sourceDirectory" is not a directory` during normal API usage from dependent extensions. [#4951](https://github.com/microsoft/vscode-cmake-tools/issues/4951)
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
 

@@ -17,7 +17,7 @@ suite('Toolchain Substitution', () => {
 
         const user_kits = await readKitsFile(USER_KITS_FILEPATH);
         const ws_kits = await kitsForWorkspaceDirectory(testEnv.projectFolder.location);
-        const kits = user_kits.concat(ws_kits);
+        const kits = (user_kits ?? []).concat(ws_kits);
         const tc_kit = kits.find(k => k.name === 'Test Toolchain');
         expect(tc_kit).to.not.eq(undefined);
 
