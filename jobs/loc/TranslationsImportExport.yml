@@ -58,13 +58,17 @@ extends:
           inputs:
             version: "22.x"
 
-        - script: npm install -g yarn@1.22.19
-          displayName: Use Yarn 1.x (from CFS feed)
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
 
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
-        
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+
         - task: CmdLine@2
           inputs:
             script: 'yarn run translations-export'

@@ -20,7 +20,9 @@ extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     pool:
-      name: VSEng-MicroBuildVSStable
+      name: AzurePipelines-EO
+      image: 1ESPT-Windows2025
+      os: windows
     settings:
       networkIsolationPolicy: Permissive,CFSClean,CFSClean2,CFSClean3
 
@@ -50,7 +52,11 @@ extends:
           displayName: 'Use Node 22.x'
           inputs:
             versionSpec: 22.x
-        - script: npm install -g @vscode/vsce
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+        - script: npm install -g @vscode/vsce@3.1.0
           displayName: 'install vsce'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
