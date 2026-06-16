@@ -17,14 +17,6 @@ steps:
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-- script: npm install -g yarn@1.22.19
-  displayName: Use Yarn 1.x (from CFS feed)
-  env:
-    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
-- script: npm install -g @vscode/vsce
-  displayName: 'install vsce'
-  env:
-    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: PowerShell@2
   displayName: Set build name
   inputs:
@@ -70,14 +62,14 @@ steps:
   inputs:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
-      if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+      if "${{parameters.IsPreRelease}}"=="1" (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
   env:
     npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: CmdLine@2
   displayName: Generate Extension Manifest
   inputs:
     script: |
-      vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
+      yarn run vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
 - task: CmdLine@2
   displayName: Prepare manifest for signing
   inputs:

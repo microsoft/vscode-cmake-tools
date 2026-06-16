@@ -4562,5 +4562,5 @@
     "serialize-javascript": "^7.0.4",
     "**/minimatch/brace-expansion": "^1.1.13"
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.22"
 }
