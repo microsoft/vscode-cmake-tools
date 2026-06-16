@@ -11,6 +11,7 @@ scripts/
 src/
 test/
 tools/
+vsce-tool/
 vscode-extensions-localization-export/
 vscode-translations-import/
 **/*.map

@@ -86,3 +86,19 @@ steps:
     script: |
       echo ${{parameters.ReleaseVersion}} >> version.txt
       move version.txt $(Build.ArtifactStagingDirectory)\vsix\version.txt
+- task: CmdLine@2
+  displayName: Bundle vsce publishing tool
+  inputs:
+    script: |
+      node $(Build.SourcesDirectory)\jobs\release\bundle-vsce.js $(Build.SourcesDirectory)\vsce-tool
+- task: PowerShell@2
+  displayName: Verify bundled vsce tool
+  inputs:
+    targetType: inline
+    script: |-
+      $entry = "$(Build.SourcesDirectory)\vsce-tool\node_modules\@vscode\vsce\vsce"
+      $bin = "$(Build.SourcesDirectory)\vsce-tool\node_modules\@vscode\vsce-sign\bin\vsce-sign.exe"
+      if (-not (Test-Path $entry)) { Write-Host "##vso[task.logissue type=error]Missing bundled vsce entry: $entry"; exit 1 }
+      if (-not (Test-Path $bin))   { Write-Host "##vso[task.logissue type=error]Missing bundled vsce-sign binary: $bin"; exit 1 }
+      node $entry --version
+      if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]Bundled vsce failed to run"; exit 1 }
