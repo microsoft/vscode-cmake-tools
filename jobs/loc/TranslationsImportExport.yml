@@ -63,17 +63,12 @@ extends:
           inputs:
             script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
 
-        - script: npm install -g yarn@1.22.19
-          displayName: Use Yarn 1.x (from CFS feed)
-          env:
-            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
-
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
-        
+
         - task: CmdLine@2
           inputs:
             script: 'yarn run translations-export'
