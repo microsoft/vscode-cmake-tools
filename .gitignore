@@ -25,5 +25,3 @@ test.txt
 **/*.nls.json
 **/*.nls.*.json
 
-# vsce publishing tool bundle staged by jobs/release/bundle-vsce.js during the build pipeline
-vsce-tool/
