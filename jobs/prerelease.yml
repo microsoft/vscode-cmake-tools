@@ -85,6 +85,11 @@ extends:
             targetPath: $(Build.ArtifactStagingDirectory)/vsix
             artifactName: vsix
             sbomBuildDropPath: $(Build.ArtifactStagingDirectory)
+          - output: pipelineArtifact
+            displayName: 'Publish vsce tool'
+            targetPath: $(Build.SourcesDirectory)/vsce-tool
+            artifactName: vsce-tool
+            sbomBuildDropPath: $(Build.SourcesDirectory)/vsce-tool
         steps:
         - checkout: self
           clean: true
