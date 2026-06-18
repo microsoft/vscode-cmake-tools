@@ -7,6 +7,7 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
+import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -335,6 +336,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
+        this.colorMode = config.colorizedBuildOutput;
         this.logBySeverity = config.logBuildOutputBySeverity;
         // Capture the severity of the diagnostic committed while processing the current line so that,
         // when logging by severity, the line can be logged at a matching level. Diagnostic parsing and
@@ -343,6 +345,12 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
             this._currentLineSeverity = diagnostic.severity;
         });
     }
+
+    /**
+     * How build output should be colorized in the Output channel. Read once per
+     * build (a fresh consumer is constructed for each build).
+     */
+    private readonly colorMode: BuildColorMode;
 
     /**
      * When true, build output is logged at a level reflecting its severity (errors as `error`,
@@ -377,28 +385,48 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     /**
-     * Log a build output line, honoring `cmake.logBuildOutputBySeverity`.
+     * Log a build output line, honoring `cmake.logBuildOutputBySeverity` and
+     * optionally colorizing the Output channel presentation.
      *
      * @param line The output line to log.
      * @param isStdErr Whether the line came from standard error.
      */
-    private logLine(line: string, isStdErr: boolean) {
+    private echo(line: string, isStdErr: boolean) {
         if (!this.logger) {
             return;
         }
         const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
+        if (this.colorMode === 'off') {
+            switch (method) {
+                case 'error':
+                    this.logger.error(line);
+                    break;
+                case 'warning':
+                    this.logger.warning(line);
+                    break;
+                case 'debug':
+                    this.logger.debug(line);
+                    break;
+                default:
+                    this.logger.info(line);
+                    break;
+            }
+            return;
+        }
+
+        const decorated = colorizeBuildLine(line, this.colorMode);
         switch (method) {
             case 'error':
-                this.logger.error(line);
+                this.logger.errorColorized(line, decorated);
                 break;
             case 'warning':
-                this.logger.warning(line);
+                this.logger.warningColorized(line, decorated);
                 break;
             case 'debug':
-                this.logger.debug(line);
+                this.logger.debugColorized(line, decorated);
                 break;
             default:
-                this.logger.info(line);
+                this.logger.infoColorized(line, decorated);
                 break;
         }
     }
@@ -406,14 +434,14 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     error(line: string) {
         this._currentLineSeverity = undefined;
         this.compileConsumer.error(line);
-        this.logLine(line, true);
+        this.echo(line, true);
         super.error(line);
     }
 
     output(line: string) {
         this._currentLineSeverity = undefined;
         this.compileConsumer.output(line);
-        this.logLine(line, false);
+        this.echo(line, false);
         super.output(line);
         const progress = this._percent_re.exec(line);
         if (progress) {
