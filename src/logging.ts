@@ -147,6 +147,18 @@ class SingletonLogger {
     }
 
     private _log(level: LogLevel, ...args: Stringable[]) {
+        this._emit(level, true, args);
+    }
+
+    /** Like the level methods, but writes to the file/console only — never the Output channel. */
+    infoFileOnly(...args: Stringable[]) {
+        this._emit(LogLevel.Info, false, args);
+    }
+    errorFileOnly(...args: Stringable[]) {
+        this._emit(LogLevel.Error, false, args);
+    }
+
+    private _emit(level: LogLevel, toChannel: boolean, args: Stringable[]) {
         const trace = vscode.workspace.getConfiguration('cmake').get('enableTraceLogging', false);
         if (level === LogLevel.Trace && !trace) {
             return;
@@ -175,8 +187,8 @@ class SingletonLogger {
         this._logStream.then(strm => strm.write(raw_message + '\n')).catch(e => {
             console.error('Unhandled error while writing CMakeTools log file', e);
         });
-        // Write to our output channel
-        if (levelEnabled(level)) {
+        // Write to our output channel (skipped for file-only messages).
+        if (toChannel && levelEnabled(level)) {
             const showTimestamps = vscode.workspace.getConfiguration('cmake').get('showTimestampsInOutput', false);
             this._channel.appendLine(showTimestamps ? raw_message : user_message);
         }
@@ -245,6 +257,13 @@ export class Logger {
     error(...args: Stringable[]) {
         SingletonLogger.instance().error(this.tag, ...args);
     }
+    /** Log at Info/Error level to the file and developer console only — never the Output channel. */
+    infoFileOnly(...args: Stringable[]) {
+        SingletonLogger.instance().infoFileOnly(this.tag, ...args);
+    }
+    errorFileOnly(...args: Stringable[]) {
+        SingletonLogger.instance().errorFileOnly(this.tag, ...args);
+    }
     fatal(...args: Stringable[]) {
         SingletonLogger.instance().fatal(this.tag, ...args);
     }
@@ -254,23 +273,9 @@ export class Logger {
     }
 
     showChannel(error_to_show?: boolean) {
-        const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
-
-        let should_show: boolean = false;
-        if (reveal_log === 'always') {
-            should_show = true;
-        }
-        // won't show if no target information
-        if (reveal_log === 'error' && error_to_show !== undefined) {
-            should_show = error_to_show;
-        }
-        const should_focus = (reveal_log === 'focus');
-        if (should_focus) {
-            should_show = true;
-        }
-
-        if (should_show) {
-            SingletonLogger.instance().showChannel(!should_focus);
+        const { show, focus } = revealLogDecision(error_to_show);
+        if (show) {
+            SingletonLogger.instance().showChannel(!focus);
         }
     }
 
@@ -282,6 +287,29 @@ export class Logger {
 
 export function createLogger(tag: string) {
     return new Logger(tag);
+}
+
+/**
+ * Decide, based on the `cmake.revealLog` setting, whether a surface (the Output
+ * channel or the colorized build terminal) should be revealed, and whether it
+ * should take focus. Shared so the colorized build terminal honors `revealLog`
+ * exactly as the Output channel does.
+ */
+export function revealLogDecision(error_to_show?: boolean): { show: boolean; focus: boolean } {
+    const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
+    let show = false;
+    if (reveal_log === 'always') {
+        show = true;
+    }
+    // won't show if no target information
+    if (reveal_log === 'error' && error_to_show !== undefined) {
+        show = error_to_show;
+    }
+    const focus = (reveal_log === 'focus');
+    if (focus) {
+        show = true;
+    }
+    return { show, focus };
 }
 
 export async function showLogFile(): Promise<void> {

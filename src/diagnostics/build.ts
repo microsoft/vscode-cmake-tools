@@ -344,7 +344,19 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
      */
     private echo(line: string, isError: boolean) {
         if (this.colorMode !== 'off') {
+            // Colorized: the terminal is the single visible build surface. The plain
+            // line still goes to the on-disk log file and developer console, but NOT
+            // the Output channel — this avoids duplicating the stream and the channel
+            // stealing focus away from the terminal.
             buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
+            if (this.logger) {
+                if (isError) {
+                    this.logger.errorFileOnly(line);
+                } else {
+                    this.logger.infoFileOnly(line);
+                }
+            }
+            return;
         }
         if (!this.logger) {
             return;
