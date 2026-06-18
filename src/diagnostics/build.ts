@@ -7,7 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
+import { BuildColorMode } from '@cmt/colorize';
+import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -386,47 +387,31 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
 
     /**
      * Log a build output line, honoring `cmake.logBuildOutputBySeverity` and
-     * optionally colorizing the Output channel presentation.
+     * optionally mirroring a colorized copy to the integrated terminal.
      *
      * @param line The output line to log.
      * @param isStdErr Whether the line came from standard error.
      */
     private echo(line: string, isStdErr: boolean) {
+        if (this.colorMode !== 'off') {
+            buildOutputTerminal().writeLine(line, this.colorMode);
+        }
         if (!this.logger) {
             return;
         }
         const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
-        if (this.colorMode === 'off') {
-            switch (method) {
-                case 'error':
-                    this.logger.error(line);
-                    break;
-                case 'warning':
-                    this.logger.warning(line);
-                    break;
-                case 'debug':
-                    this.logger.debug(line);
-                    break;
-                default:
-                    this.logger.info(line);
-                    break;
-            }
-            return;
-        }
-
-        const decorated = colorizeBuildLine(line, this.colorMode);
         switch (method) {
             case 'error':
-                this.logger.errorColorized(line, decorated);
+                this.logger.error(line);
                 break;
             case 'warning':
-                this.logger.warningColorized(line, decorated);
+                this.logger.warning(line);
                 break;
             case 'debug':
-                this.logger.debugColorized(line, decorated);
+                this.logger.debug(line);
                 break;
             default:
-                this.logger.infoColorized(line, decorated);
+                this.logger.info(line);
                 break;
         }
     }

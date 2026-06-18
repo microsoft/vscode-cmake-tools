@@ -18,6 +18,7 @@ import * as expand from '@cmt/expand';
 import { mergeBuildArgs } from '@cmt/taskArgs';
 import { CommandResult } from 'vscode-cmake-tools';
 import { CompileOutputConsumer } from '@cmt/diagnostics/build';
+import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
 import collections from '@cmt/diagnostics/collections';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 
@@ -380,6 +381,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vscode.Pseudoterminal {
     private writeEmitter = new vscode.EventEmitter<string>();
     private closeEmitter = new vscode.EventEmitter<number>();
+    // How build-tool output is colorized in this terminal. Only set for build
+    // tasks (see runBuildTask); stays 'off' for config/test/package/workflow.
+    private colorMode: BuildColorMode = 'off';
     public get onDidWrite(): vscode.Event<string> {
         return this.writeEmitter.event;
     }
@@ -394,12 +398,12 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
     // These two override methods are used to write output and error messages to the terminal, as well
     // as call the parent class's output and error methods, which store the stdout and stderr messages for returning that info later.
     override output(line: string): void {
-        this.writeEmitter.fire(line + endOfLine);
+        this.writeEmitter.fire(colorizeBuildLine(line, this.colorMode) + endOfLine);
         super.output(line);
     }
 
     override error(error: string): void {
-        this.writeEmitter.fire(error + endOfLine);
+        this.writeEmitter.fire(colorizeBuildLine(error, this.colorMode) + endOfLine);
         super.error(error);
     }
 
@@ -575,6 +579,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         let cmakePath: string;
         if (cmakeDriver) {
             cmakePath = cmakeDriver.getCMakeCommand();
+            this.colorMode = cmakeDriver.config.colorizedBuildOutput;
 
             if (!this.options) {
                 this.options = {};
