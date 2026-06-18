@@ -38,10 +38,6 @@ extends:
             pipeline: BuildPrereleasePipeline
             artifactName: vsix
             targetPath: $(Build.StagingDirectory)\vsix
-          - input: pipelineArtifact
-            pipeline: BuildPrereleasePipeline
-            artifactName: vsce-tool
-            targetPath: $(Build.StagingDirectory)\vsce-tool
 
         steps:
         - powershell: |
@@ -56,6 +52,31 @@ extends:
           displayName: 'Use Node 22.x'
           inputs:
             versionSpec: 22.x
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force
+          displayName: 'Install vsce'
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false
+          displayName: 'Rebuild vsce-sign native binary'
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+        - powershell: |
+            $root = npm root -g
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) { Write-Host "##vso[task.logissue type=error]npm root -g failed"; exit 1 }
+            $root = $root.Trim()
+            # Resolve the vsce-sign native binary exactly as `vsce publish` does: from @vscode/vsce's own module tree.
+            # In a global install, @vscode/vsce-sign is nested under @vscode/vsce/node_modules (not hoisted to the
+            # global root), so a top-level path check is wrong. This mirrors Node resolution and is layout-agnostic.
+            $sign = node -e "const p=require('path'),fs=require('fs');const vsce=require.resolve('@vscode/vsce',{paths:[process.argv[1]]});const pkg=require.resolve('@vscode/vsce-sign/package.json',{paths:[p.dirname(vsce)]});const cmd=process.platform==='win32'?'vsce-sign.exe':'vsce-sign';const b=p.join(p.dirname(pkg),'bin',cmd);if(!fs.existsSync(b)){process.exit(2);}process.stdout.write(b);" "$root"
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sign)) { Write-Host "##vso[task.logissue type=error]vsce-sign binary not resolvable from @vscode/vsce under $root"; exit 1 }
+            Write-Host "Found vsce-sign at $($sign.Trim())"
+            vsce --version
+            if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]vsce failed to run"; exit 1 }
+          displayName: 'Verify vsce'
         - task: AzureCLI@2
           displayName: 'Generate AAD_TOKEN'
           inputs:
@@ -66,7 +87,7 @@ extends:
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
         - script: |
-            node $(Build.StagingDirectory)\vsce-tool\node_modules\@vscode\vsce\vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --pre-release --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
+            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --pre-release --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
           displayName: 'Publish the VSIX'
           env:
             VSCE_PAT: $(AAD_TOKEN)
