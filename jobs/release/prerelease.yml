@@ -66,8 +66,14 @@ extends:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
         - powershell: |
             $root = npm root -g
-            $sign = Join-Path $root '@vscode\vsce-sign\bin\vsce-sign.exe'
-            if (-not (Test-Path $sign)) { Write-Host "##vso[task.logissue type=error]Missing vsce-sign binary: $sign"; exit 1 }
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($root)) { Write-Host "##vso[task.logissue type=error]npm root -g failed"; exit 1 }
+            $root = $root.Trim()
+            # Resolve the vsce-sign native binary exactly as `vsce publish` does: from @vscode/vsce's own module tree.
+            # In a global install, @vscode/vsce-sign is nested under @vscode/vsce/node_modules (not hoisted to the
+            # global root), so a top-level path check is wrong. This mirrors Node resolution and is layout-agnostic.
+            $sign = node -e "const p=require('path'),fs=require('fs');const vsce=require.resolve('@vscode/vsce',{paths:[process.argv[1]]});const pkg=require.resolve('@vscode/vsce-sign/package.json',{paths:[p.dirname(vsce)]});const cmd=process.platform==='win32'?'vsce-sign.exe':'vsce-sign';const b=p.join(p.dirname(pkg),'bin',cmd);if(!fs.existsSync(b)){process.exit(2);}process.stdout.write(b);" "$root"
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sign)) { Write-Host "##vso[task.logissue type=error]vsce-sign binary not resolvable from @vscode/vsce under $root"; exit 1 }
+            Write-Host "Found vsce-sign at $($sign.Trim())"
             vsce --version
             if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]vsce failed to run"; exit 1 }
           displayName: 'Verify vsce'
