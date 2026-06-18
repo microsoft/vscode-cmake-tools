@@ -72,8 +72,6 @@ extends:
             targetPath: $(Build.StagingDirectory)\vsix
 
         steps:
-        - checkout: self
-          fetchTags: false
         - task: NodeTool@0
           displayName: 'Use Node 22.x'
           inputs:
@@ -82,10 +80,21 @@ extends:
           displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
           inputs:
             script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-        - script: yarn install --frozen-lockfile
-          displayName: 'Install dependencies from CFS feed'
+        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force
+          displayName: 'Install vsce'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false
+          displayName: 'Rebuild vsce-sign native binary'
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+        - powershell: |
+            $root = npm root -g
+            $sign = Join-Path $root '@vscode\vsce-sign\bin\vsce-sign.exe'
+            if (-not (Test-Path $sign)) { Write-Host "##vso[task.logissue type=error]Missing vsce-sign binary: $sign"; exit 1 }
+            vsce --version
+            if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]vsce failed to run"; exit 1 }
+          displayName: 'Verify vsce'
         - task: AzureCLI@2
           displayName: 'Generate AAD_TOKEN'
           inputs:
@@ -96,7 +105,7 @@ extends:
               $aadToken = az account get-access-token --query accessToken --resource $(AzureGuid) -o tsv
               Write-Host "##vso[task.setvariable variable=AAD_TOKEN;issecret=true]$aadToken"
         - script: |
-            yarn run vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
+            vsce publish --packagePath $(Build.StagingDirectory)\vsix\cmake-tools.vsix --manifestPath $(Build.StagingDirectory)\vsix\extension.manifest --signaturePath $(Build.StagingDirectory)\vsix\extension.signature.p7s
           displayName: 'Publish the VSIX'
           env:
             VSCE_PAT: $(AAD_TOKEN)
