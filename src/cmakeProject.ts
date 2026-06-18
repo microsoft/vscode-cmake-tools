@@ -2659,8 +2659,10 @@ export class CMakeProject {
                         const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                         combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         buildLogger.info(localize('starting.build', 'Starting build'));
-                        if (drv!.config.colorizedBuildOutput !== 'off') {
-                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild);
+                        const buildColorMode = drv!.config.colorizedBuildOutput;
+                        if (buildColorMode !== 'off') {
+                            const banner = buildColorMode === 'rich' ? targetName : undefined;
+                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner);
                         }
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
@@ -2668,6 +2670,8 @@ export class CMakeProject {
                         if (rc !== 0) {
                             log.showChannel(true); // in case build has failed
                         }
+                        let buildErrors = 0;
+                        let buildWarnings = 0;
                         logBuildResult(rc);
                         if (drv!.config.parseBuildDiagnostics) {
                             const fileDiags = await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir);
@@ -2676,6 +2680,16 @@ export class CMakeProject {
                                 // path resolution and related information). This replaces
                                 // the incremental diagnostics added during the build.
                                 populateCollection(collections.build, fileDiags);
+                            }
+                            // Count from the resolved diagnostics — already filtered by
+                            // `enableOutputParsers`, so the rich-mode summary footer matches
+                            // the Problems panel exactly.
+                            for (const fileDiag of fileDiags) {
+                                if (fileDiag.diag.severity === vscode.DiagnosticSeverity.Error) {
+                                    buildErrors++;
+                                } else if (fileDiag.diag.severity === vscode.DiagnosticSeverity.Warning) {
+                                    buildWarnings++;
+                                }
                             }
                             // When empty: either the build succeeded (collection was
                             // already cleared at build start), or the build ran through
@@ -2686,6 +2700,10 @@ export class CMakeProject {
                             // Parsing disabled — clear any stale diagnostics that may
                             // remain from a previous build that had parsing enabled.
                             collections.build.clear();
+                        }
+                        if (buildColorMode === 'rich') {
+                            const outcome = rc === null ? 'cancelled' : (rc === 0 && buildErrors === 0 ? 'succeeded' : 'failed');
+                            buildOutputTerminal().writeSummary(outcome, { errors: buildErrors, warnings: buildWarnings }, drv!.config.buildOutputGlyphs);
                         }
                         if (drv!.config.testExplorerIntegrationEnabled) {
                             await this.cTestController.refreshTests(drv!);

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { classifyBuildLine, colorizeBuildLine, BuildLineSeverity } from '@cmt/colorize';
+import { classifyBuildLine, colorizeBuildLine, decorateBuildLine, isProgressNoise, renderBuildBanner, renderBuildSummary, BuildLineSeverity } from '@cmt/colorize';
 
 /**
  * Tests for the pure build-output colorizer in src/colorize.ts.
@@ -90,5 +90,91 @@ suite('[colorize] colorizeBuildLine', () => {
     test('every colorized line ends with a reset', () => {
         const line = 'main.obj : error LNK2019: unresolved external symbol';
         expect(colorizeBuildLine(line, 'severity').endsWith(RESET)).to.equal(true);
+    });
+});
+
+suite('[colorize] decorateBuildLine (rich)', () => {
+    test('off mode returns the line unchanged', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        expect(decorateBuildLine(line, 'off', 'unicode')).to.equal(line);
+    });
+    test('severity mode is identical to colorizeBuildLine (no glyph)', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        expect(decorateBuildLine(line, 'severity', 'unicode')).to.equal(colorizeBuildLine(line, 'severity'));
+    });
+    test('rich error: bold red + unicode glyph + trailing reset', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(`${ESC}[1;31m\u2717 ${line}${RESET}`);
+    });
+    test('rich warning: yellow + ascii glyph', () => {
+        const line = '/src/main.cpp:7:9: warning: meh';
+        expect(decorateBuildLine(line, 'rich', 'ascii')).to.equal(`${ESC}[33m! ${line}${RESET}`);
+    });
+    test('rich note: cyan + unicode glyph with text-presentation selector', () => {
+        const line = '/src/main.cpp:9:3: note: here';
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(`${ESC}[36m\u2139\uFE0E ${line}${RESET}`);
+    });
+    test('rich success (Built target) is green with a glyph, not dimmed', () => {
+        const line = '[100%] Built target app';
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(`${ESC}[32m\u2713 ${line}${RESET}`);
+    });
+    test('rich dims build-progress noise', () => {
+        const line = '[ 50%] Building CXX object foo.o';
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(`${ESC}[2m${line}${RESET}`);
+    });
+    test('rich leaves plain non-progress lines unchanged', () => {
+        const line = 'Scanning dependencies of target app';
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(line);
+    });
+    test('rich passes through lines already containing ANSI', () => {
+        const line = `${ESC}[31malready colored${RESET}`;
+        expect(decorateBuildLine(line, 'rich', 'unicode')).to.equal(line);
+    });
+});
+
+suite('[colorize] isProgressNoise', () => {
+    test('percent progress matches', () => {
+        expect(isProgressNoise('[ 50%] Building CXX object')).to.equal(true);
+    });
+    test('ratio progress matches', () => {
+        expect(isProgressNoise('[12/34] Linking')).to.equal(true);
+    });
+    test('a plain diagnostic line does not match', () => {
+        expect(isProgressNoise('/src/x.cpp:1:1: error: x')).to.equal(false);
+    });
+});
+
+suite('[colorize] renderBuildBanner', () => {
+    test('bold, contains the (already-localized) header text, unicode rule, trailing reset', () => {
+        const out = renderBuildBanner('Building: app', 'unicode');
+        expect(out.startsWith(`${ESC}[1m`)).to.equal(true);
+        expect(out).to.contain('Building: app');
+        expect(out).to.contain('\u2500');
+        expect(out.endsWith(RESET)).to.equal(true);
+    });
+    test('ascii style uses dashes', () => {
+        expect(renderBuildBanner('Building: app', 'ascii')).to.contain('-------- Building: app --------');
+    });
+});
+
+suite('[colorize] renderBuildSummary', () => {
+    test('succeeded: green rule + success glyph + verbatim status text + trailing reset', () => {
+        const [rule, status] = renderBuildSummary('succeeded', 'Build succeeded — 0 error(s), 0 warning(s)  (3.4s)', 'unicode');
+        expect(rule.startsWith(`${ESC}[1;32m`)).to.equal(true);
+        expect(status).to.contain('\u2713');
+        expect(status).to.contain('Build succeeded — 0 error(s), 0 warning(s)  (3.4s)');
+        expect(status.endsWith(RESET)).to.equal(true);
+    });
+    test('failed: red rule + error glyph (ascii)', () => {
+        const [rule, status] = renderBuildSummary('failed', 'Build failed - 2 error(s), 1 warning(s)  (1.0s)', 'ascii');
+        expect(rule.startsWith(`${ESC}[1;31m`)).to.equal(true);
+        expect(status).to.contain('Build failed');
+        expect(status.startsWith(`${ESC}[1;31mx `)).to.equal(true);
+    });
+    test('cancelled: yellow rule + warning glyph', () => {
+        const [rule, status] = renderBuildSummary('cancelled', 'Build cancelled', 'unicode');
+        expect(rule.startsWith(`${ESC}[1;33m`)).to.equal(true);
+        expect(status).to.contain('\u26A0');
+        expect(status).to.contain('Build cancelled');
     });
 });

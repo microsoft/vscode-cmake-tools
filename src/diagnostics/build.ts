@@ -7,7 +7,7 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode } from '@cmt/colorize';
+import { BuildColorMode, GlyphStyle } from '@cmt/colorize';
 import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
@@ -339,6 +339,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
         this.compileConsumer = new CompileOutputConsumer(config);
         this.colorMode = config.colorizedBuildOutput;
         this.logBySeverity = config.logBuildOutputBySeverity;
+        this.glyphStyle = config.buildOutputGlyphs;
         // Capture the severity of the diagnostic committed while processing the current line so that,
         // when logging by severity, the line can be logged at a matching level. Diagnostic parsing and
         // progress parsing remain independent of logging and fire on every line regardless of setting.
@@ -348,8 +349,8 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     /**
-     * How build output should be colorized in the Output channel. Read once per
-     * build (a fresh consumer is constructed for each build).
+     * How build output should be decorated in the integrated terminal. Read once
+     * per build (a fresh consumer is constructed for each build).
      */
     private readonly colorMode: BuildColorMode;
 
@@ -360,7 +361,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     private readonly logBySeverity: boolean;
     private _currentLineSeverity: string | undefined;
     private readonly _diagnosticSub: vscode.Disposable;
-
+    private readonly glyphStyle: GlyphStyle;
     /**
      * Event fired when the progress changes
      */
@@ -394,7 +395,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
      */
     private echo(line: string, isStdErr: boolean) {
         if (this.colorMode !== 'off') {
-            buildOutputTerminal().writeLine(line, this.colorMode);
+            buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
         }
         if (!this.logger) {
             return;
