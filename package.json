@@ -2425,6 +2425,20 @@
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
           "scope": "resource"
         },
+        "cmake.colorizedBuildOutput": {
+          "type": "string",
+          "enum": [
+            "off",
+            "severity"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.colorizedBuildOutput.off.description%",
+            "%cmake-tools.configuration.cmake.colorizedBuildOutput.severity.description%"
+          ],
+          "default": "off",
+          "markdownDescription": "%cmake-tools.configuration.cmake.colorizedBuildOutput.markdownDescription%",
+          "scope": "window"
+        },
         "cmake.configureSettings": {
           "type": "object",
           "default": {},

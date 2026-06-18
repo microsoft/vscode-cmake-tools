@@ -7,6 +7,7 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)
 - Add `cmake.preConfigureTask` setting to execute a named VS Code task before every CMake configure. [#2449](https://github.com/microsoft/vscode-cmake-tools/issues/2449) [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960) [@erdemiru](https://github.com/erdemiru)
+- Add experimental, opt-in `cmake.colorizedBuildOutput` setting to highlight build errors, warnings, and notes by severity in the CMake/Build Output panel using theme-aware ANSI colors. [#478](https://github.com/microsoft/vscode-cmake-tools/issues/478)
 
 Improvements:
 - Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.

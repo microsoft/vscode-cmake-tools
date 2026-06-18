@@ -193,6 +193,7 @@ export interface ExtensionConfigurationSettings {
     saveBeforeBuild: boolean;
     buildBeforeRun: boolean;
     clearOutputBeforeBuild: boolean;
+    colorizedBuildOutput: "off" | "severity";
     configureSettings: { [key: string]: boolean | number | string | string[] | util.CMakeValue };
     cacheInit: string | string[] | null;
     preferredGenerators: string[];
@@ -391,6 +392,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get clearOutputBeforeBuild(): boolean {
         return !!this.configData.clearOutputBeforeBuild;
+    }
+    get colorizedBuildOutput(): "off" | "severity" {
+        return this.configData.colorizedBuildOutput;
     }
     get configureSettings(): {[key: string]: boolean | number | string | string[] | util.CMakeValue} {
         return this.configData.configureSettings;
@@ -712,6 +716,7 @@ export class ConfigurationReader implements vscode.Disposable {
         saveBeforeBuild: new vscode.EventEmitter<boolean>(),
         buildBeforeRun: new vscode.EventEmitter<boolean>(),
         clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),
+        colorizedBuildOutput: new vscode.EventEmitter<"off" | "severity">(),
         configureSettings: new vscode.EventEmitter<{ [key: string]: any }>(),
         cacheInit: new vscode.EventEmitter<string | string[] | null>(),
         preferredGenerators: new vscode.EventEmitter<string[]>(),

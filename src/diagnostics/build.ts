@@ -7,6 +7,7 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
+import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -324,6 +325,36 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
+        this.colorMode = config.colorizedBuildOutput;
+    }
+    /**
+     * How build output should be colorized in the Output channel. Read once per
+     * build (a fresh consumer is constructed for each build).
+     */
+    private readonly colorMode: BuildColorMode;
+    /**
+     * Echo a build-output line to the logger, optionally colorized for the
+     * Output channel only. Parsing has already happened on the clean `line`, so
+     * the Problems panel is unaffected; the on-disk log file also stays clean.
+     */
+    private echo(line: string, isError: boolean) {
+        if (!this.logger) {
+            return;
+        }
+        if (this.colorMode === 'off') {
+            if (isError) {
+                this.logger.error(line);
+            } else {
+                this.logger.info(line);
+            }
+            return;
+        }
+        const decorated = colorizeBuildLine(line, this.colorMode);
+        if (isError) {
+            this.logger.errorColorized(line, decorated);
+        } else {
+            this.logger.infoColorized(line, decorated);
+        }
     }
     /**
      * Event fired when the progress changes
@@ -350,17 +381,13 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
 
     error(line: string) {
         this.compileConsumer.error(line);
-        if (this.logger) {
-            this.logger.error(line);
-        }
+        this.echo(line, true);
         super.error(line);
     }
 
     output(line: string) {
         this.compileConsumer.output(line);
-        if (this.logger) {
-            this.logger.info(line);
-        }
+        this.echo(line, false);
         super.output(line);
         const progress = this._percent_re.exec(line);
         if (progress) {
