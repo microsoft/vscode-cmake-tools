@@ -3,14 +3,16 @@
  *
  * The VS Code Output panel is a Monaco text editor and does NOT render ANSI
  * escape codes (it shows them as literal text). The integrated terminal, backed
- * by xterm.js, does render ANSI. So when colorized build output is enabled, the
- * default (Output-channel) build path mirrors its output here, where the colors
- * actually show. The Output channel and on-disk log file are left untouched.
+ * by xterm.js, does render ANSI. So when colorized build output is enabled, this
+ * terminal becomes the single visible build surface where the colors actually
+ * show. The per-line build output is still written to the on-disk log file (for
+ * diagnostics), but no longer duplicated into the Output channel.
  */
 
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { BuildColorMode, BuildOutcome, GlyphStyle, decorateBuildLine, renderBuildBanner, renderBuildSummary } from '@cmt/colorize';
+import * as util from '@cmt/util';
+import { BuildColorMode, BuildOutcome, GlyphStyle, decorateBuildLine, linkifyLeadingPath, renderBuildBanner, renderBuildSummary } from '@cmt/colorize';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -28,6 +30,31 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
     private isOpen = false;
     private pending: string[] = [];
     private buildStart = 0;
+    // Base directories used to absolutize relative diagnostic paths so VS Code's
+    // built-in terminal link detection can make them clickable. Cached per build.
+    private baseDirs: string[] = [];
+    private readonly linkCache = new Map<string, string | undefined>();
+
+    private readonly resolveExisting = (rel: string): string | undefined => {
+        if (this.linkCache.has(rel)) {
+            return this.linkCache.get(rel);
+        }
+        let abs: string | undefined;
+        for (const base of this.baseDirs) {
+            const candidate = util.resolvePath(rel, base);
+            if (util.checkFileExistsSync(candidate)) {
+                abs = candidate;
+                break;
+            }
+        }
+        this.linkCache.set(rel, abs);
+        return abs;
+    };
+
+    /** Reveal the build terminal; `focus` takes keyboard focus. No-op if not created. */
+    reveal(focus: boolean): void {
+        this.terminal?.show(!focus);
+    }
 
     // vscode.Pseudoterminal: called when the terminal is first shown.
     open(): void {
@@ -66,11 +93,13 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
 
     /**
      * Prepare the terminal at the start of a build: create it if needed, clear it
-     * when requested, record the start time, optionally print a bold banner, and
-     * reveal it without stealing keyboard focus.
+     * when requested, record the start time, and optionally print a bold banner.
+     * Revealing is left to the caller so it can honor `cmake.revealLog`.
      */
-    prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string): void {
+    prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs: string[] = []): void {
         this.ensureTerminal();
+        this.baseDirs = baseDirs;
+        this.linkCache.clear();
         if (clear) {
             // Clear screen + scrollback + move cursor home.
             this.emit('\u001b[2J\u001b[3J\u001b[H');
@@ -80,7 +109,6 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
             const header = localize('build.colorized.building', 'Building: {0}', bannerTarget);
             this.emit(renderBuildBanner(header, glyphs) + EOL);
         }
-        this.terminal?.show(true);
     }
 
     /** Write a single build-output line, decorated according to `mode`/`glyphs`. */
@@ -90,7 +118,8 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
             // recreate it hidden (which would surface stale output next build).
             return;
         }
-        this.emit(decorateBuildLine(line, mode, glyphs) + EOL);
+        const linked = this.baseDirs.length > 0 ? linkifyLeadingPath(line, this.resolveExisting) : line;
+        this.emit(decorateBuildLine(linked, mode, glyphs) + EOL);
     }
 
     /** Print the ruled, colored, localized build-summary footer (rich mode). */

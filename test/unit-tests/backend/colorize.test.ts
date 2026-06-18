@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { classifyBuildLine, colorizeBuildLine, decorateBuildLine, isProgressNoise, renderBuildBanner, renderBuildSummary, BuildLineSeverity } from '@cmt/colorize';
+import { classifyBuildLine, colorizeBuildLine, decorateBuildLine, isProgressNoise, renderBuildBanner, renderBuildSummary, linkifyLeadingPath, isAbsoluteLike, BuildLineSeverity } from '@cmt/colorize';
 
 /**
  * Tests for the pure build-output colorizer in src/colorize.ts.
@@ -176,5 +176,90 @@ suite('[colorize] renderBuildSummary', () => {
         expect(rule.startsWith(`${ESC}[1;33m`)).to.equal(true);
         expect(status).to.contain('\u26A0');
         expect(status).to.contain('Build cancelled');
+    });
+});
+
+suite('[colorize] isAbsoluteLike', () => {
+    test('Windows drive path (backslash)', () => {
+        expect(isAbsoluteLike('C:\\a\\b')).to.equal(true);
+    });
+    test('Windows drive path (forward slash)', () => {
+        expect(isAbsoluteLike('C:/a/b')).to.equal(true);
+    });
+    test('POSIX leading slash', () => {
+        expect(isAbsoluteLike('/a/b')).to.equal(true);
+    });
+    test('UNC / leading backslash', () => {
+        expect(isAbsoluteLike('\\\\srv\\share')).to.equal(true);
+    });
+    test('relative with dotdot', () => {
+        expect(isAbsoluteLike('../a/b')).to.equal(false);
+    });
+    test('relative plain', () => {
+        expect(isAbsoluteLike('src/a.cpp')).to.equal(false);
+    });
+});
+
+suite('[colorize] linkifyLeadingPath', () => {
+    test('GCC relative path is absolutized when the file exists', () => {
+        const r = (rel: string) => rel === '../src/x.cpp' ? '/abs/src/x.cpp' : undefined;
+        expect(linkifyLeadingPath('../src/x.cpp:10:5: error: boom', r)).to.equal('/abs/src/x.cpp:10:5: error: boom');
+    });
+    test('GCC relative path without a column is absolutized', () => {
+        const r = (rel: string) => rel === 'src/x.cpp' ? '/abs/src/x.cpp' : undefined;
+        expect(linkifyLeadingPath('src/x.cpp:7: warning: meh', r)).to.equal('/abs/src/x.cpp:7: warning: meh');
+    });
+    test('MSVC relative path is absolutized', () => {
+        const r = (rel: string) => rel === 'src\\x.cpp' ? 'C:\\abs\\src\\x.cpp' : undefined;
+        expect(linkifyLeadingPath('src\\x.cpp(12): error C2065: x', r)).to.equal('C:\\abs\\src\\x.cpp(12): error C2065: x');
+    });
+    test('a filename containing "(n)" is not mis-split (GCC colon wins)', () => {
+        const r = (rel: string) => rel === 'foo(1).cpp' ? '/abs/foo(1).cpp' : undefined;
+        expect(linkifyLeadingPath('foo(1).cpp:12: error: e', r)).to.equal('/abs/foo(1).cpp:12: error: e');
+    });
+    test('relative path containing spaces is absolutized as a whole', () => {
+        const r = (rel: string) => rel === '../my src/x.cpp' ? '/abs/my src/x.cpp' : undefined;
+        expect(linkifyLeadingPath('../my src/x.cpp:3:1: error: e', r)).to.equal('/abs/my src/x.cpp:3:1: error: e');
+    });
+    test('missing file leaves the line unchanged (resolver called once)', () => {
+        let called = 0;
+        const r = (_rel: string) => {
+            called++; return undefined;
+        };
+        const line = '../src/x.cpp:10:5: error: boom';
+        expect(linkifyLeadingPath(line, r)).to.equal(line);
+        expect(called).to.equal(1);
+    });
+    test('absolute POSIX path is unchanged and the resolver is not called', () => {
+        let called = 0;
+        const r = (_rel: string) => {
+            called++; return '/nope';
+        };
+        const line = '/abs/src/x.cpp:1:1: error: boom';
+        expect(linkifyLeadingPath(line, r)).to.equal(line);
+        expect(called).to.equal(0);
+    });
+    test('absolute Windows path is unchanged and the resolver is not called', () => {
+        let called = 0;
+        const r = (_rel: string) => {
+            called++; return 'nope';
+        };
+        const line = 'C:\\src\\x.cpp:1:1: error: boom';
+        expect(linkifyLeadingPath(line, r)).to.equal(line);
+        expect(called).to.equal(0);
+    });
+    test('non-diagnostic (progress) line is unchanged and the resolver is not called', () => {
+        let called = 0;
+        const r = (_rel: string) => {
+            called++; return '/x';
+        };
+        const line = '[ 50%] Building CXX object foo.o';
+        expect(linkifyLeadingPath(line, r)).to.equal(line);
+        expect(called).to.equal(0);
+    });
+    test('a line already containing ANSI is passed through unchanged', () => {
+        const r = (_rel: string) => '/x';
+        const line = `${ESC}[31m../src/x.cpp:1:1: error: e${RESET}`;
+        expect(linkifyLeadingPath(line, r)).to.equal(line);
     });
 });

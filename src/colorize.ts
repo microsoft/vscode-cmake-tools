@@ -164,6 +164,52 @@ export function decorateBuildLine(line: string, mode: BuildColorMode, glyphs: Gl
     return line;
 }
 
+/** True if `p` looks like an absolute path (drive, UNC, or leading slash), platform-independently. */
+export function isAbsoluteLike(p: string): boolean {
+    return /^([A-Za-z]:[\\/]|[\\/])/.test(p);
+}
+
+// Leading diagnostic location: GCC/Clang/Ninja "<file>:<line>[:<col>]:" or MSVC "<file>(<line>[,<col>]):".
+// The MSVC form requires the trailing ':' so a file literally named like "foo(1).cpp" is not mis-split.
+const LEADING_LOCATION_RE = /^(\s*)(.+?)(:\d+(?::\d+)?:|\(\d+(?:,\d+)?\):)/;
+
+/** The leading "<file>" token of a diagnostic location line, if present. */
+export function leadingPathToken(line: string): { file: string; start: number; end: number } | undefined {
+    const m = LEADING_LOCATION_RE.exec(line);
+    if (!m) {
+        return undefined;
+    }
+    const start = m[1].length;
+    const file = m[2];
+    return { file, start, end: start + file.length };
+}
+
+/**
+ * Display-only: rewrite the leading *relative* source path of a diagnostic line to
+ * an absolute path so VS Code's built-in terminal link detection can make it
+ * clickable (a Pseudoterminal has no cwd, so relative paths are not linkable).
+ *
+ * `resolveExisting(rel)` must return the absolute path iff the file exists, else
+ * `undefined`. This keeps the module pure — all filesystem access is the caller's.
+ * Only error/warning/note lines are touched, and only when the path is relative
+ * and resolves to a real file, so it never corrupts non-location text.
+ */
+export function linkifyLeadingPath(line: string, resolveExisting: (rel: string) => string | undefined): string {
+    if (line.includes(ESC)) {
+        return line;
+    }
+    const severity = classifyBuildLine(line);
+    if (severity !== BuildLineSeverity.Error && severity !== BuildLineSeverity.Warning && severity !== BuildLineSeverity.Note) {
+        return line;
+    }
+    const tok = leadingPathToken(line);
+    if (!tok || isAbsoluteLike(tok.file)) {
+        return line;
+    }
+    const abs = resolveExisting(tok.file);
+    return abs ? line.slice(0, tok.start) + abs + line.slice(tok.end) : line;
+}
+
 /** A bold header line printed at the start of a rich build. `headerText` is
  *  already localized by the caller (this module stays vscode-nls-free). */
 export function renderBuildBanner(headerText: string, glyphs: GlyphStyle): string {

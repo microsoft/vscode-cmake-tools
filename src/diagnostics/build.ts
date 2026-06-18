@@ -396,6 +396,25 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     private echo(line: string, isStdErr: boolean) {
         if (this.colorMode !== 'off') {
             buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
+            if (!this.logger) {
+                return;
+            }
+            const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
+            switch (method) {
+                case 'error':
+                    this.logger.errorFileOnly(line);
+                    break;
+                case 'warning':
+                    this.logger.warningFileOnly(line);
+                    break;
+                case 'debug':
+                    this.logger.debugFileOnly(line);
+                    break;
+                default:
+                    this.logger.infoFileOnly(line);
+                    break;
+            }
+            return;
         }
         if (!this.logger) {
             return;

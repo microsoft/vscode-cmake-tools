@@ -2541,7 +2541,9 @@ export class CMakeProject {
      */
     async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!showCommandOnly) {
-            log.showChannel(undefined, isAutomatic);
+            if (this.workspaceContext.config.colorizedBuildOutput === 'off') {
+                log.showChannel(undefined, isAutomatic);
+            }
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
@@ -2613,7 +2615,7 @@ export class CMakeProject {
                 buildLogger.info(localize('starting.build', 'Starting build'));
                 await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
-                if (rc !== 0) {
+                if (rc !== 0 && this.workspaceContext.config.colorizedBuildOutput === 'off') {
                     log.showChannel(true); // in case build has failed
                 }
                 await setContextAndStore(isBuildingKey, false);
@@ -2662,13 +2664,27 @@ export class CMakeProject {
                         const buildColorMode = drv!.config.colorizedBuildOutput;
                         if (buildColorMode !== 'off') {
                             const banner = buildColorMode === 'rich' ? targetName : undefined;
-                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner);
+                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner, [drv!.binaryDir, drv!.sourceDir]);
+                            const startReveal = logging.revealLogDecision(undefined, isAutomatic);
+                            if (startReveal.show) {
+                                buildOutputTerminal().reveal(startReveal.focus);
+                            }
                         }
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextAndStore(isBuildingKey, false);
                         if (rc !== 0) {
-                            log.showChannel(true); // in case build has failed
+                            if (buildColorMode !== 'off') {
+                                // Reveal the colorized build terminal (not the Output channel)
+                                // so a failed build doesn't yank focus away from it. Honor the
+                                // `cmake.revealLog` setting exactly as the channel reveal would.
+                                const reveal = logging.revealLogDecision(true, isAutomatic);
+                                if (reveal.show) {
+                                    buildOutputTerminal().reveal(reveal.focus);
+                                }
+                            } else {
+                                log.showChannel(true); // in case build has failed
+                            }
                         }
                         let buildErrors = 0;
                         let buildWarnings = 0;
