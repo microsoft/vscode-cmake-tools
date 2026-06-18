@@ -11,6 +11,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
 import { CMakeCache } from '@cmt/cache';
+import { disposeBuildOutputTerminal } from '@cmt/buildOutputTerminal';
 import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CMakeDriver, CMakePreconditionProblems, ConfigureResult, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
@@ -3122,6 +3123,7 @@ export async function deactivate() {
     if (taskProvider) {
         taskProvider.dispose();
     }
+    disposeBuildOutputTerminal();
 }
 
 export function getStatusBar(): StatusBar | undefined {

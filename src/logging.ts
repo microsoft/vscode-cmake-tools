@@ -147,24 +147,11 @@ class SingletonLogger {
     }
 
     private _log(level: LogLevel, ...args: Stringable[]) {
-        if (level === LogLevel.Trace && !vscode.workspace.getConfiguration('cmake').get('enableTraceLogging', false)) {
+        const trace = vscode.workspace.getConfiguration('cmake').get('enableTraceLogging', false);
+        if (level === LogLevel.Trace && !trace) {
             return;
         }
         const user_message = args.map(a => a.toString()).join(' ');
-        this._emit(level, user_message);
-    }
-
-    /**
-     * Like `_log`, but writes a separate, already-decorated string (e.g. an
-     * ANSI-colorized line) to the Output channel only. The plain `user_message`
-     * is still written to the on-disk log file and the developer console, so
-     * those stay free of escape codes.
-     */
-    logColorized(level: LogLevel, user_message: string, channelMessage: string) {
-        this._emit(level, user_message, channelMessage);
-    }
-
-    private _emit(level: LogLevel, user_message: string, channelMessage?: string) {
         const prefix = new Date().toISOString() + ` [${levelName(level)}]`;
         const raw_message = `${prefix} ${user_message}`;
         switch (level) {
@@ -184,18 +171,14 @@ class SingletonLogger {
                 console.error('[CMakeTools]', raw_message);
                 break;
         }
-        // Write to the logfile asynchronously. Always use the plain text so the
-        // log file never contains ANSI escape codes.
+        // Write to the logfile asynchronously.
         this._logStream.then(strm => strm.write(raw_message + '\n')).catch(e => {
             console.error('Unhandled error while writing CMakeTools log file', e);
         });
-        // Write to our output channel. When a decorated (colorized) variant is
-        // provided, only the channel receives it; the timestamp prefix stays
-        // outside the color sequence.
+        // Write to our output channel
         if (levelEnabled(level)) {
             const showTimestamps = vscode.workspace.getConfiguration('cmake').get('showTimestampsInOutput', false);
-            const channelText = channelMessage ?? user_message;
-            this._channel.appendLine(showTimestamps ? `${prefix} ${channelText}` : channelText);
+            this._channel.appendLine(showTimestamps ? raw_message : user_message);
         }
     }
 
@@ -253,13 +236,6 @@ export class Logger {
     info(...args: Stringable[]) {
         SingletonLogger.instance().info(this.tag, ...args);
     }
-    /**
-     * Log at Info level, but display a separate already-colorized string in the
-     * Output channel only (the plain `message` still goes to the log file).
-     */
-    infoColorized(message: string, channelMessage: string) {
-        SingletonLogger.instance().logColorized(LogLevel.Info, `${this.tag} ${message}`, `${this.tag} ${channelMessage}`);
-    }
     note(...args: Stringable[]) {
         SingletonLogger.instance().note(this.tag, ...args);
     }
@@ -268,13 +244,6 @@ export class Logger {
     }
     error(...args: Stringable[]) {
         SingletonLogger.instance().error(this.tag, ...args);
-    }
-    /**
-     * Log at Error level, but display a separate already-colorized string in the
-     * Output channel only (the plain `message` still goes to the log file).
-     */
-    errorColorized(message: string, channelMessage: string) {
-        SingletonLogger.instance().logColorized(LogLevel.Error, `${this.tag} ${message}`, `${this.tag} ${channelMessage}`);
     }
     fatal(...args: Stringable[]) {
         SingletonLogger.instance().fatal(this.tag, ...args);

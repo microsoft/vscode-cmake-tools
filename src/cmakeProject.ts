@@ -27,6 +27,7 @@ import { CTestDriver } from '@cmt/ctest';
 import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
+import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
@@ -2447,6 +2448,9 @@ export class CMakeProject {
                         const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
                         combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
                         buildLogger.info(localize('starting.build', 'Starting build'));
+                        if (drv!.config.colorizedBuildOutput !== 'off') {
+                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild);
+                        }
                         await setContextAndStore(isBuildingKey, true);
                         const rc = await drv!.build(newTargets, consumer, isBuildCommand);
                         await setContextAndStore(isBuildingKey, false);

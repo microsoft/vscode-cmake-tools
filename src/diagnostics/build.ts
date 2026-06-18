@@ -7,7 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
+import { BuildColorMode } from '@cmt/colorize';
+import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -333,27 +334,23 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
      */
     private readonly colorMode: BuildColorMode;
     /**
-     * Echo a build-output line to the logger, optionally colorized for the
-     * Output channel only. Parsing has already happened on the clean `line`, so
-     * the Problems panel is unaffected; the on-disk log file also stays clean.
+     * Echo a build-output line. Parsing has already happened on the clean `line`,
+     * so the Problems panel is unaffected. The plain line always goes to the
+     * logger (Output channel + on-disk log file are unchanged). When colorization
+     * is enabled, a colorized copy is additionally mirrored to the integrated
+     * terminal, where ANSI actually renders (the Output panel cannot render ANSI).
      */
     private echo(line: string, isError: boolean) {
+        if (this.colorMode !== 'off') {
+            buildOutputTerminal().writeLine(line, this.colorMode);
+        }
         if (!this.logger) {
             return;
         }
-        if (this.colorMode === 'off') {
-            if (isError) {
-                this.logger.error(line);
-            } else {
-                this.logger.info(line);
-            }
-            return;
-        }
-        const decorated = colorizeBuildLine(line, this.colorMode);
         if (isError) {
-            this.logger.errorColorized(line, decorated);
+            this.logger.error(line);
         } else {
-            this.logger.infoColorized(line, decorated);
+            this.logger.info(line);
         }
     }
     /**
