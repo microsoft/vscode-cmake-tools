@@ -2429,14 +2429,30 @@
           "type": "string",
           "enum": [
             "off",
-            "severity"
+            "severity",
+            "rich"
           ],
           "enumDescriptions": [
             "%cmake-tools.configuration.cmake.colorizedBuildOutput.off.description%",
-            "%cmake-tools.configuration.cmake.colorizedBuildOutput.severity.description%"
+            "%cmake-tools.configuration.cmake.colorizedBuildOutput.severity.description%",
+            "%cmake-tools.configuration.cmake.colorizedBuildOutput.rich.description%"
           ],
           "default": "off",
           "markdownDescription": "%cmake-tools.configuration.cmake.colorizedBuildOutput.markdownDescription%",
+          "scope": "window"
+        },
+        "cmake.buildOutputGlyphs": {
+          "type": "string",
+          "enum": [
+            "unicode",
+            "ascii"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.buildOutputGlyphs.unicode.description%",
+            "%cmake-tools.configuration.cmake.buildOutputGlyphs.ascii.description%"
+          ],
+          "default": "unicode",
+          "markdownDescription": "%cmake-tools.configuration.cmake.buildOutputGlyphs.markdownDescription%",
           "scope": "window"
         },
         "cmake.configureSettings": {

@@ -7,7 +7,7 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode } from '@cmt/colorize';
+import { BuildColorMode, GlyphStyle } from '@cmt/colorize';
 import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
@@ -327,22 +327,24 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
         this.colorMode = config.colorizedBuildOutput;
+        this.glyphStyle = config.buildOutputGlyphs;
     }
     /**
-     * How build output should be colorized in the Output channel. Read once per
-     * build (a fresh consumer is constructed for each build).
+     * How build output should be decorated in the integrated terminal. Read once
+     * per build (a fresh consumer is constructed for each build).
      */
     private readonly colorMode: BuildColorMode;
+    private readonly glyphStyle: GlyphStyle;
     /**
      * Echo a build-output line. Parsing has already happened on the clean `line`,
      * so the Problems panel is unaffected. The plain line always goes to the
      * logger (Output channel + on-disk log file are unchanged). When colorization
-     * is enabled, a colorized copy is additionally mirrored to the integrated
+     * is enabled, a decorated copy is additionally mirrored to the integrated
      * terminal, where ANSI actually renders (the Output panel cannot render ANSI).
      */
     private echo(line: string, isError: boolean) {
         if (this.colorMode !== 'off') {
-            buildOutputTerminal().writeLine(line, this.colorMode);
+            buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
         }
         if (!this.logger) {
             return;

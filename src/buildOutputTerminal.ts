@@ -10,7 +10,7 @@
 
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import { BuildColorMode, colorizeBuildLine } from '@cmt/colorize';
+import { BuildColorMode, BuildOutcome, GlyphStyle, decorateBuildLine, renderBuildBanner, renderBuildSummary } from '@cmt/colorize';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -27,6 +27,7 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
     private terminal?: vscode.Terminal;
     private isOpen = false;
     private pending: string[] = [];
+    private buildStart = 0;
 
     // vscode.Pseudoterminal: called when the terminal is first shown.
     open(): void {
@@ -65,21 +66,50 @@ class BuildOutputTerminal implements vscode.Pseudoterminal {
 
     /**
      * Prepare the terminal at the start of a build: create it if needed, clear it
-     * when requested, and reveal it without stealing keyboard focus.
+     * when requested, record the start time, optionally print a bold banner, and
+     * reveal it without stealing keyboard focus.
      */
-    prepareForBuild(clear: boolean): void {
+    prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string): void {
         this.ensureTerminal();
         if (clear) {
             // Clear screen + scrollback + move cursor home.
             this.emit('\u001b[2J\u001b[3J\u001b[H');
         }
+        this.buildStart = Date.now();
+        if (bannerTarget) {
+            const header = localize('build.colorized.building', 'Building: {0}', bannerTarget);
+            this.emit(renderBuildBanner(header, glyphs) + EOL);
+        }
         this.terminal?.show(true);
     }
 
-    /** Write a single build-output line, colorized according to `mode`. */
-    writeLine(line: string, mode: BuildColorMode): void {
-        this.ensureTerminal();
-        this.emit(colorizeBuildLine(line, mode) + EOL);
+    /** Write a single build-output line, decorated according to `mode`/`glyphs`. */
+    writeLine(line: string, mode: BuildColorMode, glyphs: GlyphStyle): void {
+        if (!this.terminal) {
+            // The user closed the terminal mid-build; drop output rather than
+            // recreate it hidden (which would surface stale output next build).
+            return;
+        }
+        this.emit(decorateBuildLine(line, mode, glyphs) + EOL);
+    }
+
+    /** Print the ruled, colored, localized build-summary footer (rich mode). */
+    writeSummary(outcome: BuildOutcome, counts: { errors: number; warnings: number }, glyphs: GlyphStyle): void {
+        if (!this.terminal) {
+            return;
+        }
+        const seconds = ((this.buildStart ? Date.now() - this.buildStart : 0) / 1000).toFixed(1);
+        const word = outcome === 'succeeded'
+            ? localize('build.colorized.succeeded', 'Build succeeded')
+            : outcome === 'cancelled'
+                ? localize('build.colorized.cancelled', 'Build cancelled')
+                : localize('build.colorized.failed', 'Build failed');
+        const dash = glyphs === 'unicode' ? '—' : '-';
+        const countsText = localize('build.colorized.counts', '{0} error(s), {1} warning(s)', counts.errors, counts.warnings);
+        const statusText = `${word} ${dash} ${countsText}  (${seconds}s)`;
+        for (const line of renderBuildSummary(outcome, statusText, glyphs)) {
+            this.emit(line + EOL);
+        }
     }
 
     dispose(): void {
