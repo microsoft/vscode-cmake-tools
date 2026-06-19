@@ -29,7 +29,12 @@ const regexPatterns: RegexPattern[] = [
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
     },
     {   // path/to/file:line: message (with neither "[fatal] severity:" nor trailing colon nor leading "make: *** [" nor leading "make[line]: *** [")
-        regexPattern: /^(?!\s*make.*:\s\*\*\*\s\[)(.+?):(\d+):\s+(?!fatal\s+\w+:)(?!\w+:)(.+)(?<!:)\s*$/,
+        // The (?!.+?:\d+:\d+:\s) guard rejects GCC compiler lines of the form "file:line:column: <message>"
+        // (e.g. template backtrace lines "file:line:col:   required from here"). Without it, the lazy
+        // (.+?):(\d+): backtracks past the real ":line:" — because a column digit, not whitespace, follows —
+        // and mis-captures "file:line" as the path, producing a Problems entry that cannot be opened (#4954).
+        // GNU ld never emits column numbers, so genuine linker "file:line: message" lines are unaffected.
+        regexPattern: /^(?!\s*make.*:\s\*\*\*\s\[)(?!.+?:\d+:\d+:\s)(.+?):(\d+):\s+(?!fatal\s+\w+:)(?!\w+:)(.+)(?<!:)\s*$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     }
 ];
