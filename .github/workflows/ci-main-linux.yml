@@ -6,29 +6,52 @@ on:
   pull_request:
     branches: [ main, 'release/**' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup LCOV
-        uses: hrishikesh-kadam/setup-lcov@v1
+      - uses: actions/checkout@v4
 
       - name: Setup Node environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn'
 
       - name: Install Yarn
         run: npm install -g yarn
 
+      # Cache node_modules archive keyed on lockfile + os + arch + node version (keytar.node is arch-specific)
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: .build/node_modules_cache
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+
+      - name: Extract node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: tar -xzf .build/node_modules_cache/cache.tgz
+
       - name: Install dependencies
-        run: yarn install
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Create node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p .build/node_modules_cache
+          tar -czf .build/node_modules_cache/cache.tgz node_modules
 
       - name: Build the extension
-        run: yarn compile-production
+        run: yarn compile-production-ci
 
       - name: Lint
         run: yarn lint
@@ -36,55 +59,152 @@ jobs:
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-            cmakeVersion: 3.18.3
-            ninjaVersion: 1.10.1
+          cmakeVersion: 3.18.3
+          ninjaVersion: 1.10.1
+
+      # Cache fakebin to skip rebuild when source unchanged
+      - name: Restore fakebin cache
+        id: fakebin-cache
+        uses: actions/cache@v4
+        with:
+          path: test/fakebin
+          key: fakebin-${{ runner.os }}-${{ hashFiles('test/fakeOutputGenerator/CMakeLists.txt', 'test/fakeOutputGenerator/main.cpp', 'test/fakeOutputGenerator/configfiles/**') }}
 
       - name: Build fake compilers for tests
+        if: steps.fakebin-cache.outputs.cache-hit != 'true'
         run: yarn pretest-buildfakebin
 
-      - name: Run backend tests
-        run: yarn backendTests
+      # Ensure fakebin files are executable (cache may not preserve permissions)
+      - name: Fix fakebin permissions
+        run: chmod +x test/fakebin/* || true
 
-      - name: Run smoke tests
-        uses: GabrielBB/xvfb-action@v1.6
+      # Compile test TypeScript ONCE for all matrix jobs
+      - name: Compile test sources
+        run: yarn pretest
+
+      # Package build outputs for the matrix test jobs. node_modules is reused via the cache above
+      # (matrix jobs use the same cache key); only build/test artifacts are uploaded here.
+      - name: Pack build outputs
+        shell: bash
+        run: |
+          tar -czf build-outputs.tgz \
+            out \
+            dist \
+            test/fakebin
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
         with:
-          run: yarn smokeTests
+          name: build-outputs-${{ runner.os }}
+          path: build-outputs.tgz
+          retention-days: 1
+          if-no-files-found: error
 
-      - name: Run unit tests
-        uses: GabrielBB/xvfb-action@v1.6
+  test:
+    name: test (${{ matrix.suite.name }})
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - { name: backend,             cmd: 'yarn backendTests',                       timeout: 5 }
+          - { name: smoke,               cmd: 'yarn smokeTests-only',                    timeout: 15 }
+          - { name: unit,                cmd: 'yarn unitTests-only',                     timeout: 20 }
+          - { name: integration,         cmd: 'yarn integrationTests-only',              timeout: 15 }
+          - { name: e2e-successful,      cmd: 'yarn endToEndTestsSuccessfulBuild-only',  timeout: 25 }
+          - { name: e2e-single-root,     cmd: 'yarn endToEndTestsSingleRoot-only',       timeout: 25 }
+          - { name: e2e-single-root-ctest, cmd: 'yarn endToEndTestsSingleRootCTest-only', timeout: 25 }
+          - { name: e2e-multi-root,      cmd: 'yarn endToEndTestsMultiRoot-only',        timeout: 25 }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node environment
+        uses: actions/setup-node@v4
         with:
-          run: yarn unitTests
+          node-version: 20
+          cache: 'yarn'
 
-      - name: Run integration tests
-        uses: GabrielBB/xvfb-action@v1.6
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # Restore the SAME node_modules cache the build job populated (key must match).
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache@v4
         with:
-          run: yarn integrationTests
+          path: .build/node_modules_cache
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
 
-      - name: Run successful-build test
-        uses: GabrielBB/xvfb-action@v1.6
+      - name: Extract node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: tar -xzf .build/node_modules_cache/cache.tgz
+
+      # Fallback: install fresh if the build job's cache was evicted between jobs (rare).
+      - name: Install dependencies (fallback)
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
         with:
-          run: yarn endToEndTestsSuccessfulBuild
+          name: build-outputs-${{ runner.os }}
 
-      - name: Run single root test
-        uses: GabrielBB/xvfb-action@v1.6
+      - name: Unpack build outputs
+        shell: bash
+        run: tar -xzf build-outputs.tgz
+
+      - name: Install CMake/Ninja
+        uses: lukka/get-cmake@latest
         with:
-          run: yarn endToEndTestsSingleRoot
+          cmakeVersion: 3.18.3
+          ninjaVersion: 1.10.1
 
-      - name: Run single root test for ctest
-        uses: GabrielBB/xvfb-action@v1.6
+      # Ensure fakebin files are executable (artifact tar may preserve perms but be defensive)
+      - name: Fix fakebin permissions
+        run: chmod +x test/fakebin/* || true
+
+      # Cache VS Code download for E2E / smoke / unit / integration tests
+      - name: Restore VS Code cache
+        uses: actions/cache@v4
         with:
-          run: yarn endToEndTestsSingleRootCTest
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}-stable
+          restore-keys: vscode-test-${{ runner.os }}-
 
+      - name: Start Xvfb
+        if: matrix.suite.name != 'backend'
+        run: |
+          # xvfb is not preinstalled on ubuntu-latest runners
+          if ! command -v Xvfb >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends xvfb
+          fi
+          Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
+          # Wait for the Xvfb socket to be ready (no extra packages needed)
+          for i in $(seq 1 40); do
+            if [ -S /tmp/.X11-unix/X99 ]; then
+              break
+            fi
+            sleep 0.25
+          done
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "Xvfb failed to start" >&2
+            exit 1
+          fi
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
 
-      - name: Run multi root test
-        uses: GabrielBB/xvfb-action@v1.6
-        with:
-          run: yarn endToEndTestsMultiRoot
+      - name: Run ${{ matrix.suite.name }} tests
+        timeout-minutes: ${{ matrix.suite.timeout }}
+        run: ${{ matrix.suite.cmd }}
 
       - name: Upload test logs if tests failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: TestLogs
+          name: TestLogs-${{ runner.os }}-${{ matrix.suite.name }}
           path: test/**/log.txt
           if-no-files-found: warn

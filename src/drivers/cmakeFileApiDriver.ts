@@ -122,7 +122,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
         // We need to treat this case as if the cache is not present and let a reconfigure
         // refresh the cache information.
         const cacheExists: boolean = await fs.exists(this.cachePath);
-        if (cacheExists && this.generator?.name === await this.getGeneratorFromCache(this.cachePath)) {
+        // When this.generator is null (e.g., __unspec__ kit with CMake >= 3.15 where CMake picks
+        // the default generator), treat it as "no explicit preference" and trust the existing cache
+        // rather than interpreting it as a generator mismatch that requires a clean reconfigure.
+        if (cacheExists && (this.generator === null || this.generator.name === await this.getGeneratorFromCache(this.cachePath))) {
             await this.loadGeneratorInformationFromCache(this.cachePath);
             const code_model_exist = await this.updateCodeModel();
             if (!code_model_exist && this.config.configureOnOpen) {

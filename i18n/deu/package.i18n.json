@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Verzeichnisse, in denen Emscripten möglicherweise installiert ist.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Sammeln und zusammenführen Sie rekursiv alle compile_commands.json aus \"cmake.buildDirectory\".",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Hiermit wird \"compile_commands.json\" nach erfolgreicher Konfiguration an diesen Speicherort kopiert.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Wenn diese Option festgelegt ist, wird diese benannte Aufgabe ausgeführt, bevor CMake konfiguriert wird. Beachten Sie, dass das Verketten des Vorkonfigurationstasks mit anderen Aufgaben in tasks.json zu mehreren Ausführungen des vorkonfigurierten Tasks führen kann.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Wenn festgelegt, wird dieser benannte Task nach einer erfolgreichen CMake-Konfiguration ausgeführt.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Hiermit werden CMake-Projektverzeichnisse beim Öffnen automatisch konfiguriert.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Hiermit werden CMake-Projektverzeichnisse automatisch konfiguriert, wenn cmake.sourceDirectory- oder CMakeLists.txt-Inhalte gespeichert werden.",
@@ -329,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Den besten Kandidaten automatisch auswählen.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Zeigen Sie eine Schnellauswahl mit Optionen aus dem ausgewählten Zielquellbefehlsaufruf an.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Schlüsselwortargumente für benutzerdefinierte Funktionen und Makros, die Listen von Quelldateien einleiten. Wenn diese Option leer gelassen wird, werden alle Argumente berücksichtigt, die nur aus Großbuchstaben und Unterstrichen bestehen. Unterstützt Globmuster.",
-	"update.code.model.for.list.modifier": "Codemodell für automatischen Listendateimodifizierer aktualisieren"
+	"update.code.model.for.list.modifier": "Codemodell für automatischen Listendateimodifizierer aktualisieren",
+	"test.codelens.run": "$(run) Ausführen",
+	"test.codelens.debug": "$(debug) Debuggen",
+	"test.run.error": "Fehler beim Ausführen der Tests: {0}",
+	"test.debug.error": "Fehler beim Debuggen des Tests: {0}"
 }

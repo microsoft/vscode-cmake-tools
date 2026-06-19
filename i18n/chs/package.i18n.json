@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "可在其中安装 Emscripten 的目录。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "以递归方式收集和合并在 cmake.buildDirectory 中找到的所有compile_commands.json。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "如果设置，此命名任务将在 CMake 配置之前执行。请注意，将预配置任务与 tasks.json 中的其他任务链接可能会导致预配置任务多次执行。",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "如果已设置，则 CMake 配置成功后执行此命名任务。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "在 CMake 项目目录打开时自动对其进行配置。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "保存 cmake.sourceDirectory 或 CMakeLists.txt 内容时，自动配置 CMake 项目目录。",
@@ -329,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "自动选择最佳候选项。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "提供快速选取，其中包含所选目标源命令调用中的选项。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "引入源文件列表的用户定义函数和宏的关键字参数。如果留空，则将考虑仅由大写字母和下划线组成的所有参数。支持 glob 模式。",
-	"update.code.model.for.list.modifier": "更新自动列表文件修饰符的代码模型"
+	"update.code.model.for.list.modifier": "更新自动列表文件修饰符的代码模型",
+	"test.codelens.run": "$(run)运行",
+	"test.codelens.debug": "$(debug)调试",
+	"test.run.error": "运行测试失败: {0}",
+	"test.debug.error": "未能调试测试: {0}"
 }

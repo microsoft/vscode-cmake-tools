@@ -38,6 +38,8 @@
 	"cmake.debug.name": "Debuger CMake",
 	"select.a.cmake.project": "Wybierz projekt cmake",
 	"compilation information.not.found": "Nie można znaleźć informacji o kompilacji dla tego pliku",
+	"test.run.error": "Nie można uruchomić testów: {0}",
+	"test.debug.error": "Nie można debugować testu: {0}",
 	"open.folder": "Otwórz folder",
 	"no.folder.open.for.quickstart": "Żaden folder nie jest otwarty. Otwórz folder, aby użyć narzędzia CMake: Szybki start.",
 	"add.config.preset.in.test.mode": "Uruchamianie narzędzi CMake w trybie testowym. Element addConfigurePreset jest wyłączony.",

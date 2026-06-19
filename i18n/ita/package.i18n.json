@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directory in cui è possibile installare Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "È possibile raccogliere e unire in modo ricorsivo tutti i file compile_commands.json disponibili in cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copia compile_commands.json in questa posizione dopo una configurazione riuscita.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Se impostata, questa attività denominata verrà eseguita prima della configurazione di CMake. Si noti che il concatenamento dell'attività di preconfigurazione con altre attività in tasks.json può portare a più esecuzioni dell'attività di preconfigurazione.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Se impostata, questa attività denominata verrà eseguita dopo una configurazione CMake riuscita.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configura automaticamente le directory di progetto di CMake quando vengono aperte.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configura automaticamente le directory del progetto CMake quando si salva cmake.sourceDirectory o il contenuto di CMakeLists.txt.",
@@ -329,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Sceglie automaticamente il candidato migliore.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Presenta una selezione rapida con le opzioni relative alla chiamata del comando di origine di destinazione selezionata.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argomenti di parole chiave per macro e funzioni definite dall'utente che introducono elenchi di file di origine. Se l'elenco viene lasciato vuoto, verranno considerati tutti gli argomenti composti esclusivamente da lettere maiuscole e trattini bassi. Supporta criteri globali.",
-	"update.code.model.for.list.modifier": "Aggiornare il modello di codice per il modificatore automatico dei file di elenco"
+	"update.code.model.for.list.modifier": "Aggiornare il modello di codice per il modificatore automatico dei file di elenco",
+	"test.codelens.run": "Esecuzione di $(run)",
+	"test.codelens.debug": "Debug di $(debug)",
+	"test.run.error": "Non è stato possibile eseguire il test: {0}",
+	"test.debug.error": "Non è possibile eseguire il debug del test: {0}"
 }

@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directorios en los que se puede instalar Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Recopile y combine de forma recursiva todos los compile_commands.json que se encuentran en cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copia compile_commands.json en esta ubicación después de una configuración correcta.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Si se establece, esta tarea con nombre se ejecutará antes de la configuración de CMake. Tenga en cuenta que encadenar la tarea preconfigurada con otras tareas en tasks.json puede dar lugar a varias ejecuciones de la tarea preconfigurada.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Si se establece, esta tarea nombrada se ejecutará tras una configuración exitosa de CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configura automáticamente los directorios del proyecto de CMake al abrirlos.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configure automáticamente los directorios de proyectos de CMake cuando se guarde el contenido de cmake.sourceDirectory o CMakeLists.txt.",
@@ -329,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Elija automáticamente el mejor candidato.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Presente una selección rápida con opciones de la invocación del comando de origen de destino seleccionado.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumentos de palabra clave para funciones y macros definidas por el usuario que introducen listas de archivos de código fuente. Si se deja vacío, se tendrán en cuenta todos los argumentos que constan solo de letras mayúsculas y caracteres de subrayado. Admite patrones globales.",
-	"update.code.model.for.list.modifier": "Actualizar el modelo de código para el modificador automático de archivo de lista"
+	"update.code.model.for.list.modifier": "Actualizar el modelo de código para el modificador automático de archivo de lista",
+	"test.codelens.run": "$(run) Ejecutar",
+	"test.codelens.debug": "$(debug) Depurar",
+	"test.run.error": "No se pudo ejecutar la prueba: {0}",
+	"test.debug.error": "No se pudo depurar la prueba: {0}"
 }
