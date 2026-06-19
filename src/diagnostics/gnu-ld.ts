@@ -9,23 +9,23 @@ import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult
 // Patterns to identify and capture GNU linker diagnostic messages
 const regexPatterns: RegexPattern[] = [
     {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
-        regexPattern: /^(?:.*ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/ld[.exe]:[ ]path/to/file.obj:path/to/file:line: message
-        regexPattern: /^(?:.*ld(?:\.exe)?\:)(?:\s*)(?:.+?\.obj:)(.+?):(\d+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?\:)(?:\s*)(?:.+?\.obj:)(.+?):(\d+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
     {   // path/to/ld[.exe]:[ ]path/to/file:line: message
-        regexPattern: /^(?:.*ld(?:\.exe)?\:)(?:\s*)?(.+):(\d+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?\:)(?:\s*)?(.+):(\d+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
     {   // path/to/ld[.exe]: severity: message
-        regexPattern: /^(.*ld(?:\.exe)?):\s+(?:fatal )?(\w+):\s+(.+)/,
+        regexPattern: /^((?:.*[/\\])?ld(?:\.exe)?):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/ld[.exe]: message (without trailing colon)
-        regexPattern: /^(.*ld(?:\.exe)?):\s+(.+)(?<!:)\s*$/,
+        regexPattern: /^((?:.*[/\\])?ld(?:\.exe)?):\s+(.+)(?<!:)\s*$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
     },
     {   // path/to/file:line: message (with neither "[fatal] severity:" nor trailing colon nor leading "make: *** [" nor leading "make[line]: *** [")

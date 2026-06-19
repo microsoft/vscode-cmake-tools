@@ -633,6 +633,18 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
     });
+    test('No linker error on Zephyr build status line "-- Zephyr version: ..." (issue #4910)', () => {
+        const lines = ['-- Zephyr version: 4.3.0 (/path/to/zephyr), build: v4.3.0'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    });
+    test('No linker error on generic CMake status lines containing "build:" (issue #4910)', () => {
+        const lines = ['-- Some tool version: 1.0 (/path/to/tool), build: v1.0'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    });
     test('Parsing GHS Diagnostics', () => {
         const lines = [
             '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign'
