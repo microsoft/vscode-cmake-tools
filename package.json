@@ -143,6 +143,15 @@
             "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
+    "configurationDefaults": {
+        "[cmake]": {
+            "editor.quickSuggestions": {
+                "other": "on",
+                "comments": "off",
+                "strings": "on"
+            }
+        }
+    },
     "commands": [
       {
         "command": "cmake.openCMakePresets",
