@@ -109,6 +109,32 @@ export enum ConfigureTrigger {
     selectKit = "selectKit"
 }
 
+/**
+ * Classifies a {@link ConfigureTrigger} as automatic/programmatic (vs. an explicit user
+ * action). Automatic configures (configure-on-open, reconfigure on file change, build-induced
+ * reconfigure, API-driven configures, etc.) should not proactively reveal the output panel and
+ * steal it away from a terminal the user is working in, while user-initiated configures
+ * (command palette, kit/preset selection, Quick Start, launch) keep revealing as before.
+ */
+export function isAutomaticConfigureTrigger(trigger: ConfigureTrigger): boolean {
+    switch (trigger) {
+        case ConfigureTrigger.configureOnOpen:
+        case ConfigureTrigger.configureWithCache:
+        case ConfigureTrigger.cmakeListsChange:
+        case ConfigureTrigger.sourceDirectoryChange:
+        case ConfigureTrigger.compilation:
+        case ConfigureTrigger.api:
+        case ConfigureTrigger.taskProvider:
+        case ConfigureTrigger.workflow:
+        case ConfigureTrigger.runTests:
+        case ConfigureTrigger.package:
+        case ConfigureTrigger.badHomeDir:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export interface DiagnosticsConfiguration {
     folder: string;
     cmakeVersion: string;
@@ -1889,7 +1915,7 @@ export class CMakeProject {
                 }
 
                 if (type !== ConfigureType.ShowCommandOnly) {
-                    log.showChannel();
+                    log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
@@ -2335,9 +2361,9 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!showCommandOnly) {
-            log.showChannel();
+            log.showChannel(undefined, isAutomatic);
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
@@ -2498,8 +2524,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken, isAutomatic);
         return this.activeBuild;
     }
 
@@ -2745,9 +2771,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
         return retc;
     }
 
