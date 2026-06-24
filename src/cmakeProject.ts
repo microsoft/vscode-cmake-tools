@@ -2388,6 +2388,20 @@ export class CMakeProject {
             };
         }
 
+        // Open the colorized "CMake Build" terminal *before* the pre-build configure so it
+        // appears immediately when the user starts a build, instead of leaving them looking at
+        // configuration progress while a (possibly slow) configure runs first. Gated on the same
+        // reveal decision as the build-start reveal, so automatic/programmatic builds stay quiet.
+        const earlyColorMode = this.workspaceContext.config.colorizedBuildOutput;
+        if (earlyColorMode !== 'off') {
+            const earlyReveal = logging.revealLogDecision(undefined, isAutomatic);
+            if (earlyReveal.show) {
+                const sink = colorizedBuildSink();
+                sink.prepareForConfigure(this.workspaceContext.config.clearOutputBeforeBuild);
+                sink.reveal(earlyReveal.focus);
+            }
+        }
+
         const configResult = await this.ensureConfigured(cancellationToken);
         if (configResult === null) {
             throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));

@@ -272,10 +272,14 @@ export class Logger {
         SingletonLogger.instance().clearOutputChannel();
     }
 
-    showChannel(error_to_show?: boolean, isAutomatic: boolean = false) {
-        const { show, focus } = revealLogDecision(error_to_show, isAutomatic);
-        if (show) {
-            SingletonLogger.instance().showChannel(!focus);
+    showChannel(error_to_show?: boolean, isAutomatic?: boolean) {
+        const config = vscode.workspace.getConfiguration('cmake');
+        const reveal_log = config.get<RevealLogKey>('revealLog', 'always');
+        const reveal_on_automatic = config.get<boolean>('revealLogOnAutomaticTrigger', false);
+
+        const decision = decideReveal(reveal_log, error_to_show, isAutomatic ?? false, reveal_on_automatic);
+        if (decision.shouldShow) {
+            SingletonLogger.instance().showChannel(decision.preserveFocus);
         }
     }
 
@@ -292,23 +296,21 @@ export function createLogger(tag: string) {
 /**
  * Decide, based on the `cmake.revealLog` setting, whether a surface (the Output
  * channel or the colorized build terminal) should be revealed, and whether it
- * should take focus. Shared so the colorized build terminal honors `revealLog`
- * exactly as the Output channel does.
- *
- * When `isAutomatic` is true (the operation was triggered automatically or
- * programmatically rather than by an explicit user action), the proactive reveal
- * is suppressed unless the user opts in via `cmake.revealLogOnAutomaticTrigger`.
- * Failure reveals (`error_to_show === true`) always surface regardless.
+ * should take focus, returning the colorized-build-terminal friendly `{ show, focus }`
+ * shape. Thin wrapper over {@link decideReveal} (which the Output-channel reveal in
+ * `showChannel` also uses), so the terminal honors `cmake.revealLog` and
+ * `cmake.revealLogOnAutomaticTrigger` exactly as the Output channel does.
  */
 export function revealLogDecision(error_to_show?: boolean, isAutomatic: boolean = false): { show: boolean; focus: boolean } {
     const config = vscode.workspace.getConfiguration('cmake');
     const reveal_log = config.get<RevealLogKey>('revealLog', 'always');
     const reveal_on_automatic = config.get<boolean>('revealLogOnAutomaticTrigger', false);
-    return decideReveal(reveal_log, error_to_show, isAutomatic, reveal_on_automatic);
+    const decision = decideReveal(reveal_log, error_to_show, isAutomatic, reveal_on_automatic);
+    return { show: decision.shouldShow, focus: !decision.preserveFocus };
 }
 
 /**
- * Pure decision logic for {@link revealLogDecision}, factored out so it can be
+ * Pure decision logic for revealing the CMake output, factored out so it can be
  * unit-tested without a VS Code instance.
  *
  * @param revealLog The `cmake.revealLog` value, controlling *how* a reveal happens.
@@ -322,26 +324,27 @@ export function revealLogDecision(error_to_show?: boolean, isAutomatic: boolean 
  *                    automatic/programmatic proactive reveals are suppressed so they don't
  *                    switch the panel away from a terminal the user is working in.
  */
-export function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { show: boolean; focus: boolean } {
-    const isFailure = errorToShow === true;
-    // Failures always surface. Suppress only proactive (non-failure) reveals for
-    // automatic/programmatic triggers, unless the user opted in.
-    if (isAutomatic && !revealOnAutomatic && !isFailure) {
-        return { show: false, focus: false };
+export function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { shouldShow: boolean; preserveFocus: boolean } {
+    const isFailureReveal = errorToShow === true;
+    // Suppress the proactive reveal for automatic/programmatic operations unless the user
+    // opts in. Failures (errorToShow === true) always surface so errors are never hidden.
+    if (isAutomatic && !isFailureReveal && !revealOnAutomatic) {
+        return { shouldShow: false, preserveFocus: true };
     }
-    let show = false;
+
+    let shouldShow: boolean = false;
     if (revealLog === 'always') {
-        show = true;
+        shouldShow = true;
     }
     // won't show if no target information
     if (revealLog === 'error' && errorToShow !== undefined) {
-        show = errorToShow;
+        shouldShow = errorToShow;
     }
-    const focus = (revealLog === 'focus');
-    if (focus) {
-        show = true;
+    const shouldFocus = (revealLog === 'focus');
+    if (shouldFocus) {
+        shouldShow = true;
     }
-    return { show, focus };
+    return { shouldShow, preserveFocus: !shouldFocus };
 }
 
 export async function showLogFile(): Promise<void> {
