@@ -438,7 +438,12 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
 
     error(line: string) {
         this._currentLineSeverity = undefined;
-        const clean = stripAnsi(line);
+        // In `off` mode, behave byte-identically to the shipped release: pass the raw line
+        // through to the parser, the Output channel/log, and the captured stdout/stderr. Only
+        // strip ANSI when colorization is enabled (where a tool may emit real colors, e.g.
+        // `compiler` mode forces CLICOLOR_FORCE), so the parser and on-disk log stay clean while
+        // the terminal still receives the raw colored line.
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
         this.compileConsumer.error(clean);
         this.echo(line, clean, true);
         super.error(clean);
@@ -446,7 +451,7 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
 
     output(line: string) {
         this._currentLineSeverity = undefined;
-        const clean = stripAnsi(line);
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
         this.compileConsumer.output(clean);
         this.echo(line, clean, false);
         super.output(clean);
