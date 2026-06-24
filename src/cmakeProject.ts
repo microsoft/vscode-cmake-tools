@@ -91,6 +91,7 @@ export enum ConfigureTrigger {
     compilation = "compilation",
     launch = "launch",
     commandEditCacheUI = "commandEditCacheUI",
+    commandEditCache = "commandEditCache",
     commandConfigure = "commandConfigure",
     commandConfigureWithDebugger = "commandConfigureWithDebugger",
     projectOutlineConfigureWithDebugger = "projectOutlineConfigureWithDebugger",
@@ -108,6 +109,32 @@ export enum ConfigureTrigger {
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
+}
+
+/**
+ * Classifies a {@link ConfigureTrigger} as automatic/programmatic (vs. an explicit user
+ * action). Automatic configures (configure-on-open, reconfigure on file change, build-induced
+ * reconfigure, API-driven configures, etc.) should not proactively reveal the output panel and
+ * steal it away from a terminal the user is working in, while user-initiated configures
+ * (command palette, kit/preset selection, Quick Start, launch) keep revealing as before.
+ */
+export function isAutomaticConfigureTrigger(trigger: ConfigureTrigger): boolean {
+    switch (trigger) {
+        case ConfigureTrigger.configureOnOpen:
+        case ConfigureTrigger.configureWithCache:
+        case ConfigureTrigger.cmakeListsChange:
+        case ConfigureTrigger.sourceDirectoryChange:
+        case ConfigureTrigger.compilation:
+        case ConfigureTrigger.api:
+        case ConfigureTrigger.taskProvider:
+        case ConfigureTrigger.workflow:
+        case ConfigureTrigger.runTests:
+        case ConfigureTrigger.package:
+        case ConfigureTrigger.badHomeDir:
+            return true;
+        default:
+            return false;
+    }
 }
 
 export interface DiagnosticsConfiguration {
@@ -1890,7 +1917,7 @@ export class CMakeProject {
                 }
 
                 if (type !== ConfigureType.ShowCommandOnly) {
-                    log.showChannel();
+                    log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
@@ -2336,10 +2363,10 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!showCommandOnly) {
             if (this.workspaceContext.config.colorizedBuildOutput === 'off') {
-                log.showChannel();
+                log.showChannel(undefined, isAutomatic);
             }
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
@@ -2401,7 +2428,7 @@ export class CMakeProject {
                 await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
                 if (rc !== 0 && this.workspaceContext.config.colorizedBuildOutput === 'off') {
-                    log.showChannel(true); // in case build has failed
+                    log.showChannel(true, isAutomatic); // in case build has failed
                 }
                 await setContextAndStore(isBuildingKey, false);
                 if (rc === null) {
@@ -2452,9 +2479,14 @@ export class CMakeProject {
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         const buildColorMode = drv!.config.colorizedBuildOutput;
                         if (buildColorMode !== 'off') {
+                            // The colorized per-line stream is rendered in the "CMake Build"
+                            // terminal (the Output panel cannot render ANSI). Leave a one-line
+                            // pointer in the regular Output channel for users who watch it, without
+                            // revealing the channel (which would defeat the single-surface design).
+                            buildLogger.info(localize('build.colorized.in.terminal', 'Colorized build output is shown in the "CMake Build" terminal; plain output is written to the CMake Tools log file and diagnostics appear in the Problems panel.'));
                             const banner = buildColorMode === 'rich' ? targetName : undefined;
                             colorizedBuildSink().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner, [drv!.binaryDir, drv!.sourceDir]);
-                            const startReveal = logging.revealLogDecision();
+                            const startReveal = logging.revealLogDecision(undefined, isAutomatic);
                             if (startReveal.show) {
                                 colorizedBuildSink().reveal(startReveal.focus);
                             }
@@ -2467,12 +2499,14 @@ export class CMakeProject {
                                 // Reveal the colorized build terminal (not the Output channel)
                                 // so a failed build doesn't yank focus away from it. Honor the
                                 // `cmake.revealLog` setting exactly as the channel reveal would.
-                                const reveal = logging.revealLogDecision(true);
-                                if (reveal.show) {
-                                    colorizedBuildSink().reveal(reveal.focus);
+                                const reveal = logging.revealLogDecision(true, isAutomatic);
+                                if (reveal.show && !colorizedBuildSink().reveal(reveal.focus)) {
+                                    // The terminal was closed mid-build, so the failure has no
+                                    // visible surface — fall back to revealing the Output channel.
+                                    log.showChannel(true, isAutomatic);
                                 }
                             } else {
-                                log.showChannel(true); // in case build has failed
+                                log.showChannel(true, isAutomatic); // in case build has failed
                             }
                         }
                         if (rc === null) {
@@ -2536,8 +2570,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken, isAutomatic);
         return this.activeBuild;
     }
 
@@ -2579,7 +2613,7 @@ export class CMakeProject {
                 localize('project.not.yet.configured', 'This project has not yet been configured'),
                 localize('configure.now.button', 'Configure Now')));
             if (doConfigure) {
-                if ((await this.configureInternal()).exitCode !== 0) {
+                if ((await this.configureInternal(ConfigureTrigger.commandEditCache)).exitCode !== 0) {
                     return;
                 }
             } else {
@@ -2767,11 +2801,11 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(fromWorkflow: boolean = false): Promise<CMakeDriver> {
+    private async preTest(fromWorkflow: boolean = false, isAutomatic: boolean = false): Promise<CMakeDriver> {
         if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
         }
-        const buildResult = await this.build(undefined, false, false);
+        const buildResult = await this.build(undefined, false, false, undefined, isAutomatic);
         if (buildResult.exitCode !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
@@ -2783,9 +2817,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+        const drv = await this.preTest(fromWorkflow, isAutomatic);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
         return retc;
     }
 

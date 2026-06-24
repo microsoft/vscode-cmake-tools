@@ -23,7 +23,7 @@ enum LogLevel {
     Fatal,
 }
 
-type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
+export type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
 
 /**
  * Get the name of a logging level
@@ -272,8 +272,8 @@ export class Logger {
         SingletonLogger.instance().clearOutputChannel();
     }
 
-    showChannel(error_to_show?: boolean) {
-        const { show, focus } = revealLogDecision(error_to_show);
+    showChannel(error_to_show?: boolean, isAutomatic: boolean = false) {
+        const { show, focus } = revealLogDecision(error_to_show, isAutomatic);
         if (show) {
             SingletonLogger.instance().showChannel(!focus);
         }
@@ -294,18 +294,50 @@ export function createLogger(tag: string) {
  * channel or the colorized build terminal) should be revealed, and whether it
  * should take focus. Shared so the colorized build terminal honors `revealLog`
  * exactly as the Output channel does.
+ *
+ * When `isAutomatic` is true (the operation was triggered automatically or
+ * programmatically rather than by an explicit user action), the proactive reveal
+ * is suppressed unless the user opts in via `cmake.revealLogOnAutomaticTrigger`.
+ * Failure reveals (`error_to_show === true`) always surface regardless.
  */
-export function revealLogDecision(error_to_show?: boolean): { show: boolean; focus: boolean } {
-    const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
+export function revealLogDecision(error_to_show?: boolean, isAutomatic: boolean = false): { show: boolean; focus: boolean } {
+    const config = vscode.workspace.getConfiguration('cmake');
+    const reveal_log = config.get<RevealLogKey>('revealLog', 'always');
+    const reveal_on_automatic = config.get<boolean>('revealLogOnAutomaticTrigger', false);
+    return decideReveal(reveal_log, error_to_show, isAutomatic, reveal_on_automatic);
+}
+
+/**
+ * Pure decision logic for {@link revealLogDecision}, factored out so it can be
+ * unit-tested without a VS Code instance.
+ *
+ * @param revealLog The `cmake.revealLog` value, controlling *how* a reveal happens.
+ * @param errorToShow When defined, indicates a build/configure result: `true` for failure.
+ *                    A failure reveal (`true`) always surfaces and is never gated.
+ * @param isAutomatic Whether the operation was triggered automatically/programmatically
+ *                    (e.g. configure-on-open, auto-reconfigure, or a build/test invoked through
+ *                    the CMake Tools API by another extension such as the C/C++ DevTools
+ *                    companion acting for Copilot) rather than by an explicit user action.
+ * @param revealOnAutomatic The `cmake.revealLogOnAutomaticTrigger` value. When `false`,
+ *                    automatic/programmatic proactive reveals are suppressed so they don't
+ *                    switch the panel away from a terminal the user is working in.
+ */
+export function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { show: boolean; focus: boolean } {
+    const isFailure = errorToShow === true;
+    // Failures always surface. Suppress only proactive (non-failure) reveals for
+    // automatic/programmatic triggers, unless the user opted in.
+    if (isAutomatic && !revealOnAutomatic && !isFailure) {
+        return { show: false, focus: false };
+    }
     let show = false;
-    if (reveal_log === 'always') {
+    if (revealLog === 'always') {
         show = true;
     }
     // won't show if no target information
-    if (reveal_log === 'error' && error_to_show !== undefined) {
-        show = error_to_show;
+    if (revealLog === 'error' && errorToShow !== undefined) {
+        show = errorToShow;
     }
-    const focus = (reveal_log === 'focus');
+    const focus = (revealLog === 'focus');
     if (focus) {
         show = true;
     }

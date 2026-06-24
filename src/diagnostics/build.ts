@@ -337,10 +337,14 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     private readonly glyphStyle: GlyphStyle;
     /**
      * Echo a build-output line. Parsing has already happened on the clean `line`,
-     * so the Problems panel is unaffected. The plain line always goes to the
-     * logger (Output channel + on-disk log file are unchanged). When colorization
-     * is enabled, a decorated copy is additionally mirrored to the integrated
-     * terminal, where ANSI actually renders (the Output panel cannot render ANSI).
+     * so the Problems panel is unaffected.
+     *
+     * In `off` mode the clean line goes to the regular CMake/Build Output channel and
+     * the on-disk log file (legacy behavior). When colorization is enabled, the raw
+     * (ANSI) line is written to the "CMake Build" terminal sink — the single visible
+     * build surface — and the clean line is written to the on-disk log file only
+     * (never the Output channel), so the stream isn't duplicated and the channel
+     * doesn't steal focus from the terminal.
      */
     private echo(raw: string, clean: string, isError: boolean) {
         if (this.colorMode !== 'off') {
