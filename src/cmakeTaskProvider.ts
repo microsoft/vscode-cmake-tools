@@ -635,11 +635,11 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             ? {
                 output: (line: string) => {
                     this.output(line);
-                    compileConsumer!.output(stripAnsi(line));
+                    compileConsumer!.output(this.colorMode === 'off' ? line : stripAnsi(line));
                 },
                 error: (line: string) => {
                     this.error(line);
-                    compileConsumer!.error(stripAnsi(line));
+                    compileConsumer!.error(this.colorMode === 'off' ? line : stripAnsi(line));
                 }
             }
             : this;
