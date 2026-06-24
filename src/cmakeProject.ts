@@ -27,7 +27,7 @@ import { CTestDriver } from '@cmt/ctest';
 import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
-import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
+import { colorizedBuildSink } from '@cmt/buildOutputTerminal';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
@@ -2453,10 +2453,10 @@ export class CMakeProject {
                         const buildColorMode = drv!.config.colorizedBuildOutput;
                         if (buildColorMode !== 'off') {
                             const banner = buildColorMode === 'rich' ? targetName : undefined;
-                            buildOutputTerminal().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner, [drv!.binaryDir, drv!.sourceDir]);
+                            colorizedBuildSink().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner, [drv!.binaryDir, drv!.sourceDir]);
                             const startReveal = logging.revealLogDecision();
                             if (startReveal.show) {
-                                buildOutputTerminal().reveal(startReveal.focus);
+                                colorizedBuildSink().reveal(startReveal.focus);
                             }
                         }
                         await setContextAndStore(isBuildingKey, true);
@@ -2469,7 +2469,7 @@ export class CMakeProject {
                                 // `cmake.revealLog` setting exactly as the channel reveal would.
                                 const reveal = logging.revealLogDecision(true);
                                 if (reveal.show) {
-                                    buildOutputTerminal().reveal(reveal.focus);
+                                    colorizedBuildSink().reveal(reveal.focus);
                                 }
                             } else {
                                 log.showChannel(true); // in case build has failed
@@ -2512,7 +2512,7 @@ export class CMakeProject {
                         }
                         if (buildColorMode === 'rich') {
                             const outcome = rc === null ? 'cancelled' : (rc === 0 && buildErrors === 0 ? 'succeeded' : 'failed');
-                            buildOutputTerminal().writeSummary(outcome, { errors: buildErrors, warnings: buildWarnings }, drv!.config.buildOutputGlyphs);
+                            colorizedBuildSink().writeSummary(outcome, { errors: buildErrors, warnings: buildWarnings }, drv!.config.buildOutputGlyphs);
                         }
                         await this.cTestController.refreshTests(drv!);
                         await this.refreshCompileDatabase(drv!.expansionOptions);

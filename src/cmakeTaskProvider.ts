@@ -17,7 +17,7 @@ import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
 import { CommandResult } from 'vscode-cmake-tools';
 import { CompileOutputConsumer } from '@cmt/diagnostics/build';
-import { BuildColorMode, GlyphStyle, decorateBuildLine } from '@cmt/colorize';
+import { BuildColorMode, GlyphStyle, decorateBuildLine, stripAnsi } from '@cmt/colorize';
 import collections from '@cmt/diagnostics/collections';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 
@@ -635,11 +635,11 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             ? {
                 output: (line: string) => {
                     this.output(line);
-                    compileConsumer!.output(line);
+                    compileConsumer!.output(stripAnsi(line));
                 },
                 error: (line: string) => {
                     this.error(line);
-                    compileConsumer!.error(line);
+                    compileConsumer!.error(stripAnsi(line));
                 }
             }
             : this;

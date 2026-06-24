@@ -124,6 +124,7 @@
     "cmake-tools.configuration.cmake.colorizedBuildOutput.off.description": "Do not colorize build output.",
     "cmake-tools.configuration.cmake.colorizedBuildOutput.severity.description": "Highlight build errors, warnings, and notes by severity, shown in a dedicated CMake Build integrated terminal.",
     "cmake-tools.configuration.cmake.colorizedBuildOutput.rich.description": "Everything in 'severity', plus accessible severity glyphs, dimmed build-progress lines, a build header, and a colored build-summary footer (error/warning counts and elapsed time).",
+    "cmake-tools.configuration.cmake.colorizedBuildOutput.compiler.description": "Show the compiler's and build tools' own colors by setting CMAKE_COLOR_DIAGNOSTICS=ON at configure time and CLICOLOR_FORCE=1 at build time. Requires a reconfigure to take effect. Best with GCC/Clang and Ninja/Make; MSVC (cl.exe) emits no colors, so prefer 'severity' or 'rich' for MSVC.",
     "cmake-tools.configuration.cmake.buildOutputGlyphs.markdownDescription": "Glyph style used by `cmake.colorizedBuildOutput: rich`. Use `ascii` if your terminal font does not render the Unicode severity glyphs (✗ ⚠ ℹ ✓).",
     "cmake-tools.configuration.cmake.buildOutputGlyphs.unicode.description": "Use Unicode severity glyphs (✗ ⚠ ℹ ✓).",
     "cmake-tools.configuration.cmake.buildOutputGlyphs.ascii.description": "Use ASCII severity markers (x ! i +) for fonts that do not render the Unicode glyphs.",

@@ -17,7 +17,7 @@
  *   axis stays uncluttered for red-green color vision deficiency.
  */
 
-export type BuildColorMode = 'off' | 'severity' | 'rich';
+export type BuildColorMode = 'off' | 'severity' | 'rich' | 'compiler';
 export type GlyphStyle = 'unicode' | 'ascii';
 
 export enum BuildLineSeverity {
@@ -107,7 +107,7 @@ function sgrFor(severity: BuildLineSeverity): string | undefined {
  * - the line does not classify into a known severity.
  */
 export function colorizeBuildLine(line: string, mode: BuildColorMode): string {
-    if (mode === 'off') {
+    if (mode === 'off' || mode === 'compiler') {
         return line;
     }
     if (line.includes(ESC)) {
@@ -115,6 +115,27 @@ export function colorizeBuildLine(line: string, mode: BuildColorMode): string {
     }
     const sgr = sgrFor(classifyBuildLine(line));
     return sgr ? `${sgr}${line}${RESET}` : line;
+}
+
+const OSC_RE = /\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)/g;
+// CSI: ESC [ , parameter bytes (0x30-0x3F: 0-9 : ; < = > ?), intermediate bytes
+// (0x20-0x2F), final byte (0x40-0x7E). The full parameter-byte class (not just
+// "[0-9;?]") covers SGR colon sub-parameters such as ESC[4:3m.
+const CSI_RE = /\u001b\[[0-9:;<=>?]*[ -/]*[@-~]/g;
+const LONE_ESC_RE = /\u001b[@-Z\\-_]/g;
+
+/**
+ * Remove ANSI escape sequences (SGR colors, other CSI, OSC hyperlinks, and lone
+ * two-character escapes) from a string. Pure; used to feed the diagnostic parsers
+ * and the on-disk log clean text when a tool emits its own colors (e.g. the
+ * `compiler` mode forces `-fdiagnostics-color`). No-op fast path for the common
+ * case of a line without any escape.
+ */
+export function stripAnsi(s: string): string {
+    if (s.indexOf(ESC) === -1) {
+        return s;
+    }
+    return s.replace(OSC_RE, '').replace(CSI_RE, '').replace(LONE_ESC_RE, '');
 }
 
 function glyphFor(severity: BuildLineSeverity, glyphs: GlyphStyle): string | undefined {
@@ -146,6 +167,11 @@ export function isProgressNoise(line: string): boolean {
  *   and dims build-progress noise. Lines that already contain ANSI pass through.
  */
 export function decorateBuildLine(line: string, mode: BuildColorMode, glyphs: GlyphStyle): string {
+    if (mode === 'off' || mode === 'compiler') {
+        // off: no decoration. compiler: the tool emits its own real ANSI colors,
+        // which we forward verbatim (no synthetic severity color or glyph).
+        return line;
+    }
     if (mode !== 'rich') {
         return colorizeBuildLine(line, mode);
     }
@@ -248,4 +274,34 @@ export function renderBuildSummary(outcome: BuildOutcome, statusText: string, gl
         `${sgr}${rule}${RESET}`,
         `${sgr}${glyph} ${statusText}${RESET}`
     ];
+}
+
+/**
+ * A surface that renders colorized build output. Implemented by an integrated
+ * terminal (today) or — if VS Code can render ANSI in the Output panel — an
+ * Output channel. The ANSI strings produced by this module are identical for
+ * both surfaces, so the colorization is portable across them.
+ */
+export interface ColorizedBuildSink {
+    prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs?: string[]): void;
+    writeLine(line: string, mode: BuildColorMode, glyphs: GlyphStyle): void;
+    writeSummary(outcome: BuildOutcome, counts: { errors: number; warnings: number }, glyphs: GlyphStyle): void;
+    reveal(focus: boolean): void;
+    dispose(): void;
+}
+
+/**
+ * Whether the VS Code Output panel can render ANSI escape codes. Today this is
+ * `false`: the Output panel is a Monaco text editor that shows escapes as literal
+ * text, so colorized build output is rendered in an integrated terminal instead.
+ * If a future VS Code renders ANSI in the Output panel, flipping this to `true`
+ * routes the SAME colorized output to the Output channel with no other change.
+ */
+export function canRenderAnsiInOutput(): boolean {
+    return false;
+}
+
+/** Pure sink selection: the Output channel when it can render ANSI, else a terminal. */
+export function selectSink(canRender: boolean, makeTerminal: () => ColorizedBuildSink, makeChannel: () => ColorizedBuildSink): ColorizedBuildSink {
+    return canRender ? makeChannel() : makeTerminal();
 }

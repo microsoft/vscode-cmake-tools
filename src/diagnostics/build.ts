@@ -7,8 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode, GlyphStyle } from '@cmt/colorize';
-import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
+import { BuildColorMode, GlyphStyle, stripAnsi } from '@cmt/colorize';
+import { colorizedBuildSink } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -342,18 +342,19 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
      * is enabled, a decorated copy is additionally mirrored to the integrated
      * terminal, where ANSI actually renders (the Output panel cannot render ANSI).
      */
-    private echo(line: string, isError: boolean) {
+    private echo(raw: string, clean: string, isError: boolean) {
         if (this.colorMode !== 'off') {
-            // Colorized: the terminal is the single visible build surface. The plain
-            // line still goes to the on-disk log file and developer console, but NOT
-            // the Output channel — this avoids duplicating the stream and the channel
-            // stealing focus away from the terminal.
-            buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
+            // Colorized: the terminal is the single visible build surface and receives
+            // the RAW line (ANSI preserved). The plain (ANSI-stripped) line still goes to
+            // the on-disk log file and developer console, but NOT the Output channel —
+            // this avoids duplicating the stream and the channel stealing focus away from
+            // the terminal.
+            colorizedBuildSink().writeLine(raw, this.colorMode, this.glyphStyle);
             if (this.logger) {
                 if (isError) {
-                    this.logger.errorFileOnly(line);
+                    this.logger.errorFileOnly(clean);
                 } else {
-                    this.logger.infoFileOnly(line);
+                    this.logger.infoFileOnly(clean);
                 }
             }
             return;
@@ -362,9 +363,9 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
             return;
         }
         if (isError) {
-            this.logger.error(line);
+            this.logger.error(clean);
         } else {
-            this.logger.info(line);
+            this.logger.info(clean);
         }
     }
     /**
@@ -391,16 +392,18 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     error(line: string) {
-        this.compileConsumer.error(line);
-        this.echo(line, true);
-        super.error(line);
+        const clean = stripAnsi(line);
+        this.compileConsumer.error(clean);
+        this.echo(line, clean, true);
+        super.error(clean);
     }
 
     output(line: string) {
-        this.compileConsumer.output(line);
-        this.echo(line, false);
-        super.output(line);
-        const progress = this._percent_re.exec(line);
+        const clean = stripAnsi(line);
+        this.compileConsumer.output(clean);
+        this.echo(line, clean, false);
+        super.output(clean);
+        const progress = this._percent_re.exec(clean);
         if (progress) {
             const percent = progress[1];
             this._onProgressEmitter.fire({
