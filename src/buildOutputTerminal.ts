@@ -122,6 +122,20 @@ class BuildOutputTerminal implements vscode.Pseudoterminal, ColorizedBuildSink {
     }
 
     /**
+     * Open the terminal (creating it if needed) before the pre-build configure runs, so the
+     * "CMake Build" terminal appears immediately when the user starts a build instead of only
+     * once a (possibly slow) configure completes. Revealing is left to the caller so it can
+     * honor `cmake.revealLog` / `cmake.revealLogOnAutomaticTrigger`.
+     */
+    prepareForConfigure(clear: boolean): void {
+        this.ensureTerminal();
+        if (clear) {
+            this.emit('\u001b[2J\u001b[3J\u001b[H');
+        }
+        this.emit(localize('build.colorized.preparing', 'Preparing build…') + EOL);
+    }
+
+    /**
      * Prepare the terminal at the start of a build: create it if needed, clear it
      * when requested, record the start time, and optionally print a bold banner.
      * Revealing is left to the caller so it can honor `cmake.revealLog`.
@@ -195,6 +209,14 @@ class OutputChannelBuildSink implements ColorizedBuildSink {
         }
         this.channel.show(!focus);
         return true;
+    }
+
+    prepareForConfigure(clear: boolean): void {
+        const channel = this.ensureChannel();
+        if (clear) {
+            channel.clear();
+        }
+        channel.appendLine(localize('build.colorized.preparing', 'Preparing build…'));
     }
 
     prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs: string[] = []): void {

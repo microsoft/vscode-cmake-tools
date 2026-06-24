@@ -283,6 +283,11 @@ export function renderBuildSummary(outcome: BuildOutcome, statusText: string, gl
  * both surfaces, so the colorization is portable across them.
  */
 export interface ColorizedBuildSink {
+    /** Open the build surface (creating it if needed) *before* the pre-build configure runs,
+     * optionally clearing it, so the surface appears immediately when the user starts a build
+     * rather than only once configuration finishes. Writes a short "preparing" notice; the
+     * caller is responsible for revealing via {@link reveal}. */
+    prepareForConfigure(clear: boolean): void;
     prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs?: string[]): void;
     writeLine(line: string, mode: BuildColorMode, glyphs: GlyphStyle): void;
     writeSummary(outcome: BuildOutcome, counts: { errors: number; warnings: number }, glyphs: GlyphStyle): void;

@@ -19,23 +19,32 @@ import * as path from 'path';
 type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
 
 // Mirror of `decideReveal` in src/logging.ts.
-function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { show: boolean; focus: boolean } {
-    const isFailure = errorToShow === true;
-    if (isAutomatic && !revealOnAutomatic && !isFailure) {
-        return { show: false, focus: false };
+// Mirror of `decideReveal` in src/logging.ts (returns { shouldShow, preserveFocus }, matching
+// the cmake.revealLogOnAutomaticTrigger gate shared with the #4988 work).
+function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { shouldShow: boolean; preserveFocus: boolean } {
+    const isFailureReveal = errorToShow === true;
+    if (isAutomatic && !isFailureReveal && !revealOnAutomatic) {
+        return { shouldShow: false, preserveFocus: true };
     }
-    let show = false;
+    let shouldShow = false;
     if (revealLog === 'always') {
-        show = true;
+        shouldShow = true;
     }
     if (revealLog === 'error' && errorToShow !== undefined) {
-        show = errorToShow;
+        shouldShow = errorToShow;
     }
-    const focus = (revealLog === 'focus');
-    if (focus) {
-        show = true;
+    const shouldFocus = (revealLog === 'focus');
+    if (shouldFocus) {
+        shouldShow = true;
     }
-    return { show, focus };
+    return { shouldShow, preserveFocus: !shouldFocus };
+}
+
+// Mirror of the colorization-only `revealLogDecision` wrapper: maps decideReveal's
+// { shouldShow, preserveFocus } to the { show, focus } shape the colorized terminal reveal uses.
+function revealLogDecision(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { show: boolean; focus: boolean } {
+    const d = decideReveal(revealLog, errorToShow, isAutomatic, revealOnAutomatic);
+    return { show: d.shouldShow, focus: !d.preserveFocus };
 }
 
 // Mirror of `isAutomaticConfigureTrigger` in src/cmakeProject.ts (ConfigureTrigger values).
@@ -99,36 +108,49 @@ suite('[revealDecision] #4988 minimize interruptions on automatic triggers', () 
 
     suite('decideReveal', () => {
         test('user-initiated operations keep legacy revealLog behavior', () => {
-            expect(decideReveal('always', undefined, false, false)).to.deep.equal({ show: true, focus: false });
-            expect(decideReveal('focus', undefined, false, false)).to.deep.equal({ show: true, focus: true });
-            expect(decideReveal('never', undefined, false, false)).to.deep.equal({ show: false, focus: false });
-            expect(decideReveal('error', undefined, false, false)).to.deep.equal({ show: false, focus: false });
+            expect(decideReveal('always', undefined, false, false)).to.deep.equal({ shouldShow: true, preserveFocus: true });
+            expect(decideReveal('focus', undefined, false, false)).to.deep.equal({ shouldShow: true, preserveFocus: false });
+            expect(decideReveal('never', undefined, false, false)).to.deep.equal({ shouldShow: false, preserveFocus: true });
+            expect(decideReveal('error', undefined, false, false)).to.deep.equal({ shouldShow: false, preserveFocus: true });
         });
 
         test('automatic operations are suppressed by default (the fix)', () => {
-            expect(decideReveal('always', undefined, true, false)).to.deep.equal({ show: false, focus: false });
+            expect(decideReveal('always', undefined, true, false)).to.deep.equal({ shouldShow: false, preserveFocus: true });
             // Even when the user chose `focus`, an automatic op must not steal focus.
-            expect(decideReveal('focus', undefined, true, false)).to.deep.equal({ show: false, focus: false });
+            expect(decideReveal('focus', undefined, true, false)).to.deep.equal({ shouldShow: false, preserveFocus: true });
         });
 
         test('automatic operations reveal when the user opts in', () => {
-            expect(decideReveal('always', undefined, true, true)).to.deep.equal({ show: true, focus: false });
-            expect(decideReveal('focus', undefined, true, true)).to.deep.equal({ show: true, focus: true });
+            expect(decideReveal('always', undefined, true, true)).to.deep.equal({ shouldShow: true, preserveFocus: true });
+            expect(decideReveal('focus', undefined, true, true)).to.deep.equal({ shouldShow: true, preserveFocus: false });
         });
 
         test('failures always surface, even for automatic operations and even when opted out', () => {
-            expect(decideReveal('always', true, true, false)).to.deep.equal({ show: true, focus: false });
-            expect(decideReveal('error', true, true, false)).to.deep.equal({ show: true, focus: false });
-            expect(decideReveal('focus', true, true, false)).to.deep.equal({ show: true, focus: true });
+            expect(decideReveal('always', true, true, false)).to.deep.equal({ shouldShow: true, preserveFocus: true });
+            expect(decideReveal('error', true, true, false)).to.deep.equal({ shouldShow: true, preserveFocus: true });
+            expect(decideReveal('focus', true, true, false)).to.deep.equal({ shouldShow: true, preserveFocus: false });
         });
 
         test('successful automatic results are not revealed under error mode', () => {
-            expect(decideReveal('error', false, true, false)).to.deep.equal({ show: false, focus: false });
+            expect(decideReveal('error', false, true, false)).to.deep.equal({ shouldShow: false, preserveFocus: true });
         });
 
         test('never suppresses everything, including failures (subordinate to revealLog as today)', () => {
-            expect(decideReveal('never', true, false, true)).to.deep.equal({ show: false, focus: false });
-            expect(decideReveal('never', true, true, true)).to.deep.equal({ show: false, focus: false });
+            expect(decideReveal('never', true, false, true)).to.deep.equal({ shouldShow: false, preserveFocus: true });
+            expect(decideReveal('never', true, true, true)).to.deep.equal({ shouldShow: false, preserveFocus: true });
+        });
+    });
+
+    suite('revealLogDecision (colorized terminal mapping)', () => {
+        test('maps shouldShow -> show and preserveFocus -> !focus', () => {
+            // always/user: shown, focus preserved (no focus steal)
+            expect(revealLogDecision('always', undefined, false, false)).to.deep.equal({ show: true, focus: false });
+            // focus/user: shown and takes focus
+            expect(revealLogDecision('focus', undefined, false, false)).to.deep.equal({ show: true, focus: true });
+            // automatic suppressed by default
+            expect(revealLogDecision('always', undefined, true, false)).to.deep.equal({ show: false, focus: false });
+            // failure always shows
+            expect(revealLogDecision('always', true, true, false)).to.deep.equal({ show: true, focus: false });
         });
     });
 

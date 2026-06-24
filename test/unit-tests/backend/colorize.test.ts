@@ -335,7 +335,7 @@ suite('[colorize] strip-before-parse preserves classification', () => {
 
 suite('[colorize] sink selection', () => {
     const fakeSink = (): ColorizedBuildSink => ({
-        prepareForBuild: () => {}, writeLine: () => {}, writeSummary: () => {}, reveal: () => true, dispose: () => {}
+        prepareForConfigure: () => {}, prepareForBuild: () => {}, writeLine: () => {}, writeSummary: () => {}, reveal: () => true, dispose: () => {}
     });
     test('the Output panel cannot render ANSI today', () => {
         expect(canRenderAnsiInOutput()).to.equal(false);
