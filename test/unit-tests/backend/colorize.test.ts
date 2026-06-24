@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { classifyBuildLine, colorizeBuildLine, decorateBuildLine, isProgressNoise, renderBuildBanner, renderBuildSummary, linkifyLeadingPath, isAbsoluteLike, BuildLineSeverity } from '@cmt/colorize';
+import { classifyBuildLine, colorizeBuildLine, decorateBuildLine, isProgressNoise, renderBuildBanner, renderBuildSummary, linkifyLeadingPath, isAbsoluteLike, leadingPathToken, stripAnsi, canRenderAnsiInOutput, selectSink, ColorizedBuildSink, BuildLineSeverity } from '@cmt/colorize';
 
 /**
  * Tests for the pure build-output colorizer in src/colorize.ts.
@@ -261,5 +261,105 @@ suite('[colorize] linkifyLeadingPath', () => {
         const r = (_rel: string) => '/x';
         const line = `${ESC}[31m../src/x.cpp:1:1: error: e${RESET}`;
         expect(linkifyLeadingPath(line, r)).to.equal(line);
+    });
+});
+
+suite('[colorize] stripAnsi', () => {
+    test('no-op fast path: a line without any escape is returned by identity', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        expect(stripAnsi(line)).to.equal(line);
+    });
+    test('removes a leading SGR color and trailing reset', () => {
+        expect(stripAnsi(`${ESC}[1;31m/src/x.cpp:1:1: error: e${RESET}`)).to.equal('/src/x.cpp:1:1: error: e');
+    });
+    test('removes multiple interleaved SGR sequences', () => {
+        expect(stripAnsi(`${ESC}[33mwarn${ESC}[0m: ${ESC}[36mnote${ESC}[0m`)).to.equal('warn: note');
+    });
+    test('removes a non-SGR CSI sequence (cursor move)', () => {
+        expect(stripAnsi(`abc${ESC}[2Kdef`)).to.equal('abcdef');
+    });
+    test('removes an SGR using colon sub-parameters (e.g. underline color ESC[4:3m)', () => {
+        expect(stripAnsi(`${ESC}[4:3munderlined${ESC}[0m`)).to.equal('underlined');
+    });
+    test('removes an OSC 8 hyperlink wrapper (BEL-terminated)', () => {
+        expect(stripAnsi(`${ESC}]8;;file:///x\u0007label${ESC}]8;;\u0007`)).to.equal('label');
+    });
+    test('removes an OSC sequence terminated by ST (ESC backslash)', () => {
+        expect(stripAnsi(`${ESC}]0;title${ESC}\\rest`)).to.equal('rest');
+    });
+    test('is idempotent', () => {
+        const once = stripAnsi(`${ESC}[31m/src/x.cpp:9:3: note: here${RESET}`);
+        expect(stripAnsi(once)).to.equal(once);
+    });
+    test('leaves a clean line byte-identical (===)', () => {
+        const line = 'Scanning dependencies of target app';
+        expect(stripAnsi(line)).to.equal(line);
+    });
+});
+
+suite('[colorize] compiler mode passthrough', () => {
+    test('decorateBuildLine in compiler mode returns the raw line unchanged (no synthetic color/glyph)', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        expect(decorateBuildLine(line, 'compiler', 'unicode')).to.equal(line);
+    });
+    test('decorateBuildLine in compiler mode forwards a tool-colored line verbatim', () => {
+        const line = `${ESC}[0;1;31merror: ${ESC}[0mboom`;
+        expect(decorateBuildLine(line, 'compiler', 'unicode')).to.equal(line);
+    });
+    test('colorizeBuildLine in compiler mode returns the line unchanged', () => {
+        const line = '/src/main.cpp:7:9: warning: meh';
+        expect(colorizeBuildLine(line, 'compiler')).to.equal(line);
+    });
+});
+
+suite('[colorize] strip-before-parse preserves classification', () => {
+    const samples = [
+        '/src/main.cpp:10:5: error: expected \';\'',
+        '/src/main.cpp:7:9: warning: unused variable \'y\'',
+        '/src/main.cpp:9:3: note: in expansion of macro',
+        'main.cpp(12): error C2065: \'x\': undeclared identifier',
+        '[ 50%] Building CXX object CMakeFiles/app.dir/main.cpp.o'
+    ];
+    test('classifyBuildLine is identical with and without a forced compiler color wrapper', () => {
+        for (const s of samples) {
+            const colored = `${ESC}[1;31m${s}${RESET}`;
+            expect(classifyBuildLine(stripAnsi(colored))).to.equal(classifyBuildLine(s));
+        }
+    });
+    test('leadingPathToken (line/col positions) is identical after stripping a leading SGR', () => {
+        const line = '/src/main.cpp:10:5: error: boom';
+        const colored = `${ESC}[1;31m${line}${RESET}`;
+        expect(leadingPathToken(stripAnsi(colored))).to.deep.equal(leadingPathToken(line));
+    });
+});
+
+suite('[colorize] sink selection', () => {
+    const fakeSink = (): ColorizedBuildSink => ({
+        prepareForBuild: () => {}, writeLine: () => {}, writeSummary: () => {}, reveal: () => {}, dispose: () => {}
+    });
+    test('the Output panel cannot render ANSI today', () => {
+        expect(canRenderAnsiInOutput()).to.equal(false);
+    });
+    test('selectSink(false, ...) builds the terminal sink and not the channel sink', () => {
+        let terminal = 0;
+        let channel = 0;
+        selectSink(false, () => {
+            terminal++; return fakeSink();
+        }, () => {
+            channel++; return fakeSink();
+        });
+        expect(terminal).to.equal(1);
+        expect(channel).to.equal(0);
+    });
+    test('selectSink(true, ...) builds the channel sink and not the terminal sink', () => {
+        let terminal = 0;
+        let channel = 0;
+        selectSink(true, () => {
+            terminal++; return fakeSink();
+        }, () => {
+            channel++; return fakeSink();
+        });
+        expect(terminal).to.equal(0);
+        expect(channel).to.equal(1);
     });
 });

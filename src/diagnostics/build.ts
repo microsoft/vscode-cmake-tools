@@ -7,8 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
-import { BuildColorMode, GlyphStyle } from '@cmt/colorize';
-import { buildOutputTerminal } from '@cmt/buildOutputTerminal';
+import { BuildColorMode, GlyphStyle, stripAnsi } from '@cmt/colorize';
+import { colorizedBuildSink } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -393,25 +393,25 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
      * @param line The output line to log.
      * @param isStdErr Whether the line came from standard error.
      */
-    private echo(line: string, isStdErr: boolean) {
+    private echo(raw: string, clean: string, isStdErr: boolean) {
         if (this.colorMode !== 'off') {
-            buildOutputTerminal().writeLine(line, this.colorMode, this.glyphStyle);
+            colorizedBuildSink().writeLine(raw, this.colorMode, this.glyphStyle);
             if (!this.logger) {
                 return;
             }
             const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
             switch (method) {
                 case 'error':
-                    this.logger.errorFileOnly(line);
+                    this.logger.errorFileOnly(clean);
                     break;
                 case 'warning':
-                    this.logger.warningFileOnly(line);
+                    this.logger.warningFileOnly(clean);
                     break;
                 case 'debug':
-                    this.logger.debugFileOnly(line);
+                    this.logger.debugFileOnly(clean);
                     break;
                 default:
-                    this.logger.infoFileOnly(line);
+                    this.logger.infoFileOnly(clean);
                     break;
             }
             return;
@@ -422,33 +422,35 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
         const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
         switch (method) {
             case 'error':
-                this.logger.error(line);
+                this.logger.error(clean);
                 break;
             case 'warning':
-                this.logger.warning(line);
+                this.logger.warning(clean);
                 break;
             case 'debug':
-                this.logger.debug(line);
+                this.logger.debug(clean);
                 break;
             default:
-                this.logger.info(line);
+                this.logger.info(clean);
                 break;
         }
     }
 
     error(line: string) {
         this._currentLineSeverity = undefined;
-        this.compileConsumer.error(line);
-        this.echo(line, true);
-        super.error(line);
+        const clean = stripAnsi(line);
+        this.compileConsumer.error(clean);
+        this.echo(line, clean, true);
+        super.error(clean);
     }
 
     output(line: string) {
         this._currentLineSeverity = undefined;
-        this.compileConsumer.output(line);
-        this.echo(line, false);
-        super.output(line);
-        const progress = this._percent_re.exec(line);
+        const clean = stripAnsi(line);
+        this.compileConsumer.output(clean);
+        this.echo(line, clean, false);
+        super.output(clean);
+        const progress = this._percent_re.exec(clean);
         if (progress) {
             const percent = progress[1];
             this._onProgressEmitter.fire({
