@@ -93,6 +93,7 @@ export enum ConfigureTrigger {
     compilation = "compilation",
     launch = "launch",
     commandEditCacheUI = "commandEditCacheUI",
+    commandEditCache = "commandEditCache",
     commandConfigure = "commandConfigure",
     commandConfigureWithDebugger = "commandConfigureWithDebugger",
     projectOutlineConfigureWithDebugger = "projectOutlineConfigureWithDebugger",
@@ -2616,7 +2617,7 @@ export class CMakeProject {
                 await setContextAndStore(isBuildingKey, true);
                 rc = await drv!.build(newTargets, taskConsumer, isBuildCommand);
                 if (rc !== 0 && this.workspaceContext.config.colorizedBuildOutput === 'off') {
-                    log.showChannel(true); // in case build has failed
+                    log.showChannel(true, isAutomatic); // in case build has failed
                 }
                 await setContextAndStore(isBuildingKey, false);
                 logBuildResult(rc);
@@ -2663,6 +2664,11 @@ export class CMakeProject {
                         buildLogger.info(localize('starting.build', 'Starting build'));
                         const buildColorMode = drv!.config.colorizedBuildOutput;
                         if (buildColorMode !== 'off') {
+                            // The colorized per-line stream is rendered in the "CMake Build"
+                            // terminal (the Output panel cannot render ANSI). Leave a one-line
+                            // pointer in the regular Output channel for users who watch it, without
+                            // revealing the channel (which would defeat the single-surface design).
+                            buildLogger.info(localize('build.colorized.in.terminal', 'Colorized build output is shown in the "CMake Build" terminal; plain output is written to the CMake Tools log file and diagnostics appear in the Problems panel.'));
                             const banner = buildColorMode === 'rich' ? targetName : undefined;
                             colorizedBuildSink().prepareForBuild(drv!.config.clearOutputBeforeBuild, drv!.config.buildOutputGlyphs, banner, [drv!.binaryDir, drv!.sourceDir]);
                             const startReveal = logging.revealLogDecision(undefined, isAutomatic);
@@ -2679,11 +2685,13 @@ export class CMakeProject {
                                 // so a failed build doesn't yank focus away from it. Honor the
                                 // `cmake.revealLog` setting exactly as the channel reveal would.
                                 const reveal = logging.revealLogDecision(true, isAutomatic);
-                                if (reveal.show) {
-                                    colorizedBuildSink().reveal(reveal.focus);
+                                if (reveal.show && !colorizedBuildSink().reveal(reveal.focus)) {
+                                    // The terminal was closed mid-build, so the failure has no
+                                    // visible surface — fall back to revealing the Output channel.
+                                    log.showChannel(true, isAutomatic);
                                 }
                             } else {
-                                log.showChannel(true); // in case build has failed
+                                log.showChannel(true, isAutomatic); // in case build has failed
                             }
                         }
                         let buildErrors = 0;
@@ -2788,7 +2796,7 @@ export class CMakeProject {
                 localize('project.not.yet.configured', 'This project has not yet been configured'),
                 localize('configure.now.button', 'Configure Now')));
             if (doConfigure) {
-                if ((await this.configureInternal()).exitCode !== 0) {
+                if ((await this.configureInternal(ConfigureTrigger.commandEditCache)).exitCode !== 0) {
                     return;
                 }
             } else {

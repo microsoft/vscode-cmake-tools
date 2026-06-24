@@ -79,9 +79,14 @@ class BuildOutputTerminal implements vscode.Pseudoterminal, ColorizedBuildSink {
     private baseDirs: string[] = [];
     private readonly linkCache = new Map<string, string | undefined>();
 
-    /** Reveal the build terminal; `focus` takes keyboard focus. No-op if not created. */
-    reveal(focus: boolean): void {
-        this.terminal?.show(!focus);
+    /** Reveal the build terminal; `focus` takes keyboard focus. Returns whether a
+     * terminal was actually revealed (`false` if it was closed/never created). */
+    reveal(focus: boolean): boolean {
+        if (!this.terminal) {
+            return false;
+        }
+        this.terminal.show(!focus);
+        return true;
     }
 
     // vscode.Pseudoterminal: called when the terminal is first shown.
@@ -184,8 +189,12 @@ class OutputChannelBuildSink implements ColorizedBuildSink {
         return this.channel;
     }
 
-    reveal(focus: boolean): void {
-        this.channel?.show(!focus);
+    reveal(focus: boolean): boolean {
+        if (!this.channel) {
+            return false;
+        }
+        this.channel.show(!focus);
+        return true;
     }
 
     prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs: string[] = []): void {

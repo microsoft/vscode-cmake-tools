@@ -286,7 +286,9 @@ export interface ColorizedBuildSink {
     prepareForBuild(clear: boolean, glyphs: GlyphStyle, bannerTarget?: string, baseDirs?: string[]): void;
     writeLine(line: string, mode: BuildColorMode, glyphs: GlyphStyle): void;
     writeSummary(outcome: BuildOutcome, counts: { errors: number; warnings: number }, glyphs: GlyphStyle): void;
-    reveal(focus: boolean): void;
+    /** Reveal the sink's surface. Returns `true` if a surface was actually revealed
+     * (`false` if there is nothing to reveal, e.g. the terminal was closed mid-build). */
+    reveal(focus: boolean): boolean;
     dispose(): void;
 }
 

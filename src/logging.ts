@@ -322,8 +322,8 @@ export class Logger {
         SingletonLogger.instance().clearOutputChannel();
     }
 
-    showChannel(error_to_show?: boolean, isAutomatic?: boolean) {
-        const { show, focus } = revealLogDecision(error_to_show, isAutomatic ?? false);
+    showChannel(error_to_show?: boolean, isAutomatic: boolean = false) {
+        const { show, focus } = revealLogDecision(error_to_show, isAutomatic);
         if (show) {
             SingletonLogger.instance().showChannel(!focus);
         }
@@ -344,6 +344,11 @@ export function createLogger(tag: string) {
  * channel or the colorized build terminal) should be revealed, and whether it
  * should take focus. Shared so the colorized build terminal honors `revealLog`
  * exactly as the Output channel does.
+ *
+ * When `isAutomatic` is true (the operation was triggered automatically or
+ * programmatically rather than by an explicit user action), the proactive reveal
+ * is suppressed unless the user opts in via `cmake.revealLogOnAutomaticTrigger`.
+ * Failure reveals (`error_to_show === true`) always surface regardless.
  */
 export function revealLogDecision(error_to_show?: boolean, isAutomatic: boolean = false): { show: boolean; focus: boolean } {
     const config = vscode.workspace.getConfiguration('cmake');
