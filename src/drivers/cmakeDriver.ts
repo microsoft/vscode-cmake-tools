@@ -1987,9 +1987,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const timeEnd: number = new Date().getTime();
         const duration: number = timeEnd - timeStart;
         log.info(localize('build.duration', 'Build completed: {0}', util.msToString(duration)));
-        const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-            ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
+        // Track adoption of the colorized build output feature (cmake.colorizedBuildOutput).
+        // Both values are low-cardinality enums (no user data): off|severity|rich|compiler and
+        // unicode|ascii. ConfigType stays kits-mode-only as before.
+        const telemetryProperties: telemetry.Properties = {
+            colorizedBuildOutput: this.config.colorizedBuildOutput,
+            buildOutputGlyphs: this.config.buildOutputGlyphs
         };
+        if (!this.useCMakePresets) {
+            telemetryProperties['ConfigType'] = this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '';
+        }
         const telemetryMeasures: telemetry.Measures = {
             Duration: duration
         };
