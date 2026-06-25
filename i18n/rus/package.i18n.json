@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Каталоги, где возможна установка Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Рекурсивный сбор и объединение всех compile_commands.json, найденных в cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Копирование сюда файла compile_commands.json после выполнения настройки.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Если этот параметр задан, указанная задача будет выполнена перед этапом конфигурации CMake. Обратите внимание, что объединение задачи предварительной настройки с другими задачами в файле tasks.json может привести к многократному выполнению этой задачи.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Если эта настройка задана, данная именованная задача будет выполнена после успешной настройки конфигурации CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Автоматическая настройка каталогов проекта CMake при их открытии.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Автоматически настраивать каталоги проекта CMake при сохранении содержимого в каталоге cmake.sourceDirectory или в файле CMakeLists.txt.",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Сборка с помощью tasks.json вместо внутреннего процесса.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Кодирование выходных данных из внешних команд (например, cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Включение ведения журнала трассировки в файле и в консоли (большое число сообщений).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Отображать метки времени и уровни журнала в канале вывода CMake. Полезно для отслеживания длительности сборки.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Автоматический выбор активной папки.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Настройте активную папку по умолчанию (работает, только если параметр cmake.autoSelectActiveFolder отключен).",
 	"cmake-tools.configuration.cmake.exclude.description": "Расширение будет игнорировать папки, указанные в этом параметре. Папки должны быть указаны в виде абсолютных путей.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Выбирать лучший вариант автоматически.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Показать быстрый выбор с вариантами из выбранного вызова целевой исходной команды.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Аргументы ключевых слов для пользовательских функций и макросов, которые определяют списки исходных файлов. Если оставить пустым, будут учитываться все аргументы, состоящие только из заглавных букв и символов подчеркивания. Поддерживает glob-шаблоны.",
-	"update.code.model.for.list.modifier": "Обновить модель кода для автоматического модификатора списка файлов"
+	"update.code.model.for.list.modifier": "Обновить модель кода для автоматического модификатора списка файлов",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Не удалось выполнить тесты: {0}",
+	"test.debug.error": "Не удалось выполнить отладку теста: {0}"
 }

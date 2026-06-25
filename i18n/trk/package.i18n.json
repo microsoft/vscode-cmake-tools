@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory içinde tüm compile_commands.json dosyalarını özyinelemeli olarak topla ve birleştir.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Ayarlanırsa, bu adlandırılmış görev CMake yapılandırması başlamadan önce yürütülür. Ön yapılandırma görevini tasks.json dosyasındaki diğer görevlerle zincirleme olarak bağlamanın, ön yapılandırma görevinin birden fazla kez çalıştırılmasına yol açabileceğini unutmayın.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Ayarlanırsa, bu adlandırılmış görev başarılı bir CMake yapılandırması sonrasında yürütülür.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory veya CMakeLists.txt içeriği kaydedildiğinde CMake proje dizinlerini otomatik olarak yapılandırın.",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "İç işlem yerine tasks.json kullanarak derle.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Dış komutlardan (ör. cmake -- build) gelen çıkışın kodlaması.",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Dosya ve konsolda izleme günlüğünü etkinleştirin (çok gürültülü).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "CMake çıktı kanalında zaman damgalarını ve günlük düzeylerini gösterin. Derleme sürelerini izlemek için yararlıdır.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Etkin klasörü otomatik olarak seçin.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Varsayılan etkin klasörü ayarla (yalnızca cmake.autoSelectActiveFolder devre dışı bırakıldığında çalışır).",
 	"cmake-tools.configuration.cmake.exclude.description": "Uygulama, bu ayarda listelenen klasörleri yok sayacaktır. Klasörler mutlak yollar olarak belirtilmelidir.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "En iyi adayı otomatik olarak seç.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Seçili hedef kaynak komut çağrısından seçeneklerle bir Hızlı Seçim sun.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Kullanıcı tanımlı işlevlere ve makrolara kaynak dosya listeleri ekleyen anahtar kelime bağımsız değişkenleri. Boş bırakılırsa, yalnızca büyük harf ve alt çizgilerden oluşan tüm bağımsız değişkenler dikkate alınır. Glob desenlerini destekler.",
-	"update.code.model.for.list.modifier": "Otomatik liste dosyası değiştiricisi için kod modelini güncelleştir"
+	"update.code.model.for.list.modifier": "Otomatik liste dosyası değiştiricisi için kod modelini güncelleştir",
+	"test.codelens.run": "$(run) Run",
+	"test.codelens.debug": "$(debug) Debug",
+	"test.run.error": "Test yürütülemedi: {0}",
+	"test.debug.error": "Testte hata ayıklaması başarısız oldu: {0}"
 }

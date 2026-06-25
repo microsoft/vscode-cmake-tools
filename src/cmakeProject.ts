@@ -1238,6 +1238,15 @@ export class CMakeProject {
     }
     private readonly onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
+    /**
+     * Event fired after CMake configure completes (success or failure).
+     * The event payload contains the configure result including exit code.
+     */
+    get onConfigureResult() {
+        return this._onConfigureResultEmitter.event;
+    }
+    private readonly _onConfigureResultEmitter = new vscode.EventEmitter<ConfigureResult>();
+
     private readonly onTargetChangedEmitter = new vscode.EventEmitter<void>();
     get onTargetChanged() {
         return this.onTargetChangedEmitter.event;
@@ -1709,6 +1718,71 @@ export class CMakeProject {
     }
 
     /**
+     * Execute the preConfigureTask if configured
+     */
+    private async executePreConfigureTask(configureType: ConfigureType): Promise<ConfigureResult> {
+        const resultType = ConfigureResultType.NormalOperation;
+
+        if (configureType === ConfigureType.ShowCommandOnly) {
+            // only run for real configures
+            return { exitCode: 0, stdout: '', stderr: '', resultType: resultType };
+        }
+        const preConfigureTask = this.workspaceContext.config.preConfigureTask;
+
+        if (!preConfigureTask) {
+            // no pre-configure task is configured
+            return { exitCode: 0, stdout: '', stderr: '', resultType: resultType };
+        }
+
+        try {
+            // Fetch all available tasks
+            const tasks = await vscode.tasks.fetchTasks();
+
+            // Find the task by label
+            const task = tasks.find(t => t.name === preConfigureTask);
+
+            if (!task) {
+                const errorMsg = localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', preConfigureTask, tasks.map(t => t.name).join(', '));
+                void vscode.window.showErrorMessage(errorMsg);
+                log.error(errorMsg);
+                return { exitCode: -1, stdout: '', stderr: errorMsg, resultType: resultType };
+            }
+
+            log.info(localize('executing.pre.configure.task', 'Executing pre-configure task: {0}', preConfigureTask));
+
+            const taskExecution = await vscode.tasks.executeTask(task);
+
+            const start = new Date();
+
+            const endEvent = await new Promise<vscode.TaskProcessEndEvent>(resolve => {
+                const disposable = vscode.tasks.onDidEndTaskProcess(e => {
+                    if (e.execution === taskExecution) {
+                        disposable.dispose();
+                        resolve(e);
+                    }
+                });
+            });
+
+            const exitCode = endEvent.exitCode ?? -1;
+            const elapsed = (new Date().getTime() - start.getTime()) / 1000;
+            if (exitCode === 0) {
+                log.info(localize('executed.pre.configure.task', 'Executed pre-configure task: {0} ({1}s)', preConfigureTask, elapsed));
+                return { exitCode: exitCode, stdout: '', stderr: '', resultType: resultType };
+            } else {
+                const errorMsg = localize('pre.configure.task.failed', 'Pre-configure task: {0} failed: {1} ({2}s)', preConfigureTask, exitCode, elapsed);
+                void vscode.window.showErrorMessage(errorMsg);
+                log.error(errorMsg);
+                return { exitCode: exitCode, stdout: '', stderr: errorMsg, resultType: resultType };
+            }
+        } catch (error: any) {
+            const errorMsg = localize('failed.to.execute.pre.configure.task', 'Failed to execute pre-configure task: {0}', error.toString());
+            void vscode.window.showErrorMessage(errorMsg);
+            log.error(localize('pre.configure.task.error', 'Error executing pre configure task'), error);
+            return { exitCode: -1, stdout: '', stderr: errorMsg, resultType: resultType };
+        }
+    }
+
+    /**
      * Execute the postConfigureTask if configured
      */
     private async executePostConfigureTask(): Promise<void> {
@@ -1755,6 +1829,11 @@ export class CMakeProject {
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
+            const preConfigureResult  = await this.executePreConfigureTask(type);
+            if (preConfigureResult.exitCode !== 0) {
+                return preConfigureResult;
+            }
+
             const result: ConfigureResult = await drv.configure(trigger, []);
             if (result.exitCode === 0) {
                 await this.refreshCompileDatabase(drv.expansionOptions);
@@ -1764,6 +1843,7 @@ export class CMakeProject {
             }
             await this.cTestController.refreshTests(drv);
             this.onReconfiguredEmitter.fire();
+            this._onConfigureResultEmitter.fire(result);
             debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.with.cache', "Configured CMake with cache. CMake debugger is not supported with cache."));
             return result;
         }
@@ -1772,7 +1852,9 @@ export class CMakeProject {
             const message = localize('no.cache.available', 'Unable to configure with existing cache');
             log.debug(message);
             debuggerInformation?.debuggerStoppedDueToPreconditions(message);
-            return { exitCode: -1, resultType: ConfigureResultType.NoCache };
+            const result: ConfigureResult = { exitCode: -1, resultType: ConfigureResultType.NoCache };
+            this._onConfigureResultEmitter.fire(result);
+            return result;
         }
 
         const res = await vscode.window.withProgress(
@@ -1824,8 +1906,14 @@ export class CMakeProject {
                                     progress.report({ increment });
                                 }
                             });
+                            progress.report({message: localize('checking.preconfigure', 'Checking pre-configure task')});
+                            const preConfigureResult  = await this.executePreConfigureTask(type);
+                            if (preConfigureResult.exitCode !== 0) {
+                                return preConfigureResult;
+                            }
                             try {
                                 progress.report({ message: this.folderName });
+
                                 let result: ConfigureResult;
                                 await setContextAndStore(isConfiguringKey, true);
                                 if (type === ConfigureType.Cache) {
@@ -1924,6 +2012,7 @@ export class CMakeProject {
         if (res.exitCode !== 0) {
             log.showChannel(true);
         }
+        this._onConfigureResultEmitter.fire(res);
         return res;
     }
 

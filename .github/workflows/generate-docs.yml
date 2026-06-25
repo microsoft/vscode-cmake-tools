@@ -1,0 +1,34 @@
+name: Auto-generate settings docs
+
+on:
+  pull_request:
+    branches: [ main, 'release/**' ]
+    paths:
+      - 'package.json'
+      - 'package.nls.json'
+      - 'tools/generate-settings-docs.js'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Generate settings docs
+        run: node tools/generate-settings-docs.js
+
+      - name: Verify docs/cmake-settings.md is up to date
+        run: |
+          if ! git diff --exit-code -- docs/cmake-settings.md; then
+            echo "::error::docs/cmake-settings.md is out of date. Run 'node tools/generate-settings-docs.js' locally and commit the updated docs/cmake-settings.md."
+            exit 1
+          fi

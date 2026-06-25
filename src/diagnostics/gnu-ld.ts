@@ -9,27 +9,32 @@ import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult
 // Patterns to identify and capture GNU linker diagnostic messages
 const regexPatterns: RegexPattern[] = [
     {   // path/to/ld[.exe]:[ ]path/to/file:line: severity: message
-        regexPattern: /^(?:.*ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?:)(?:\s*)?(.+):(\d+):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/ld[.exe]:[ ]path/to/file.obj:path/to/file:line: message
-        regexPattern: /^(?:.*ld(?:\.exe)?\:)(?:\s*)(?:.+?\.obj:)(.+?):(\d+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?\:)(?:\s*)(?:.+?\.obj:)(.+?):(\d+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
     {   // path/to/ld[.exe]:[ ]path/to/file:line: message
-        regexPattern: /^(?:.*ld(?:\.exe)?\:)(?:\s*)?(.+):(\d+):\s+(.+)/,
+        regexPattern: /^(?:(?:.*[/\\])?ld(?:\.exe)?\:)(?:\s*)?(.+):(\d+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     },
     {   // path/to/ld[.exe]: severity: message
-        regexPattern: /^(.*ld(?:\.exe)?):\s+(?:fatal )?(\w+):\s+(.+)/,
+        regexPattern: /^((?:.*[/\\])?ld(?:\.exe)?):\s+(?:fatal )?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/ld[.exe]: message (without trailing colon)
-        regexPattern: /^(.*ld(?:\.exe)?):\s+(.+)(?<!:)\s*$/,
+        regexPattern: /^((?:.*[/\\])?ld(?:\.exe)?):\s+(.+)(?<!:)\s*$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Message]
     },
     {   // path/to/file:line: message (with neither "[fatal] severity:" nor trailing colon nor leading "make: *** [" nor leading "make[line]: *** [")
-        regexPattern: /^(?!\s*make.*:\s\*\*\*\s\[)(.+?):(\d+):\s+(?!fatal\s+\w+:)(?!\w+:)(.+)(?<!:)\s*$/,
+        // The (?!.+?:\d+:\d+:\s) guard rejects GCC compiler lines of the form "file:line:column: <message>"
+        // (e.g. template backtrace lines "file:line:col:   required from here"). Without it, the lazy
+        // (.+?):(\d+): backtracks past the real ":line:" — because a column digit, not whitespace, follows —
+        // and mis-captures "file:line" as the path, producing a Problems entry that cannot be opened (#4954).
+        // GNU ld never emits column numbers, so genuine linker "file:line: message" lines are unaffected.
+        regexPattern: /^(?!\s*make.*:\s\*\*\*\s\[)(?!.+?:\d+:\d+:\s)(.+?):(\d+):\s+(?!fatal\s+\w+:)(?!\w+:)(.+)(?<!:)\s*$/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Message]
     }
 ];

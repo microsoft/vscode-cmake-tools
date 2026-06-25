@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "安裝 Emscripten 的目錄。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "遞迴收集及合併 cmake.buildDirectory 中找到的所有compile_commands.js。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "若已設定，此具名工作將在 CMake 設定之前執行。請注意，將設定前工作與 tasks.json 中的其他工作鏈結，可能會導致多次執行設定前工作。",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "若設定，此具名工作將在成功執行 CMake 設定後執行。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "在儲存 cmake.sourceDirectory 或 CMakeLists.txt 內容後，自動設定 CMake 專案目錄。",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "使用 tasks.json 而非內部處理序的組建。",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部命令輸出的編譯 (例如 cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "為檔案及主控台啟用追蹤記錄 (雜訊非常多)。",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "在 CMake 輸出通道中顯示時間戳記和記錄層級。適用於追蹤建置持續時間。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "自動選取使用中的資料夾。",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "設定預設作用中資料夾 (只有在 cmake.autoSelectActiveFolder 停用時才有效)。",
 	"cmake-tools.configuration.cmake.exclude.description": "此延伸模組將忽略此設定中列出的資料夾。資料夾應以絕對路徑列出。",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "自動選擇最佳候選項目。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "提供 [快速挑選]，其中包含來自所選目標來源命令調用的選項。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "使用者定義函式和巨集的關鍵字引數，用於引入來源檔案的清單。若留空，將會考慮所有僅包含大寫字母與底線的引數。支援 Glob 模式。",
-	"update.code.model.for.list.modifier": "更新自動清單檔案修飾元的程式碼模型"
+	"update.code.model.for.list.modifier": "更新自動清單檔案修飾元的程式碼模型",
+	"test.codelens.run": "$(run) 執行",
+	"test.codelens.debug": "$(debug) 偵錯",
+	"test.run.error": "無法執行測試: {0}",
+	"test.debug.error": "無法對測試進行偵錯: {0}"
 }

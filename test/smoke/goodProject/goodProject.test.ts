@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import * as vscode from 'vscode';
 
 import { smokeSuite, smokeTestDefaultKit } from '@test/smoke/smoke';
+import { ConfigureResult } from '@cmt/drivers/cmakeDriver';
 
 suite('Smoke test: good project', () => {
     test('Successful configure', async () => {
@@ -20,6 +21,40 @@ suite('Smoke test: good project', () => {
             });
             suite.smokeTest('Successful configure', async () => {
                 expect((await cmakeProject.configure()).exitCode).to.eq(0);
+            });
+        });
+    });
+
+    test('Fires onConfigureResult on success', async () => {
+        smokeSuite('Smoke test: good project', suite => {
+            let cmakeProject: CMakeProject;
+            suite.setup('create cmake-tools', async test => {
+                cmakeProject = await test.createCMakeProject({
+                    kit: await smokeTestDefaultKit()
+                });
+            });
+            suite.teardown('dispose cmake-tools', async () => {
+                if (cmakeProject) {
+                    await cmakeProject.asyncDispose();
+                }
+            });
+            suite.smokeTest('Fires onConfigureResult on success', async () => {
+                let receivedResult: ConfigureResult | undefined;
+                let fireCount = 0;
+                const sub = cmakeProject.onConfigureResult(result => {
+                    receivedResult = result;
+                    fireCount++;
+                });
+
+                try {
+                    await cmakeProject.configure();
+
+                    expect(fireCount, 'onConfigureResult should fire exactly once').to.eq(1);
+                    expect(receivedResult, 'onConfigureResult should have fired').to.not.be.undefined;
+                    expect(receivedResult!.exitCode, 'Exit code should indicate success').to.eq(0);
+                } finally {
+                    sub.dispose();
+                }
             });
         });
     });

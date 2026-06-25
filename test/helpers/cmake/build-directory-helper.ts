@@ -5,7 +5,11 @@ export class BuildDirectoryHelper {
     public constructor(private readonly _location: string) {}
 
     public clear() {
-        return fs.rmSync(this._location, {recursive: true, force: true});
+        // Retry on Windows: lingering MSVC helper processes (e.g. mspdbsrv.exe / vctip.exe) can
+        // briefly keep handles on .pdb files in the build directory, so a single rmSync can fail
+        // with ENOTEMPTY/EBUSY. maxRetries/retryDelay lets the delete ride out those transient
+        // locks instead of failing the test's build-directory cleanup hook.
+        return fs.rmSync(this._location, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     }
 
     public get location(): string {

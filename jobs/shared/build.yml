@@ -10,17 +10,13 @@ parameters:
 
 steps:
 - task: NodeTool@0
-  displayName: Use Node 20.x
+  displayName: Use Node 22.x
   inputs:
-    versionSpec: 20.x
-- task: geeklearningio.gl-vsts-tasks-yarn.yarn-installer-task.YarnInstaller@3
-  displayName: Use Yarn 1.x
+    versionSpec: 22.x
 - task: CmdLine@2
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-- script: npm install -g @vscode/vsce
-  displayName: 'install vsce'
 - task: PowerShell@2
   displayName: Set build name
   inputs:
@@ -47,13 +43,15 @@ steps:
     script: |
       if "${{parameters.IsPreRelease}}"=="1" (type nul > "insiders.flag") else (type nul > "release.flag")
 - template: /jobs/shared/install-nuget.yml@self
-- script: nuget restore $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\jobs\signing\packages
+- script: nuget restore $(Build.SourcesDirectory)\jobs\signing\SignFiles.proj -PackagesDirectory $(Build.SourcesDirectory)\jobs\signing\packages -ConfigFile $(Build.SourcesDirectory)\jobs\signing\NuGet.config
   displayName: Restore MicroBuild Core
 - task: CmdLine@2
   displayName: Build files
   inputs:
     script: |
       yarn compile-production
+  env:
+    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: MSBuild@1
   displayName: Sign files
   inputs:
@@ -64,12 +62,14 @@ steps:
   inputs:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
-      if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+      if "${{parameters.IsPreRelease}}"=="1" (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+  env:
+    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: CmdLine@2
   displayName: Generate Extension Manifest
   inputs:
     script: |
-      vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
+      yarn run vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
 - task: CmdLine@2
   displayName: Prepare manifest for signing
   inputs:
