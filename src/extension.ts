@@ -1020,13 +1020,6 @@ export class ExtensionManager implements vscode.Disposable {
             this.onActiveProjectChangedEmitter.fire(vscode.Uri.file(activeProject.folderPath));
             const currentActiveFolderPath = this.activeFolderPath();
             await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
-
-            // Update IntelliSense to prefer configurations from the active project
-            this.configProvider.setActiveFolder(activeProject.folderPath);
-            if (this.cppToolsAPI && this.configProvider.ready) {
-                this.cppToolsAPI.didChangeCustomBrowseConfiguration(this.configProvider);
-                this.cppToolsAPI.didChangeCustomConfiguration(this.configProvider);
-            }
         }
     }
 
@@ -1590,14 +1583,17 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForProject(command, project, precheck);
     }
 
-    queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
+    async queryCMakeProject(query: QueryCMakeProject, folder?: vscode.WorkspaceFolder | string) {
         const project = this.getProjectFromFolder(folder);
         if (project) {
+            if (!await this.ensureActiveConfigurePresetOrKit(project)) {
+                return null;
+            }
             return query(project);
         }
 
         rollbar.error(localize('invalid.folder', 'Invalid folder.'));
-        return Promise.resolve(null);
+        return null;
     }
 
     cleanConfigure(folder?: vscode.WorkspaceFolder) {

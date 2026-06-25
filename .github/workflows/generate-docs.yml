@@ -9,7 +9,7 @@ on:
       - 'tools/generate-settings-docs.js'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate-docs:
@@ -17,9 +17,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node environment
         uses: actions/setup-node@v3
@@ -29,10 +26,9 @@ jobs:
       - name: Generate settings docs
         run: node tools/generate-settings-docs.js
 
-      - name: Commit updated docs if changed
+      - name: Verify docs/cmake-settings.md is up to date
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/cmake-settings.md
-          git diff --cached --quiet || git commit -m "docs: auto-update cmake-settings.md [skip ci]"
-          git push
+          if ! git diff --exit-code -- docs/cmake-settings.md; then
+            echo "::error::docs/cmake-settings.md is out of date. Run 'node tools/generate-settings-docs.js' locally and commit the updated docs/cmake-settings.md."
+            exit 1
+          fi

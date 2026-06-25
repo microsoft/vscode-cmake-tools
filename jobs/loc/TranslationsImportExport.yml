@@ -40,6 +40,8 @@ extends:
         os: windows
     customBuildTags:
     - ES365AIMigrationTooling
+    settings:
+      networkIsolationPolicy: Permissive,CFSClean,CFSClean2,CFSClean3
     stages:
     - stage: stage
       jobs:
@@ -52,14 +54,21 @@ extends:
             publishLocation: 'Container'
         steps:
         - task: UseNode@1
-          displayName: "Use Node 20.x"
+          displayName: "Use Node 22.x"
           inputs:
-            version: "20.x"
+            version: "22.x"
+
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
 
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
-        
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+
         - task: CmdLine@2
           inputs:
             script: 'yarn run translations-export'

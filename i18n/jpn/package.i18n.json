@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten がインストールされる可能性のあるディレクトリです。",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory で見つかったすべての compile_commands.json を再帰的に収集してマージします。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "構成が正常に完了したら、compile_commands.json をこの場所にコピーします。",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "設定されている場合、この名前付きタスクは CMake の構成前に実行されます。構成前タスクを tasks.json 内の他のタスクと連結すると、構成前タスクが複数回実行される場合があることに注意してください。",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "設定されている場合、この名前付きタスクは、CMake の構成が成功した後に実行されます。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake プロジェクト ディレクトリを開いたときに自動的に構成します。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory または CMakeLists.txt のコンテンツの保存時に、CMake プロジェクトのディレクトリを自動的に構成します。",
@@ -329,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "最適な候補を自動的に選択します。",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "選択したターゲットのソース コマンド呼び出しからのオプションを含むクイック ピックを表示します。",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "ソース ファイルの一覧を導入するユーザー定義関数およびマクロへのキーワード引数。空の場合は、大文字とアンダースコアのみで構成されるすべての引数が対象となります。glob パターンをサポートします。",
-	"update.code.model.for.list.modifier": "自動リスト ファイル修飾子のコード モデルを更新する"
+	"update.code.model.for.list.modifier": "自動リスト ファイル修飾子のコード モデルを更新する",
+	"test.codelens.run": "$(run) 実行",
+	"test.codelens.debug": "$(debug) デバッグ",
+	"test.run.error": "テストの実行に失敗しました: {0}",
+	"test.debug.error": "テストのデバッグに失敗しました: {0}"
 }
