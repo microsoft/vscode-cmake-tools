@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Katalogi, w których można zainstalować program Emscripten.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Cyklicznie zbieraj i scalaj wszystkie compile_commands.json znalezione w katalogu cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Kopiuj plik compile_commands.json do tej lokalizacji po pomyślnym skonfigurowaniu.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Jeśli ta opcja zostanie ustawiona, to to nazwane zadanie zostanie wykonane przed konfiguracją CMake. Pamiętaj, że łączenie zadania wykonywanego przed konfiguracją z innymi zadaniami w tasks.json może prowadzić do wielokrotnego uruchomienia tego zadania.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Jeśli zostanie ustawiona, to nazwane zadanie zostanie wykonane po pomyślnym skonfigurowaniu narzędzia CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake przy ich otwieraniu.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automatycznie konfiguruj katalogi projektu CMake po zapisaniu zawartości ustawienia cmake.sourceDirectory i pliku CMakeLists.txt.",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Kompiluj przy użyciu pliku tasks.json zamiast procesu wewnętrznego.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kodowanie danych wyjściowych z poleceń zewnętrznych (np. cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Włącz rejestrowanie śledzenia w pliku i na konsoli (bardzo dużo danych).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Pokaż znaczniki czasu i poziomy dzienników w kanale danych wyjściowych CMake. Przydatne do śledzenia czasu trwania kompilacji.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Wybierz aktywny folder automatycznie.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Ustaw domyślny aktywny folder (działa tylko wtedy, gdy właściwość cmake.autoSelectActiveFolder jest wyłączona).",
 	"cmake-tools.configuration.cmake.exclude.description": "Rozszerzenie zignoruje foldery wymienione w tym ustawieniu. Foldery powinny być wymienione jako ścieżki bezwzględne.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Wybierz automatycznie najlepszego kandydata.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Zaprezentuj szybkie wybieranie z opcjami z wybranego wywołania polecenia docelowego źródła.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty słów kluczowych dla funkcji i makr zdefiniowanych przez użytkownika, które wprowadzają listy plików źródłowych. Jeśli argument pozostanie pusty, zostaną uwzględnione wszystkie argumenty składające się tylko z wielkich liter i podkreśleń. Obsługuje wzorce globalne.",
-	"update.code.model.for.list.modifier": "Aktualizowanie modelu kodu dla automatycznego modyfikatora pliku listy"
+	"update.code.model.for.list.modifier": "Aktualizowanie modelu kodu dla automatycznego modyfikatora pliku listy",
+	"test.codelens.run": "Przebieg $(run)",
+	"test.codelens.debug": "Debugowanie $(debug)",
+	"test.run.error": "Nie można uruchomić testów: {0}",
+	"test.debug.error": "Nie można debugować testu: {0}"
 }

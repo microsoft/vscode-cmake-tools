@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Répertoires où Emscripten peut être installé.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Collectez et fusionnez de manière récursive tous les compile_commands.jstrouvés dans cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copie compile_commands.json à cet emplacement après une configuration réussie.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Si cette option est définie, cette tâche nommée sera exécutée avant la configuration de CMake. Notez que le chaînage de la tâche de préconfiguration avec d’autres tâches dans tasks.json peut entraîner plusieurs exécutions de la tâche de préconfiguration.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Si cette option est définie, cette tâche nommée s’exécutera après une configuration CMake réussie.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configure automatiquement les répertoires de projet CMake quand ils s'ouvrent.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configurez automatiquement les répertoires de projet CMake pendant l'enregistrement du contenu de cmake.sourceDirectory ou CMakeLists.txt.",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Effectue une build à l'aide de tasks.json au lieu du processus interne.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Encodage de la sortie à partir de commandes externes (par exemple cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Active la journalisation des traces dans le fichier et la console (très bruyant).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Affichez les horodateurs et les niveaux de journalisation dans le canal de sortie CMake. Utile pour suivre les durées de génération.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Sélectionne le dossier actif automatiquement.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Définir le dossier actif par défaut (fonctionne uniquement lorsque cmake.autoSelectActiveFolder est désactivé).",
 	"cmake-tools.configuration.cmake.exclude.description": "L’extension ignorera les dossiers répertoriés dans ce paramètre. Les dossiers doivent être répertoriés sous forme de chemins absolus.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choisissez automatiquement le meilleur candidat.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Présentez une sélection rapide avec des options de l’appel de commande source de la cible sélectionnée.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Arguments de mots-clé pour les fonctions et macros définies par l’utilisateur qui introduisent des listes de fichiers sources. S’ils sont laissés vides, tous les arguments composés uniquement de lettres majuscules et de traits de soulignement seront pris en compte. Prend en charge les modèles glob.",
-	"update.code.model.for.list.modifier": "Mettre à jour le modèle de code pour le modificateur automatique d’un fichier de liste"
+	"update.code.model.for.list.modifier": "Mettre à jour le modèle de code pour le modificateur automatique d’un fichier de liste",
+	"test.codelens.run": "$(run) Exécuter",
+	"test.codelens.debug": "$(debug) Déboguer",
+	"test.run.error": "Échec de l’exécution du test : {0}",
+	"test.debug.error": "Nous n’avons pas pu effectuer le test de débogage : {0}"
 }

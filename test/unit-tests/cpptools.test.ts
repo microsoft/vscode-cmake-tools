@@ -482,7 +482,7 @@ suite('CppTools tests', () => {
         expect(activeConfigurations[0].configuration.defines).to.contain('NEW');
     });
 
-    test('Prefers configurations from active folder in multi-project workspace', async () => {
+    test('Active project change does not hide other projects configurations (#4964)', async () => {
         const provider = new CppConfigurationProvider();
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
 
@@ -541,35 +541,64 @@ suite('CppTools tests', () => {
         provider.updateConfigurationData({ cache, codeModelContent: codeModelA, activeTarget: 'targetA', activeBuildTypeVariant: 'Release', folder: folderA });
         provider.updateConfigurationData({ cache, codeModelContent: codeModelB, activeTarget: 'targetB', activeBuildTypeVariant: 'Release', folder: folderB });
 
-        // Without active folder set, both files should be available
-        let configsA = await provider.provideConfigurations([vscode.Uri.file(fileInFolderA)]);
-        let configsB = await provider.provideConfigurations([vscode.Uri.file(fileInFolderB)]);
+        // Every indexed file always provides its own project's configuration. Switching the
+        // active project must NEVER hide or clear another project's configurations — a file
+        // unique to one root keeps its config regardless of which root is "active" (#4964).
+        const configsA = await provider.provideConfigurations([vscode.Uri.file(fileInFolderA)]);
+        const configsB = await provider.provideConfigurations([vscode.Uri.file(fileInFolderB)]);
         expect(configsA.length).to.eq(1);
         expect(configsB.length).to.eq(1);
         expect(configsA[0].configuration.defines).to.contain('PROJECT_A');
         expect(configsB[0].configuration.defines).to.contain('PROJECT_B');
 
-        // Set folderA as active - file in folderB should no longer provide configuration
-        provider.setActiveFolder(folderA);
-        configsA = await provider.provideConfigurations([vscode.Uri.file(fileInFolderA)]);
-        configsB = await provider.provideConfigurations([vscode.Uri.file(fileInFolderB)]);
+        // canProvideConfiguration (cpptools' per-file query path) must also stay true for both.
+        expect(await provider.canProvideConfiguration(vscode.Uri.file(fileInFolderA))).to.eq(true);
+        expect(await provider.canProvideConfiguration(vscode.Uri.file(fileInFolderB))).to.eq(true);
+    });
+
+    test('Configuring a second root does not drop the first root file configurations (#4964)', async () => {
+        const provider = new CppConfigurationProvider();
+        const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
+
+        const rootA = here;
+        const rootB = path.join(here, '../smoke');
+        const fileA = path.join(rootA, 'mainA.cpp');
+        const fileB = path.join(rootB, 'mainB.cpp');
+
+        const makeModel = (proj: string, target: string, file: string, define: string): codeModel.CodeModelContent => ({
+            configurations: [{
+                name: 'Release',
+                projects: [{
+                    name: proj,
+                    sourceDirectory: path.dirname(file),
+                    targets: [{
+                        name: target,
+                        type: 'EXECUTABLE',
+                        fileGroups: [{
+                            sources: [file],
+                            isGenerated: false,
+                            defines: [define],
+                            compileCommandFragments: ['-D' + define],
+                            language: 'CXX'
+                        }]
+                    }]
+                }]
+            }],
+            toolchains: new Map<string, codeModel.CodeModelToolchain>()
+        });
+
+        // Index rootA, then rootB (rootB becomes the most-recently configured / "active" root).
+        provider.updateConfigurationData({ cache, codeModelContent: makeModel('projectA', 'targetA', fileA, 'PROJECT_A'), activeTarget: 'targetA', activeBuildTypeVariant: 'Release', folder: rootA });
+        provider.updateConfigurationData({ cache, codeModelContent: makeModel('projectB', 'targetB', fileB, 'PROJECT_B'), activeTarget: 'targetB', activeBuildTypeVariant: 'Release', folder: rootB });
+
+        // The file unique to rootA must still provide its configuration — making rootB the active
+        // root must not clear rootA's translation units (the #4964 regression).
+        const configsA = await provider.provideConfigurations([vscode.Uri.file(fileA)]);
         expect(configsA.length).to.eq(1);
         expect(configsA[0].configuration.defines).to.contain('PROJECT_A');
-        expect(configsB.length).to.eq(0); // Active folder doesn't have this file
 
-        // Switch active folder to B - file in folderA should no longer provide configuration
-        provider.setActiveFolder(folderB);
-        configsA = await provider.provideConfigurations([vscode.Uri.file(fileInFolderA)]);
-        configsB = await provider.provideConfigurations([vscode.Uri.file(fileInFolderB)]);
-        expect(configsA.length).to.eq(0); // Active folder doesn't have this file
+        const configsB = await provider.provideConfigurations([vscode.Uri.file(fileB)]);
         expect(configsB.length).to.eq(1);
         expect(configsB[0].configuration.defines).to.contain('PROJECT_B');
-
-        // Clear active folder - both should work again
-        provider.setActiveFolder(null);
-        configsA = await provider.provideConfigurations([vscode.Uri.file(fileInFolderA)]);
-        configsB = await provider.provideConfigurations([vscode.Uri.file(fileInFolderB)]);
-        expect(configsA.length).to.eq(1);
-        expect(configsB.length).to.eq(1);
     });
 });

@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Os diretórios nos quais o Emscripten pode ser instalado.",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Coletar e mesclar recursivamente todos os compile_commands.json encontrados no diretório CMake.BuildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copiar o compile_commands.json neste local após uma configuração bem-sucedida.",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Se definida, essa tarefa nomeada será executada antes da configuração do CMake. Observe que encadear a tarefa de pré-configuração com outras tarefas tasks.json pode levar a várias execuções da tarefa de pré-configuração.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Se definido, essa tarefa nomeada será executada após uma configuração bem-sucedida do CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configurar os diretórios de projeto do CMake automaticamente quando eles forem abertos.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configure automaticamente diretórios de projeto do CMake quando o conteúdo de cmake.sourceDirectory ou de CMakeLists.txt forem salvos.",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Compilar usando o tasks.json em vez do processo interno.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "A codificação da saída de comandos externos (ex.: cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Habilitar o log de rastreamento para arquivo e console (muito ruído).",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Mostrar carimbos de data/hora e níveis de log no canal de saída do CMake. Útil para rastrear durações de construção.",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Selecionar a pasta ativa automaticamente.",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Defina a pasta ativa padrão (só funciona quando cmake.autoSelectActiveFolder está desabilitado).",
 	"cmake-tools.configuration.cmake.exclude.description": "A extensão ignorará as pastas listadas nesta configuração. As pastas devem ser listadas como caminhos absolutos.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Escolha o melhor candidato automaticamente.",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Mostre uma Seleção Rápida com opções da invocação do comando de origem do destino selecionado.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumentos de palavra-chave para macros e funções definidas pelo usuário que introduzem listas de arquivos de origem. Se deixado em branco, todos os argumentos que consistem apenas em letras maiúsculas e sublinhados serão considerados. Dá suporte a padrões glob.",
-	"update.code.model.for.list.modifier": "Atualizar o modelo de código para o modificador automático de arquivo de lista"
+	"update.code.model.for.list.modifier": "Atualizar o modelo de código para o modificador automático de arquivo de lista",
+	"test.codelens.run": "$(run) Execução",
+	"test.codelens.debug": "$(debug) Depuração",
+	"test.run.error": "Falha ao executar o teste: {0}",
+	"test.debug.error": "Falha ao depurar o teste: {0}"
 }

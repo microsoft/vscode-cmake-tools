@@ -257,8 +257,8 @@
     "cmake-tools.configuration.cmake.defaultVariants.buildType.release.long": "Optimize for speed - exclude debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optimize for smallest binary size - exclude debug information.",
     "cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Optimize for speed - include debug information.",
-    "cmake-tools.configuration.cmake.ctestArgs.description": "Additional arguments to pass to CTest. When using CMake Presets, these arguments are temporarily added to the arguments provided by the active test preset.",
-    "cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
+    "cmake-tools.configuration.cmake.ctestArgs.description": "Additional arguments to pass to CTest. When using CMake Presets, these arguments are temporarily added to the arguments provided by the active test preset. Use ${testName} to reference the current test name (only expanded when running a single test).",
+    "cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest. Use ${testName} to reference the current test name (only expanded when running a single test).",
     "cmake-tools.configuration.cmake.environment.description": "Environment variables to set when running CMake commands. When using CMake Presets, these are temporarily added to the environment used for CMake commands.",
     "cmake-tools.configuration.cmake.environment.additionalProperties.description": "Value for the environment variable.",
     "cmake-tools.configuration.cmake.configureEnvironment.description": "Environment variables to pass to CMake during configure. When using CMake Presets, these are temporarily added to the environment provided by the active configure preset.",
@@ -272,6 +272,7 @@
     "cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directories where Emscripten may be installed.",
     "cmake-tools.configuration.cmake.mergedCompileCommands.description": "Recursively collect and merge all compile_commands.json found in the cmake.buildDirectory.",
     "cmake-tools.configuration.cmake.copyCompileCommands.description": "Copy compile_commands.json to this location after a successful configure.",
+    "cmake-tools.configuration.cmake.preConfigureTask.description": "If set, this named task will be executed before CMake configure. Note that chaining the pre-configure task with other tasks in tasks.json may lead to multiple executions of the pre-configure task.",
     "cmake-tools.configuration.cmake.postConfigureTask.description": "If set, this named task will be executed after a successful CMake configure.",
     "cmake-tools.configuration.cmake.configureOnOpen.description": "Automatically configure CMake project directories when they are opened.",
     "cmake-tools.configuration.cmake.configureOnEdit.description": "Automatically configure CMake project directories when cmake.sourceDirectory or CMakeLists.txt content are saved.",
@@ -285,6 +286,7 @@
     "cmake-tools.configuration.cmake.buildTask.description": "Build using tasks.json instead of internal process.",
     "cmake-tools.configuration.cmake.outputLogEncoding.description": "Encoding of the output from external commands (eg.cmake -- build).",
     "cmake-tools.configuration.cmake.enableTraceLogging.description": "Enable trace logging to file and console (very noisy).",
+    "cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Show timestamps and log levels in the CMake output channel. Useful for tracking build durations.",
     "cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Select active folder automatically.",
     "cmake-tools.configuration.cmake.defaultActiveFolder.description": "Set the default active folder (only works when cmake.autoSelectActiveFolder is disable).",
     "cmake-tools.configuration.cmake.exclude.description": "The extension will ignore the folders listed in this setting. The folders should be listed as absolute paths.",
@@ -495,5 +497,9 @@
     "cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Choose the best candidate automatically.",
     "cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Present a Quick Pick with options from the selected target source command invocation.",
     "cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns.",
-    "update.code.model.for.list.modifier": "Update code model for automatic list file modifier"
+    "update.code.model.for.list.modifier": "Update code model for automatic list file modifier",
+    "test.codelens.run": "$(run) Run",
+    "test.codelens.debug": "$(debug) Debug",
+    "test.run.error": "Failed to run test: {0}",
+    "test.debug.error": "Failed to debug test: {0}"
 }

@@ -4,85 +4,193 @@ on:
   push:
     branches: [ main, 'release/**' ]
   pull_request:
-    branches: [ main, 'release/**']
+    branches: [ main, 'release/**' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: macos-26
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup LCOV
-        uses: hrishikesh-kadam/setup-lcov@v1
+      - uses: actions/checkout@v4
 
       - name: Setup Node environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'yarn'
 
       - name: Install Yarn
         run: npm install -g yarn
 
+      # Cache node_modules archive keyed on lockfile + os + arch + node version (keytar.node is arch-specific)
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: .build/node_modules_cache
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+
+      - name: Extract node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: tar -xzf .build/node_modules_cache/cache.tgz
+
       - name: Install dependencies
-        run: yarn install
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Create node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p .build/node_modules_cache
+          tar -czf .build/node_modules_cache/cache.tgz node_modules
 
       - name: Build the extension
-        run: yarn compile-production
-
-      - name: Lint
-        run: yarn lint
+        run: yarn compile-production-ci
 
       - name: Install CMake/Ninja
         uses: lukka/get-cmake@latest
         with:
-            cmakeVersion: 3.18.3
-            ninjaVersion: 1.10.1
-      
-      - name: Remove conflicting system CMake installation 
-        # The electron test runner modifies PATH priority, so we remove system CMake to ensure our installed version of CMake is used
+          cmakeVersion: 3.31.6
+          ninjaVersion: 1.10.1
+
+      - name: Remove conflicting system CMake installation
         run: |
-          sudo rm -f /usr/local/bin/cmake
-          sudo rm -f /usr/local/bin/cmake-gui
-          sudo rm -f /usr/local/bin/ccmake
-          sudo rm -f /usr/local/bin/cmcldeps
-          sudo rm -f /usr/local/bin/cpack
-          sudo rm -f /usr/local/bin/ctest
-          sudo rm -f /opt/homebrew/bin/cmake
-          sudo rm -f /opt/homebrew/bin/cmake-gui
-          sudo rm -f /opt/homebrew/bin/ccmake
-          sudo rm -f /opt/homebrew/bin/cmcldeps
-          sudo rm -f /opt/homebrew/bin/cpack
-          sudo rm -f /opt/homebrew/bin/ctest
+          sudo rm -f /usr/local/bin/cmake /usr/local/bin/ctest /usr/local/bin/cpack
+          sudo rm -f /opt/homebrew/bin/cmake /opt/homebrew/bin/ctest /opt/homebrew/bin/cpack
+
+      # Cache fakebin to skip rebuild when source unchanged
+      - name: Restore fakebin cache
+        id: fakebin-cache
+        uses: actions/cache@v4
+        with:
+          path: test/fakebin
+          key: fakebin-${{ runner.os }}-${{ hashFiles('test/fakeOutputGenerator/CMakeLists.txt', 'test/fakeOutputGenerator/main.cpp', 'test/fakeOutputGenerator/configfiles/**') }}
 
       - name: Build fake compilers for tests
+        if: steps.fakebin-cache.outputs.cache-hit != 'true'
         run: yarn pretest-buildfakebin
 
-      - name: Run successful-build test
-        run: yarn endToEndTestsSuccessfulBuild
+      # Ensure fakebin files are executable (cache may not preserve permissions)
+      - name: Fix fakebin permissions
+        run: chmod +x test/fakebin/* || true
 
-      - name: Run backend tests
-        run: yarn backendTests
+      # Compile test TypeScript ONCE for all matrix jobs
+      - name: Compile test sources
+        run: yarn pretest
 
-      - name: Run smoke tests
-        run: yarn smokeTests
+      # Package build outputs for the matrix test jobs. node_modules is reused via the cache above
+      # (matrix jobs use the same cache key); only build/test artifacts are uploaded here.
+      - name: Pack build outputs
+        shell: bash
+        run: |
+          tar -czf build-outputs.tgz \
+            out \
+            dist \
+            test/fakebin
 
-      - name: Run unit tests
-        run: yarn unitTests
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-outputs-${{ runner.os }}
+          path: build-outputs.tgz
+          retention-days: 1
+          if-no-files-found: error
 
-      - name: Run integration tests
-        run: yarn integrationTests
+  test:
+    name: test (${{ matrix.suite.name }})
+    needs: build
+    runs-on: macos-26
 
-      - name: Run single root test
-        run: yarn endToEndTestsSingleRoot
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - { name: backend,                 cmd: 'yarn backendTests',                       timeout: 5 }
+          - { name: smoke,                   cmd: 'yarn smokeTests-only',                    timeout: 15 }
+          - { name: unit,                    cmd: 'yarn unitTests-only',                     timeout: 20 }
+          - { name: integration,             cmd: 'yarn integrationTests-only',              timeout: 15 }
+          - { name: e2e-successful,          cmd: 'yarn endToEndTestsSuccessfulBuild-only',  timeout: 25 }
+          - { name: e2e-single-root,         cmd: 'yarn endToEndTestsSingleRoot-only',       timeout: 25 }
+          - { name: e2e-single-root-ctest,   cmd: 'yarn endToEndTestsSingleRootCTest-only',  timeout: 25 }
+          - { name: e2e-multi-root,          cmd: 'yarn endToEndTestsMultiRoot-only',        timeout: 25 }
 
-      - name: Run multi root test
-        run: yarn endToEndTestsMultiRoot
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # Restore the SAME node_modules cache the build job populated (key must match).
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: .build/node_modules_cache
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+
+      - name: Extract node_modules archive
+        if: steps.node-modules-cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: tar -xzf .build/node_modules_cache/cache.tgz
+
+      # Fallback: install fresh if the build job's cache was evicted between jobs (rare).
+      - name: Install dependencies (fallback)
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: build-outputs-${{ runner.os }}
+
+      - name: Unpack build outputs
+        shell: bash
+        run: tar -xzf build-outputs.tgz
+
+      - name: Install CMake/Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          # Must match the build job's cmake version. See note there.
+          cmakeVersion: 3.31.6
+          ninjaVersion: 1.10.1
+
+      - name: Remove conflicting system CMake installation
+        run: |
+          sudo rm -f /usr/local/bin/cmake /usr/local/bin/ctest /usr/local/bin/cpack
+          sudo rm -f /opt/homebrew/bin/cmake /opt/homebrew/bin/ctest /opt/homebrew/bin/cpack
+
+      # Ensure fakebin files are executable (artifact tar may preserve perms but be defensive)
+      - name: Fix fakebin permissions
+        run: chmod +x test/fakebin/* || true
+
+      # Cache VS Code download for E2E / smoke / unit / integration tests
+      - name: Restore VS Code cache
+        uses: actions/cache@v4
+        with:
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}-stable
+          restore-keys: vscode-test-${{ runner.os }}-
+
+      - name: Run ${{ matrix.suite.name }} tests
+        timeout-minutes: ${{ matrix.suite.timeout }}
+        run: ${{ matrix.suite.cmd }}
 
       - name: Upload test logs if tests failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: TestLogs
+          name: TestLogs-${{ runner.os }}-${{ matrix.suite.name }}
           path: test/**/log.txt
           if-no-files-found: warn

@@ -364,17 +364,6 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
         const normalizedPath = util.platformNormalizePath(uri.fsPath);
         const configurations = this.fileIndex.get(normalizedPath);
 
-        // If we have an active folder, only provide configurations for files
-        // that belong to that folder's project. This ensures IntelliSense
-        // reflects the active project in multi-project workspaces.
-        if (this.activeFolder) {
-            const activeFolderFiles = this.fileIndexByFolder.get(this.activeFolder);
-            if (!activeFolderFiles?.has(normalizedPath)) {
-                // This file is not part of the active folder's project
-                return undefined;
-            }
-        }
-
         if (this.activeTarget && configurations?.has(this.activeTarget)) {
             return configurations!.get(this.activeTarget);
         } else {
@@ -453,22 +442,6 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
      */
     private activeTarget: string | null = null;
 
-    /**
-     * The active folder path. When set, IntelliSense configurations from this folder
-     * are preferred over configurations from other folders for shared source files.
-     */
-    private activeFolder: string | null = null;
-
-    /**
-     * Set the active folder for IntelliSense configuration resolution.
-     * When a file exists in multiple project folders, configurations from
-     * the active folder will be preferred.
-     * @param folder The folder path, or null to clear
-     */
-    setActiveFolder(folder: string | null) {
-        this.activeFolder = folder ? util.platformNormalizePath(folder) : null;
-    }
-
     private activeBuildType: string | null = null;
     private buildTypesSeen = new Set<string>();
 
@@ -514,6 +487,7 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
 
         const targetFromToolchains = compilerToolchains?.target;
         const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
+        const compilerImplicitIncludes = compilerToolchains?.implicitIncludes?.map(util.platformNormalizePath) || [];
 
         const normalizedCompilerPath = util.platformNormalizePath(compilerPath);
         const compileCommandFragments = useFragments ? (fileGroup.compileCommandFragments || target.compileCommandFragments).slice(0) : [];
@@ -573,6 +547,28 @@ export class CppConfigurationProvider implements cpptools.CustomConfigurationPro
                 compileCommandFragments.push(`--target=${targetFromToolchains}`);
             } else {
                 flags.push(`--target=${targetFromToolchains}`);
+            }
+        }
+        if (compilerImplicitIncludes.length > 0) {
+            // Extract the stem from compiler path.
+            const compilerId = compilerPath.toLocaleLowerCase()
+                .match(/(?:^|[-\/\\])(cl|clang-cl|clang\+\+|clang|g\+\+|gcc)(?:$|[-.])/)?.[1] || "";
+
+            const includeFlag = {
+                "cl": "/external:I",
+                "clang-cl": "-imsvc",
+                "clang++": "-isystem",
+                "clang": "-isystem",
+                "g++": "-isystem",
+                "gcc": "-isystem"
+            }[compilerId] || "-I";
+
+            for (const implicitInclude of compilerImplicitIncludes) {
+                if (useFragments) {
+                    compileCommandFragments.push(`${includeFlag}${shlex.quote(implicitInclude)}`);
+                } else {
+                    flags.push(`${includeFlag}${implicitInclude}`);
+                }
             }
         }
 

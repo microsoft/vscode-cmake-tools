@@ -190,6 +190,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný Emscripten",
 	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Rekurzivně shromážděte a slučte všechny soubory compile_commands.json nalezené v adresáři cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Po úspěšné konfiguraci zkopírovat soubor compile_commands.json do tohoto umístění",
+	"cmake-tools.configuration.cmake.preConfigureTask.description": "Pokud je nastaveno, tato pojmenovaná úloha se provede před konfigurací CMake. Vezměte prosím na vědomí, že zřetězení předkonfigurační úlohy s dalšími úlohami v tasks.json může vést k vícenásobnému provedení předkonfigurační úlohy.",
 	"cmake-tools.configuration.cmake.postConfigureTask.description": "Pokud je nastavená, tato pojmenovaná úloha se spustí po úspěšné konfiguraci CMake.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automaticky nakonfigurovat adresáře projektu CMake, když se uloží obsah cmake.sourceDirectory nebo CMakeLists.txt",
@@ -203,6 +204,7 @@
 	"cmake-tools.configuration.cmake.buildTask.description": "Sestavit pomocí souboru tasks.json místo interního procesu",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kódování výstupu z externích příkazů (např. cmake -- build)",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Povolit protokolování trasování do souboru a konzoly (velmi vysoké objemy dat)",
+	"cmake-tools.configuration.cmake.showTimestampsInOutput.description": "Umožňuje zobrazit časová razítka a úrovně protokolu ve výstupním kanálu CMake. Užitečné pro sledování doby trvání sestavení",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Vybrat aktivní složku automaticky",
 	"cmake-tools.configuration.cmake.defaultActiveFolder.description": "Nastavte výchozí aktivní složku (funguje jenom v případě, že je zakázané nastavení cmake.autoSelectActiveFolder).",
 	"cmake-tools.configuration.cmake.exclude.description": "Rozšíření bude ignorovat složky uvedené v tomto nastavení. Složky by měly být uvedeny jako absolutní cesty.",
@@ -328,5 +330,9 @@
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.auto.description": "Automaticky zvolit nejlepšího kandidáta",
 	"cmake-tools.configuration.cmake.modifyLists.scopeSelection.ask.description": "Umožňuje zobrazit nabídku rychlého výběru s možnostmi z vybraného volání příkazu pracujícího se zdrojovými soubory cíle.",
 	"cmake-tools.configuration.cmake.modifyLists.sourceListKeywords.markdownDescription": "Argumenty klíčových slov u uživatelem definovaných funkcí a maker, které zavádějí seznamy zdrojových souborů Pokud zůstane prázdné, budou zohledněny všechny argumenty složené pouze z velkých písmen a podtržítek. Podporuje vzory glob.",
-	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu"
+	"update.code.model.for.list.modifier": "Aktualizovat model kódu pro automatický modifikátor souborů seznamu",
+	"test.codelens.run": "$(run) Spustit",
+	"test.codelens.debug": "$(debug) Ladit",
+	"test.run.error": "Spuštění testu se nezdařilo: {0}",
+	"test.debug.error": "Test se nepovedlo ladit: {0}"
 }
