@@ -9,6 +9,7 @@ Features:
 - Add `cmake.preConfigureTask` setting to execute a named VS Code task before every CMake configure. [#2449](https://github.com/microsoft/vscode-cmake-tools/issues/2449) [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960) [@erdemiru](https://github.com/erdemiru)
 
 Improvements:
+- Add `${testName}` variable support for `cmake.ctestArgs` and `cmake.ctestDefaultArgs`, enabling per-test argument expansion (e.g., unique log file paths per test). [#4416](https://github.com/microsoft/vscode-cmake-tools/issues/4416)
 - Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.
 - Further reduce CI pipeline time by splitting each platform pipeline into a build job and a parallel test matrix (backend, smoke, unit, integration, four E2E suites), caching `node_modules` between runs, sharing a single Xvfb instance on Linux, dropping a duplicate backend-test load inside the unit-tests Electron suite, and adding per-step timeouts to prevent silent hangs.
 - Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
