@@ -10,6 +10,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         buildDirectory: '',
         installPrefix: null,
         sourceDirectory: '',
+        autoDetectSourceDirectory: true,
         saveBeforeBuild: true,
         buildBeforeRun: true,
         clearOutputBeforeBuild: true,
