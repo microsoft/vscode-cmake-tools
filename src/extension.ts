@@ -777,8 +777,12 @@ export class ExtensionManager implements vscode.Disposable {
 
         const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, project.folderPath);
         if (!project.hasCMakeLists()) {
-            if (shouldConfigure && hascmakelists) {
-                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this.workspaceConfig);
+            // The workspace root has no CMakeLists.txt. If one exists in a subdirectory, let the
+            // precondition handler auto-detect/offer it so the UI activates. This runs regardless of
+            // configureOnOpen (the handler only auto-configures when configureOnOpen is enabled), so a
+            // nested project still surfaces its UI instead of staying hidden.
+            if (hascmakelists) {
+                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, project.workspaceContext.config);
             }
         } else {
             if (shouldConfigure) {
