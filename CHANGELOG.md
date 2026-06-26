@@ -9,6 +9,7 @@ Features:
 - Add `cmake.preConfigureTask` setting to execute a named VS Code task before every CMake configure. [#2449](https://github.com/microsoft/vscode-cmake-tools/issues/2449) [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960) [@erdemiru](https://github.com/erdemiru)
 
 Improvements:
+- Add `${testName}` variable support for `cmake.ctestArgs` and `cmake.ctestDefaultArgs`, enabling per-test argument expansion (e.g., unique log file paths per test). [#4416](https://github.com/microsoft/vscode-cmake-tools/issues/4416)
 - Reduce CI pipeline time by parallelizing E2E test jobs and adding build artifact caching.
 - Further reduce CI pipeline time by splitting each platform pipeline into a build job and a parallel test matrix (backend, smoke, unit, integration, four E2E suites), caching `node_modules` between runs, sharing a single Xvfb instance on Linux, dropping a duplicate backend-test load inside the unit-tests Electron suite, and adding per-step timeouts to prevent silent hangs.
 - Add `cmake.showTimestampsInOutput` setting to display timestamps and log levels in the CMake output channel, useful for tracking build durations. [#4057](https://github.com/microsoft/vscode-cmake-tools/issues/4057)
@@ -21,6 +22,7 @@ Improvements:
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
 
 Bug Fixes:
+- Fix CMake Tools not activating for projects whose `CMakeLists.txt` lives in a subdirectory (e.g. `source/CMakeLists.txt`) rather than the workspace root. Such projects now activate on open: a single nested `CMakeLists.txt` is detected and adopted automatically (with a notification to change the choice or opt out), and a picker is offered when there are multiple candidates. The new `cmake.autoDetectSourceDirectory` setting (default `true`) controls this behavior.
 - Fix switching the active editor to a file in a different root in a multi-root workspace clearing all C/C++ IntelliSense translation units (including for files still open in other panes). Changing the active project no longer tells cpptools that every file's configuration changed, so it no longer discards and rebuilds translation units for unrelated files. [#4964](https://github.com/microsoft/vscode-cmake-tools/issues/4964)
 - Fix `cmake.configureOnOpen` performing a clean reconfigure (deleting `CMakeCache.txt`) instead of an incremental configure when using `__unspec__` kit with CMake >= 3.15 and no explicit generator setting. [#4956](https://github.com/microsoft/vscode-cmake-tools/issues/4956)
 - Fix `${command:cmake.launchTargetPath}` and related substitution commands (`cmake.launchTargetDirectory`, `cmake.launchTargetFilename`, `cmake.launchTargetName`, `cmake.getLaunchTargetPath`, etc.) showing an error instead of prompting kit or preset selection when none is active. These commands now behave consistently with the build/configure commands by displaying the quick pick dialog.
