@@ -7,6 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
+import { BuildColorMode, GlyphStyle, stripAnsi } from '@cmt/colorize';
+import { colorizedBuildSink } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -324,6 +326,51 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
+        this.colorMode = config.colorizedBuildOutput;
+        this.glyphStyle = config.buildOutputGlyphs;
+    }
+    /**
+     * How build output should be decorated in the integrated terminal. Read once
+     * per build (a fresh consumer is constructed for each build).
+     */
+    private readonly colorMode: BuildColorMode;
+    private readonly glyphStyle: GlyphStyle;
+    /**
+     * Echo a build-output line. Parsing has already happened on the clean `line`,
+     * so the Problems panel is unaffected.
+     *
+     * In `off` mode the clean line goes to the regular CMake/Build Output channel and
+     * the on-disk log file (legacy behavior). When colorization is enabled, the raw
+     * (ANSI) line is written to the "CMake Build" terminal sink — the single visible
+     * build surface — and the clean line is written to the on-disk log file only
+     * (never the Output channel), so the stream isn't duplicated and the channel
+     * doesn't steal focus from the terminal.
+     */
+    private echo(raw: string, clean: string, isError: boolean) {
+        if (this.colorMode !== 'off') {
+            // Colorized: the terminal is the single visible build surface and receives
+            // the RAW line (ANSI preserved). The plain (ANSI-stripped) line still goes to
+            // the on-disk log file and developer console, but NOT the Output channel —
+            // this avoids duplicating the stream and the channel stealing focus away from
+            // the terminal.
+            colorizedBuildSink().writeLine(raw, this.colorMode, this.glyphStyle);
+            if (this.logger) {
+                if (isError) {
+                    this.logger.errorFileOnly(clean);
+                } else {
+                    this.logger.infoFileOnly(clean);
+                }
+            }
+            return;
+        }
+        if (!this.logger) {
+            return;
+        }
+        if (isError) {
+            this.logger.error(clean);
+        } else {
+            this.logger.info(clean);
+        }
     }
     /**
      * Event fired when the progress changes
@@ -349,20 +396,23 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     error(line: string) {
-        this.compileConsumer.error(line);
-        if (this.logger) {
-            this.logger.error(line);
-        }
-        super.error(line);
+        // In `off` mode, behave byte-identically to the shipped release: pass the raw line
+        // through to the parser, the Output channel/log, and the captured stdout/stderr. Only
+        // strip ANSI when colorization is enabled (where a tool may emit real colors, e.g.
+        // `compiler` mode forces CLICOLOR_FORCE), so the parser and on-disk log stay clean while
+        // the terminal still receives the raw colored line.
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
+        this.compileConsumer.error(clean);
+        this.echo(line, clean, true);
+        super.error(clean);
     }
 
     output(line: string) {
-        this.compileConsumer.output(line);
-        if (this.logger) {
-            this.logger.info(line);
-        }
-        super.output(line);
-        const progress = this._percent_re.exec(line);
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
+        this.compileConsumer.output(clean);
+        this.echo(line, clean, false);
+        super.output(clean);
+        const progress = this._percent_re.exec(clean);
         if (progress) {
             const percent = progress[1];
             this._onProgressEmitter.fire({

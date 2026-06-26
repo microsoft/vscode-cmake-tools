@@ -320,6 +320,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (extraEnvironmentVariables) {
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(extraEnvironmentVariables, envs)]);
         }
+        if (this.config.colorizedBuildOutput === 'compiler') {
+            // Compiler colorized mode: ask CMake to bake compiler color flags (e.g.
+            // -fdiagnostics-color / -fcolor-diagnostics) into the generated build system so
+            // the compiler emits real ANSI colors at build time. CMAKE_COLOR_DIAGNOSTICS is a
+            // configure-time cache variable, so toggling this mode requires a reconfigure to
+            // take effect. It is intentionally NOT set as CLICOLOR_FORCE here: configure
+            // output is routed to the Output channel, which cannot render ANSI.
+            envs = EnvironmentUtils.merge([envs, { CMAKE_COLOR_DIAGNOSTICS: 'ON' }]);
+        }
         return envs;
     }
 
@@ -327,18 +336,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * Get the environment variables that should be set at CMake-build time.
      */
     async getCMakeBuildCommandEnvironment(in_env?: Environment): Promise<Environment> {
+        let envs;
         if (this.useCMakePresets) {
-            let envs = EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
+            envs = EnvironmentUtils.merge([in_env, this._buildPreset?.environment]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs)]);
-            return envs;
         } else {
-            let envs = EnvironmentUtils.merge([in_env, this._kitEnvironmentVariables]);
+            envs = EnvironmentUtils.merge([in_env, this._kitEnvironmentVariables]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.environment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs)]);
             envs = EnvironmentUtils.merge([envs, await this.computeExpandedEnvironment(this._variantEnv, envs)]);
-            return envs;
         }
+        if (this.config.colorizedBuildOutput === 'compiler') {
+            // Compiler colorized mode: force CLI build tools (cmake --build, Ninja, make) to
+            // emit ANSI colors even though their output is piped rather than attached to a
+            // TTY. This is read at invocation time, so it takes effect on the next build with
+            // no reconfigure required.
+            envs = EnvironmentUtils.merge([envs, { CLICOLOR_FORCE: '1' }]);
+        }
+        return envs;
     }
 
     /**
@@ -1971,9 +1987,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const timeEnd: number = new Date().getTime();
         const duration: number = timeEnd - timeStart;
         log.info(localize('build.duration', 'Build completed: {0}', util.msToString(duration)));
-        const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-            ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
+        // Track adoption of the colorized build output feature (cmake.colorizedBuildOutput).
+        // Both values are low-cardinality enums (no user data): off|severity|rich|compiler and
+        // unicode|ascii. ConfigType stays kits-mode-only as before.
+        const telemetryProperties: telemetry.Properties = {
+            colorizedBuildOutput: this.config.colorizedBuildOutput,
+            buildOutputGlyphs: this.config.buildOutputGlyphs
         };
+        if (!this.useCMakePresets) {
+            telemetryProperties['ConfigType'] = this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '';
+        }
         const telemetryMeasures: telemetry.Measures = {
             Duration: duration
         };

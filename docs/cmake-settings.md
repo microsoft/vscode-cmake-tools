@@ -18,12 +18,14 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
 | `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes |
+| `cmake.buildOutputGlyphs` | Glyph style for `cmake.colorizedBuildOutput: rich`. Use `ascii` if your terminal font does not render the Unicode severity glyphs (✗ ⚠ ℹ ✓). One of `unicode`, `ascii`. | `unicode` | no |
 | `cmake.buildTask` | If `true`, generate VS Code tasks for building. | `false` | no |
 | `cmake.buildToolArgs` | An array of additional arguments to pass to the underlying build tool. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |
 | `cmake.clearOutputBeforeBuild` | If `true`, clear output before building. | `true` | no |
 | `cmake.cmakeCommunicationMode` | Specifies the protocol for communicating between the extension and CMake | `automatic` | no |
 | `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
+| `cmake.colorizedBuildOutput` | Experimental, opt-in: highlight build errors, warnings, and notes by severity using theme-aware ANSI colors, shown in a dedicated **CMake Build** integrated terminal (the VS Code Output panel cannot render ANSI colors). `rich` additionally adds severity glyphs, dimmed progress, a build header, and a colored summary footer. `compiler` forwards the compiler's and build tools' own colors via `CMAKE_COLOR_DIAGNOSTICS=ON` (configure time, requires a reconfigure) and `CLICOLOR_FORCE=1` (build time). One of `off`, `severity`, `rich`, `compiler`. | `off` | no |
 | `cmake.configureArgs` | Arguments to CMake that will be passed during the configure process. Prefer to use `cmake.configureSettings` or [CMake variants](variants.md).</br> It is not recommended to pass `-D` arguments using this setting. | `[]` (empty array-no arguments) | yes |
 | `cmake.configureEnvironment` | An object containing `key:value` pairs of environment variables, which will be passed to CMake only when configuring.| `null` (no environment variable pairs) | yes |
 | `cmake.configureOnEdit` | Automatically configure CMake project directories when the path in the `cmake.sourceDirectory` setting is updated or when `CMakeLists.txt` or `*.cmake` files are saved. | `true` | no |
@@ -90,6 +92,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | `[]` | no |
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. Possible values: `focus` (show the log and move focus to the output channel), `always` (show the log but do not move focus), `never` (do not show the log), `error` (show the log only when an error occurs). | `always` | no |
+| `cmake.revealLogOnAutomaticTrigger` | Whether automatic or programmatic CMake operations (configure-on-open, automatic reconfigure, and builds or tests invoked through the CMake Tools API, e.g. by Copilot via the C/C++ DevTools companion) reveal the CMake build output. Failures are always shown. | `false` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
