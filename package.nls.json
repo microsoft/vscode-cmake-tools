@@ -117,6 +117,7 @@
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",
     "cmake-tools.configuration.cmake.installPrefix.description": "The directory where CMake installed files will go.",
     "cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
+    "cmake-tools.configuration.cmake.autoDetectSourceDirectory.markdownDescription": "When no `CMakeLists.txt` exists at the workspace root (`#cmake.sourceDirectory#`), automatically detect a single `CMakeLists.txt` in a subdirectory and use its folder as the source directory so CMake Tools activates instead of staying hidden. When several candidates are found, you are prompted to choose. Has no effect when `#cmake.sourceDirectory#` is set explicitly.",
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
     "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it.",
     "cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Clear build output before each build.",

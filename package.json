@@ -2407,6 +2407,12 @@
           "default": "${workspaceFolder}",
           "scope": "resource"
         },
+        "cmake.autoDetectSourceDirectory": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%cmake-tools.configuration.cmake.autoDetectSourceDirectory.markdownDescription%",
+          "scope": "resource"
+        },
         "cmake.saveBeforeBuild": {
           "type": "boolean",
           "default": true,
