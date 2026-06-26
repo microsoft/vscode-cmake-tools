@@ -4078,6 +4078,12 @@
           ],
           "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
+        "cmake.revealLogOnAutomaticTrigger": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%cmake-tools.configuration.cmake.revealLogOnAutomaticTrigger.markdownDescription%",
+          "scope": "window"
+        },
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",
           "default": true,

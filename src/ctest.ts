@@ -516,10 +516,10 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
-            log.showChannel();
+            log.showChannel(undefined, isAutomatic);
         }
 
         if (this.ws.config.testExplorerIntegrationEnabled) {
