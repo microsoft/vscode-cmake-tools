@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVSKitEnvironment, getVsKitPreferredGenerator } from '@cmt/kits/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVsKitPreferredGenerator } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -1464,11 +1464,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
     ];
 
-    async getCompilerVersion(compilerPath: string): Promise<CompilerInfo> {
-        // Compiler name and path as coming from the kit.
-        const compilerName = path.parse(compilerPath).name;
-        const compilerDir = path.parse(compilerPath).dir;
-
+    private getCompilerAllowListEntry(compilerName: string) {
         // Find an equivalent in the compilers allowed list.
         // To avoid finding "cl" instead of "clang" or "g++" instead of "clang++",
         // sort the array from lengthier to shorter, so that the find operation
@@ -1476,8 +1472,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // The find condition must be "includes" instead of "equals"
         // (which wouldn't otherwise need the sort) to avoid implementing separate handling
         // for compiler file name prefixes and suffixes related to targeted architecture.
-        const sortedCompilerAllowList = this.compilerAllowList.sort((a, b) => b.name.length - a.name.length);
-        const compiler = sortedCompilerAllowList.find(comp => compilerName.includes(comp.name));
+        const sortedCompilerAllowList = [...this.compilerAllowList].sort((a, b) => b.name.length - a.name.length);
+        return sortedCompilerAllowList.find(comp => compilerName.includes(comp.name));
+    }
+
+    private getCompilerNameForTelemetry(compilerPathOrName: string): string {
+        const compilerName = path.parse(compilerPathOrName).name || compilerPathOrName;
+        const compiler = this.getCompilerAllowListEntry(compilerName);
 
         // Mask any unrecognized compiler as "other" to hide private information
         let allowedCompilerName = compiler ? compiler.name : "other";
@@ -1493,6 +1494,38 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (compilerName.includes("eabi")) {
             allowedCompilerName += "-eabi";
         }
+
+        return allowedCompilerName;
+    }
+
+    /**
+     * Derive compiler name/version telemetry from the CMake File-API "toolchains"
+     * object instead of spawning the compiler. This is used during configure so that
+     * configure completion never depends on launching an external compiler process
+     * (which on some toolchains leaves a descendant holding the inherited stdio pipes
+     * open, stalling the subprocess result). Returns undefined when no compiler
+     * information is available; the version falls back to "unknown".
+     */
+    private getCompilerInfoForTelemetry(language: string, compilerPath?: string): CompilerInfo | undefined {
+        const toolchain: codeModel.CodeModelToolchain | undefined = this.codeModelContent?.toolchains?.get(language);
+        const compilerPathForName = compilerPath ?? toolchain?.path ?? toolchain?.id;
+        if (!compilerPathForName) {
+            return undefined;
+        }
+
+        return {
+            name: this.getCompilerNameForTelemetry(compilerPathForName),
+            version: toolchain?.version || "unknown"
+        };
+    }
+
+    async getCompilerVersion(compilerPath: string): Promise<CompilerInfo> {
+        // Compiler name and path as coming from the kit.
+        const compilerName = path.parse(compilerPath).name;
+        const compilerDir = path.parse(compilerPath).dir;
+
+        const compiler = this.getCompilerAllowListEntry(compilerName);
+        const allowedCompilerName = this.getCompilerNameForTelemetry(compilerPath);
 
         // If we don't have a regexp, we can't obtain the compiler version information.
         // With an undefined switch we still can get the version information (if regexp is defined),
@@ -1732,15 +1765,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             if (this._kit?.compilers) {
-                let cCompilerVersion;
-                let cppCompilerVersion;
-                if (this._kit.compilers["C"]) {
-                    cCompilerVersion = await this.getCompilerVersion(this._kit.compilers["C"]);
-                }
-
-                if (this._kit.compilers["CXX"]) {
-                    cppCompilerVersion = await this.getCompilerVersion(this._kit.compilers["CXX"]);
-                }
+                // Read compiler name/version from the CMake File-API toolchains object
+                // instead of spawning the compiler during configure (see
+                // getCompilerInfoForTelemetry). The version falls back to "unknown".
+                const cCompilerVersion = this._kit.compilers["C"]
+                    ? this.getCompilerInfoForTelemetry("C", this._kit.compilers["C"])
+                    : undefined;
+                const cppCompilerVersion = this._kit.compilers["CXX"]
+                    ? this.getCompilerInfoForTelemetry("CXX", this._kit.compilers["CXX"])
+                    : undefined;
 
                 if (cCompilerVersion) {
                     telemetryProperties.CCompilerName = cCompilerVersion.name;
@@ -1752,25 +1785,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     telemetryProperties.CppCompilerVersion = cppCompilerVersion.version;
                 }
             } else if (this._kit?.visualStudio && this._kit.visualStudioArchitecture) {
-                const env = await getVSKitEnvironment(this._kit);
-                const dirs = env?.['Path']?.split(';') ?? [];
-                let compilerPath = '';
-                for (const dir of dirs) {
-                    if (dir.indexOf('MSVC') > 0) {
-                        compilerPath = path.join(dir, 'cl.exe');
-                        break;
-                    }
-                }
-                if (compilerPath) {
-                    const compiler = await this.getCompilerVersion(compilerPath);
-                    telemetryProperties.CCompilerVersion = compiler.version;
-                    telemetryProperties.CppCompilerVersion = compiler.version;
-                } else {
-                    telemetryProperties.CCompilerVersion = 'unknown';
-                    telemetryProperties.CppCompilerVersion = 'unknown';
-                }
+                // Visual Studio kit: read the MSVC version from the File-API toolchains
+                // object rather than locating and spawning cl.exe during configure.
+                const cToolchain: codeModel.CodeModelToolchain | undefined = this.codeModelContent?.toolchains?.get("C");
+                const cppToolchain: codeModel.CodeModelToolchain | undefined = this.codeModelContent?.toolchains?.get("CXX");
                 telemetryProperties.CCompilerName = 'cl';
                 telemetryProperties.CppCompilerName = 'cl';
+                telemetryProperties.CCompilerVersion = cToolchain?.version ?? cppToolchain?.version ?? 'unknown';
+                telemetryProperties.CppCompilerVersion = cppToolchain?.version ?? cToolchain?.version ?? 'unknown';
             }
 
             if (this.useCMakePresets) {
