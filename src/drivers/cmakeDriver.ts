@@ -1318,6 +1318,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return undefined;
         }
 
+        // The File-API toolchains object (compiler version/id) exists only on CMake >= 3.20;
+        // below that, version stays "unknown" — we intentionally don't spawn the compiler.
         return {
             name: this.getCompilerNameForTelemetry(compilerPathForName),
             version: toolchain?.version || "unknown"
