@@ -44,6 +44,7 @@ Bug Fixes:
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 - Fix GNU LD diagnostic regex incorrectly matching CMake status lines (e.g., Zephyr build output) as linker errors in the Problems panel. [#4910](https://github.com/microsoft/vscode-cmake-tools/issues/4910)
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
+- Fix broken marketplace badges in `README.md` [#4972](https://github.com/microsoft/vscode-cmake-tools/pull/4972) [@Maxxxxior](https://github.com/Maxxxxior)
 
 ## 1.23.52
 
