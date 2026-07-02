@@ -2801,11 +2801,13 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(fromWorkflow: boolean = false): Promise<CMakeDriver> {
+    private async preTest(fromWorkflow: boolean = false, buildTargets?: string[]): Promise<CMakeDriver> {
         if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
         }
-        const buildResult = await this.build(undefined, false, false);
+        // When buildTargets is undefined, build() resolves the default build target (existing behavior for
+        // ctest/cpack/refresh/workflow callers). A single-test run passes the specific test's target instead.
+        const buildResult = await this.build(buildTargets, false, false);
         if (buildResult.exitCode !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
@@ -2817,8 +2819,8 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        const drv = await this.preTest(fromWorkflow);
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[]): Promise<CommandResult> {
+        const drv = await this.preTest(fromWorkflow, buildTargets);
         const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
         return retc;
     }
@@ -2857,7 +2859,11 @@ export class CMakeProject {
     }
 
     async runTest(testName: string): Promise<CommandResult> {
-        return this.ctest(false, undefined, [testName]);
+        // Build only the target that produces this test's executable (issue #4515 / PR #4881) instead of the
+        // default/ALL target. getTestBuildTargets returns [] for non-CMake test commands or when the program
+        // can't be mapped to a target; in that case we fall back to the default build (existing behavior).
+        const buildTargets = this.cTestController.getTestBuildTargets([testName], await this.executableTargets);
+        return this.ctest(false, undefined, [testName], undefined, buildTargets.length ? buildTargets : undefined);
     }
 
     async debugCTest(testName: string): Promise<vscode.DebugSession | null> {

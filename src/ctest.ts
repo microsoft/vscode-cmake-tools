@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
-import { CMakeDriver } from '@cmt/drivers/drivers';
+import { CMakeDriver, ExecutableTarget } from '@cmt/drivers/drivers';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -2204,14 +2204,8 @@ export class CTestDriver implements vscode.Disposable {
     private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
-            const execTargets = await project.executableTargets;
             // Precompute a lookup map from normalized executable path to target name, excluding install targets
-            const execPathToName = new Map<string, string>();
-            for (const t of execTargets) {
-                if (!t.isInstallTarget) {
-                    execPathToName.set(util.platformNormalizePath(t.path), t.name);
-                }
-            }
+            const execPathToName = this.executableTargetNamesByPath(await project.executableTargets);
             const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
@@ -2252,6 +2246,41 @@ export class CTestDriver implements vscode.Disposable {
             }
         };
         return overallSuccess;
+    }
+
+    /**
+     * Build a lookup from normalized executable output path to CMake target name, excluding install targets.
+     */
+    private executableTargetNamesByPath(executableTargets: ExecutableTarget[]): Map<string, string> {
+        const execPathToName = new Map<string, string>();
+        for (const target of executableTargets) {
+            if (!target.isInstallTarget) {
+                execPathToName.set(util.platformNormalizePath(target.path), target.name);
+            }
+        }
+        return execPathToName;
+    }
+
+    /**
+     * Resolve the CMake executable target(s) that must be built to run the given tests — the same mapping used by
+     * buildTestTargets (test program path -> executableTargets name, install targets skipped). Test programs that
+     * are not known CMake executable targets (e.g. python, cmake -E, or a nested ctest build-and-test) are skipped,
+     * so callers can fall back to the default build target for those.
+     */
+    public getTestBuildTargets(testNames: string[], executableTargets: ExecutableTarget[]): string[] {
+        const execPathToName = this.executableTargetNamesByPath(executableTargets);
+        const targets = new Set<string>();
+        for (const testName of testNames) {
+            const program = this.testProgram(testName);
+            if (!program) {
+                continue;
+            }
+            const targetName = execPathToName.get(util.platformNormalizePath(program));
+            if (targetName) {
+                targets.add(targetName);
+            }
+        }
+        return [...targets];
     }
 
     /**
