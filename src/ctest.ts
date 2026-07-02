@@ -79,7 +79,7 @@ export enum RunCTestHelperEntryPoint {
 
 interface EncodedMeasurementValue {
     $: { encoding?: BufferEncoding; compression?: string };
-    _: string;
+    _?: string;
 }
 
 interface MessyResults {
@@ -96,10 +96,10 @@ interface MessyResults {
                 FullName: string[];
                 Name: string[];
                 Path: string[];
-                Results: {
-                    NamedMeasurement:
+                Results?: {
+                    NamedMeasurement?:
                     { $: { type: string; name: string }; Value: string[] }[];
-                    Measurement: { Value: [EncodedMeasurementValue | string] }[];
+                    Measurement?: { Value: [EncodedMeasurementValue | string] }[];
                 }[];
             }[];
         }[];
@@ -300,13 +300,21 @@ function parseXmlString<T>(xml: string): Promise<T> {
     });
 }
 
-function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string {
+function decodeOutputMeasurement(node: EncodedMeasurementValue | string | undefined): string {
+    if (node === undefined) {
+        return '';
+    }
     if (typeof node === 'string') {
         return node;
     }
-    let buffer = !!node.$.encoding ? Buffer.from(node._, node.$.encoding) : Buffer.from(node._, 'utf-8');
-    if (!!node.$.compression) {
-        buffer = zlib.unzipSync(buffer as Uint8Array);
+    const raw = node._ ?? '';
+    let buffer = node.$.encoding ? Buffer.from(raw, node.$.encoding) : Buffer.from(raw, 'utf-8');
+    if (node.$.compression) {
+        try {
+            buffer = zlib.unzipSync(buffer as Uint8Array);
+        } catch {
+            // If decompression fails, keep the raw decoded bytes rather than dropping the output entirely.
+        }
     }
     return buffer.toString('utf-8');
 }
@@ -333,11 +341,12 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
                 testList: testingHead.TestList[0].Test,
                 test: testingHead.Test.map((test): Test => {
                     const measurements = new Map<string, TestMeasurement>();
-                    for (const namedMeasurement of test.Results[0].NamedMeasurement) {
+                    const results = test.Results?.[0];
+                    for (const namedMeasurement of results?.NamedMeasurement ?? []) {
                         measurements.set(namedMeasurement.$.name, {
                             type: namedMeasurement.$.type,
                             name: namedMeasurement.$.name,
-                            value: decodeOutputMeasurement(namedMeasurement.Value[0])
+                            value: decodeOutputMeasurement(namedMeasurement.Value?.[0])
                         });
                     }
                     return {
@@ -347,7 +356,7 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
                         path: test.Path[0],
                         status: test.$.Status,
                         measurements,
-                        output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0])
+                        output: decodeOutputMeasurement(results?.Measurement?.[0]?.Value?.[0])
                     };
                 })
             }
@@ -652,6 +661,21 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
+     * Marks a started test for which CTest produced no matching result (e.g. the test executable was
+     * not built, so CTest reported "Not Run", or the run matched no tests). Without this, VS Code
+     * leaves the test with an empty output stream and shows a bare "The test case did not report any
+     * output." Here we attach an actionable reason to both the test output and its error state.
+     */
+    private reportMissingTestResult(test: vscode.TestItem, run: vscode.TestRun): void {
+        const reason = localize('test.did.not.run',
+            "Test '{0}' did not run and produced no output. The test executable may not have been built — build the test target, then run the test again.",
+            test.id);
+        run.appendOutput(util.normalizeCRLF(reason) + '\r\n',
+            (test.uri && test.range) ? new vscode.Location(test.uri, test.range.end) : undefined, test);
+        this.ctestErrored(test, run, new vscode.TestMessage(reason));
+    }
+
+    /**
      * Retrieve the driver from the test in argument
      *
      * @param test : test to retrieve the driver from
@@ -783,9 +807,15 @@ export class CTestDriver implements vscode.Disposable {
                         if (testResult) {
                             returnCode = this.testResultsAnalysis(testResult, test, returnCode, run);
                         } else {
-                            this.ctestErrored(test, run, { message: localize('test.results.not.found', 'Test results not found.') });
+                            // Started, but CTest reported no result for it (e.g. the executable was not
+                            // built, or the run matched nothing). Surface a clear reason instead of an
+                            // empty "did not report any output".
+                            this.reportMissingTestResult(test, run);
                             returnCode = -1;
                         }
+                    } else {
+                        this.reportMissingTestResult(test, run);
+                        returnCode = -1;
                     }
                 }
             }
@@ -854,6 +884,21 @@ export class CTestDriver implements vscode.Disposable {
                         }
 
                         returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
+                    }
+                }
+
+                // Mark any explicitly targeted test that CTest did not report (e.g. an unbuilt
+                // executable) so it doesn't silently show "did not report any output". This only
+                // applies when we selected specific tests via -R; when running all (or a
+                // preset-filtered set) an unreported test may be intentionally excluded, so we must
+                // not assume it is missing.
+                if (targetTests && !(cancellation && cancellation.isCancellationRequested)) {
+                    const reported = new Set((testResults?.site.testing.test ?? []).map(t => t.name));
+                    for (const t of targetTests) {
+                        if (!reported.has(t.id)) {
+                            this.reportMissingTestResult(t, run);
+                            returnCode = -1;
+                        }
                     }
                 }
             }

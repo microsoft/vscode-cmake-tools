@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20260702-1000-Experimental"
+	Name="(empty)"
+	Generator="ctest-3.30.3"
+	OSName="Windows"
+	Hostname="localhost"
+	>
+	<Testing>
+		<StartDateTime>Jul 02 10:00 Central Daylight Time</StartDateTime>
+		<StartTestTime>1783004664</StartTestTime>
+		<TestList>
+			<Test>./compressed-test</Test>
+			<Test>./notrun-test</Test>
+			<Test>./empty-output-test</Test>
+		</TestList>
+		<Test Status="passed">
+			<Name>compressed-test</Name>
+			<Path>.</Path>
+			<FullName>./compressed-test</FullName>
+			<FullCommandLine>C:\build\bin\compressed-test.exe</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>1.5</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value encoding="base64" compression="gzip">eJxzzs8tKEotLk5NUUgvSS0uUcgvLSkoLVHIycxLVTDkckZIg0WMuADOGxGK</Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<Test Status="notrun">
+			<Name>notrun-test</Name>
+			<Path>.</Path>
+			<FullName>./notrun-test</FullName>
+			<FullCommandLine></FullCommandLine>
+			<Results>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Not Run</Value>
+				</NamedMeasurement>
+			</Results>
+		</Test>
+		<Test Status="passed">
+			<Name>empty-output-test</Name>
+			<Path>.</Path>
+			<FullName>./empty-output-test</FullName>
+			<FullCommandLine>C:\build\bin\empty-output-test.exe</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>0.1</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value></Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<EndDateTime>Jul 02 10:00 Central Daylight Time</EndDateTime>
+		<EndTestTime>1783004665</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

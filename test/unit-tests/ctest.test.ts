@@ -23,6 +23,25 @@ suite('CTest test', () => {
         expect(result).to.eq(undefined);
     });
 
+    test('Parse results with compressed output and missing/empty measurements (robustness)', async () => {
+        const result = await readTestResultsFile(getTestResourceFilePath('TestResults3.xml'));
+        // A single test lacking a <Measurement> must not throw and wipe ALL results.
+        expect(result).to.not.eq(undefined);
+        expect(result!.site.testing.test.length).to.eq(3);
+
+        const byName = (name: string) => result!.site.testing.test.find(t => t.name === name)!;
+
+        // base64 + (gzip-labelled) zlib-compressed output decodes correctly (e.g. fmt's large gtest output).
+        expect(byName('compressed-test').output).to.eq('Compressed gtest output line 1\nCompressed line 2\n');
+
+        // A "Not Run" test with no <Measurement> yields empty output rather than throwing.
+        expect(byName('notrun-test').status).to.eq('notrun');
+        expect(byName('notrun-test').output).to.eq('');
+
+        // An empty <Value/> yields empty output.
+        expect(byName('empty-output-test').output).to.eq('');
+    });
+
     test('Find failure patterns in output', () => {
         const DEFAULT_MESSAGE = 'Test Failed';
         const output =
