@@ -1948,16 +1948,28 @@ export class ExtensionManager implements vscode.Disposable {
      */
     async runTestFromCodeLens(testName: string) {
         try {
-            const project = this.getActiveProject();
+            const project = this.findProjectForTest(testName) ?? this.getActiveProject();
             if (!project) {
                 void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
                 return;
             }
-            return project.runTest(testName);
+            log.info(localize('codelens.run.test', "Running test from CodeLens: '{0}'", testName));
+            // Note: `await` is required so that a rejection from the async run is caught below
+            // (and the test run is finalized) instead of escaping this handler silently.
+            return await project.runTest(testName);
         } catch (err) {
             log.error(`Error running test from CodeLens: ${err}`);
             void vscode.window.showErrorMessage(localize('test.run.error', 'Failed to run test: {0}', String(err)));
         }
+    }
+
+    /**
+     * Finds the CMake project that owns a test with the given name, falling back to undefined
+     * when no project reports it (callers then use the active project).
+     */
+    private findProjectForTest(testName: string): CMakeProject | undefined {
+        return this.projectController.getAllCMakeProjects()
+            .find(project => (project.cTestController.getTestNames() ?? []).includes(testName));
     }
 
     /**
@@ -1966,12 +1978,13 @@ export class ExtensionManager implements vscode.Disposable {
      */
     async debugTestFromCodeLens(testName: string) {
         try {
-            const project = this.getActiveProject();
+            const project = this.findProjectForTest(testName) ?? this.getActiveProject();
             if (!project) {
                 void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
                 return;
             }
-            return project.debugCTest(testName);
+            log.info(localize('codelens.debug.test', "Debugging test from CodeLens: '{0}'", testName));
+            return await project.debugCTest(testName);
         } catch (err) {
             log.error(`Error debugging test from CodeLens: ${err}`);
             void vscode.window.showErrorMessage(localize('test.debug.error', 'Failed to debug test: {0}', String(err)));

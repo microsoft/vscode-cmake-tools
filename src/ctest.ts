@@ -188,6 +188,13 @@ export function getMinimalRegexFragments(superset: string[], targets: string[]):
     if (targets.length === 0) {
         return [];
     }
+    // If we don't know the full set of tests (empty superset), we cannot safely compute
+    // minimal unique prefixes: the trie would be empty and every target would collapse to
+    // a one-character (or match-everything) prefix, causing a single-test run to execute
+    // the entire suite. Fall back to exact, anchored matches for the specific targets.
+    if (superset.length === 0) {
+        return targets.map(t => `^${util.escapeStringForRegex(t)}$`);
+    }
     if (forbidden.length === 0) {
         return ["^."];
     }
@@ -534,11 +541,16 @@ export class CTestDriver implements vscode.Disposable {
 
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
-            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
-            const returnCode = await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
-            run.end();
-            return returnCode;
+            try {
+                const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+                const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
+                return await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
+            } finally {
+                // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+                // Note: we intentionally do NOT swallow the error here — task/workflow callers rely on the
+                // rejection propagating (the CodeLens handler awaits and logs it).
+                run.end();
+            }
         } else {
             return vscode.window.withProgress(
                 {
@@ -732,6 +744,12 @@ export class CTestDriver implements vscode.Disposable {
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
 
         await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, testsToRun, customizedTask);
+
+        if (testsToRun && testsToRun.length > 0 && driverMap.size === 0) {
+            // A specific set of tests was requested (e.g. from the inline CodeLens) but none of
+            // them matched a discovered test id. Surface this so a "nothing ran" outcome is not silent.
+            log.warning(localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', ')));
+        }
 
         if (!this.ws.config.ctestAllowParallelJobs) {
             const usesTestName = this.hasTestNameVariable();
@@ -1568,7 +1586,7 @@ export class CTestDriver implements vscode.Disposable {
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
                 if (rc.exitCode !== 0) {
                     log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
-                    run.end();
+                    // Note: the caller (runTestHandler) owns run.end() via its finally block.
                     return rc.exitCode;
                 }
             }
@@ -1624,19 +1642,25 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         const run = testExplorer.createTestRun(request);
-        this.ctestsEnqueued(tests, run);
-        const buildSucceeded = await this.buildTests(tests, run);
-        if (buildSucceeded) {
-            if (isCoverageRun) {
-                await this.coverageCTestHelper(tests, run, cancellation);
+        try {
+            this.ctestsEnqueued(tests, run);
+            const buildSucceeded = await this.buildTests(tests, run);
+            if (buildSucceeded) {
+                if (isCoverageRun) {
+                    await this.coverageCTestHelper(tests, run, cancellation);
 
+                } else {
+                    await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, undefined, RunCTestHelperEntryPoint.TestExplorer);
+                }
             } else {
-                await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, undefined, RunCTestHelperEntryPoint.TestExplorer);
+                log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
             }
-        } else {
-            log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
+        } catch (e) {
+            log.error(localize('ctest.run.failed', 'Running tests failed: {0}', (e as Error)?.message ?? String(e)));
+        } finally {
+            // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+            run.end();
         }
-        run.end();
     };
 
     private async debugCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, useLaunchJson: boolean = true): Promise<number> {
@@ -2045,14 +2069,20 @@ export class CTestDriver implements vscode.Disposable {
         const tests = this.uniqueTests(requestedTests);
 
         const run = testExplorer.createTestRun(request);
-        this.ctestsEnqueued(tests, run);
-        const buildSucceeded = await this.buildTests(tests, run);
-        if (buildSucceeded) {
-            await this.debugCTestHelper(tests, run, cancellation, useLaunchJson);
-        } else {
-            log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+        try {
+            this.ctestsEnqueued(tests, run);
+            const buildSucceeded = await this.buildTests(tests, run);
+            if (buildSucceeded) {
+                await this.debugCTestHelper(tests, run, cancellation, useLaunchJson);
+            } else {
+                log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+            }
+        } catch (e) {
+            log.error(localize('ctest.run.failed', 'Running tests failed: {0}', (e as Error)?.message ?? String(e)));
+        } finally {
+            // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+            run.end();
         }
-        run.end();
     };
 
     private getTestRootFolder(test: vscode.TestItem): string {

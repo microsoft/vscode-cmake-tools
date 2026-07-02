@@ -200,5 +200,23 @@ suite('CTest test', () => {
             ]);
             expect(result.length).to.eq(5);
         });
+
+        test('empty superset falls back to exact anchored matches (does not run all tests)', () => {
+            // When the full set of tests is unknown (empty superset), a specific target must
+            // not collapse to a match-everything regex; otherwise a single-test run (e.g. from
+            // the inline CodeLens) would execute the entire suite.
+            const result = getMinimalRegexFragments([], ['alpha']);
+            expect(result).to.deep.eq(['^alpha$']);
+        });
+
+        test('empty superset exact-matches each of multiple targets', () => {
+            const result = getMinimalRegexFragments([], ['alpha', 'beta']);
+            expect(result).to.have.members(['^alpha$', '^beta$']);
+        });
+
+        test('empty superset escapes regex special characters', () => {
+            const result = getMinimalRegexFragments([], ['A+B.Test']);
+            expect(result).to.deep.eq(['^A\\+B\\.Test$']);
+        });
     });
 });
