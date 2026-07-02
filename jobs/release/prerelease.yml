@@ -56,11 +56,31 @@ extends:
           displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
           inputs:
             script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force
+        - powershell: |
+            # Release jobs run without a repo checkout, so write clean, token-less npm configs and pass them
+            # via --globalconfig/--userconfig. This overrides any stale agent-injected
+            # //pkgs.dev.azure.com/:_authToken (a DevDiv-org token that is invalid for the cross-org
+            # azure-public cpp_PublicPackages feed), so `npm install -g` reads the feed anonymously,
+            # exactly as the build does. The user-scope delete above does not clear the global scope.
+            # Distinct files are required: npm rejects the same path for both --globalconfig and --userconfig.
+            # The global config preserves the existing prefix so the global install location is unchanged.
+            $registry = 'https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/'
+            $prefix = (npm config get prefix).Trim()
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prefix)) {
+              Write-Host "##vso[task.logissue type=error]npm config get prefix failed"; exit 1
+            }
+            $prefix = $prefix -replace '\\','/'
+            $globalNpmrc = Join-Path $env:AGENT_TEMPDIRECTORY 'vsce-global.npmrc'
+            $userNpmrc = Join-Path $env:AGENT_TEMPDIRECTORY 'vsce-user.npmrc'
+            Set-Content -Path $globalNpmrc -Encoding ascii -Value @("prefix=$prefix", "registry=$registry")
+            Set-Content -Path $userNpmrc -Encoding ascii -Value "registry=$registry"
+            Write-Host "Wrote clean npm configs to $globalNpmrc and $userNpmrc (prefix=$prefix)"
+          displayName: 'Create clean npm configs for vsce'
+        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force --globalconfig "$(Agent.TempDirectory)\vsce-global.npmrc" --userconfig "$(Agent.TempDirectory)\vsce-user.npmrc"
           displayName: 'Install vsce'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
-        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false
+        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false --globalconfig "$(Agent.TempDirectory)\vsce-global.npmrc" --userconfig "$(Agent.TempDirectory)\vsce-user.npmrc"
           displayName: 'Rebuild vsce-sign native binary'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
