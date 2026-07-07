@@ -7,6 +7,7 @@ Features:
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)
 - Add `cmake.preConfigureTask` setting to execute a named VS Code task before every CMake configure. [#2449](https://github.com/microsoft/vscode-cmake-tools/issues/2449) [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960) [@erdemiru](https://github.com/erdemiru)
+- Add `cmake.environmentSetupScript` setting to source (Linux/macOS) or call (Windows) a script and use its environment as the parent environment when using CMake Presets, so preset macro/`$penv{}` expansion and configure/build/test can use environments that cannot be expressed as static variables. Cross-platform counterpart to the Visual Studio Developer Environment. [#PR](https://github.com/microsoft/vscode-cmake-tools/pull/PR) [@vasdal](https://github.com/vasdal)
 
 Improvements:
 - Add `${testName}` variable support for `cmake.ctestArgs` and `cmake.ctestDefaultArgs`, enabling per-test argument expansion (e.g., unique log file paths per test). [#4416](https://github.com/microsoft/vscode-cmake-tools/issues/4416)
