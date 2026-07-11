@@ -2307,13 +2307,43 @@ export class CTestDriver implements vscode.Disposable {
             testExplorer.createRunProfile(
                 localize('run.tests.profile', 'Run Tests'),
                 vscode.TestRunProfileKind.Run,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation),
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+                    if (request.include === undefined) {
+                        return this.runTestHandler(request, cancellation);
+                    }
+
+                    // Try to find the specific test controller, if we hit any errors, fall back to the default test handler.
+                    // There are cases where our assumptions about include and uri are incorrect, so we need to handle those.
+                    try {
+                        const testProject = this.projectController!.getAllCMakeProjects().filter(
+                            project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                        );
+                        return testProject![0].cTestController.runTestHandler(request, cancellation);
+                    } catch (e) {
+                        return this.runTestHandler(request, cancellation);
+                    }
+                },
                 true
             );
             testExplorer.createRunProfile(
                 localize('run.tests.with.coverage.profile', 'Run Tests with Coverage'),
                 vscode.TestRunProfileKind.Coverage,
-                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => this.runTestHandler(request, cancellation, true),
+                (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+                    if (request.include === undefined) {
+                        return this.runTestHandler(request, cancellation, true);
+                    }
+
+                    // Try to find the specific test controller, if we hit any errors, fall back to the default test handler.
+                    // There are cases where our assumptions about include and uri are incorrect, so we need to handle those.
+                    try {
+                        const testProject = this.projectController!.getAllCMakeProjects().filter(
+                            project => request.include![0].uri!.fsPath.includes(project.folderPath)
+                        );
+                        return testProject![0].cTestController.runTestHandler(request, cancellation, true);
+                    } catch (e) {
+                        return this.runTestHandler(request, cancellation, true);
+                    }
+                },
                 true
             ).loadDetailedCoverage = async (_, fileCoverage) => this.coverageData.get(fileCoverage) ?? [];
             testExplorer.createRunProfile(
