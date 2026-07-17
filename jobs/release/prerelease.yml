@@ -56,31 +56,18 @@ extends:
           displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
           inputs:
             script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-        - powershell: |
-            # Release jobs run without a repo checkout, so write clean, token-less npm configs and pass them
-            # via --globalconfig/--userconfig. This overrides any stale agent-injected
-            # //pkgs.dev.azure.com/:_authToken (a DevDiv-org token that is invalid for the cross-org
-            # azure-public cpp_PublicPackages feed), so `npm install -g` reads the feed anonymously,
-            # exactly as the build does. The user-scope delete above does not clear the global scope.
-            # Distinct files are required: npm rejects the same path for both --globalconfig and --userconfig.
-            # The global config preserves the existing prefix so the global install location is unchanged.
-            $registry = 'https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/'
-            $prefix = (npm config get prefix).Trim()
-            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prefix)) {
-              Write-Host "##vso[task.logissue type=error]npm config get prefix failed"; exit 1
-            }
-            $prefix = $prefix -replace '\\','/'
-            $globalNpmrc = Join-Path $env:AGENT_TEMPDIRECTORY 'vsce-global.npmrc'
-            $userNpmrc = Join-Path $env:AGENT_TEMPDIRECTORY 'vsce-user.npmrc'
-            Set-Content -Path $globalNpmrc -Encoding ascii -Value @("prefix=$prefix", "registry=$registry")
-            Set-Content -Path $userNpmrc -Encoding ascii -Value "registry=$registry"
-            Write-Host "Wrote clean npm configs to $globalNpmrc and $userNpmrc (prefix=$prefix)"
-          displayName: 'Create clean npm configs for vsce'
-        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force --globalconfig "$(Agent.TempDirectory)\vsce-global.npmrc" --userconfig "$(Agent.TempDirectory)\vsce-user.npmrc"
+        # Pin the transitive closure to versions published on/before 2026-06-19 so `npm install -g` only pulls
+        # package versions already saved in the cpp_PublicPackages CFS feed. Under network isolation the feed
+        # serves saved versions anonymously (HTTP 303) but returns 401 for versions it has not upstream-saved,
+        # and this no-checkout release job has no feed credential to trigger an upstream fetch. Without the date
+        # pin, @vscode/vsce@3.9.1's floating ^-ranges (markdown-it, @azure/msal-*, p-map, ...) drift onto newly
+        # published, unsaved versions and fail with E401. The full @vscode/vsce@3.9.1 closure was verified saved
+        # in the feed as of 2026-06-19; bump this date only after newer transitive versions are saved to the feed.
+        - script: npm install -g @vscode/vsce@3.9.1 --before=2026-06-19T23:59:59Z --include=optional --ignore-scripts=false --force
           displayName: 'Install vsce'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
-        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false --globalconfig "$(Agent.TempDirectory)\vsce-global.npmrc" --userconfig "$(Agent.TempDirectory)\vsce-user.npmrc"
+        - script: npm rebuild -g @vscode/vsce-sign --ignore-scripts=false
           displayName: 'Rebuild vsce-sign native binary'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
