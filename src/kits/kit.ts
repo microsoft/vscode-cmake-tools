@@ -727,6 +727,16 @@ export const MSVC_HOST_ARCHES: MsvcHostArches[] = ['x86', 'x64'];
  */
 export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Environment | undefined> {
     console.assert(kit.environmentSetupScript);
+    return getEnvironmentFromSetupScript(kit.environmentSetupScript!, opts);
+}
+
+/**
+ * Gets the environment variables produced by sourcing (Linux/macOS) or calling (Windows) a setup script.
+ * Shared by kits (`environmentSetupScript`) and, in preset mode, by the `cmake.environmentSetupScript` setting.
+ * @param setupScript Path to the setup script (optionally followed by args, in which case it must be quoted).
+ * @param opts Expansion options applied to the script string before it is run.
+ */
+export async function getEnvironmentFromSetupScript(setupScript: string, opts?: expand.ExpansionOptions): Promise<Environment | undefined> {
     const filename = Math.random().toString() + (process.platform === 'win32' ? '.bat' : '.sh');
     const script_filename = `vs-cmt-${filename}`;
     const environment_filename = script_filename + '.env';
@@ -752,7 +762,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     let script = '';
     let run_command = '';
 
-    let environmentSetupScript = kit.environmentSetupScript!.trim();
+    let environmentSetupScript = setupScript.trim();
     if (opts) {
         environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
     }
@@ -786,7 +796,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
     if (res.retc !== 0) {
-        log.error(localize('error.running.setup.script', 'Error running {0} with: {1}', kit.environmentSetupScript, output));
+        log.error(localize('error.running.setup.script', 'Error running {0} with: {1}', setupScript, output));
         return;
     }
 
@@ -799,7 +809,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         log.error(error as Error);
     }
     if (!env || env === '') {
-        console.log(`Error running ${kit.environmentSetupScript} with:`, output);
+        console.log(`Error running ${setupScript} with:`, output);
         return;
     }
 
@@ -814,7 +824,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         }
         return acc;
     }, EnvironmentUtils.create());
-    log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentSetupScript, JSON.stringify(vars)));
+    log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', setupScript, JSON.stringify(vars)));
     return vars;
 }
 

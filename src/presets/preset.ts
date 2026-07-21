@@ -11,8 +11,10 @@ import { execute } from '@cmt/proc';
 import { errorHandlerHelper, expandString, ExpansionErrorHandler, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
-import { EnvironmentUtils, EnvironmentWithNull } from '@cmt/environmentVariables';
+import { Environment, EnvironmentUtils, EnvironmentWithNull } from '@cmt/environmentVariables';
 import { UseVsDeveloperEnvironment } from '@cmt/config';
+import { getEnvironmentFromSetupScript } from '@cmt/kits/kit';
+import { fs } from '@cmt/pr';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -681,8 +683,8 @@ async function getVendorForConfigurePresetHelper(folder: string, preset: Configu
     return preset.vendor || null;
 }
 
-async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, envOverride?: EnvironmentWithNull, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true) {
-    const generator = includeGenerator ? 'generator' in preset
+async function getExpansionOptions(workspaceFolder: string, sourceDir: string, preset?: ConfigurePreset | BuildPreset | TestPreset | PackagePreset, envOverride?: EnvironmentWithNull, penvOverride?: EnvironmentWithNull, includeGenerator: boolean = true) {
+    const generator = includeGenerator && preset ? 'generator' in preset
         ? preset.generator
         : ('__generator' in preset ? preset.__generator : undefined) : undefined;
 
@@ -698,9 +700,9 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
             sourceDir,
             sourceParentDir: path.dirname(sourceDir),
             sourceDirName: path.basename(sourceDir),
-            presetName: preset.name
+            presetName: preset?.name ?? ''
         },
-        envOverride: envOverride ?? preset.environment,
+        envOverride: envOverride ?? preset?.environment,
         penvOverride: penvOverride,
         recursive: true,
         // Don't support commands since expansion might be called on activation. If there is
@@ -709,13 +711,13 @@ async function getExpansionOptions(workspaceFolder: string, sourceDir: string, p
         doNotSupportCommands: true
     };
 
-    if (preset.__file && preset.__file.version >= 3) {
+    if (preset?.__file && preset.__file.version >= 3) {
         expansionOpts.vars.hostSystemName = await util.getHostSystemNameMemo();
     }
-    if (preset.__file && preset.__file.version >= 4) {
+    if (preset?.__file && preset.__file.version >= 4) {
         expansionOpts.vars.fileDir = path.dirname(preset.__file!.__path!);
     }
-    if (preset.__file && preset.__file.version >= 5) {
+    if (preset?.__file && preset.__file.version >= 5) {
         expansionOpts.vars.pathListSep = path.delimiter;
     }
 
@@ -990,10 +992,64 @@ export function getVsDevEnvAutoDetectionInfo(preset: ConfigurePreset): VsDevEnvA
  * @param sourceDir The source dir of the CMake project.
  * @returns Void. We don't return as we are modifying the preset by reference.
  */
+// Cache of environments produced by `cmake.environmentSetupScript`, keyed by the
+// expanded script string plus its file mtime, so the script is not re-sourced on
+// every configure/build/test. A changed setting yields a different key; a rebuilt
+// setup file changes the mtime and thereby invalidates the entry.
+const setupScriptEnvCache = new Map<string, Environment>();
+
+/**
+ * Sources (Linux/macOS) or calls (Windows) the `cmake.environmentSetupScript`, if configured,
+ * and returns the resulting environment. Cross-platform counterpart to the VS Dev Env: it lets
+ * users bootstrap a parent environment that cannot be expressed as static variables.
+ *
+ * This is used in two places so a single script bootstraps everything (they share the cache):
+ *   - preset include/`$penv{}` resolution (via the presets controller's settings environment), and
+ *   - per-preset expansion + the configure/build/test spawn environment (via `tryApplyVsDevEnv`).
+ *
+ * @returns The environment produced by the script, or undefined if the setting is empty or the script fails.
+ */
+export async function getEnvironmentSetupScriptEnv(workspaceFolder: string, sourceDir: string, preset?: ConfigurePreset): Promise<Environment | undefined> {
+    const setupScript = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get<string>("environmentSetupScript");
+    if (!setupScript) {
+        return undefined;
+    }
+
+    // `preset` is passed when expanding for a specific preset (so ${presetName}/generator resolve),
+    // and omitted for the file-level include resolution, where no preset has been selected yet.
+    const opts = await getExpansionOptions(workspaceFolder, sourceDir, preset);
+    const expandedScript = await expandString(setupScript, opts);
+
+    // Best-effort mtime so a rebuilt setup file invalidates the cache. If the value is not a bare
+    // path (e.g. it carries arguments or surrounding quotes) we simply cache by the string alone.
+    let cacheKey = expandedScript;
+    try {
+        const stat = await fs.stat(expandedScript);
+        cacheKey = `${expandedScript}\0${stat.mtimeMs}`;
+    } catch {
+        // Not a plain, existing file path; fall back to string-only key.
+    }
+
+    const cached = setupScriptEnvCache.get(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
+    const env = await getEnvironmentFromSetupScript(expandedScript, opts);
+    if (env) {
+        setupScriptEnvCache.set(cacheKey, env);
+    }
+    return env;
+}
+
 export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder: string, sourceDir: string): Promise<void> {
+    // The environment-setup-script environment is applied regardless of the VS Dev Env mode (including
+    // "never"), since it is the cross-platform mechanism for bootstrapping a parent environment.
+    const setupScriptEnvironment = await getEnvironmentSetupScriptEnv(workspaceFolder, sourceDir, preset);
+
     const useVsDeveloperEnvironmentMode = vscode.workspace.getConfiguration("cmake", vscode.Uri.file(workspaceFolder)).get("useVsDeveloperEnvironment") as UseVsDeveloperEnvironment;
     if (useVsDeveloperEnvironmentMode === "never") {
-        preset.__parentEnvironment = process.env;
+        preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, setupScriptEnvironment]);
         return;
     }
 
@@ -1075,7 +1131,7 @@ export async function tryApplyVsDevEnv(preset: ConfigurePreset, workspaceFolder:
         preset.__developerEnvironmentArchitecture = getArchitecture(preset);
     }
 
-    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, developerEnvironment]);
+    preset.__parentEnvironment = EnvironmentUtils.mergePreserveNull([process.env, preset.__parentEnvironment, developerEnvironment, setupScriptEnvironment]);
 }
 
 /**

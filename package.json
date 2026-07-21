@@ -4112,6 +4112,12 @@
             "description": "%cmake-tools.configuration.cmake.useVsDeveloperEnvironment.description%",
             "scope": "resource"
         },
+        "cmake.environmentSetupScript": {
+            "type": "string",
+            "default": "",
+            "description": "%cmake-tools.configuration.cmake.environmentSetupScript.description%",
+            "scope": "resource"
+        },
         "cmake.allowCommentsInPresetsFile": {
           "type": "boolean",
           "default": false,
