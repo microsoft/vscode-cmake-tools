@@ -4,6 +4,7 @@ import { CompilationDatabase } from '@cmt/compilationDatabase';
 import * as debuggerModule from '@cmt/debug/debugger';
 import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
+import { decideMissingCMakeListsAction } from '@cmt/startupPromptDecisions';
 import { Strand } from '@cmt/strand';
 import { ProgressHandle, versionToString, lightNormalizePath, Version, versionLess } from '@cmt/util';
 import { DirectoryContext } from '@cmt/workspace';
@@ -994,7 +995,7 @@ export class CMakeProject {
      * configure. This should be called by a derived driver before any
      * configuration tasks are run
      */
-    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader): Promise<boolean> {
+    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader, isAutomatic: boolean = false): Promise<boolean> {
         let telemetryEvent: string | undefined;
         const telemetryProperties: telemetry.Properties = {};
 
@@ -1035,9 +1036,14 @@ export class CMakeProject {
                         }
                     }
 
-                    // Otherwise fall back to manual selection. Don't pop a modal picker on open when the
-                    // user opted out of configure-on-open; an explicit configure always prompts.
-                    if (isConfiguring || (config?.configureOnOpen ?? true)) {
+                    // Otherwise fall back to manual selection. Never steal an active quick pick on
+                    // open (issue #5000): an automatic on-open path defers to a non-modal
+                    // notification, while an explicit configure keeps prompting directly.
+                    const action = decideMissingCMakeListsAction(isAutomatic, isConfiguring, config?.configureOnOpen ?? true);
+                    if (action === 'notification') {
+                        this.showSelectCMakeListsFileNotification(config, isConfiguring);
+                        telemetryProperties["missingCMakeListsUserAction"] = "deferredToNotification";
+                    } else if (action === 'quickpick') {
                         if (await this.promptToSelectCMakeListsFile(config, isConfiguring, telemetryEvent, telemetryProperties)) {
                             return true;
                         }
@@ -1108,6 +1114,10 @@ export class CMakeProject {
             if (cmakeListsFile) {
                 // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
                 selectedFile = cmakeListsFile[0].fsPath;
+            } else {
+                // Browse dialog cancelled. Record it here so it does not clobber the "dontAskAgain"
+                // action recorded above when the user picked "[Don't Show Again]" (issue #5000).
+                telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
             }
         } else if (selection.label === dontAskAgain) {
             await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
@@ -1119,8 +1129,6 @@ export class CMakeProject {
         if (selectedFile) {
             await this.applyDetectedSourceDirectory(selectedFile, config, isConfiguring, telemetryEvent, telemetryProperties);
             return true;
-        } else {
-            telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
         }
         return false;
     }
@@ -1156,7 +1164,15 @@ export class CMakeProject {
                 }
                 // Only auto-configure when the user opted into configure-on-open.
                 if (config.configureOnOpen) {
-                    await vscode.commands.executeCommand('cmake.configure');
+                    // Route the auto-detected on-open configure through the automatic path so a
+                    // missing kit/preset surfaces as a non-modal notification instead of an
+                    // unsolicited quick pick (issue #5000). Fall back to the command if the
+                    // extension manager isn't wired up yet (e.g. very early activation).
+                    if (extensionManager) {
+                        await extensionManager.configureExtensionInternal(ConfigureTrigger.configureOnOpen, this);
+                    } else {
+                        await vscode.commands.executeCommand('cmake.configure');
+                    }
                 }
             } else {
                 await this.reloadCMakeDriver();
@@ -1183,6 +1199,34 @@ export class CMakeProject {
                 await this.promptToSelectCMakeListsFile(config, isConfiguring, undefined, {});
             } else if (choice === dontAutoDetectAction) {
                 await vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update('autoDetectSourceDirectory', false, vscode.ConfigurationTarget.WorkspaceFolder);
+            }
+        });
+    }
+
+    /**
+     * Non-modally offer to select a CMakeLists.txt when the workspace root has none but nested ones
+     * exist, instead of popping a quick pick during activation (issue #5000). The quick pick is only
+     * opened in response to the user clicking the notification action (a genuine gesture), so it
+     * never cancels a quick pick the user already has open (e.g. the F1 command palette).
+     */
+    private showSelectCMakeListsFileNotification(config: ConfigurationReader | undefined, isConfiguring: boolean): void {
+        if (util.isTestMode()) {
+            return;
+        }
+        const selectAction: string = localize("locate.cmakelists.action", "Locate CMakeLists.txt");
+        const dontShowAgain: string = localize("do.not.ask.again.action", "Don't Show Again");
+        void vscode.window.showInformationMessage(
+            localize("cmakelists.not.found.notification", "CMake Tools did not find a CMakeLists.txt in the root of '{0}'. Locate one to activate the project.", this.folderName),
+            selectAction,
+            dontShowAgain
+        ).then(async (choice) => {
+            if (choice === selectAction) {
+                // A genuine user gesture now, so opening the quick pick is safe. Pass an undefined
+                // telemetry event (like showAutoDetectedSourceDirectoryNotification) to avoid
+                // double-logging the partialActivation event.
+                await this.promptToSelectCMakeListsFile(config, isConfiguring, undefined, {});
+            } else if (choice === dontShowAgain) {
+                await vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
             }
         });
     }

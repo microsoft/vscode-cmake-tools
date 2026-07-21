@@ -11,7 +11,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 import * as api from 'vscode-cmake-tools';
 import { CMakeCache } from '@cmt/cache';
-import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings } from '@cmt/cmakeProject';
+import { CMakeProject, ConfigureType, ConfigureTrigger, DiagnosticsConfiguration, DiagnosticsSettings, isAutomaticConfigureTrigger } from '@cmt/cmakeProject';
 import { ConfigurationReader, getSettingsChangePromise, TouchBarConfig } from '@cmt/config';
 import { CMakeDriver, CMakePreconditionProblems, ConfigureResult, ConfigureResultType } from '@cmt/drivers/cmakeDriver';
 import { CppConfigurationProvider, DiagnosticsCpptools } from '@cmt/cpptools';
@@ -34,6 +34,7 @@ import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
 import * as util from '@cmt/util';
+import { decideEnsurePresetOrKitAction } from '@cmt/startupPromptDecisions';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
 import { expandString, KitContextVars } from '@cmt/expand';
@@ -578,7 +579,7 @@ export class ExtensionManager implements vscode.Disposable {
      * @returns `false` if there is not active CMakeProject, or it has no active kit
      * and the user cancelled the kit selection dialog.
      */
-    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject): Promise<boolean> {
+    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject, isAutomatic: boolean = false): Promise<boolean> {
         if (!cmakeProject) {
             cmakeProject = this.getActiveProject();
         }
@@ -587,38 +588,91 @@ export class ExtensionManager implements vscode.Disposable {
             return false;
         }
 
-        if (cmakeProject.useCMakePresets) {
-            if (cmakeProject.configurePreset) {
-                return true;
-            }
-            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
-            if (!didChoosePreset && !cmakeProject.configurePreset) {
-                return false;
-            }
-            return !!cmakeProject.configurePreset;
-        } else {
-            if (cmakeProject.activeKit) {
-                // We have an active kit. We're good.
-                return true;
-            }
+        const useCMakePresets = cmakeProject.useCMakePresets;
+        const hasSelection = useCMakePresets ? !!cmakeProject.configurePreset : !!cmakeProject.activeKit;
+        // The CMakeLists.txt probe is only meaningful in kits mode when no kit is selected yet.
+        let hasCMakeLists = true;
+        if (!useCMakePresets && !hasSelection) {
+            hasCMakeLists = !!(await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath));
+        }
 
-            const hascmakelists = await util.globForFileName("CMakeLists.txt", 3, cmakeProject.folderPath);
-
-            // No kit selected? Is enable kit scan on?
-            // Or, is this an empty workspace from QuickStart ie: no CMakeLists.txt
-            if (!this.workspaceConfig.enableAutomaticKitScan || !hascmakelists) {
+        const action = decideEnsurePresetOrKitAction(isAutomatic, useCMakePresets, hasSelection, this.workspaceConfig.enableAutomaticKitScan, hasCMakeLists);
+        switch (action) {
+            case 'ok':
+                return true;
+            case 'setUnspecified':
+                // No kit selected, and either automatic kit scan is off or there is no CMakeLists.txt
+                // (e.g. an empty workspace from Quick Start): silently opt out via the Unspecified kit.
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
-            }
-            // Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
-            if (!didChooseKit && !cmakeProject.activeKit) {
-                // The user did not choose a kit and kit isn't set in other way such as setKitByName
+            case 'notificationConfigurePreset':
+                // Automatic configure-on-open: never steal an active quick pick (issue #5000).
+                // Surface a non-modal notification instead and skip the auto-configure for now.
+                this.showNeedsConfigurePresetNotification(cmakeProject);
                 return false;
+            case 'notificationKit':
+                this.showNeedsKitNotification(cmakeProject);
+                return false;
+            case 'quickpickConfigurePreset': {
+                const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
+                if (!didChoosePreset && !cmakeProject.configurePreset) {
+                    return false;
+                }
+                return !!cmakeProject.configurePreset;
             }
-            // Return whether we have an active kit defined.
-            return !!cmakeProject.activeKit;
+            case 'quickpickKit': {
+                const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
+                if (!didChooseKit && !cmakeProject.activeKit) {
+                    // The user did not choose a kit and kit isn't set in another way such as setKitByName.
+                    return false;
+                }
+                return !!cmakeProject.activeKit;
+            }
         }
+        return false;
+    }
+
+    /**
+     * On automatic configure-on-open with no active kit, surface a non-modal notification instead of
+     * popping the kit quick pick (issue #5000). Clicking the action re-enters the configure-on-open
+     * flow as a user gesture, which prompts for the kit and then configures, preserving the
+     * pre-#5000 behavior. The persistent "No Kit Selected" status bar item remains as the passive
+     * affordance if the notification is dismissed.
+     */
+    private showNeedsKitNotification(project: CMakeProject): void {
+        if (util.isTestMode()) {
+            return;
+        }
+        const selectAction: string = localize('select.a.kit.action', 'Select a Kit');
+        void vscode.window.showInformationMessage(
+            localize('no.kit.selected.on.open', "CMake Tools needs a kit to configure '{0}'.", project.folderName),
+            selectAction
+        ).then(async (choice) => {
+            if (choice === selectAction) {
+                await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project, false);
+            }
+        });
+    }
+
+    /**
+     * On automatic configure-on-open with no configure preset, surface a non-modal notification
+     * instead of popping the preset quick pick (issue #5000). Clicking the action re-enters the
+     * configure-on-open flow as a user gesture (prompt then configure). The "No Configure Preset
+     * Selected" status bar item remains as the passive affordance if the notification is dismissed.
+     */
+    private showNeedsConfigurePresetNotification(project: CMakeProject): void {
+        if (util.isTestMode()) {
+            return;
+        }
+        const selectAction: string = localize('select.a.configure.preset.action', 'Select a Configure Preset');
+        void vscode.window.showInformationMessage(
+            localize('no.configure.preset.selected.on.open', "CMake Tools needs a configure preset to configure '{0}'.", project.folderName),
+            selectAction
+        ).then(async (choice) => {
+            if (choice === selectAction) {
+                await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, project, false);
+            }
+        });
     }
 
     /**
@@ -749,8 +803,8 @@ export class ExtensionManager implements vscode.Disposable {
         await telemetry.deactivate();
     }
 
-    async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject): Promise<ConfigureResult> {
-        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project)) {
+    async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject, isAutomatic: boolean = isAutomaticConfigureTrigger(trigger)): Promise<ConfigureResult> {
+        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project, isAutomatic)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
 
@@ -782,7 +836,7 @@ export class ExtensionManager implements vscode.Disposable {
             // configureOnOpen (the handler only auto-configures when configureOnOpen is enabled), so a
             // nested project still surfaces its UI instead of staying hidden.
             if (hascmakelists) {
-                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, project.workspaceContext.config);
+                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, project.workspaceContext.config, true);
             }
         } else {
             if (shouldConfigure) {
