@@ -533,6 +533,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
         const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
         const exec_options = { ...options, environment, shell };
+        // Run driver subprocesses inside the project by default so directory-based version
+        // managers (mise, asdf, vfox, ...) can resolve the tool version. Without a cwd the
+        // child inherits the extension host's process.cwd(), which may be outside the workspace.
+        if (exec_options.cwd === undefined) {
+            exec_options.cwd = this.sourceDir || undefined;
+        }
         return proc.execute(command, args, consumer, exec_options);
     }
 
@@ -2015,7 +2021,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding, cwd: this.binaryDir || undefined };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();
