@@ -996,7 +996,10 @@ async function scanDirForClangForMSVCKits(dir: PathWithTrust, vsInstalls: VSInst
                 log.info(localize("failed.to.scan.for.kits", "Unable to scan for GNU CLI Clang kits: CMake Path is undefined"));
                 return null;
             } else {
-                const cmake_executable = await getCMakeExecutableInformation(cmakePath);
+                // Probe from the workspace folder so directory-based version managers (mise, asdf,
+                // vfox, ...) can resolve the cmake shim; otherwise the child inherits the extension
+                // host's process.cwd(), which may be outside the workspace and fail to resolve.
+                const cmake_executable = await getCMakeExecutableInformation(cmakePath, undefined, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
