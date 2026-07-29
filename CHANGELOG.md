@@ -21,6 +21,7 @@ Improvements:
 - Improve ergonomics of the test explorer UI by removing the project source directory, improving horizontal scrolling experience. [#4562](https://github.com/microsoft/vscode-cmake-tools/issues/4562) [@miss-programgamer](https://github.com/miss-programgamer)
 - Auto-generate `docs/cmake-settings.md` from `package.json` via CI so documentation never drifts from actual settings. [#4007](https://github.com/microsoft/vscode-cmake-tools/issues/4007)
 - Pass mandatory compiler arguments from `CMAKE_<LANG>_COMPILER` to cpptools so it can properly determine system include paths and built-in preprocessor macro definitions. Requires CMake 4.3 or newer. [#4627](https://github.com/microsoft/vscode-cmake-tools/pull/4627) [@cwalther](https://github.com/cwalther)
+- Add support for a `vsInstanceVersion` vendor field in `CMakePresets.json` so Ninja configure presets can target a specific installed Visual Studio instance (by version) when bootstrapping the developer environment, instead of always using the latest. [#4698](https://github.com/microsoft/vscode-cmake-tools/issues/4698)
 
 Bug Fixes:
 - Fix running a single test from the inline Test CodeLens or the project outline building the default (or all) target instead of the test's own executable; single-test runs now build only that test's target.
