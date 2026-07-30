@@ -172,8 +172,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .vscode-test
-          key: vscode-test-${{ runner.os }}-stable
-          restore-keys: vscode-test-${{ runner.os }}-
+          key: vscode-test-${{ runner.os }}-1.130.0
+          restore-keys: vscode-test-${{ runner.os }}-1.130.0
 
       - name: Start Xvfb
         if: matrix.suite.name != 'backend'
