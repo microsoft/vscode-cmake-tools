@@ -1348,23 +1348,32 @@ export class ExtensionManager implements vscode.Disposable {
             return '';
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeProject) {
+        const cmakeProjects = this.getProjectsForWorkspaceFolder(folder);
+        if (!cmakeProjects || cmakeProjects.length === 0) {
             return '';
         }
 
+        // Select the kit for the project that owns the requested folder. Previously this always
+        // operated on the active project, which in a multi-root workspace caused the automatic
+        // configure-on-open kit prompt to target (and be titled for) whichever folder had the
+        // active editor rather than the folder that actually triggered configuration. 
         const activeProject = this.getActiveProject();
-        const kitSelected = await activeProject?.kitsController.selectKit();
+        const targetProject = (activeProject && cmakeProjects.includes(activeProject)) ? activeProject : cmakeProjects[0];
+        const kitSelected = await targetProject?.kitsController.selectKit();
 
         let kitSelectionType;
-        const activeKit = activeProject?.activeKit;
-        if (activeKit) {
-            this.statusBar.setActiveKitName(activeKit.name);
-            if (activeKit.name === "__unspec__") {
+        const selectedKit = targetProject?.activeKit;
+        if (selectedKit) {
+            // The status bar reflects the active project, so only update it when the kit was
+            // selected for the active project (otherwise leave the active project's kit shown).
+            if (targetProject === activeProject) {
+                this.statusBar.setActiveKitName(selectedKit.name);
+            }
+            if (selectedKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
-                if (activeKit.visualStudio ||
-                    activeKit.visualStudioArchitecture) {
+                if (selectedKit.visualStudio ||
+                    selectedKit.visualStudioArchitecture) {
                     kitSelectionType = "vsInstall";
                 } else {
                     kitSelectionType = "compilerSet";
@@ -1380,7 +1389,7 @@ export class ExtensionManager implements vscode.Disposable {
             telemetry.logEvent('kitSelection', telemetryProperties);
         }
 
-        return kitSelected ? activeKit?.name ?? '' : '';
+        return kitSelected ? selectedKit?.name ?? '' : '';
     }
 
     /**
