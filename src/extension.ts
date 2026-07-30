@@ -551,11 +551,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.languageServicesDisposables.forEach(sub => sub.dispose());
     }
 
-    private getProjectsForWorkspaceFolder(folder?: vscode.WorkspaceFolder): CMakeProject[]  | undefined {
-        folder = this.getWorkspaceFolder(folder);
-        return this.projectController.getProjectsForWorkspaceFolder(folder);
-    }
-
     private getWorkspaceFolder(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
             // We don't want to break existing setup for single root projects.
@@ -591,7 +586,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
+            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder, cmakeProject.folderPath);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
             }
@@ -611,7 +606,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
             // Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
+            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
@@ -1342,24 +1337,27 @@ export class ExtensionManager implements vscode.Disposable {
     /**
     * Show UI to allow the user to select an active kit
     */
-    async selectKit(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectKit(folder?: vscode.WorkspaceFolder, sourceDir?: string): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
             return '';
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
+        const cmakeProject = this.getProjectFromFolder(folder, sourceDir);
         if (!cmakeProject) {
             return '';
         }
 
-        const activeProject = this.getActiveProject();
-        const kitSelected = await activeProject?.kitsController.selectKit();
+        const kitSelected = await cmakeProject.kitsController.selectKit();
 
         let kitSelectionType;
-        const activeKit = activeProject?.activeKit;
+        const activeKit = cmakeProject.activeKit;
         if (activeKit) {
-            this.statusBar.setActiveKitName(activeKit.name);
+            // The status bar reflects the active project only. Avoid overwriting it with a
+            // non-active project's kit (e.g. during configure-on-open of a non-active folder).
+            if (cmakeProject === this.getActiveProject()) {
+                this.statusBar.setActiveKitName(activeKit.name);
+            }
             if (activeKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
@@ -2463,13 +2461,13 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active configure preset
      */
-    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectConfigurePreset(folder?: vscode.WorkspaceFolder, sourceDir?: string): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
             return '';
         }
 
-        const project = this.getProjectFromFolder(folder);
+        const project = this.getProjectFromFolder(folder, sourceDir);
         if (!project) {
             return '';
         }
@@ -2481,13 +2479,17 @@ export class ExtensionManager implements vscode.Disposable {
 
         const presetSelected = await project.presetsController.selectConfigurePreset();
         const configurePreset = project.configurePreset;
-        this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
+        // The status bar reflects the active project only. Avoid overwriting it with a
+        // non-active project's presets (e.g. during configure-on-open of a non-active folder).
+        if (project === this.getActiveProject()) {
+            this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
-        // Reset build and test presets since they might not be used with the selected configure preset
-        const buildPreset = project.buildPreset;
-        this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-        const testPreset = project.testPreset;
-        this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
+            // Reset build and test presets since they might not be used with the selected configure preset
+            const buildPreset = project.buildPreset;
+            this.statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
+            const testPreset = project.testPreset;
+            this.statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
+        }
         return presetSelected ? configurePreset?.name ?? '' : '';
     }
 
