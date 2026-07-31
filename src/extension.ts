@@ -611,7 +611,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
             // Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
+            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
@@ -1342,24 +1342,35 @@ export class ExtensionManager implements vscode.Disposable {
     /**
     * Show UI to allow the user to select an active kit
     */
-    async selectKit(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectKit(folder?: vscode.WorkspaceFolder, sourceDirectory?: string): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
             return '';
         }
 
-        const cmakeProjects = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeProjects || cmakeProjects.length === 0) {
+        // Resolve the exact project to select a kit for. When triggered automatically for a
+        // specific project (e.g. configure-on-open), the caller passes that project's source
+        // directory so we target the correct project by identity — even when a workspace folder
+        // contains multiple CMake projects, or when a different folder holds the active editor.
+        // Previously this always operated on the active project, which in a multi-root workspace
+        // caused the automatic kit prompt to be titled for, and applied to, whichever folder had
+        // the active editor rather than the folder that actually triggered configuration. #5011
+        let targetProject: CMakeProject | undefined;
+        if (sourceDirectory) {
+            targetProject = await this.projectController.getProjectForFolder(sourceDirectory);
+        } else if (folder) {
+            targetProject = await this.projectController.getProjectForFolder(folder.uri.fsPath);
+        }
+        if (!targetProject) {
+            // Manual invocation (status bar / command palette) with no folder: use the active project.
+            targetProject = this.getActiveProject();
+        }
+        if (!targetProject) {
             return '';
         }
 
-        // Select the kit for the project that owns the requested folder. Previously this always
-        // operated on the active project, which in a multi-root workspace caused the automatic
-        // configure-on-open kit prompt to target (and be titled for) whichever folder had the
-        // active editor rather than the folder that actually triggered configuration. 
         const activeProject = this.getActiveProject();
-        const targetProject = (activeProject && cmakeProjects.includes(activeProject)) ? activeProject : cmakeProjects[0];
-        const kitSelected = await targetProject?.kitsController.selectKit();
+        const kitSelected = await targetProject.kitsController.selectKit();
 
         let kitSelectionType;
         const selectedKit = targetProject?.activeKit;
