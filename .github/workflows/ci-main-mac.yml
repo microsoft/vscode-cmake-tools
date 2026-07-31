@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'yarn'
 
       - name: Install Yarn
@@ -32,7 +32,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build/node_modules_cache
-          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('yarn.lock', 'package.json') }}
 
       - name: Extract node_modules archive
         if: steps.node-modules-cache.outputs.cache-hit == 'true'
@@ -126,7 +126,7 @@ jobs:
       - name: Setup Node environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'yarn'
 
       - name: Install Yarn
@@ -138,7 +138,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build/node_modules_cache
-          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('yarn.lock', 'package.json') }}
 
       - name: Extract node_modules archive
         if: steps.node-modules-cache.outputs.cache-hit == 'true'
@@ -180,8 +180,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .vscode-test
-          key: vscode-test-${{ runner.os }}-stable
-          restore-keys: vscode-test-${{ runner.os }}-
+          key: vscode-test-${{ runner.os }}-1.131.0
+          restore-keys: vscode-test-${{ runner.os }}-1.131.0
 
       - name: Run ${{ matrix.suite.name }} tests
         timeout-minutes: ${{ matrix.suite.timeout }}
