@@ -1170,7 +1170,7 @@ export class CMakeProject {
      */
     private showAutoDetectedSourceDirectoryNotification(sourceDir: string, config: ConfigurationReader | undefined, isConfiguring: boolean): void {
         const relativeSourceDir: string = path.relative(this.workspaceContext.folder.uri.fsPath, sourceDir) || sourceDir;
-        const changeAction: string = localize("change.source.directory", "Change\u2026");
+        const changeAction: string = localize("change.source.directory", "Change...");
         const dontAutoDetectAction: string = localize("do.not.auto.detect.source.directory", "Don't auto-detect");
         void vscode.window.showInformationMessage(
             localize("auto.detected.source.directory", "CMake Tools detected and activated the project in '{0}'.", relativeSourceDir),
