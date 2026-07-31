@@ -4921,9 +4921,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 linkify-it@^5.0.1:
-  version "5.0.1"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/linkify-it/-/linkify-it-5.0.1.tgz#10c4cecbb5c6828eabf81d3c801adc4a542dfb55"
-  integrity sha1-EMTOy7XGgo6r+B08gBrcSlQt+1U=
+  version "5.0.2"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/linkify-it/-/linkify-it-5.0.2.tgz#d3be0a693af3da9df3883f1e346a0e97461a8c19"
+  integrity sha1-074KaTrz2p3ziD8eNGoOl0YajBk=
   dependencies:
     uc.micro "^2.0.0"
 
