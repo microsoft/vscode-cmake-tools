@@ -551,11 +551,6 @@ export class ExtensionManager implements vscode.Disposable {
         this.languageServicesDisposables.forEach(sub => sub.dispose());
     }
 
-    private getProjectsForWorkspaceFolder(folder?: vscode.WorkspaceFolder): CMakeProject[]  | undefined {
-        folder = this.getWorkspaceFolder(folder);
-        return this.projectController.getProjectsForWorkspaceFolder(folder);
-    }
-
     private getWorkspaceFolder(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
             // We don't want to break existing setup for single root projects.
