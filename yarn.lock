@@ -842,10 +842,10 @@
     "@microsoft/1ds-post-js" "^4.1.2"
     "@microsoft/applicationinsights-web-basic" "^3.1.2"
 
-"@vscode/test-electron@^2.5.2":
-  version "2.5.2"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@vscode/test-electron/-/test-electron-2.5.2.tgz#f7d4078e8230ce9c94322f2a29cc16c17954085d"
-  integrity sha1-99QHjoIwzpyUMi8qKcwWwXlUCF0=
+"@vscode/test-electron@^3.1.0":
+  version "3.1.0"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@vscode/test-electron/-/test-electron-3.1.0.tgz#46b93d118dcd3b3c89caae296a13f9a7f5eb63c5"
+  integrity sha1-Rrk9EY3NOzyJyq4pahP5p/XrY8U=
   dependencies:
     http-proxy-agent "^7.0.2"
     https-proxy-agent "^7.0.5"
