@@ -1386,7 +1386,7 @@ export class CTestDriver implements vscode.Disposable {
      * @returns The exit code of the ctest command.
      */
     async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => Promise<void>): Promise<number> {
-        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true, environment: await driver.getCTestCommandEnvironment() }).result;
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
             log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
