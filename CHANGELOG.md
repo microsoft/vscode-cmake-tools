@@ -3,6 +3,7 @@
 ## 1.24
 
 Features:
+- Add a `refresh` command to the `cmake` task type so builds and automation driven through tasks (for example a build launched from another extension, where the test view is not visible during the build) can refresh the CMake test information / Test Explorer, equivalent to the "CMake: Refresh Tests" command. [#5007](https://github.com/microsoft/vscode-cmake-tools/issues/5007)
 - Add support for the FASTBuild generator (CMake 4.2+). [#4690](https://github.com/microsoft/vscode-cmake-tools/pull/4690)
 - Add support for `${workspaceFolder}`, `${workspaceFolder:name}` variables and relative paths in `cmake.exclude` setting for multi-root workspaces. [#4689](https://github.com/microsoft/vscode-cmake-tools/pull/4689)
 - Add `onConfigureResult` event to the CMake Tools API that fires after every configure attempt (success or failure), allowing dependent extensions to detect and react to configure failures. [#4021](https://github.com/microsoft/vscode-cmake-tools/issues/4021)

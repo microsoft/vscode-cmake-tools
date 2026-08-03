@@ -53,7 +53,8 @@ export enum CommandType {
     package = "package",
     workflow = "workflow",
     clean = "clean",
-    cleanRebuild = "cleanRebuild"
+    cleanRebuild = "cleanRebuild",
+    refresh = "refresh"
 }
 
 const localizeCommandType = (cmd: CommandType): string => {
@@ -81,6 +82,9 @@ const localizeCommandType = (cmd: CommandType): string => {
         }
         case CommandType.cleanRebuild: {
             return localize("clean.rebuild", "clean rebuild");
+        }
+        case CommandType.refresh: {
+            return localize("refresh", "refresh");
         }
         default: {
             return "";
@@ -181,6 +185,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             result.push(await CMakeTaskProvider.provideTask(CommandType.build, project.workspaceFolder, project.useCMakePresets, targets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.install, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.test, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.refresh, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.package, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project.workspaceFolder, project.useCMakePresets));
@@ -405,6 +410,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
                 break;
             case CommandType.test:
                 await this.runTestTask();
+                break;
+            case CommandType.refresh:
+                await this.runRefreshTask();
                 break;
             case CommandType.package:
                 await this.runPackageTask();
@@ -710,6 +718,34 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("test.failed", "CTest run failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+    }
+
+    private async runRefreshTask(): Promise<any> {
+        this.writeEmitter.fire(localize("refresh.started", "Refresh task started...") + endOfLine);
+
+        const project: CMakeProject | undefined = await this.getProject();
+        if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+            return;
+        }
+        telemetry.logEvent("task", { taskType: "refresh", useCMakePresets: String(project.useCMakePresets) });
+
+        try {
+            // Mirrors the "CMake: Refresh Tests" command: it builds the default target if needed,
+            // then re-reads the CTest information and refreshes the Test Explorer. Exposing this as a
+            // task lets automation (e.g. builds launched from another extension, where the test view
+            // isn't visible during the build) refresh the test information afterwards. Uses the active
+            // test preset, the same as the command.
+            const result: number = await project.refreshTests();
+            this.writeEmitter.fire(localize('refresh.finished.with.code', 'Refresh finished with return code {0}', result) + endOfLine);
+            // Report success as long as the refresh itself did not throw. A negative return code is
+            // a non-fatal state (e.g. no CTestTestfile.cmake because the project defines no tests, or
+            // CTest not found) rather than a task failure; a failed build throws and is handled below.
+            // This matches the "CMake: Refresh Tests" command, which also ignores the numeric result.
+            this.closeEmitter.fire(0);
+        } catch (e) {
+            this.writeEmitter.fire(localize('refresh.failed', 'Refresh failed: {0}', String(e)) + endOfLine);
             this.closeEmitter.fire(-1);
         }
     }
