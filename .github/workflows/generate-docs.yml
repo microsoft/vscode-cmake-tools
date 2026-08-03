@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node environment
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Generate settings docs
         run: node tools/generate-settings-docs.js
