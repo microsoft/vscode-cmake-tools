@@ -288,6 +288,72 @@ export class ConfigurationWebview {
             background-color: #4e2621;
           }
 
+          .cmake-string-editor,
+          .cmake-choice-list,
+          .cmake-choice-toggle,
+          .cmake-choice-option {
+            box-sizing: border-box;
+          }
+
+          .cmake-string-editor {
+            align-items: stretch;
+            display: flex;
+            width: 90%;
+          }
+
+          .cmake-string-editor .cmake-input-text {
+            box-sizing: content-box;
+            flex: 1;
+            min-width: 0;
+            width: auto;
+          }
+
+          .cmake-choice-editor {
+            position: relative;
+          }
+
+          .cmake-choice-toggle {
+            flex: 0 0 28px;
+            color: var(--vscode-settings-dropdownForeground);
+            background: var(--vscode-settings-dropdownBackground);
+            border: 1px solid var(--vscode-settings-dropdownBorder);
+          }
+
+          .cmake-choice-toggle:hover,
+          .cmake-choice-option:hover {
+            cursor: pointer;
+            background-color: var(--vscode-list-hoverBackground);
+          }
+
+          .cmake-choice-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            color: var(--vscode-settings-dropdownForeground);
+            background: var(--vscode-settings-dropdownBackground);
+            border: 1px solid var(--vscode-settings-dropdownBorder);
+          }
+
+          .cmake-choice-option {
+            display: block;
+            width: 100%;
+            padding: 5px 8px;
+            text-align: left;
+            font-weight: bold;
+            color: var(--vscode-settings-dropdownForeground);
+            background: var(--vscode-settings-dropdownBackground);
+            border: 0;
+          }
+
+          .cmake-choice-option:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+          }
+
           .vscode-light .input-disabled {
               background-color:rgba(255, 255, 255, 0.4);
               color: rgb(138, 138, 138);
@@ -423,21 +489,102 @@ export class ConfigurationWebview {
           function updateCheckboxState(checkbox) {
             checkbox.labels.forEach(label => label.textContent = checkbox.checked ? 'ON' : 'OFF');
           }
+          function getChoiceList(editbox) {
+            const choicesId = editbox.dataset.choicesId;
+            return choicesId ? document.getElementById(choicesId) : null;
+          }
+          function getChoiceValues(editbox) {
+            const list = getChoiceList(editbox);
+            return list ? Array.from(list.querySelectorAll('.cmake-choice-option')).map(opt => opt.getAttribute('data-value') || '') : [];
+          }
+          function hideChoiceListForEditor(editor) {
+            const list = editor.querySelector('.cmake-choice-list');
+            const editbox = editor.querySelector('.cmake-input-text');
+            const toggle = editor.querySelector('.cmake-choice-toggle');
+            if (list) {
+              list.classList.add('invisible');
+            }
+            if (editbox) {
+              editbox.setAttribute('aria-expanded', 'false');
+            }
+            if (toggle) {
+              toggle.setAttribute('aria-expanded', 'false');
+            }
+          }
+          function hideChoiceLists() {
+            document.querySelectorAll('.cmake-choice-editor').forEach(editor => hideChoiceListForEditor(editor));
+          }
+          function showChoiceList(editbox) {
+            const list = getChoiceList(editbox);
+            if (!list) {
+              return;
+            }
+            hideChoiceLists();
+            list.classList.remove('invisible');
+            editbox.setAttribute('aria-expanded', 'true');
+
+            const editor = editbox.closest('.cmake-choice-editor');
+            const toggle = editor ? editor.querySelector('.cmake-choice-toggle') : null;
+            if (toggle) {
+              toggle.setAttribute('aria-expanded', 'true');
+            }
+          }
+          function toggleChoiceList(editbox) {
+            const list = getChoiceList(editbox);
+            if (!list) {
+              return;
+            }
+            if (list.classList.contains('invisible')) {
+              showChoiceList(editbox);
+            } else {
+              const editor = editbox.closest('.cmake-choice-editor');
+              if (editor) {
+                hideChoiceListForEditor(editor);
+              }
+            }
+          }
+          function focusChoice(editbox) {
+            const list = getChoiceList(editbox);
+            if (!list) {
+              return;
+            }
+            const options = Array.from(list.querySelectorAll('.cmake-choice-option'));
+            const current = options.find(opt => opt.getAttribute('data-value') === editbox.value) || options[0];
+            if (current) {
+              current.focus();
+            }
+          }
+          function chooseChoice(choice) {
+            const editor = choice.closest('.cmake-choice-editor');
+            if (!editor) {
+              return;
+            }
+
+            const editbox = editor.querySelector('.cmake-input-text');
+            if (!editbox) {
+              return;
+            }
+
+            const value = choice.getAttribute('data-value') || '';
+            if (editbox.value !== value) {
+              editbox.value = value;
+              edit(editbox);
+            } else {
+              validateInput(editbox);
+            }
+
+            editbox.focus();
+            hideChoiceListForEditor(editor);
+          }
           function toggleKey(checkbox) {
             updateCheckboxState(checkbox);
             vscode.postMessage({key: checkbox.id, type: "Bool", value: checkbox.checked});
             document.getElementById('not-saved').classList.remove('invisible');
           }
           function validateInput(editbox) {
-            const list = editbox.list;
-            if (list) {
-              let found = false;
-              for (const opt of list.options) {
-                if (opt.value === editbox.value) {
-                  found = true;
-                  break;
-                }
-              }
+            const choices = getChoiceValues(editbox);
+            if (choices.length > 0) {
+              const found = choices.some(value => value === editbox.value);
               editbox.classList.toggle('invalid-selection', !found);
             }
           }
@@ -469,6 +616,71 @@ export class ConfigurationWebview {
             document.querySelectorAll('.cmake-input-text').forEach(editbox => {
               validateInput(editbox)
               editbox.oninput = () => edit(editbox);
+              if (getChoiceList(editbox)) {
+                editbox.onfocus = () => showChoiceList(editbox);
+                editbox.onclick = () => showChoiceList(editbox);
+                editbox.onkeydown = event => {
+                  if (event.key === 'ArrowDown') {
+                    showChoiceList(editbox);
+                    focusChoice(editbox);
+                    event.preventDefault();
+                  } else if (event.key === 'Escape') {
+                    hideChoiceLists();
+                    event.preventDefault();
+                  }
+                };
+              }
+            });
+            document.querySelectorAll('.cmake-choice-toggle').forEach(toggle => {
+              toggle.onclick = () => {
+                const inputId = toggle.getAttribute('data-input-id');
+                const editbox = inputId ? document.getElementById(inputId) : null;
+                if (editbox) {
+                  const list = getChoiceList(editbox);
+                  const shouldFocus = list ? list.classList.contains('invisible') : false;
+                  toggleChoiceList(editbox);
+                  if (shouldFocus) {
+                    editbox.focus();
+                  }
+                }
+              };
+            });
+            document.querySelectorAll('.cmake-choice-option').forEach(choice => {
+              choice.onclick = () => chooseChoice(choice);
+              choice.onkeydown = event => {
+                const list = choice.closest('.cmake-choice-list');
+                const editor = choice.closest('.cmake-choice-editor');
+                const editbox = editor ? editor.querySelector('.cmake-input-text') : null;
+                if (event.key === 'Escape') {
+                  hideChoiceLists();
+                  if (editbox) {
+                    editbox.focus();
+                  }
+                  event.preventDefault();
+                } else if (list && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                  const options = Array.from(list.querySelectorAll('.cmake-choice-option'));
+                  const index = options.indexOf(choice);
+                  const offset = event.key === 'ArrowDown' ? 1 : -1;
+                  const next = options[(index + offset + options.length) % options.length];
+                  next.focus();
+                  event.preventDefault();
+                }
+              };
+            });
+            document.querySelectorAll('.cmake-choice-editor').forEach(editor => {
+              editor.addEventListener('focusout', () => {
+                setTimeout(() => {
+                  if (!editor.contains(document.activeElement)) {
+                    hideChoiceListForEditor(editor);
+                  }
+                }, 0);
+              });
+            });
+            document.addEventListener('click', event => {
+              const target = event.target;
+              if (!target || !target.closest || !target.closest('.cmake-choice-editor')) {
+                hideChoiceLists();
+              }
             });
             document.querySelector('#search').focus();
           }
@@ -513,12 +725,20 @@ export class ConfigurationWebview {
             } else {
                 const hasChoices = option.choices.length > 0;
                 if (hasChoices) {
-                    editControls = `<datalist id="CHOICES_${id}">
-            ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join()}
-          </datalist>`;
+                    editControls = `<div class="cmake-string-editor cmake-choice-editor">
+          <input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}"
+            type="text" data-choices-id="CHOICES_${id}" autocomplete="off" role="combobox"
+            aria-autocomplete="list" aria-controls="CHOICES_${id}" aria-expanded="false">
+          <button class="cmake-choice-toggle" type="button" data-input-id="${id}" aria-controls="CHOICES_${id}" aria-expanded="false">&#9662;</button>
+          <div class="cmake-choice-list invisible" id="CHOICES_${id}" role="listbox">
+            ${option.choices.map(ch => `<button class="cmake-choice-option" type="button" role="option" data-value="${escapeAttribute(ch)}">${escapeHtml(ch)}</button>`).join("")}
+          </div>
+        </div>`;
+                } else {
+                    editControls = `<div class="cmake-string-editor">
+          <input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" type="text">
+        </div>`;
                 }
-                editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
-          type="text" ${hasChoices ? `list="CHOICES_${id}"` : ''}>`;
             }
 
             return `<tr class="content-tr">
