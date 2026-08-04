@@ -33,9 +33,14 @@ steps:
       $oldVersion = $JsonData.version
       $newVersion = "${{parameters.ReleaseVersion}}"
       $JsonData.version = $newVersion
+      # Embed the source commit SHA so the exact commit a (pre-)release was built
+      # from can be identified from the VSIX (see issue #4801).
+      $commitId = "$(Build.SourceVersion)"
+      $JsonData | Add-Member -NotePropertyName 'commitId' -NotePropertyValue $commitId -Force
       $JsonData | ConvertTo-Json -Depth 20 | Set-Content -Path .\package.json
       Write-Host "old version was: $oldVersion"
       Write-Host "new version is: $newVersion"
+      Write-Host "commit id is: $commitId"
       Get-Content -Path .\package.json
 - task: CmdLine@2
   displayName: Create release.flag/insiders.flag
