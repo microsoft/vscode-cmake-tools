@@ -126,7 +126,7 @@ However, if you are using presets, this task will be generated in `tasks.json` f
 **Note**: When running this task, the test settings defined in `CMakeUserPresets.json`/`CMakePresets.json` will be used.
 
 # Refresh with CMake Tools tasks
-You can create a refresh task the same way, by running the **Tasks: Configure task** command and selecting the "CMake: refresh" template. This task refreshes the CMake test information and the Test Explorer, the same as the **CMake: Refresh Tests** command. It is useful when you drive your build through a task (for example from another extension) and the test view is not visible during the build, so it does not refresh automatically.
+You can create a refresh task the same way, by running the **Tasks: Configure task** command and selecting the "CMake: refresh" template. This task refreshes the CMake test information and the Test Explorer, the same as the **CMake: Refresh Tests** command.
 
 ```json
     {
@@ -137,11 +137,11 @@ You can create a refresh task the same way, by running the **Tasks: Configure ta
     }
 ```
 
-You can chain a refresh task after your build task by adding this to the refresh task's definition:
+**Note**: A `type: cmake`, `command: build` task already refreshes the test information and marks prior test results as outdated when it finishes, so you do not need to chain a refresh task after it. The refresh task is useful after a build that does *not* go through a `cmake` task (for example an external/shell build task, or a build driven by another extension), where the test view would otherwise not refresh. You can chain it with `dependsOn`:
 
 ```json
         "dependsOn": [
-            "CMake: build"
+            "Some external build task"
         ]
 ```
 
