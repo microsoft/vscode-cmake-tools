@@ -272,7 +272,19 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             });
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
-                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, resolvedDefinition.args);
+                    // Mark this terminal as an internal build: it is launched by CMakeDriver.build()
+                    // (via cmake.buildTask) for internal builds such as preTest and coverage pre/post
+                    // builds that run during an active test run. Such builds must NOT refresh/invalidate
+                    // the Test Explorer, otherwise they would retire the in-flight run's own results.
+                    const terminal = new CustomBuildTaskTerminal(
+                        resolvedDefinition.command,
+                        resolvedDefinition.targets,
+                        workspaceFolder,
+                        resolvedDefinition.preset,
+                        resolvedDefinition.options,
+                        resolvedDefinition.args,
+                        true
+                    );
                     const listener = terminal.onDidClose((exitCode) => {
                         listener.dispose();
                         exitCodeResolve(exitCode);
@@ -392,7 +404,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private args?: string[]) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private args?: string[], private isInternalBuild: boolean = false) {
         super();
     }
 
@@ -702,8 +714,10 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             // task, which runs runBuildTask(CommandType.build)), refresh the test list and mark prior
             // results outdated so the Test Explorer reflects the rebuilt binaries even when the view was
             // not visible during the build (issue #5007). Best-effort: never fail the task or change its
-            // exit code, and never trigger another build.
-            if (!result.retc && commandType === CommandType.build) {
+            // exit code, and never trigger another build. Skipped for internal builds (cmake.buildTask
+            // executions launched by CMakeDriver.build(), e.g. preTest/coverage builds during a test
+            // run) so they never retire an in-flight run's results.
+            if (!result.retc && commandType === CommandType.build && !this.isInternalBuild) {
                 try {
                     await project.refreshTestsAfterExternalBuild();
                 } catch (e) {
