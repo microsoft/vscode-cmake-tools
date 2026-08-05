@@ -4392,12 +4392,17 @@
           "id": "cmake-view",
           "title": "CMake",
           "icon": "$(cmake-tools-cmake-view-2)",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:isInitializing || cmake:enableFullFeatureSet"
         }
       ]
     },
     "views": {
       "cmake-view": [
+        {
+          "id": "cmake.initializing",
+          "name": "%cmake-tools.configuration.views.cmake.initializing.description%",
+          "when": "cmake:isInitializing && !cmake:enableFullFeatureSet"
+        },
         {
           "id": "cmake.projectStatus",
           "name": "%cmake-tools.configuration.views.cmake.projectStatus.description%",
@@ -4425,6 +4430,11 @@
         "view": "cmake.pinnedCommands",
         "contents": "%cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description%",
         "when": "cmake:enableFullFeatureSet"
+      },
+      {
+        "view": "cmake.initializing",
+        "contents": "%cmake-tools.configuration.views.cmake.initializingWelcome.description%",
+        "when": "cmake:isInitializing && !cmake:enableFullFeatureSet"
       }
     ],
     "yamlValidation": [
