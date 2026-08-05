@@ -222,7 +222,10 @@ export type OsName = "Windows" | "Linux" | "macOS";
 
 export type VendorVsSettings = {
     'microsoft.com/VisualStudioSettings/CMake/1.0': {
-        hostOS: OsName | OsName[];
+        hostOS?: OsName | OsName[];
+        intelliSenseMode?: string;
+        sourceDir?: string;
+        vsInstanceVersion?: number;
         [key: string]: any;
     };
     [key: string]: any;
@@ -906,6 +909,20 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     }
 
+    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, check the vendor field
+    // for a preferred VS major version (e.g., 17 for VS2022, 18 for VS2026).
+    // This allows users to pin a specific VS version for the dev environment in Ninja presets.
+    let vendorVsVersion: number | undefined;
+    if (!vsInstall) {
+        const vendorSettings = (opts.preset.vendor as VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0'];
+        if (vendorSettings?.vsInstanceVersion) {
+            vendorVsVersion = vendorSettings.vsInstanceVersion;
+            log.info(localize('using.vendor.vs.version',
+                "Configure preset {0}: Using Visual Studio major version {1} from vendor settings.",
+                opts.preset.name, vendorVsVersion));
+        }
+    }
+
     // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
     // that supports the specified toolset.
     if (!vsInstall) {
@@ -928,6 +945,12 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
                     const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
                     // forcing non-null due to false positive (toolset.version is checked in conditional)
                     if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
+                        vsInstall = vs;
+                        break;
+                    }
+                } else if (vendorVsVersion) {
+                    // If a VS major version is specified via vendor settings, match against it.
+                    if (vs.installationVersion.startsWith(vendorVsVersion.toString())) {
                         vsInstall = vs;
                         break;
                     }
