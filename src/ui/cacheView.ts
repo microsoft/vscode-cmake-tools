@@ -466,6 +466,9 @@ export class ConfigurationWebview {
               updateCheckboxState(checkbox);
               checkbox.onclick = () => toggleKey(checkbox);
             });
+            document.querySelectorAll('.cmake-input-select').forEach(sel => {
+                sel.oninput = () => edit(sel);
+            });
             document.querySelectorAll('.cmake-input-text').forEach(editbox => {
               validateInput(editbox)
               editbox.oninput = () => edit(editbox);
@@ -513,12 +516,14 @@ export class ConfigurationWebview {
             } else {
                 const hasChoices = option.choices.length > 0;
                 if (hasChoices) {
-                    editControls = `<datalist id="CHOICES_${id}">
-            ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join()}
-          </datalist>`;
+                    editControls = `<select class="cmake-input-select select-default" id="${id}">
+                        ${option.choices.map(ch =>
+                            `<option value="${escapeAttribute(ch)}" ${ch === option.value ? 'selected' : ''}>${escapeHtml(ch)}</option>`
+                        ).join('\n')}
+                    </select>`;
+                } else {
+                    editControls = `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;" type="text">`;
                 }
-                editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
-          type="text" ${hasChoices ? `list="CHOICES_${id}"` : ''}>`;
             }
 
             return `<tr class="content-tr">
