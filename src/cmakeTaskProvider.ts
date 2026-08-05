@@ -249,32 +249,31 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 
     public static async resolveInternalTask(task: CMakeTask): Promise<{ task: CMakeTask; exitCodePromise?: Promise<number | null> } | undefined> {
-        const execution: any = task.execution;
-        if (!execution) {
-            const definition: CMakeTaskDefinition = <any>task.definition;
-            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
-            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
-            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
-            let exitCodeResolve!: (exitCode: number | null) => void;
-            const exitCodePromise = new Promise<number | null>(resolve => {
-                exitCodeResolve = resolve;
-            });
-            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
-                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
-                    // Mark this terminal as an internal build: it is launched by CMakeDriver.build()
-                    // (via cmake.buildTask) for internal builds such as preTest and coverage pre/post
-                    // builds that run during an active test run. Such builds must NOT refresh/invalidate
-                    // the Test Explorer, otherwise they would retire the in-flight run's own results.
-                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, true);
-                    const listener = terminal.onDidClose((exitCode) => {
-                        listener.dispose();
-                        exitCodeResolve(exitCode);
-                    });
-                    return terminal;
-                }), []);
-            return { task: resolvedTask, exitCodePromise };
-        }
-        return { task };
+        const definition: CMakeTaskDefinition = <any>task.definition;
+        // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
+        // Only use it as a WorkspaceFolder if it's an object (not a number or null).
+        const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+        let exitCodeResolve!: (exitCode: number | null) => void;
+        const exitCodePromise = new Promise<number | null>(resolve => {
+            exitCodeResolve = resolve;
+        });
+        // resolveInternalTask is called ONLY from CMakeDriver.build() for internal cmake.buildTask
+        // executions (e.g. preTest and coverage pre/post builds that may run during an active test
+        // run), so ALWAYS construct our own internal terminal (isInternalBuild=true) regardless of
+        // whether the incoming task already carried a CustomExecution. In particular findBuildTask's
+        // ambiguous/no-match fallback returns a provideTask-built task whose terminal defaults to
+        // isInternalBuild=false; returning it unchanged would let an internal build trip Hook C and
+        // retire the in-flight run's own results. Rebuilding it also gives us a real exitCodePromise.
+        const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
+                const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, true);
+                const listener = terminal.onDidClose((exitCode) => {
+                    listener.dispose();
+                    exitCodeResolve(exitCode);
+                });
+                return terminal;
+            }), []);
+        return { task: resolvedTask, exitCodePromise };
     }
 
     public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
