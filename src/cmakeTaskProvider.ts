@@ -53,7 +53,8 @@ export enum CommandType {
     package = "package",
     workflow = "workflow",
     clean = "clean",
-    cleanRebuild = "cleanRebuild"
+    cleanRebuild = "cleanRebuild",
+    refresh = "refresh"
 }
 
 const localizeCommandType = (cmd: CommandType): string => {
@@ -81,6 +82,9 @@ const localizeCommandType = (cmd: CommandType): string => {
         }
         case CommandType.cleanRebuild: {
             return localize("clean.rebuild", "clean rebuild");
+        }
+        case CommandType.refresh: {
+            return localize("refresh", "refresh");
         }
         default: {
             return "";
@@ -181,6 +185,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             result.push(await CMakeTaskProvider.provideTask(CommandType.build, project.workspaceFolder, project.useCMakePresets, targets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.install, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.test, project.workspaceFolder, project.useCMakePresets));
+            result.push(await CMakeTaskProvider.provideTask(CommandType.refresh, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.package, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.workflow, project.workspaceFolder, project.useCMakePresets));
             result.push(await CMakeTaskProvider.provideTask(CommandType.clean, project.workspaceFolder, project.useCMakePresets));
@@ -244,28 +249,31 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
 
     public static async resolveInternalTask(task: CMakeTask): Promise<{ task: CMakeTask; exitCodePromise?: Promise<number | null> } | undefined> {
-        const execution: any = task.execution;
-        if (!execution) {
-            const definition: CMakeTaskDefinition = <any>task.definition;
-            // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
-            // Only use it as a WorkspaceFolder if it's an object (not a number or null).
-            const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
-            let exitCodeResolve!: (exitCode: number | null) => void;
-            const exitCodePromise = new Promise<number | null>(resolve => {
-                exitCodeResolve = resolve;
-            });
-            const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
-                new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
-                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
-                    const listener = terminal.onDidClose((exitCode) => {
-                        listener.dispose();
-                        exitCodeResolve(exitCode);
-                    });
-                    return terminal;
-                }), []);
-            return { task: resolvedTask, exitCodePromise };
-        }
-        return { task };
+        const definition: CMakeTaskDefinition = <any>task.definition;
+        // task.scope can be a WorkspaceFolder, TaskScope.Global, or TaskScope.Workspace.
+        // Only use it as a WorkspaceFolder if it's an object (not a number or null).
+        const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
+        let exitCodeResolve!: (exitCode: number | null) => void;
+        const exitCodePromise = new Promise<number | null>(resolve => {
+            exitCodeResolve = resolve;
+        });
+        // resolveInternalTask is called ONLY from CMakeDriver.build() for internal cmake.buildTask
+        // executions (e.g. preTest and coverage pre/post builds that may run during an active test
+        // run), so ALWAYS construct our own internal terminal (isInternalBuild=true) regardless of
+        // whether the incoming task already carried a CustomExecution. In particular findBuildTask's
+        // ambiguous/no-match fallback returns a provideTask-built task whose terminal defaults to
+        // isInternalBuild=false; returning it unchanged would let an internal build trip Hook C and
+        // retire the in-flight run's own results. Rebuilding it also gives us a real exitCodePromise.
+        const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
+                const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, true);
+                const listener = terminal.onDidClose((exitCode) => {
+                    listener.dispose();
+                    exitCodeResolve(exitCode);
+                });
+                return terminal;
+            }), []);
+        return { task: resolvedTask, exitCodePromise };
     }
 
     public static async findBuildTask(workspaceFolder: string, presetName?: string, targets?: string[], expansionOptions?: expand.ExpansionOptions): Promise<CMakeTask | undefined> {
@@ -375,7 +383,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private isInternalBuild: boolean = false) {
         super();
     }
 
@@ -405,6 +413,9 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
                 break;
             case CommandType.test:
                 await this.runTestTask();
+                break;
+            case CommandType.refresh:
+                await this.runRefreshTask();
                 break;
             case CommandType.package:
                 await this.runPackageTask();
@@ -660,6 +671,20 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             } else {
                 this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
+            // On a successful `type: cmake, command: build` task (this path also backs the cleanRebuild
+            // task, which runs runBuildTask(CommandType.build)), refresh the test list and mark prior
+            // results outdated so the Test Explorer reflects the rebuilt binaries even when the view was
+            // not visible during the build (issue #5007). Best-effort: never fail the task or change its
+            // exit code, and never trigger another build. Skipped for internal builds (cmake.buildTask
+            // executions launched by CMakeDriver.build(), e.g. preTest/coverage builds during a test
+            // run) so they never retire an in-flight run's results.
+            if (!result.retc && commandType === CommandType.build && !this.isInternalBuild) {
+                try {
+                    await project.refreshTestsAfterExternalBuild();
+                } catch (e) {
+                    log.debug(localize("refresh.tests.after.build.failed", 'Failed to refresh tests after build: {0}', String(e)));
+                }
+            }
             if (doCloseEmitter) {
                 this.closeEmitter.fire(result.retc ?? 0);
             }
@@ -710,6 +735,34 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         } else {
             log.debug(localize("cmake.driver.not.found", 'CMake driver not found.'));
             this.writeEmitter.fire(localize("test.failed", "CTest run failed.") + endOfLine);
+            this.closeEmitter.fire(-1);
+        }
+    }
+
+    private async runRefreshTask(): Promise<any> {
+        this.writeEmitter.fire(localize("refresh.started", "Refresh task started...") + endOfLine);
+
+        const project: CMakeProject | undefined = await this.getProject();
+        if (!project || !await this.isTaskCompatibleWithPresets(project)) {
+            return;
+        }
+        telemetry.logEvent("task", { taskType: "refresh", useCMakePresets: String(project.useCMakePresets) });
+
+        try {
+            // Mirrors the "CMake: Refresh Tests" command: it builds the default target if needed,
+            // then re-reads the CTest information and refreshes the Test Explorer. Exposing this as a
+            // task lets automation (e.g. builds launched from another extension, where the test view
+            // isn't visible during the build) refresh the test information afterwards. Uses the active
+            // test preset, the same as the command.
+            const result: number = await project.refreshTests();
+            this.writeEmitter.fire(localize('refresh.finished.with.code', 'Refresh finished with return code {0}', result) + endOfLine);
+            // Report success as long as the refresh itself did not throw. A negative return code is
+            // a non-fatal state (e.g. no CTestTestfile.cmake because the project defines no tests, or
+            // CTest not found) rather than a task failure; a failed build throws and is handled below.
+            // This matches the "CMake: Refresh Tests" command, which also ignores the numeric result.
+            this.closeEmitter.fire(0);
+        } catch (e) {
+            this.writeEmitter.fire(localize('refresh.failed', 'Refresh failed: {0}', String(e)) + endOfLine);
             this.closeEmitter.fire(-1);
         }
     }

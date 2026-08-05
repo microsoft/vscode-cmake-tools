@@ -2596,9 +2596,19 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false, markOutdated: boolean = false): Promise<CommandResult> {
         this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken, isAutomatic);
-        return this.activeBuild;
+        const result = await this.activeBuild;
+        // After a successful, user-facing build the test binaries may have changed, so any prior
+        // pass/fail results in the Test Explorer are stale. Mark them outdated (muted) rather than
+        // leaving them misleadingly current. markOutdated defaults to false so internal builds
+        // (preTest, per-test/coverage builds during a Test Explorer run, API/programmatic builds)
+        // never invalidate results - in particular a build that runs inside an active test run must
+        // not retire that run's own results.
+        if (markOutdated && !showCommandOnly && result.exitCode === 0) {
+            this.cTestController.markTestResultsOutdated(this.sourceDir);
+        }
+        return result;
     }
 
     /**
@@ -2804,7 +2814,7 @@ export class CMakeProject {
         if (cleanResult !== 0) {
             return cleanResult;
         }
-        return (await this.build()).exitCode;
+        return (await this.build(undefined, undefined, undefined, undefined, undefined, true)).exitCode;
     }
 
     async cleanConfigureAndBuild(trigger: ConfigureTrigger = ConfigureTrigger.api): Promise<number> {
@@ -2883,7 +2893,34 @@ export class CMakeProject {
 
     async refreshTests(): Promise<number> {
         const drv = await this.preTest();
-        return this.cTestController.refreshTests(drv);
+        try {
+            return await this.cTestController.refreshTests(drv);
+        } finally {
+            // Retire prior pass/fail so the Test Explorer shows results as outdated (muted) after the
+            // refresh, rather than misleadingly current. Runs in finally so results are still marked
+            // outdated even when discovery returns a non-zero status (e.g. no CTestTestfile) after a
+            // successful preTest build. If preTest throws (build failure), we never get here.
+            this.cTestController.markTestResultsOutdated(drv.sourceDir);
+        }
+    }
+
+    /**
+     * Post-build Test Explorer sync for the direct `type: cmake, command: build` task, which builds
+     * through the task terminal (not build()/preTest). Refreshes the CTest list into the Test
+     * Explorer WITHOUT triggering another build and marks prior results outdated. Best-effort and
+     * gated on test explorer integration so it never rebuilds or affects the task's exit code.
+     */
+    async refreshTestsAfterExternalBuild(): Promise<void> {
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv || !drv.config.testExplorerIntegrationEnabled) {
+            return;
+        }
+        try {
+            await this.cTestController.refreshTests(drv);
+        } finally {
+            // Retire prior results even if discovery throws, so stale pass/fail is never left looking current.
+            this.cTestController.markTestResultsOutdated(drv.sourceDir);
+        }
     }
 
     async runTest(testName: string): Promise<CommandResult> {

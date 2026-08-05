@@ -2363,6 +2363,26 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
+     * Marks all previously-recorded test results for the given project as outdated in the Test
+     * Explorer, so stale pass/fail icons are visually de-emphasized (VS Code renders them as
+     * "outdated"/muted, it does not clear them) after a rebuild or an explicit refresh. This is
+     * scoped to the project's root TestItem subtree so that results for other projects sharing the
+     * singleton controller are left untouched. No-op when the Test Explorer is not active (test
+     * explorer integration disabled, or test mode without the override).
+     */
+    markTestResultsOutdated(sourceDir: string): void {
+        const refreshTestExplorer = this.ws.config.testExplorerIntegrationEnabled && !(util.isTestMode() && !util.overrideTestModeForTestExplorer());
+        if (!refreshTestExplorer || !testExplorer) {
+            return;
+        }
+
+        const root = testExplorer.items.get(util.platformNormalizePath(sourceDir));
+        if (root) {
+            testExplorer.invalidateTestResults(root);
+        }
+    }
+
+    /**
      * If returning false, the test explorer is not available, and refreshTests can be called to construct it.
      * Since there's no way to reveal the explorer itself, this function reveals the first test in the test explorer.
      */

@@ -1729,7 +1729,10 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("build", { all: "false"});
         return this.runCMakeCommand(async cmakeProject => {
             const targets = name ? [name] : undefined;
-            return (await cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand)).exitCode;
+            const resolvedIsBuildCommand = (isBuildCommand === undefined) ? true : isBuildCommand;
+            // Only a real build (not "show build command", not clean) should mark test results outdated.
+            const markOutdated = !showCommandOnly && resolvedIsBuildCommand;
+            return (await cmakeProject.build(targets, showCommandOnly, resolvedIsBuildCommand, undefined, undefined, markOutdated)).exitCode;
         },
         folder,
         this.ensureActiveBuildPreset,
@@ -1741,11 +1744,11 @@ export class ExtensionManager implements vscode.Disposable {
         return this.build(folder, name, undefined, true, false);
     }
 
-    buildAll(name?: string | string[]) {
+    buildAll(name?: string | string[], markOutdated: boolean = true) {
         telemetry.logEvent("build", { all: "true"});
         return this.runCMakeCommandForAll(async cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return (await cmakeProject.build(targets)).exitCode;
+            return (await cmakeProject.build(targets, undefined, undefined, undefined, undefined, markOutdated)).exitCode;
         },
         this.ensureActiveBuildPreset,
         true);
@@ -1798,7 +1801,9 @@ export class ExtensionManager implements vscode.Disposable {
 
     cleanAll() {
         telemetry.logEvent("clean", { all: "true"});
-        return this.buildAll(['clean']);
+        // Clean does not produce new test binaries, so do not mark test results outdated (mirrors the
+        // single-project clean, which routes through build() with isBuildCommand=false).
+        return this.buildAll(['clean'], false);
     }
 
     cleanRebuild(folder?: vscode.WorkspaceFolder) {
