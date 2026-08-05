@@ -2915,8 +2915,12 @@ export class CMakeProject {
         if (!drv || !drv.config.testExplorerIntegrationEnabled) {
             return;
         }
-        await this.cTestController.refreshTests(drv);
-        this.cTestController.markTestResultsOutdated(drv.sourceDir);
+        try {
+            await this.cTestController.refreshTests(drv);
+        } finally {
+            // Retire prior results even if discovery throws, so stale pass/fail is never left looking current.
+            this.cTestController.markTestResultsOutdated(drv.sourceDir);
+        }
     }
 
     async runTest(testName: string): Promise<CommandResult> {
