@@ -1729,7 +1729,10 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("build", { all: "false"});
         return this.runCMakeCommand(async cmakeProject => {
             const targets = name ? [name] : undefined;
-            return (await cmakeProject.build(targets, showCommandOnly, (isBuildCommand === undefined) ? true : isBuildCommand)).exitCode;
+            const resolvedIsBuildCommand = (isBuildCommand === undefined) ? true : isBuildCommand;
+            // Only a real build (not "show build command", not clean) should mark test results outdated.
+            const markOutdated = !showCommandOnly && resolvedIsBuildCommand;
+            return (await cmakeProject.build(targets, showCommandOnly, resolvedIsBuildCommand, undefined, undefined, markOutdated)).exitCode;
         },
         folder,
         this.ensureActiveBuildPreset,
@@ -1745,7 +1748,7 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("build", { all: "true"});
         return this.runCMakeCommandForAll(async cmakeProject => {
             const targets = util.isArrayOfString(name) ? name : util.isString(name) ? [name] : undefined;
-            return (await cmakeProject.build(targets)).exitCode;
+            return (await cmakeProject.build(targets, undefined, undefined, undefined, undefined, true)).exitCode;
         },
         this.ensureActiveBuildPreset,
         true);

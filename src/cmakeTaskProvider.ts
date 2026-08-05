@@ -668,6 +668,18 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             } else {
                 this.writeEmitter.fire(localize("build.finished.successfully", "{0} finished successfully.", taskName) + endOfLine);
             }
+            // On a successful `type: cmake, command: build` task (this path also backs the cleanRebuild
+            // task, which runs runBuildTask(CommandType.build)), refresh the test list and mark prior
+            // results outdated so the Test Explorer reflects the rebuilt binaries even when the view was
+            // not visible during the build (issue #5007). Best-effort: never fail the task or change its
+            // exit code, and never trigger another build.
+            if (!result.retc && commandType === CommandType.build) {
+                try {
+                    await project.refreshTestsAfterExternalBuild();
+                } catch (e) {
+                    log.debug(localize("refresh.tests.after.build.failed", 'Failed to refresh tests after build: {0}', String(e)));
+                }
+            }
             if (doCloseEmitter) {
                 this.closeEmitter.fire(result.retc ?? 0);
             }
