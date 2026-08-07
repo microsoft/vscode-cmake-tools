@@ -58,6 +58,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.languageServerOnlyMode` | If `true`, keep CMake language services enabled while disabling CMake project, build, test, and kit integration. | `false` | no |
 | `cmake.enableTraceLogging` | If `true`, enable trace logging. | `false` | no |
 | `cmake.environment` | An object containing `key:value` pairs of environment variables, which will be available when configuring, building, or testing with CTest. | `{}` (no environment variables) | yes |
+| `cmake.environmentSetupScript` | When using CMake Presets, source (Linux/macOS) or call (Windows) this script and use the resulting environment as the parent environment for preset expansion and for configure, build, and test. Use this to bootstrap environments that cannot be captured as static variables. | `""` (no script) | yes |
 | `cmake.exclude` | CMake Tools will ignore the folders defined in this setting. | `[]` | yes |
 | `cmake.exportCompileCommandsFile` | If `true`, generate the compile_commands.json file. | `true` | no |
 | `cmake.generator` | Set to a string to override CMake Tools preferred generator logic. If set, CMake will unconditionally use it as the `-G` CMake generator command line argument. | `null` | no |

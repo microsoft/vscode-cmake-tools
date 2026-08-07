@@ -78,6 +78,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         },
         useCMakePresets: 'never',
         useVsDeveloperEnvironment: 'auto',
+        environmentSetupScript: '',
         allowCommentsInPresetsFile: false,
         allowUnsupportedPresetsVersions: false,
         launchBehavior: 'reuseTerminal',
