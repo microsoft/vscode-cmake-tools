@@ -563,6 +563,12 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             if (!this.options) {
                 this.options = {};
             }
+            // Default the working directory to the project so directory-based version managers
+            // (mise, asdf, vfox, ...) can resolve the cmake shim; otherwise the child inherits
+            // the extension host's process.cwd(), which may be outside the workspace.
+            if (this.options.cwd === undefined) {
+                this.options.cwd = cmakeDriver.binaryDir || cmakeDriver.sourceDir || this.workspaceFolder?.uri.fsPath;
+            }
             this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.build);
             if (this.preset) {
                 const buildPreset: preset.BuildPreset | undefined = await project?.expandBuildPresetbyName(this.preset);

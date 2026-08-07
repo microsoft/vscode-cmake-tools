@@ -186,7 +186,7 @@ export class ExtensionManager implements vscode.Disposable {
             cmakePath = await workspaceContext.getCMakePath() || '';
         }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig);
+        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         if (this.workspaceConfig.testExplorerIntegrationEnabled) {

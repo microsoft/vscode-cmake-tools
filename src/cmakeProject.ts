@@ -1605,7 +1605,7 @@ export class CMakeProject {
 
     async getCMakeExecutable() {
         const cmakePath: string = await this.getCMakePathofProject();
-        const cmakeExe = await getCMakeExecutableInformation(cmakePath);
+        const cmakeExe = await getCMakeExecutableInformation(cmakePath, undefined, this.folderPath);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',
                 'CMake version {0} may not be supported. Minimum version required is {1}.',
