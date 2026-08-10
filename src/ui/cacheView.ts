@@ -145,12 +145,6 @@ export class ConfigurationWebview {
                 this.options = mergedOptions;
             }
 
-            // The webview needs a re-render also for the "ignore" or "fromUI" cases
-            // to reflect all the unconflicting changes.
-            if (this.panel.visible) {
-                await this.renderWebview(this.panel, false);
-            }
-
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
             // between the webview and the file on disk.
             if (result !== ignore) {
@@ -158,6 +152,12 @@ export class ConfigurationWebview {
             }
         } else {
             this.options = await this.getConfigurationOptions();
+        }
+
+        // Re-render after both clean and dirty refreshes so external cache changes
+        // are reflected immediately while the editor is visible.
+        if (this.panel.visible) {
+            await this.renderWebview(this.panel, false);
         }
     }
 
