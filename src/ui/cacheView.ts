@@ -50,7 +50,7 @@ export class ConfigurationWebview {
 
     private options: IOption[] = [];
 
-    constructor(protected cachePath: string, protected save: () => void) {
+    constructor(protected cachePath: string, protected save: () => Promise<void>) {
         this.panel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
             this.cmakeCacheEditorText, // Title of the panel displayed to the user
@@ -68,9 +68,8 @@ export class ConfigurationWebview {
             telemetry.logEvent("editCMakeCache", { command: "saveCMakeCacheUI" });
             await this.saveCmakeCache(this.options);
             void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-            // start configure
-            this.save();
             this.isDirty = false;
+            await this.save();
         }
     }
 
