@@ -18,11 +18,12 @@ import {
     getAdditionalKits
 } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
-import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import { ProgressHandle, reportProgress } from '@cmt/util';
 import { ConfigurationType } from 'vscode-cmake-tools';
+import * as which from 'which';
+import { CompilerPathState, classifyCompilerPathProbe, classifyWhichResult } from '@cmt/kits/compilerPathState';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -161,9 +162,6 @@ export class KitsController {
         if (kits !== undefined) {
             KitsController.userKits = kits;
         }
-
-        // Pruning requires user interaction, so it happens fully async
-        KitsController._startPruneOutdatedKitsAsync(await project.getCMakePathofProject());
     }
 
     /**
@@ -352,13 +350,30 @@ export class KitsController {
     }
 
     /**
+     * Single-flight guard for {@link _startPruneOutdatedKitsAsync}. Prevents
+     * overlapping scans from stacking additional bursts of filesystem probes.
+     */
+    private static prunePromise?: Promise<void>;
+
+    /**
+     * Set when a scan requests pruning while a prune is already running, so that
+     * exactly one more pass runs afterward (coalesced) instead of stacking a
+     * concurrent burst of probes. Kits already kept (`keep === true`) or removed
+     * are not re-prompted on the follow-up pass.
+     */
+    private static pruneAgain = false;
+
+    /**
      * User-interactive kit pruning:
      *
      * This function will find all user-local kits that identify files that are
      * no longer present (such as compiler binaries), and will show a popup
      * notification to the user requesting an action.
      *
-     * This function will not prune kits that have the `keep` field marked `true`
+     * This function will not prune kits that have the `keep` field marked `true`,
+     * and it will never prompt to remove a kit whose compiler could not be
+     * probed reliably (for example under file-handle exhaustion) -- only
+     * definitively-missing compilers are treated as stale.
      *
      * If the user chooses to remove the kit, we call `_removeKit()` and erase it
      * from the user-local file.
@@ -369,6 +384,56 @@ export class KitsController {
      * Always returns immediately.
      */
     private static _startPruneOutdatedKitsAsync(cmakePath: string) {
+        if (KitsController.prunePromise) {
+            // A prune is already running; don't launch another concurrent burst of
+            // probes. Instead request a single coalesced follow-up pass so a scan
+            // that finishes mid-prune still gets its (newly) stale kits checked.
+            KitsController.pruneAgain = true;
+            return;
+        }
+        const pr = KitsController._pruneOutdatedKits(cmakePath).finally(() => {
+            // Clear the guard so a later scan can prune again, even if this run
+            // failed for a transient reason.
+            KitsController.prunePromise = undefined;
+            if (KitsController.pruneAgain) {
+                KitsController.pruneAgain = false;
+                KitsController._startPruneOutdatedKitsAsync(cmakePath);
+            }
+        });
+        KitsController.prunePromise = pr;
+        rollbar.takePromise(localize('pruning.kit', "Pruning kit"), {}, pr);
+    }
+
+    /**
+     * Probe whether a kit compiler binary exists, preserving the error cause so
+     * that transient failures (e.g. `EMFILE`) are not misread as "missing".
+     *
+     * Absolute paths are stat'd directly (error codes are preserved). Relative
+     * names are resolved with the `which` package; because `which` cannot reliably
+     * distinguish a missing binary from a transient probe failure, any `which`
+     * failure is treated as `unknown` rather than `absent`.
+     */
+    private static async probeCompilerPath(compilerPath: string): Promise<CompilerPathState> {
+        if (path.isAbsolute(compilerPath)) {
+            try {
+                await fs.stat(compilerPath);
+                return 'present';
+            } catch (e) {
+                return classifyCompilerPathProbe(e as NodeJS.ErrnoException);
+            }
+        }
+        return new Promise<CompilerPathState>(resolve => {
+            which(compilerPath, (err: Error | null, resolved?: string) => {
+                resolve(classifyWhichResult(err, resolved));
+            });
+        });
+    }
+
+    private static async _pruneOutdatedKits(cmakePath: string): Promise<void> {
+        // Cache probe results within a single run so multiple kits that reference
+        // the same compiler binary do not re-stat it.
+        const pathStates = new Map<string, CompilerPathState>();
+
         // Iterate over _user_ kits. We don't care about workspace-local kits
         for (const kit of KitsController.userKits) {
             if (kit.keep === true) {
@@ -379,57 +444,64 @@ export class KitsController {
                 // We only prune kits with a `compilers` field.
                 continue;
             }
-            // Accrue a list of promises that resolve to whether a give file exists
-            interface FileInfo {
-                path: string;
-                exists: boolean;
-            }
-            const missing_paths_prs: Promise<FileInfo>[] = [];
+
+            let missingPath: string | undefined;
+            let hasUnknown = false;
             for (const lang in kit.compilers) {
-                const comp_path = kit.compilers[lang];
-                // Get a promise that resolve to whether the given path/name exists
-                const exists_pr = path.isAbsolute(comp_path)
-                    // Absolute path, just check if it exists
-                    ? fs.exists(comp_path)
-                    // Non-absolute. Check on $PATH
-                    : paths.which(comp_path).then(v => v !== null);
-                // Add it to the list
-                missing_paths_prs.push(exists_pr.then(exists => ({ exists, path: comp_path })));
+                const compilerPath = kit.compilers[lang];
+                let state = pathStates.get(compilerPath);
+                if (state === undefined) {
+                    // Probe sequentially to avoid launching an unbounded burst of
+                    // filesystem/PATH probes at once.
+                    state = await KitsController.probeCompilerPath(compilerPath);
+                    pathStates.set(compilerPath, state);
+                }
+                if (state === 'unknown') {
+                    // The probe failed transiently; this is not proof the compiler
+                    // is missing, so never prompt to remove this kit.
+                    hasUnknown = true;
+                    break;
+                }
+                if (state === 'absent' && missingPath === undefined) {
+                    missingPath = compilerPath;
+                }
             }
-            const pr = Promise.all(missing_paths_prs).then(async infos => {
-                const missing = infos.find(i => !i.exists);
-                if (!missing) {
-                    return;
+
+            if (hasUnknown || missingPath === undefined) {
+                continue;
+            }
+
+            // This kit contains a compiler that definitively does not exist. Ask
+            // the user what to do, one prompt at a time so notifications don't
+            // compete.
+            interface UpdateKitsItem extends vscode.MessageItem {
+                action: 'remove' | 'keep';
+            }
+            const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
+                localize('kit.references.non-existent',
+                    'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
+                    `"${kit.name}"`, missingPath),
+                {},
+                {
+                    action: 'remove',
+                    title: localize('remove.it.button', 'Remove it')
+                },
+                {
+                    action: 'keep',
+                    title: localize('keep.it.button', 'Keep it')
                 }
-                // This kit contains a compiler that does not exist. What to do?
-                interface UpdateKitsItem extends vscode.MessageItem {
-                    action: 'remove' | 'keep';
-                }
-                const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-                    localize('kit.references.non-existent',
-                        'The kit {0} references a non-existent compiler binary [{1}]. What would you like to do?',
-                        `"${kit.name}"`, missing.path),
-                    {},
-                    {
-                        action: 'remove',
-                        title: localize('remove.it.button', 'Remove it')
-                    },
-                    {
-                        action: 'keep',
-                        title: localize('keep.it.button', 'Keep it')
-                    }
-                );
-                if (chosen === undefined) {
-                    return;
-                }
-                switch (chosen.action) {
-                    case 'keep':
-                        return KitsController._keepKit(cmakePath, kit);
-                    case 'remove':
-                        return KitsController._removeKit(cmakePath, kit);
-                }
-            });
-            rollbar.takePromise(localize('pruning.kit', "Pruning kit"), { kit }, pr);
+            );
+            if (chosen === undefined) {
+                continue;
+            }
+            switch (chosen.action) {
+                case 'keep':
+                    await KitsController._keepKit(cmakePath, kit);
+                    break;
+                case 'remove':
+                    await KitsController._removeKit(cmakePath, kit);
+                    break;
+            }
         }
     }
 
