@@ -28,6 +28,7 @@ Improvements:
 
 Bug Fixes:
 - Fix CMake syntax highlighting treating escaped `$<` sequences in quoted regex strings as generator expressions. [#5028](https://github.com/microsoft/vscode-cmake-tools/issues/5028)
+- Fix the auto-detected source directory notification showing a literal `Change\u2026` on its button instead of `Change...` in packaged (Marketplace) builds. The label used a `\u2026` JavaScript unicode escape, which `vscode-nls-dev` extracted verbatim into the localization bundle; it now uses plain `...`. [#5003](https://github.com/microsoft/vscode-cmake-tools/issues/5003)
 - Fix a test run that matched no tests being reported as success. When specific tests are requested (e.g. programmatically via the API/Copilot) but none match a discovered test — for example an agent passing a partial or non-existent test name — CTest exits 0 ("No tests were found!!!"), which callers could misread as "all tests passed". Such runs now return a failure with a clear message when tests exist but the requested ones weren't found. [#4915](https://github.com/microsoft/vscode-cmake-tools/issues/4915)
 - Stop showing "Adding a file without a valid code model" / "Deleting a file without a valid code model" warning notifications when a source file is automatically added or deleted and there is no valid CMake code model (for example when using clangd with the C/C++ IntelliSense engine disabled, or before the project has been configured). The automatic list-file update now stays silent in this case; the warning is only shown when the update is explicitly invoked via the "CMake: Add new source file" / "CMake: Remove deleted source file" commands. [#5009](https://github.com/microsoft/vscode-cmake-tools/issues/5009)
 - Fix running a single test from the inline Test CodeLens or the project outline building the default (or all) target instead of the test's own executable; single-test runs now build only that test's target.
@@ -56,6 +57,7 @@ Bug Fixes:
 - Update testing framework to fix bugs when running tests of CMake Tools without a reliable internet connection. [#4891](https://github.com/microsoft/vscode-cmake-tools/pull/4891) [@cwalther](https://github.com/cwalther)
 - Fix GNU LD diagnostic regex incorrectly matching CMake status lines (e.g., Zephyr build output) as linker errors in the Problems panel. [#4910](https://github.com/microsoft/vscode-cmake-tools/issues/4910)
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
+- Refresh the open CMake Cache Editor when configuration changes cache values externally. [#3635](https://github.com/microsoft/vscode-cmake-tools/issues/3635)
 
 ## 1.23.52
 
