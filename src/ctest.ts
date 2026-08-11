@@ -437,6 +437,9 @@ export class CTestDriver implements vscode.Disposable {
     }
     set tests(v: CTestInfo | undefined) {
         this._tests = v;
+        if (v !== undefined) {
+            this._legacyTests = undefined;
+        }
         this.testsChangedEmitter.fire(v);
     }
 
@@ -449,6 +452,9 @@ export class CTestDriver implements vscode.Disposable {
     }
     set legacyTests(v: LegacyCTestInfo[] | undefined) {
         this._legacyTests = v;
+        if (v !== undefined) {
+            this._tests = undefined;
+        }
         this.testsChangedEmitter.fire(undefined);
     }
 

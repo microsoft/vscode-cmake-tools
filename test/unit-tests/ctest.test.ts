@@ -1,8 +1,25 @@
-import { readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments } from "@cmt/ctest";
+import { CTestDriver, readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments } from "@cmt/ctest";
 import { expect, getTestResourceFilePath } from "@test/util";
 import { TestMessage } from "vscode";
 
 suite('CTest test', () => {
+    test('Switching discovery formats clears stale test data', () => {
+        const driver = new CTestDriver(undefined as never);
+        const jsonTests = {
+            tests: [{ name: 'json-test' }]
+        };
+
+        driver.tests = jsonTests as never;
+        driver.legacyTests = [{ id: 1, name: 'legacy-test' }];
+        expect(driver.tests).to.eq(undefined);
+        expect(driver.getTestNames()).to.deep.eq(['legacy-test']);
+
+        driver.tests = jsonTests as never;
+        expect(driver.legacyTests).to.eq(undefined);
+        expect(driver.getTestNames()).to.deep.eq(['json-test']);
+        driver.dispose();
+    });
+
     test('Parse XML test results', async () => {
         const result = await readTestResultsFile(getTestResourceFilePath('TestResults.xml'));
         expect(result!.site.testing.testList.length).to.eq(2);
