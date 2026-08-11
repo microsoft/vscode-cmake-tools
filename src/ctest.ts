@@ -20,6 +20,7 @@ import { CMakeProject } from '@cmt/cmakeProject';
 import { handleCoverageInfoFiles } from '@cmt/coverage';
 import { CommandResult } from 'vscode-cmake-tools';
 import { FailurePattern, FailurePatternsConfig } from '@cmt/config';
+import { getCTestDiscoveryArgument } from '@cmt/ctestVersion';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1439,10 +1440,12 @@ export class CTestDriver implements vscode.Disposable {
 
         const ctestArgs = await this.getCTestArgs(driver);
 
-        // The difference between the following two branches is dependent on the cmake version.
-        // first branch is for CMake versions < 3.14, second branch is for CMake versions >= 3.14
-        // The branches are needed because test information is provided in different formats.
-        if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
+        const versionResult = await driver.executeCommand(ctestpath, ['--version'], undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const discoveryArgument = getCTestDiscoveryArgument(versionResult.retc === 0 ? versionResult.stdout : undefined);
+
+        // CTest versions before 3.14 do not support JSON test discovery. Unknown versions also
+        // use the legacy listing because some old versions interpret the JSON argument as a test filter.
+        if (discoveryArgument === '-N') {
             return this.extractTestsCommand(driver, ctestpath, ['-N', ...(ctestArgs ?? [])], async (result) => {
                 const tests = result.stdout?.split('\n')
                     .map(l => l.trim())
@@ -1457,7 +1460,7 @@ export class CTestDriver implements vscode.Disposable {
                 }
             });
         } else {
-            return this.extractTestsCommand(driver, ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], async (result) => {
+            return this.extractTestsCommand(driver, ctestpath, [discoveryArgument, ...(ctestArgs ?? [])], async (result) => {
                 try {
                     this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
                 } catch {

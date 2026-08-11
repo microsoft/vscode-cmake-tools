@@ -57,6 +57,7 @@ Bug Fixes:
 - Fix GNU LD diagnostic regex incorrectly matching CMake status lines (e.g., Zephyr build output) as linker errors in the Problems panel. [#4910](https://github.com/microsoft/vscode-cmake-tools/issues/4910)
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
 - Refresh the open CMake Cache Editor when configuration changes cache values externally. [#3635](https://github.com/microsoft/vscode-cmake-tools/issues/3635)
+- Prevent test discovery from executing tests when `cmake.ctestPath` points to CTest older than 3.14 by checking the selected CTest executable's version and using its safe legacy test listing. [#4155](https://github.com/microsoft/vscode-cmake-tools/issues/4155)
 
 ## 1.23.52
 
