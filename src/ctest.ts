@@ -461,6 +461,20 @@ export class CTestDriver implements vscode.Disposable {
     private readonly testsChangedEmitter = new vscode.EventEmitter<CTestInfo | undefined>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
 
+    private updateTestsFromJsonOutput(output: string): CTestInfo | undefined {
+        let tests: CTestInfo | undefined;
+        try {
+            tests = JSON.parse(output.slice(output.indexOf("{"))) ?? undefined;
+        } catch {
+            return undefined;
+        }
+
+        if (tests) {
+            this.tests = tests;
+        }
+        return tests;
+    }
+
     private testItemCollectionToArray(collection: vscode.TestItemCollection): vscode.TestItem[] {
         if (!collection) {
             return [];
@@ -1467,13 +1481,9 @@ export class CTestDriver implements vscode.Disposable {
             });
         } else {
             return this.extractTestsCommand(driver, ctestpath, [discoveryArgument, ...(ctestArgs ?? [])], async (result) => {
-                try {
-                    this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
-                } catch {
-                    this.tests = undefined;
-                }
+                const tests = this.updateTestsFromJsonOutput(result.stdout);
 
-                if (refreshTestExplorer && this.tests) {
+                if (refreshTestExplorer && tests) {
                     await this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
                 }
             });

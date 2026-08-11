@@ -20,6 +20,25 @@ suite('CTest test', () => {
         driver.dispose();
     });
 
+    test('Malformed JSON discovery preserves the last valid test data', () => {
+        const driver = new CTestDriver(undefined as never);
+        const jsonUpdater = driver as unknown as {
+            updateTestsFromJsonOutput(output: string): unknown;
+        };
+
+        driver.legacyTests = [{ id: 1, name: 'legacy-test' }];
+        jsonUpdater.updateTestsFromJsonOutput('{"tests":[{"name":"json-test"}]}');
+        const validTests = driver.tests;
+        expect(driver.legacyTests).to.eq(undefined);
+        expect(driver.getTestNames()).to.deep.eq(['json-test']);
+
+        expect(jsonUpdater.updateTestsFromJsonOutput('{"tests":[{"name":"truncated')).to.eq(undefined);
+        expect(driver.tests).to.eq(validTests);
+        expect(driver.legacyTests).to.eq(undefined);
+        expect(driver.getTestNames()).to.deep.eq(['json-test']);
+        driver.dispose();
+    });
+
     test('Parse XML test results', async () => {
         const result = await readTestResultsFile(getTestResourceFilePath('TestResults.xml'));
         expect(result!.site.testing.testList.length).to.eq(2);
