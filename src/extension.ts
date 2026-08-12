@@ -33,7 +33,6 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
-import { InitializingViewProvider } from '@cmt/ui/initializingView';
 import { shouldShowInitializingView, isDefinitivelyAbsentError } from '@cmt/activation';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
@@ -3031,23 +3030,11 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
 }
 
 /**
- * Cheap, best-effort preflight used only to decide whether to show the transient
- * "initializing" placeholder in the CMake activity bar during activation.
- *
- * Returns true when at least one non-excluded workspace folder plausibly has a CMake
- * project. It performs only variable expansion and a single `CMakeLists.txt` stat per
- * configured source directory — no project construction, kit/preset initialization,
- * CMake resolution, subprocess spawn, or recursive scan — so it stays fast even in the
- * slow environments this reveal is meant to mitigate.
- *
- * It is deliberately FAIL-OPEN: only a definitive "file absent" result
- * (`ENOENT`/`ENOTDIR`) counts as "no project". Any transient/ambiguous filesystem error
- * — notably `EMFILE` from extension-host file-handle exhaustion, which is exactly the
- * condition that makes the sidebar disappear for minutes — shows the (inert) placeholder
- * rather than hiding it. `${command:...}` source directories, which cannot be resolved by
- * this non-interactive preflight, likewise fail open. A false positive is harmless (the
- * placeholder is inert and self-clears once init settles); the authoritative end-of-init
- * reveal remains the source of truth for the real project views.
+ * Cheap, best-effort preflight: returns true when a non-excluded workspace folder plausibly has a
+ * CMake project (one `CMakeLists.txt` stat per configured source dir; no project/kit/preset init,
+ * subprocess, or recursive scan). Fails open — only a definitive `ENOENT`/`ENOTDIR` counts as
+ * "no project", so transient errors (e.g. `EMFILE`) and `${command:...}` source dirs still show the
+ * placeholder. A false positive is harmless: the placeholder is inert and self-clears once init settles.
  */
 async function workspaceHasCMakeProjectForInitialization(): Promise<boolean> {
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
@@ -3068,33 +3055,27 @@ async function workspaceHasCMakeProjectForInitialization(): Promise<boolean> {
                 if (!sourceDirectory) {
                     continue;
                 }
-                // A ${command:...} source directory cannot be resolved by this cheap, non-interactive
-                // preflight. Fail open: show the placeholder (it self-clears if no project materializes).
+                // Can't resolve ${command:...} cheaply; fail open.
                 if (sourceDirectory.includes('${command:')) {
                     return true;
                 }
                 let sourceDir = util.lightNormalizePath(await expandString(sourceDirectory, expansionOptions));
                 if (path.basename(sourceDir).toLocaleLowerCase() === 'cmakelists.txt') {
-                    // Tolerate a sourceDirectory that already points at the CMakeLists.txt file,
-                    // matching normalizeAndVerifySourceDir()'s behavior.
+                    // Tolerate a sourceDirectory pointing directly at CMakeLists.txt (matches normalizeAndVerifySourceDir).
                     sourceDir = path.dirname(sourceDir);
                 }
                 try {
                     await fs.stat(path.join(sourceDir, 'CMakeLists.txt'));
-                    return true; // A CMakeLists.txt is present — this is a CMake project.
+                    return true;
                 } catch (statErr) {
                     if (isDefinitivelyAbsentError((statErr as NodeJS.ErrnoException)?.code)) {
-                        continue; // Definitively no CMakeLists.txt here; keep checking other source dirs/folders.
+                        continue; // Definitively absent; keep checking.
                     }
-                    // Transient/ambiguous error (e.g. EMFILE from extension-host file-handle exhaustion,
-                    // EACCES). Fail open so the placeholder still appears in exactly the resource-starved
-                    // environments this reveal is meant to help.
-                    return true;
+                    return true; // Transient/ambiguous error (e.g. EMFILE): fail open.
                 }
             }
         } catch (e) {
-            // Config/expansion error: fail open. The authoritative end-of-init reveal remains the
-            // source of truth for whether the real project views appear.
+            // Config/expansion error: fail open.
             log.debug(localize('init.preflight.inconclusive', 'CMake initialization preflight for folder {0} was inconclusive ({1}); showing the initializing placeholder.', folder.uri.fsPath, util.errorToString(e)));
             return true;
         }
@@ -3166,23 +3147,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
 
-    // Two-phase activation reveal: back the transient placeholder view and show the
-    // CMake activity-bar container with an "initializing" state as soon as the
-    // manager exists, so the sidebar is visible immediately instead of staying
-    // hidden for the entire (potentially slow) init(). The real views, commands,
-    // and status bar remain gated on cmake:enableFullFeatureSet, so nothing runs
-    // against a not-yet-ready backend.
-    context.subscriptions.push(vscode.window.registerTreeDataProvider('cmake.initializing', new InitializingViewProvider()));
+    // Two-phase reveal: show the CMake activity-bar container with an "initializing" placeholder (from
+    // viewsWelcome) as soon as the manager exists; real views/commands/status stay gated on
+    // cmake:enableFullFeatureSet until init() completes.
     const languageServerOnlyMode = extensionManager.getWorkspaceConfig().languageServerOnlyMode;
-    // Skip the filesystem preflight entirely in language-server-only mode, where the project
-    // UI (and therefore the placeholder) is intentionally never shown.
+    // The placeholder is never shown in language-server-only mode, so skip the preflight there.
     const hasCMakeProject = !languageServerOnlyMode && await workspaceHasCMakeProjectForInitialization();
     const showInitializingView = shouldShowInitializingView(hasCMakeProject, languageServerOnlyMode);
     try {
         if (showInitializingView) {
-            // Use setContextValue directly (not setContextAndStore): cmake:isInitializing gates only
-            // UI visibility and is referenced by no command, so it must not trigger the active-commands
-            // recompute that setContextAndStore performs.
+            // setContextValue (not setContextAndStore): this key gates only UI visibility, so it must
+            // not trigger an active-commands recompute.
             await util.setContextValue(initializingContextKey, true);
         }
         await extensionManager.init();
@@ -3192,9 +3167,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
 
         return await setup(context);
     } finally {
-        // Clear the placeholder once activation settles (success or failure) so the
-        // icon never sticks; the real views take over via cmake:enableFullFeatureSet
-        // when a valid CMake project is present.
+        // Always clear the placeholder so the icon never sticks on failure or when no project is found.
         await util.setContextValue(initializingContextKey, false);
     }
 }
