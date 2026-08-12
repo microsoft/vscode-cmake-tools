@@ -1,3 +1,4 @@
+import { hasExplicitBuildPresetTargets, presetTargetsReset, resolveDefaultBuildTargets, shouldOfferPresetTargetsReset } from '@cmt/buildTargetSelection';
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
@@ -2693,16 +2694,19 @@ export class CMakeProject {
         if (target === null) {
             return -1;
         }
-        let targets: string | string[] | undefined = target;
-        if (target === this.targetsInPresetName) {
+        let targets: string | string[] | undefined;
+        if (target === presetTargetsReset) {
             targets = this.buildPreset?.targets;
+        } else {
+            targets = target;
         }
         return (await this.build(util.isString(targets) ? [targets] : targets)).exitCode;
     }
 
     private readonly targetsInPresetName = localize('targests.in.preset', '[Targets In Preset]');
 
-    async showTargetSelector(): Promise<string | null> {
+    async showTargetSelector(allowPresetReset: boolean = false): Promise<string | typeof presetTargetsReset | null> {
+        type BuildTargetQuickPickItem = vscode.QuickPickItem & { isPresetReset?: boolean };
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
             void vscode.window.showErrorMessage(localize('set.up.before.selecting.target', 'Set up your CMake project before selecting a target.'));
@@ -2714,11 +2718,6 @@ export class CMakeProject {
         } else {
             const folders: string[] = [];
             const itemsGroup: (RichTarget | NamedTarget | FolderTarget)[] = [];
-
-            // Add special "[Targets In Preset]" option when using presets with defined targets
-            if (this.useCMakePresets && this.buildPreset?.targets) {
-                itemsGroup.push({ type: 'named', name: this.targetsInPresetName });
-            }
 
             // group the data
             drv.uniqueTargets.forEach((t) => {
@@ -2742,7 +2741,7 @@ export class CMakeProject {
                 }
             });
 
-            const choicesGroup = itemsGroup.map((t): vscode.QuickPickItem => {
+            const choicesGroup = itemsGroup.map((t): BuildTargetQuickPickItem => {
                 switch (t.type) {
                     case 'named': {
                         return {
@@ -2759,7 +2758,23 @@ export class CMakeProject {
                 }
             });
 
+            // Offer "[Targets In Preset]" so the user can return to the preset-defined targets (or
+            // the default target) after having pinned a specific one. When the build preset has no
+            // explicit targets this reset only applies to the persisted default-target picker, so
+            // it is gated by allowPresetReset (see shouldOfferPresetTargetsReset).
+            if (shouldOfferPresetTargetsReset(this.useCMakePresets, allowPresetReset, hasExplicitBuildPresetTargets(this.buildPreset?.targets))) {
+                choicesGroup.unshift({
+                    label: this.targetsInPresetName,
+                    description: localize('targets.in.preset.description', 'Build the targets defined by the active build preset'),
+                    isPresetReset: true
+                });
+            }
+
             const selGroup = await vscode.window.showQuickPick(choicesGroup, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
+
+            if (selGroup?.isPresetReset) {
+                return presetTargetsReset;
+            }
 
             // exit if we do not group the folders or if we got something other than a folder
             if (!selGroup || !this.workspaceContext.config.useFolderPropertyInBuildTargetDropdown || selGroup.description !== "FOLDER") {
@@ -3054,21 +3069,15 @@ export class CMakeProject {
     public get defaultBuildTarget(): string | null {
         return this.workspaceContext.state.getDefaultBuildTarget(this.folderName, this.isMultiProjectFolder);
     }
-    private async setDefaultBuildTarget(v: string) {
+    private async setDefaultBuildTarget(v: string | null) {
         await this.workspaceContext.state.setDefaultBuildTarget(this.folderName, v, this.isMultiProjectFolder);
-        this.targetName.set(v);
+        this.targetName.set(v ?? this.targetsInPresetName);
     }
 
     public async getDefaultBuildTargets(): Promise<string[] | undefined> {
         const defaultTarget = this.defaultBuildTarget;
-        let targets: string | string[] | undefined = defaultTarget || undefined;
-        if (this.useCMakePresets && (!defaultTarget || defaultTarget === this.targetsInPresetName)) {
-            targets = this.buildPreset?.targets;
-        }
-        if (!this.useCMakePresets && !defaultTarget) {
-            targets = await this.allTargetName;
-        }
-        return util.isString(targets) ? [targets] : targets;
+        const allTargetName = (!this.useCMakePresets && !defaultTarget) ? await this.allTargetName : '';
+        return resolveDefaultBuildTargets(this.useCMakePresets, defaultTarget, this.targetsInPresetName, this.buildPreset?.targets, allTargetName);
     }
 
     /**
@@ -3077,7 +3086,14 @@ export class CMakeProject {
      */
     async setDefaultTarget(target?: string | null) {
         if (!target) {
-            target = await this.showTargetSelector();
+            const selected = await this.showTargetSelector(true);
+            // "[Targets In Preset]" clears the persisted default so building follows the preset-defined
+            // targets (or the default target) again, rather than a previously pinned target.
+            if (selected === presetTargetsReset) {
+                await this.setDefaultBuildTarget(null);
+                return;
+            }
+            target = selected;
         }
         if (!target) {
             return;
