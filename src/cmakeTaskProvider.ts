@@ -567,7 +567,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             // (mise, asdf, vfox, ...) can resolve the cmake shim; otherwise the child inherits
             // the extension host's process.cwd(), which may be outside the workspace.
             if (this.options.cwd === undefined) {
-                this.options.cwd = cmakeDriver.binaryDir || cmakeDriver.sourceDir || this.workspaceFolder?.uri.fsPath;
+                this.options.cwd = cmakeDriver.sourceDir || cmakeDriver.binaryDir || this.workspaceFolder?.uri.fsPath;
             }
             this.preset = await this.resolvePresetName(this.preset, project.useCMakePresets, CommandType.build);
             if (this.preset) {

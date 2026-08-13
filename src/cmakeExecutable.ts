@@ -49,8 +49,10 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
     // what causes 'path' to be undefined here.
     if (path && path.length !== 0) {
         const normalizedPath = util.platformNormalizePath(path);
-        if (cmakeInfo.has(normalizedPath)) {
-            const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
+        const normalizedCwd = cwd !== undefined ? util.platformNormalizePath(cwd) : '';
+        const cacheKey = `${normalizedPath}@${normalizedCwd}`;
+        if (cmakeInfo.has(cacheKey)) {
+            const cmakeExe: CMakeExecutable = cmakeInfo.get(cacheKey)!;
             if (cmakeExe.isPresent) {
                 await setCMakeDebuggerAvailableContext(
                     cmakeExe.isDebuggerSupported?.valueOf() ?? false
@@ -94,7 +96,7 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
             }
         } catch {
         }
-        cmakeInfo.set(normalizedPath, cmake);
+        cmakeInfo.set(cacheKey, cmake);
     }
     return cmake;
 }

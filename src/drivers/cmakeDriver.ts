@@ -2021,7 +2021,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding, cwd: this.binaryDir || undefined };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding, cwd: this.sourceDir || undefined };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();
