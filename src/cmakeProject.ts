@@ -1170,7 +1170,7 @@ export class CMakeProject {
      */
     private showAutoDetectedSourceDirectoryNotification(sourceDir: string, config: ConfigurationReader | undefined, isConfiguring: boolean): void {
         const relativeSourceDir: string = path.relative(this.workspaceContext.folder.uri.fsPath, sourceDir) || sourceDir;
-        const changeAction: string = localize("change.source.directory", "Change\u2026");
+        const changeAction: string = localize("change.source.directory", "Change...");
         const dontAutoDetectAction: string = localize("do.not.auto.detect.source.directory", "Don't auto-detect");
         void vscode.window.showInformationMessage(
             localize("auto.detected.source.directory", "CMake Tools detected and activated the project in '{0}'.", relativeSourceDir),
@@ -2663,12 +2663,17 @@ export class CMakeProject {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
-                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
+                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
             });
             await this.cacheEditorWebview.initPanel();
 
+            const refreshCacheEditor = this.onReconfigured(() => rollbar.invokeAsync(
+                localize('refresh.cache.editor.after.configure', 'Refresh the CMake Cache Editor after configure'),
+                async () => this.cacheEditorWebview?.refreshPanel()
+            ));
             this.cacheEditorWebview.panel.onDidDispose(() => {
+                refreshCacheEditor.dispose();
                 this.cacheEditorWebview = undefined;
             });
         } else {
