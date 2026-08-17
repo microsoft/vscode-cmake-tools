@@ -70,9 +70,9 @@ export class PresetsController implements vscode.Disposable {
             );
         }, presetsController._presetsChangedEmitter.fire, presetsController._userPresetsChangedEmitter.fire);
 
-        // Pass cmake.environment and cmake.configureEnvironment settings so that $penv{} in preset
-        // include paths can resolve variables defined in VS Code settings.
-        presetsController.updateSettingsEnvironment();
+        // Pass the setup-script env plus cmake.environment and cmake.configureEnvironment settings
+        // so that $penv{} in preset include paths can resolve variables from those sources.
+        await presetsController.updateSettingsEnvironment();
 
         // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
         // there might be timing issues, since listeners are invoked async.
@@ -104,11 +104,15 @@ export class PresetsController implements vscode.Disposable {
         // We need to reapply presets when environment settings change so that $penv{} expansions
         // in include paths are re-evaluated with the updated environment variables.
         project.workspaceContext.config.onChange('environment', async () => {
-            presetsController.updateSettingsEnvironment();
+            await presetsController.updateSettingsEnvironment();
             await presetsController.reapplyPresets();
         });
         project.workspaceContext.config.onChange('configureEnvironment', async () => {
-            presetsController.updateSettingsEnvironment();
+            await presetsController.updateSettingsEnvironment();
+            await presetsController.reapplyPresets();
+        });
+        project.workspaceContext.config.onChange('environmentSetupScript', async () => {
+            await presetsController.updateSettingsEnvironment();
             await presetsController.reapplyPresets();
         });
 
@@ -118,14 +122,17 @@ export class PresetsController implements vscode.Disposable {
     private constructor(private readonly project: CMakeProject, private readonly _kitsController: KitsController, private isMultiProject: boolean) {}
 
     /**
-     * Merges cmake.environment and cmake.configureEnvironment settings into a single
-     * environment object and passes it to the PresetsParser for $penv{} expansion.
-     * cmake.configureEnvironment takes precedence over cmake.environment.
+     * Merges the `cmake.environmentSetupScript` environment, cmake.environment, and
+     * cmake.configureEnvironment settings into a single environment object and passes it to the
+     * PresetsParser for $penv{} expansion in preset include paths. Explicit settings take
+     * precedence over the setup-script environment; cmake.configureEnvironment takes precedence
+     * over cmake.environment.
      */
-    private updateSettingsEnvironment(): void {
+    private async updateSettingsEnvironment(): Promise<void> {
+        const setupScriptEnv = await preset.getEnvironmentSetupScriptEnv(this.project.workspaceFolder.uri.fsPath, this.project.sourceDir) ?? {};
         const env = this.project.workspaceContext.config.environment;
         const configureEnv = this.project.workspaceContext.config.configureEnvironment;
-        this._presetsParser.settingsEnvironment = EnvironmentUtils.merge([env, configureEnv]);
+        this._presetsParser.settingsEnvironment = EnvironmentUtils.merge([setupScriptEnv, env, configureEnv]);
     }
 
     get presetsPath() {

@@ -245,6 +245,7 @@ export interface ExtensionConfigurationSettings {
     options: OptionConfig;
     useCMakePresets: UseCMakePresets;
     useVsDeveloperEnvironment: UseVsDeveloperEnvironment;
+    environmentSetupScript: string;
     allowCommentsInPresetsFile: boolean;
     allowUnsupportedPresetsVersions: boolean;
     launchBehavior: string;
@@ -529,6 +530,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get useVsDeveloperEnvironment(): UseVsDeveloperEnvironment {
         return this.configData.useVsDeveloperEnvironment;
     }
+    get environmentSetupScript(): string {
+        return this.configData.environmentSetupScript;
+    }
     get allowCommentsInPresetsFile(): boolean {
         return this.configData.allowCommentsInPresetsFile;
     }
@@ -768,6 +772,7 @@ export class ConfigurationReader implements vscode.Disposable {
         options: new vscode.EventEmitter<OptionConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
         useVsDeveloperEnvironment: new vscode.EventEmitter<UseVsDeveloperEnvironment>(),
+        environmentSetupScript: new vscode.EventEmitter<string>(),
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),

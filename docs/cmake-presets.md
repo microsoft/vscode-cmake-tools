@@ -193,6 +193,12 @@ Environment variables set in a Configure Preset also automatically flow to assoc
 
 You can reference environment variables by using the `$env{<variable-name>}` and `$penv{<variable-name>}` syntax. For more information, see [Macro Expansion](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#macro-expansion).
 
+### Bootstrap the parent environment from a setup script
+
+Some environments cannot be expressed as static `environment` entries — for example when the required variables are large, interdependent, or produced by a tool's own setup script. For these cases, set `cmake.environmentSetupScript` to a script that CMake Tools sources (Linux/macOS) or calls (Windows) before working with presets. The resulting environment becomes the parent environment, so it is available both when expanding preset macros (including `$penv{<variable-name>}` in `include` paths and toolchain files) and when running configure, build, and test.
+
+This is the cross-platform counterpart to the Visual Studio Developer Environment, which CMake Tools sources automatically for Visual C++ toolsets (see `cmake.useVsDeveloperEnvironment`). The setting value supports variable substitution such as `${workspaceFolder}`.
+
 ### Select your target and host architecture when building with the Visual C++ toolset
 
 The target architecture (x64, Win32, ARM64, or ARM) can be set with `architecture.value`. This is equivalent to passing `-A` to CMake from the command line. For more information, see [Platform Selection](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2016%202019.html#platform-selection).
