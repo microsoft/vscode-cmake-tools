@@ -375,6 +375,20 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
+/**
+ * Builds the failure message for a test that CTest did not report as passed and that has an
+ * "Exit Value" measurement. CTest writes a companion "Exit Code" measurement next to it: for an
+ * ordinary non zero exit it is "Failed", but when the test was killed by a signal or timed out it
+ * names the cause ("SEGFAULT", "Timeout", "ILLEGAL", ...) while "Exit Value" is typically 0, which
+ * would read like success. In that case the message names the "Exit Code" status instead.
+ */
+export function getTestFailureMessage(testName: string, output: string, exitValue: string, exitStatus: string | undefined): string {
+    if (exitStatus !== undefined && exitStatus !== 'Failed' && exitStatus !== 'Completed' && !/^-?\d+$/.test(exitStatus)) {
+        return localize('test.failed.with.signal', '{0}\nTest {1} failed with {2} (exit value {3}).', output, testName, exitStatus, exitValue);
+    }
+    return localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitValue);
+}
+
 export class CTestOutputLogger extends proc.CommandConsumer {
     override output(line: string) {
         log.info(line);
@@ -949,13 +963,14 @@ export class CTestDriver implements vscode.Disposable {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
             const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
             const exitCode = testResult.measurements.get("Exit Value")?.value;
+            const exitStatus = testResult.measurements.get("Exit Code")?.value;
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
             if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
+                    new vscode.TestMessage(getTestFailureMessage(testName, output, exitCode, exitStatus)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
