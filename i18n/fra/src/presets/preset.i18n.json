@@ -24,6 +24,7 @@
 	"no.cl.toolset.version": "Configurer la présélection {0} : aucune version de l’ensemble d’outils spécifiée pour cl.exe, utilisation de la dernière version par défaut",
 	"unknown.toolset.option": "L’option d’ensemble d’outils non reconnu sera ignorée : {0}",
 	"specified.vs.not.found": "Configurer les {0} prédéfinies : Instance Visual Studio spécifiée par {1} est introuvable, ce qui revient au comportement de recherche d’instance par défaut.",
+	"using.vendor.vs.version": "Présélection de configuration {0} : utilisation de la version majeure de Visual Studio {1} à partir des paramètres du fournisseur.",
 	"specified.cl.not.found": "Configurer la présélection {0} : La compilation {1} avec le jeu d'outils {2} et l'architecture {3} n'a pas été trouvé, vous devrez peut-être exécuter la commande 'CMake : Scan for Compilers' si ce jeu d'outils existe sur votre ordinateur.",
 	"vs.not.found": "Configurer la présélection {0} : aucune installation de Visual Studio prenant en charge l’ensemble d’outils spécifié {1} et l’architecture {2} n’a été trouvé. Vous devrez peut-être exécuter la commande « CMake: Scan for Compilers » (« CMake : rechercher des compilateurs ») si cet ensemble d’outils existe sur votre ordinateur.",
 	"using.vs.instance": "Utilisation de l’environnement de développement à partir de Visual Studio (instance {0}, version {1}, installé sur {2})",
