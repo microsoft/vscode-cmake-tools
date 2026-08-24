@@ -51,7 +51,30 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
     private modules: Modules = {};
     private policies: Policies = {};
 
-    private constructor() {
+    private loadPromise?: Promise<boolean>;
+    private disposed = false;
+
+    private constructor(private readonly onLoadError?: (error: unknown) => void) {
+    }
+
+    /**
+     * Lazily load the bundled language-service data on first use. The load is
+     * memoized so concurrent hover/completion requests share a single read, and
+     * a failure is memoized as `false` (never a rejected promise and never
+     * cleared) so providers stop retrying the four files on every keystroke.
+     */
+    private ensureLoaded(): Promise<boolean> {
+        return this.loadPromise ??= this.load().then(
+            () => true,
+            (error) => {
+                this.onLoadError?.(error);
+                return false;
+            }
+        );
+    }
+
+    public dispose(): void {
+        this.disposed = true;
     }
 
     private async getFile(fileEnding: string, locale: string): Promise<string> {
@@ -128,13 +151,23 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             .concat(this.getCompletionSuggestionsHelper(currentWord, this.modules, LanguageType.Module, beforeCurrentWord));
     }
 
-    public static async create(): Promise<LanguageServiceData> {
-        const data = new LanguageServiceData();
-        await data.load();
-        return data;
+    public static create(onLoadError?: (error: unknown) => void): LanguageServiceData {
+        return new LanguageServiceData(onLoadError);
     }
 
-    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, _context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
+    async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, _context: vscode.CompletionContext): Promise<vscode.CompletionItem[] | undefined> {
+        if (this.disposed || token.isCancellationRequested) {
+            return undefined;
+        }
+
+        if (!await this.ensureLoaded()) {
+            return undefined;
+        }
+
+        if (this.disposed || token.isCancellationRequested) {
+            return undefined;
+        }
+
         const wordAtPosition = document.getWordRangeAtPosition(position);
         const beforeWordAtPosition = wordAtPosition ? document.getText(new vscode.Range(new vscode.Position(position.line, 0), new vscode.Position(position.line, wordAtPosition.start.character))) : undefined;
 
@@ -144,10 +177,6 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             currentWord = word.substr(0, position.character - wordAtPosition.start.character);
         }
 
-        if (token.isCancellationRequested) {
-            return null;
-        }
-
         return this.getCompletionSuggestions(currentWord, beforeWordAtPosition);
     }
 
@@ -155,13 +184,21 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
         return item;
     }
 
-    provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
+    async provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): Promise<vscode.Hover | undefined> {
+        if (this.disposed || token.isCancellationRequested) {
+            return undefined;
+        }
+
+        if (!await this.ensureLoaded()) {
+            return undefined;
+        }
+
+        if (this.disposed || token.isCancellationRequested) {
+            return undefined;
+        }
+
         const range = document.getWordRangeAtPosition(position);
         const value = document.getText(range);
-
-        if (token.isCancellationRequested) {
-            return null;
-        }
 
         // Check for CMake policy identifiers (e.g., CMP0177)
         const policy = this.policies[value];
@@ -189,6 +226,6 @@ export class LanguageServiceData implements vscode.HoverProvider, vscode.Complet
             return new vscode.Hover(markdown);
         }
 
-        return null;
+        return undefined;
     }
 }
