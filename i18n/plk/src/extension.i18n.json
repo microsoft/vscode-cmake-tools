@@ -71,7 +71,7 @@
 	"yes": "Tak",
 	"no": "Nie",
 	"all.bookmarks.cleared": "Wyczyszczono wszystkie zakładki",
-	"init.preflight.inconclusive": "Wstępny pakiet testowy inicjowania narzędzia CMake dla folderu {0} był niejednoznaczny ({1}); wyświetlanie symbolu zastępczego inicjowania.",
+	"init.preflight.inconclusive": "Wstępna kontrola inicjalizacji narzędzia CMake dla folderu {0} nie dała jednoznacznego wyniku ({1}); wyświetlany jest symbol zastępczy inicjalizacji.",
 	"uninstall.old.cmaketools": "Odinstaluj wszystkie starsze wersje rozszerzenia narzędzi CMake Tools. Jest ono teraz publikowane przez firmę Microsoft, począwszy od wersji 1.2.0.",
 	"uninstall.twxs.uninstall": "Odinstaluj rozszerzenie twxs.cmake",
 	"uninstall.twxs.cmaketools": "Rekomendujemy odinstalowanie rozszerzenia twxs.cmake. Rozszerzenie CMake Tools udostępnia teraz usługi językowe i nie zależy już od rozszerzenia twxs.cmake.",
