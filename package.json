@@ -4591,7 +4591,7 @@
     "tmp": "^0.2.7",
     "jws": "^4.0.1",
     "serialize-javascript": "^7.0.4",
-    "**/minimatch/brace-expansion": "^1.1.13"
+    "**/minimatch/brace-expansion": "^1.1.16"
   },
   "packageManager": "yarn@1.22.22"
 }
