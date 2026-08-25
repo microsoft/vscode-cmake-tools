@@ -39,7 +39,6 @@
 	"setting.new.variant": "正在设置新变量 {0}",
 	"command.version.test.return.code": "{0} 返回了代码 {1}",
 	"trying.to.detect.generator": "正在尝试检测系统支持的生成器",
-	"compiler.version.return.code": "{0} 返回了代码 {1}",
 	"no.cached.config": "没有任何缓存的配置可以用于 IntelliSense",
 	"start.configure": "开始配置",
 	"use.cached.configuration": "使用缓存配置",
