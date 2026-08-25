@@ -60,6 +60,7 @@ Bug Fixes:
 - Fix “Make it easier for a new developer of CMake Tools to run tests” on Windows. [#4932](https://github.com/microsoft/vscode-cmake-tools/pull/4932) [@cwalther](https://github.com/cwalther)
 - Show the CMake Tools activity-bar view immediately with an "initializing" placeholder instead of hiding the entire sidebar until CMake, kit, preset, and Visual Studio developer-environment probing completes. On machines where those probes are intermittently slow (e.g. aggressive antivirus scanning of spawned processes, or extension-host file-handle exhaustion), the sidebar no longer disappears for minutes during activation. Project commands, menus, and status items remain gated on full readiness, so nothing runs against a partially-initialized project. [#5027](https://github.com/microsoft/vscode-cmake-tools/pull/5027)
 - Refresh the open CMake Cache Editor when configuration changes cache values externally. [#3635](https://github.com/microsoft/vscode-cmake-tools/issues/3635)
+- Avoid building the project multiple times when a single `launch.json` configuration uses several `${command:cmake.launchTargetPath}`-style substitutions (e.g. `cmake.launchTargetDirectory` plus `cmake.launchTargetPath`). All such substitutions in one launch now share a single build; a later launch still rebuilds as needed. [#5051](https://github.com/microsoft/vscode-cmake-tools/issues/5051)
 
 ## 1.23.52
 
