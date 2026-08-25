@@ -20,6 +20,7 @@ import { CMakeProject } from '@cmt/cmakeProject';
 import { handleCoverageInfoFiles } from '@cmt/coverage';
 import { CommandResult } from 'vscode-cmake-tools';
 import { FailurePattern, FailurePatternsConfig } from '@cmt/config';
+import { getCTestDiscoveryArgument } from '@cmt/ctestVersion';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -436,6 +437,9 @@ export class CTestDriver implements vscode.Disposable {
     }
     set tests(v: CTestInfo | undefined) {
         this._tests = v;
+        if (v !== undefined) {
+            this._legacyTests = undefined;
+        }
         this.testsChangedEmitter.fire(v);
     }
 
@@ -448,11 +452,28 @@ export class CTestDriver implements vscode.Disposable {
     }
     set legacyTests(v: LegacyCTestInfo[] | undefined) {
         this._legacyTests = v;
+        if (v !== undefined) {
+            this._tests = undefined;
+        }
         this.testsChangedEmitter.fire(undefined);
     }
 
     private readonly testsChangedEmitter = new vscode.EventEmitter<CTestInfo | undefined>();
     readonly onTestsChanged = this.testsChangedEmitter.event;
+
+    private updateTestsFromJsonOutput(output: string): CTestInfo | undefined {
+        let tests: CTestInfo | undefined;
+        try {
+            tests = JSON.parse(output.slice(output.indexOf("{"))) ?? undefined;
+        } catch {
+            return undefined;
+        }
+
+        if (tests) {
+            this.tests = tests;
+        }
+        return tests;
+    }
 
     private testItemCollectionToArray(collection: vscode.TestItemCollection): vscode.TestItem[] {
         if (!collection) {
@@ -1439,10 +1460,12 @@ export class CTestDriver implements vscode.Disposable {
 
         const ctestArgs = await this.getCTestArgs(driver);
 
-        // The difference between the following two branches is dependent on the cmake version.
-        // first branch is for CMake versions < 3.14, second branch is for CMake versions >= 3.14
-        // The branches are needed because test information is provided in different formats.
-        if (!driver.cmake.version || util.versionLess(driver.cmake.version, { major: 3, minor: 14, patch: 0 })) {
+        const versionResult = await driver.executeCommand(ctestpath, ['--version'], undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const discoveryArgument = getCTestDiscoveryArgument(versionResult.retc === 0 ? versionResult.stdout : undefined);
+
+        // CTest versions before 3.14 do not support JSON test discovery. Unknown versions also
+        // use the legacy listing because some old versions interpret the JSON argument as a test filter.
+        if (discoveryArgument === '-N') {
             return this.extractTestsCommand(driver, ctestpath, ['-N', ...(ctestArgs ?? [])], async (result) => {
                 const tests = result.stdout?.split('\n')
                     .map(l => l.trim())
@@ -1457,14 +1480,10 @@ export class CTestDriver implements vscode.Disposable {
                 }
             });
         } else {
-            return this.extractTestsCommand(driver, ctestpath, ['--show-only=json-v1', ...(ctestArgs ?? [])], async (result) => {
-                try {
-                    this.tests = JSON.parse(result.stdout.slice(result.stdout.indexOf("{"))) ?? undefined;
-                } catch {
-                    this.tests = undefined;
-                }
+            return this.extractTestsCommand(driver, ctestpath, [discoveryArgument, ...(ctestArgs ?? [])], async (result) => {
+                const tests = this.updateTestsFromJsonOutput(result.stdout);
 
-                if (refreshTestExplorer && this.tests) {
+                if (refreshTestExplorer && tests) {
                     await this.refreshTestsInTestExplorer(driver, ctestArgs, "CTestInfo");
                 }
             });
