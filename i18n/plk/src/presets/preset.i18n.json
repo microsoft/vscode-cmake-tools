@@ -24,7 +24,7 @@
 	"no.cl.toolset.version": "Predefiniowana konfiguracja {0}: nie określono wersji zestawu narzędzi dla cl.exe, domyślnie używając najnowszej",
 	"unknown.toolset.option": "Nierozpoznana opcja zestawu narzędzi zostanie zignorowana: {0}",
 	"specified.vs.not.found": "Skonfiguruj wstępnie ustawione {0}: nie znaleziono wystąpienia programu Visual Studio określonego przez {1}, co powoduje powrót do domyślnego zachowania wyszukiwania wystąpienia.",
-	"using.vendor.vs.version": "Ustawienie wstępne konfiguracji {0}: używana jest wersja główna {1} programu Visual Studio z ustawień dostawcy.",
+	"using.vendor.vs.version": "Konfigurowanie ustawień wstępnych {0}: używanie wersji głównej {1} programu Visual Studio z poziomu ustawień dostawcy.",
 	"specified.cl.not.found": "Konfigurowanie ustawień wstępnych {0}: nie znaleziono kompilatora {1} z zestawem narzędzi {2} i architekturą {3}. Może być konieczne uruchomienie elementu „CMake: skanuj w poszukiwaniu kompilatorów”, jeśli istnieje on na komputerze.",
 	"vs.not.found": "Skonfiguruj ustawienie wstępne {0}: nie znaleziono żadnej instalacji programu Visual Studio obsługującej określony zestaw narzędzi {1} i architektury {2}. Jeśli ten zestaw narzędzi istnieje na komputerze, może być konieczne uruchomienie polecenia „CMake: Scan for Compilers”.",
 	"using.vs.instance": "Korzystanie ze środowiska deweloperskiego programu Visual Studio (wystąpienie {0}, wersja {1} zainstalowane w {2})",

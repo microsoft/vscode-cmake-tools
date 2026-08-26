@@ -71,7 +71,7 @@
 	"yes": "Sí",
 	"no": "No",
 	"all.bookmarks.cleared": "Todos los marcadores borrados",
-	"init.preflight.inconclusive": "La comprobación previa de la inicialización de CMake para la carpeta {0} no fue concluyente ({1}); se muestra el marcador de posición de inicialización.",
+	"init.preflight.inconclusive": "La inicialización prepiloto de CMake para la carpeta {0} no era concluyente ({1}); se muesta el marcador de posición de inicialización.",
 	"uninstall.old.cmaketools": "Desinstale cualquier versión anterior de la extensión CMake Tools, que ahora publica Microsoft a partir de la versión 1.2.0.",
 	"uninstall.twxs.uninstall": "Desinstalar twxs.cmake",
 	"uninstall.twxs.cmaketools": "Se recomienda desinstalar la extensión twxs.cmake. La extensión CMake Tools ahora proporciona Language Services y ya no depende de twxs.cmake.",
