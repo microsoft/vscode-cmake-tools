@@ -50,6 +50,19 @@ jobs:
           mkdir -p .build/node_modules_cache
           tar -czf .build/node_modules_cache/cache.tgz node_modules
 
+      # Guard the checked-in translations. The ledger check runs on every PR and fails fast (before
+      # the expensive build) if a human-reviewed translation fix was reverted; it is safe on normal
+      # PRs because it compares against the ledger, not the current English.
+      - name: Verify translation fixes
+        run: node tools/translation-verifier.js --ledger-only
+
+      # The placeholder/variable lint compares translations against the current English, so it only
+      # runs on the automatic-localization PR (where translations are what changed); running it on a
+      # PR that edits an English string would fail before the translations can be regenerated.
+      - name: Verify localization import (placeholders)
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'localization'
+        run: node tools/translation-verifier.js --corpus-only
+
       - name: Build the extension
         run: yarn compile-production-ci
 
