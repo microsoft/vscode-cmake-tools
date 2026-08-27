@@ -19,8 +19,11 @@ on:
 
 permissions:
   contents: read
+  # issues + pull-requests write cover the label/comment endpoints (they accept either). In orgs
+  # that cap the Actions token to read-only, these writes fail 403; the workflow degrades to the
+  # failing check plus inline annotations rather than erroring. See tools/localization-readiness.js.
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: localization-readiness-${{ github.event.pull_request.number }}

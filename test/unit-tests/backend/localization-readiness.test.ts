@@ -6,11 +6,21 @@ const readiness = require(path.resolve(__dirname, '../../../tools/localization-r
 
 // A minimal in-memory mock of the pieces of the Octokit client the readiness logic uses. It records
 // label state and comments so a test can assert what the workflow would do to a real PR.
-function makeMockGitHub(options: { headSha: string; existingComments?: any[] }) {
+function makeMockGitHub(options: { headSha: string; existingComments?: any[]; writeErrorStatus?: number }) {
     const labels = new Set<string>();
     const comments: any[] = (options.existingComments || []).slice();
     const calls: { method: string; args: any }[] = [];
     let commentIdSeq = 1000;
+
+    // When writeErrorStatus is set, all label/comment mutations reject with that HTTP status — used
+    // to simulate a read-only GITHUB_TOKEN (403 "Resource not accessible by integration").
+    const maybeFail = () => {
+        if (options.writeErrorStatus) {
+            const err: any = new Error('Resource not accessible by integration');
+            err.status = options.writeErrorStatus;
+            throw err;
+        }
+    };
 
     const github: any = {
         rest: {
@@ -23,12 +33,14 @@ function makeMockGitHub(options: { headSha: string; existingComments?: any[] }) 
             issues: {
                 addLabels: async (args: any) => {
                     calls.push({ method: 'addLabels', args });
+                    maybeFail();
                     for (const l of args.labels) {
                         labels.add(l);
                     }
                 },
                 removeLabel: async (args: any) => {
                     calls.push({ method: 'removeLabel', args });
+                    maybeFail();
                     if (!labels.has(args.name)) {
                         const err: any = new Error('Label does not exist');
                         err.status = 404;
@@ -39,10 +51,12 @@ function makeMockGitHub(options: { headSha: string; existingComments?: any[] }) 
                 listComments: async () => comments,
                 createComment: async (args: any) => {
                     calls.push({ method: 'createComment', args });
+                    maybeFail();
                     comments.push({ id: ++commentIdSeq, user: { login: 'github-actions[bot]' }, body: args.body });
                 },
                 updateComment: async (args: any) => {
                     calls.push({ method: 'updateComment', args });
+                    maybeFail();
                     const c = comments.find((x) => x.id === args.comment_id);
                     if (c) {
                         c.body = args.body;
@@ -63,7 +77,11 @@ const context: any = {
     serverUrl: 'https://github.com',
     runId: 42
 };
-const core: any = { notice: () => { /* no-op */ } };
+const core: any = { notice: () => { /* no-op */ }, warning: () => { /* no-op */ } };
+function makeCore() {
+    const warnings: string[] = [];
+    return { core: { notice: () => { /* no-op */ }, warning: (m: string) => warnings.push(m) }, warnings };
+}
 
 const HEAD_SHA = 'abcdef1234567890abcdef1234567890abcdef12';
 
@@ -211,6 +229,52 @@ suite('Localization readiness signal', () => {
             expect([...mock.labels]).to.include(readiness.BLOCKING_LABEL); // re-added
             expect(mock.comments).to.have.length(1);
             expect(mock.comments[0].body).to.contain('NOT READY');
+        });
+    });
+
+    suite('read-only token resilience', () => {
+        test('isPermissionError is true only for a 403', () => {
+            expect(readiness.isPermissionError({ status: 403 })).to.equal(true);
+            expect(readiness.isPermissionError({ status: 404 })).to.equal(false);
+            expect(readiness.isPermissionError({ status: 500 })).to.equal(false);
+            expect(readiness.isPermissionError(undefined)).to.equal(false);
+        });
+
+        test('a 403 on label/comment writes is degraded, not thrown (the #5061 failure mode)', async () => {
+            const mock = makeMockGitHub({ headSha: HEAD_SHA, writeErrorStatus: 403 });
+            const { core: recCore, warnings } = makeCore();
+            let threw = false;
+            let result: any;
+            try {
+                result = await readiness.updateLocalizationReadiness({
+                    github: mock.github, context, core: recCore,
+                    verifyOutcome: 'failure', expectedHeadSha: HEAD_SHA,
+                    verifierOutput: '::error file=i18n/deu/src/presets/preset.i18n.json,title=Verified translation reverted::deu / using.vendor.vs.version: reverted.'
+                });
+            } catch {
+                threw = true;
+            }
+            expect(threw, 'a read-only token must not fail the readiness step').to.equal(false);
+            expect(result.degraded).to.equal(true);
+            expect(warnings.length, 'a warning is logged for each blocked write').to.be.greaterThan(0);
+            // It still attempted both writes (so it works the moment the token gains write access).
+            expect(mock.calls.some((c) => c.method === 'addLabels')).to.equal(true);
+            expect(mock.calls.some((c) => c.method === 'createComment' || c.method === 'updateComment')).to.equal(true);
+        });
+
+        test('a non-permission error (500) still throws', async () => {
+            const mock = makeMockGitHub({ headSha: HEAD_SHA, writeErrorStatus: 500 });
+            const { core: recCore } = makeCore();
+            let threw = false;
+            try {
+                await readiness.updateLocalizationReadiness({
+                    github: mock.github, context, core: recCore,
+                    verifyOutcome: 'failure', expectedHeadSha: HEAD_SHA, verifierOutput: ''
+                });
+            } catch {
+                threw = true;
+            }
+            expect(threw, 'an unexpected server error should not be silently swallowed').to.equal(true);
         });
     });
 });

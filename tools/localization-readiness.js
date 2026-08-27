@@ -111,11 +111,23 @@ async function upsertStickyComment(github, { owner, repo, issue_number, body }) 
 }
 
 /**
+ * Whether an Octokit error is a permission failure. In organizations that restrict the Actions
+ * `GITHUB_TOKEN` to read-only, label/comment writes fail with 403 "Resource not accessible by
+ * integration" even when the workflow requests `issues: write`. The readiness signal degrades to the
+ * failing check plus the verifier's inline annotations in that case, rather than erroring the run.
+ * @param {any} error
+ */
+function isPermissionError(error) {
+    return !!error && error.status === 403;
+}
+
+/**
  * Reconcile the readiness signal (label + sticky comment) for the localization PR against the latest
  * verifier result. A stale run (whose head SHA no longer matches the PR) is skipped so it cannot
- * overwrite a newer run's result.
+ * overwrite a newer run's result. Label/comment writes are best-effort: if the token cannot write
+ * (read-only `GITHUB_TOKEN`), the failure is logged and the run continues so the check still enforces.
  * @param {{ github: any, context: any, core: any, verifyOutcome: string, expectedHeadSha: string, verifierOutput?: string }} args
- * @returns {Promise<{ skipped?: boolean, ready?: boolean }>}
+ * @returns {Promise<{ skipped?: boolean, ready?: boolean, degraded?: boolean }>}
  */
 async function updateLocalizationReadiness({ github, context, core, verifyOutcome, expectedHeadSha, verifierOutput }) {
     const owner = context.repo.owner;
@@ -141,19 +153,43 @@ async function updateLocalizationReadiness({ github, context, core, verifyOutcom
     }
     const issues = parseVerifierAnnotations(output);
 
-    await setReadinessLabel(github, { owner, repo, issue_number, ready });
+    let degraded = false;
+    const permissionHint = "The workflow's GITHUB_TOKEN cannot write to this pull request "
+        + "(read-only token). The failing check and the inline annotations still convey readiness; "
+        + "grant Actions read-write permissions to also get the label and comment.";
+
+    try {
+        await setReadinessLabel(github, { owner, repo, issue_number, ready });
+    } catch (error) {
+        if (isPermissionError(error)) {
+            degraded = true;
+            core.warning(`Could not update the "${BLOCKING_LABEL}" label: ${error.message}. ${permissionHint}`);
+        } else {
+            throw error;
+        }
+    }
 
     const runLink = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
     const body = buildReadinessComment({ ready, issues, shaShort: expectedHeadSha.slice(0, 7), runLink });
-    await upsertStickyComment(github, { owner, repo, issue_number, body });
+    try {
+        await upsertStickyComment(github, { owner, repo, issue_number, body });
+    } catch (error) {
+        if (isPermissionError(error)) {
+            degraded = true;
+            core.warning(`Could not post the localization readiness comment: ${error.message}. ${permissionHint}`);
+        } else {
+            throw error;
+        }
+    }
 
-    return { ready };
+    return { ready, degraded };
 }
 
 module.exports = {
     BLOCKING_LABEL,
     MARKER,
     OUTPUT_FILE,
+    isPermissionError,
     parseVerifierAnnotations,
     buildReadinessComment,
     setReadinessLabel,
