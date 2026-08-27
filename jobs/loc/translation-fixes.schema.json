@@ -1,0 +1,49 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Verified localization fixes",
+    "description": "Records human-reviewed translations that must not be silently reverted by the automatic localization import. Enforced by tools/translation-verifier.js (run: node tools/translation-verifier.js, or gulp translations-verify).",
+    "type": "object",
+    "required": ["version", "locales"],
+    "additionalProperties": false,
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "version": {
+            "type": "integer",
+            "description": "Ledger schema version.",
+            "const": 1
+        },
+        "locales": {
+            "type": "object",
+            "description": "Map of locale folder name (as under i18n/, e.g. 'deu', 'ptb', 'chs') to the fixed files in that locale.",
+            "additionalProperties": {
+                "type": "object",
+                "description": "Map of file path relative to the locale folder (e.g. 'src/presets/preset.i18n.json' or 'package.i18n.json') to the fixed keys in that file.",
+                "additionalProperties": {
+                    "type": "object",
+                    "description": "Map of localization key to its verified translation.",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": ["value"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "description": "The exact verified translation that must be present for this key."
+                            },
+                            "source": {
+                                "type": "string",
+                                "description": "The English source string at the time the fix was verified. Used to structurally validate the translation (placeholders, variables, setting references) and to detect when the English text changed and the translation needs re-review."
+                            },
+                            "note": {
+                                "type": "string",
+                                "description": "Optional human-readable provenance for the fix."
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
