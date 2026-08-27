@@ -50,6 +50,16 @@ jobs:
           mkdir -p .build/node_modules_cache
           tar -czf .build/node_modules_cache/cache.tgz node_modules
 
+      # Guard the checked-in translations against manual/non-localization regressions: the ledger
+      # check fails fast (before the expensive build) if a human-reviewed translation fix was
+      # reverted. It is safe on normal PRs because it compares against the ledger, not the current
+      # English. The automatic-localization PR is covered more fully by the Localization Readiness
+      # workflow (full ledger + placeholder/variable verification with a PR comment and label), so it
+      # is skipped here to avoid a duplicate signal.
+      - name: Verify translation fixes
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || github.event.pull_request.head.ref != 'localization'
+        run: node tools/translation-verifier.js --ledger-only
+
       - name: Build the extension
         run: yarn compile-production-ci
 

@@ -93,6 +93,18 @@ directories.forEach(languageId => {
 console.log("Import translations into i18n directory");
 cp.execSync("npm run translations-import");
 
+// Restore any human-reviewed translation fixes that this import reverted (see
+// jobs/loc/translation-fixes.json and tools/translation-verifier.js). Use --ledger-only so a
+// genuinely new placeholder/variable break does not abort publishing the PR; that residual case is
+// surfaced on the pull request by the Localization Readiness workflow instead. Running this before
+// the change check below means a PR whose only change was a reverted fix collapses to no change.
+console.log("Restore human-reviewed translations reverted by the import (ledger)");
+try {
+    cp.execSync("node ./tools/translation-verifier.js --restore --ledger-only", { stdio: "inherit" });
+} catch (e) {
+    console.log("Localization restore reported residual issues; continuing so the pull request still surfaces for review.");
+}
+
 if (!hasAnyChanges()) {
     console.log("No changes detected");
     return;
