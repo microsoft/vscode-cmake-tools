@@ -48,6 +48,7 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { KitsController } from '@cmt/kits/kitsController';
 import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
+import { shouldUsePinnedVsInstanceCMake, vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
@@ -1598,7 +1599,28 @@ export class CMakeProject {
     }
 
     async getCMakePathofProject(): Promise<string> {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        let overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        // When the active configure preset pins a Visual Studio instance via the vsInstanceVersion
+        // vendor field, prefer the CMake bundled with that same instance instead of the latest
+        // installed VS. Only applies on Windows, in presets mode, and only when the user has not
+        // pinned CMake themselves (neither the preset's cmakeExecutable nor the cmake.cmakePath
+        // setting); if that instance ships no bundled CMake, fall back to the normal resolution.
+        if (!overWriteCMakePathSetting && this.useCMakePresets && process.platform === 'win32') {
+            const vsInstallPath = this.configurePreset?.__vsDevEnvInstallationPath;
+            if (shouldUsePinnedVsInstanceCMake({
+                platform: process.platform,
+                useCMakePresets: this.useCMakePresets,
+                presetCMakeExecutable: this.configurePreset?.cmakeExecutable,
+                rawCMakePath: this.workspaceContext.config.rawCMakePath,
+                vsInstallPath
+            })) {
+                const bundledCMake = vsBundledCMakePath(vsInstallPath!);
+                if (await fs.exists(bundledCMake)) {
+                    log.info(localize('using.vs.instance.cmake', 'Using the CMake bundled with the Visual Studio instance selected by vsInstanceVersion: {0}', bundledCMake));
+                    overWriteCMakePathSetting = bundledCMake;
+                }
+            }
+        }
         const envOverride = await this.getCMakePathEnvironment();
         return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
