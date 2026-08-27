@@ -1,0 +1,97 @@
+# Surfaces the result of the localization verifier (tools/translation-verifier.js) directly on the
+# automatic localization pull request, so a not-ready import is obvious before anyone merges it.
+#
+# On the localization PR it posts a single sticky comment, toggles the "localization: not ready"
+# label, and fails this check when the import reverted a reviewed translation or broke a placeholder.
+# On every other PR the job is a no-op that succeeds, so this check can be marked required for `main`
+# in branch protection without blocking unrelated contributions. (Marking it required is the one
+# repository-settings step that turns the signal into a hard merge block.)
+name: Localization Readiness
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+  # issues + pull-requests write cover the label/comment endpoints (they accept either). In orgs
+  # that cap the Actions token to read-only, these writes fail 403; the workflow degrades to the
+  # failing check plus inline annotations rather than erroring. See tools/localization-readiness.js.
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: localization-readiness-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  localization-readiness:
+    name: localization-readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine whether this is the automatic localization PR
+        id: gate
+        # The comparison is evaluated by the GitHub expression engine and only its boolean result is
+        # written to the output. The (fork-controlled) branch name is never interpolated into the
+        # shell, so a malicious ref such as `evil$(...)` cannot inject a command here.
+        run: echo "is_loc=${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'localization' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the repository
+        if: steps.gate.outputs.is_loc == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        if: steps.gate.outputs.is_loc == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install Yarn
+        if: steps.gate.outputs.is_loc == 'true'
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        if: steps.gate.outputs.is_loc == 'true'
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: Verify imported translations
+        id: verify
+        if: steps.gate.outputs.is_loc == 'true'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node tools/translation-verifier.js 2>&1 | tee translation-verifier-output.txt
+
+      - name: Update localization readiness signal
+        if: always() && steps.gate.outputs.is_loc == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          # Logic lives in tools/localization-readiness.js so it can be unit-tested (including that
+          # the "not ready" label and comment are cleared once a later run passes).
+          script: |
+            const fs = require('fs');
+            const { updateLocalizationReadiness, OUTPUT_FILE } = require('./tools/localization-readiness.js');
+            const verifierOutput = fs.existsSync(OUTPUT_FILE) ? fs.readFileSync(OUTPUT_FILE, 'utf8') : '';
+            await updateLocalizationReadiness({
+              github,
+              context,
+              core,
+              verifyOutcome: process.env.VERIFY_OUTCOME,
+              expectedHeadSha: process.env.EXPECTED_HEAD_SHA,
+              verifierOutput
+            });
+
+      - name: Enforce localization readiness
+        if: always() && steps.gate.outputs.is_loc == 'true' && steps.verify.outcome != 'success'
+        run: |
+          echo "The automatic localization import is not ready to merge; see the pull request comment for details."
+          exit 1
