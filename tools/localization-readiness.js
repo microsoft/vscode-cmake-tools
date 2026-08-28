@@ -37,18 +37,63 @@ function parseVerifierAnnotations(output) {
 }
 
 /**
+ * Parse the verifier's `::warning file=...,title=...::message` lines (the informational tier used
+ * for likely-untranslated strings) into structured issues, mirroring `parseVerifierAnnotations`.
+ * @param {string} output
+ * @returns {{ file: string, title: string, message: string }[]}
+ */
+function parseVerifierWarnings(output) {
+    const decode = (v) => v.replace(/%0A/gi, '\n').replace(/%0D/gi, '\r').replace(/%25/gi, '%');
+    return (output || '').split(/\r?\n/)
+        .map((line) => /^::warning file=([^,]+),title=([^:]+)::(.*)$/.exec(line))
+        .filter(Boolean)
+        .map((m) => ({ file: decode(m[1]), title: decode(m[2]), message: decode(m[3]).replace(/\s+/g, ' ').trim() }));
+}
+
+/**
+ * Build the "Awaiting translation" section listing strings that look like untranslated English. It
+ * is purely informational and appended to both the READY and NOT READY bodies; it never changes the
+ * verdict or the blocking label. Returns [] when there is nothing to report.
+ * @param {{ file: string, title: string, message: string }[]} untranslated
+ * @param {string} runLink
+ * @returns {string[]}
+ */
+function buildAwaitingTranslationSection(untranslated, runLink) {
+    if (!untranslated || untranslated.length === 0) {
+        return [];
+    }
+    const shown = untranslated.slice(0, 20);
+    const noun = untranslated.length === 1 ? 'string' : 'strings';
+    const verb = untranslated.length === 1 ? 'appears' : 'appear';
+    const lines = [
+        '',
+        '### ℹ️ Awaiting translation',
+        `${untranslated.length} newly imported ${noun} ${verb} to still be in English across every locale — `
+            + `a new source string the localization team hasn't translated yet. This does **not** block merge; `
+            + `it will be translated in a later cycle.`,
+        ...shown.map((w) => `- ${w.message}`)
+    ];
+    if (untranslated.length > shown.length) {
+        lines.push(`- …and ${untranslated.length - shown.length} more; see the [workflow logs](${runLink}).`);
+    }
+    return lines;
+}
+
+/**
  * Build the sticky comment body for the current readiness state. Always starts with the hidden
  * marker so the workflow can find and update the single existing comment.
  * @param {{ ready: boolean, issues: { file: string, title: string, message: string }[], shaShort: string, runLink: string }} args
  * @returns {string}
  */
-function buildReadinessComment({ ready, issues, shaShort, runLink }) {
+function buildReadinessComment({ ready, issues, untranslated = [], shaShort, runLink }) {
+    const awaiting = buildAwaitingTranslationSection(untranslated, runLink);
     if (ready) {
         return [
             MARKER,
             '## ✅ Localization readiness: READY',
             '',
             'Reviewed translation fixes are intact and every checked placeholder and `${variable}` is preserved.',
+            ...awaiting,
             '',
             `Checked commit \`${shaShort}\`. This check covers localization integrity only; normal review and other checks still apply.`
         ].join('\n');
@@ -67,6 +112,7 @@ function buildReadinessComment({ ready, issues, shaShort, runLink }) {
         '### Issues',
         ...detail,
         ...more,
+        ...awaiting,
         '',
         'To fix: run `node tools/translation-verifier.js --restore` for reverted fixes, correct any remaining placeholder/variable mismatches, and let the localization pipeline regenerate the branch.',
         '',
@@ -152,6 +198,7 @@ async function updateLocalizationReadiness({ github, context, core, verifyOutcom
         }
     }
     const issues = parseVerifierAnnotations(output);
+    const untranslated = parseVerifierWarnings(output);
 
     let degraded = false;
     const permissionHint = "The workflow's GITHUB_TOKEN cannot write to this pull request "
@@ -170,7 +217,7 @@ async function updateLocalizationReadiness({ github, context, core, verifyOutcom
     }
 
     const runLink = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
-    const body = buildReadinessComment({ ready, issues, shaShort: expectedHeadSha.slice(0, 7), runLink });
+    const body = buildReadinessComment({ ready, issues, untranslated, shaShort: expectedHeadSha.slice(0, 7), runLink });
     try {
         await upsertStickyComment(github, { owner, repo, issue_number, body });
     } catch (error) {
@@ -191,6 +238,8 @@ module.exports = {
     OUTPUT_FILE,
     isPermissionError,
     parseVerifierAnnotations,
+    parseVerifierWarnings,
+    buildAwaitingTranslationSection,
     buildReadinessComment,
     setReadinessLabel,
     upsertStickyComment,
