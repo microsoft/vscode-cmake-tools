@@ -40,7 +40,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.ctest.allowParallelJobs` | If `true`, allow running test jobs in parallel. When `false`, tests run sequentially in alphabetical order, matching the Test Explorer display order. | `false` | no |
 | `cmake.ctest.debugLaunchTarget` | Target to debug during CTest execution. | `null` | no |
 | `cmake.ctest.parallelJobs` | Specify the number of jobs to run in parallel for ctest. Using the value `0` will detect and use the number of CPUs. Using the value `1` will disable test parallelism. | `0` | no |
-| `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. | `true` | no |
+| `cmake.ctest.testExplorerIntegrationEnabled` | If `true`, configure CMake to generate information needed by the test explorer. When `false`, the automatic CTest discovery that runs after each build is also skipped; the post-configure refresh and the manual `cmake.refreshTests` command still run. | `true` | no |
 | `cmake.ctest.testSuiteDelimiter` | Character(s) that separate test suite name components. | `null` | no |
 | `cmake.ctestArgs` | An array of additional arguments to pass to CTest. Supports `${testName}` for per-test expansion (see [Variable substitution](#variable-substitution)). | `[]` | yes |
 | `cmake.ctestDefaultArgs` | Default arguments to pass to CTest. Supports `${testName}` for per-test expansion (see [Variable substitution](#variable-substitution)). | `["-T", "test", "--output-on-failure"]` | no |
@@ -90,6 +90,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | `[]` | no |
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. Possible values: `focus` (show the log and move focus to the output channel), `always` (show the log but do not move focus), `never` (do not show the log), `error` (show the log only when an error occurs). | `always` | no |
+| `cmake.revealLogOnAutomaticTrigger` | Whether automatic or programmatic CMake operations (configure-on-open, automatic reconfigure, and builds or tests invoked through the CMake Tools API, e.g. by Copilot via the C/C++ DevTools companion) reveal the CMake output channel. Failures are always shown. | `false` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |
@@ -99,6 +100,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.showSystemKits` | If `true`, show system kits in kit selection. | `true` | no |
 | `cmake.skipConfigureIfCachePresent` | If `true`, skip configure if CMake cache is present. | `null` | no |
 | `cmake.sourceDirectory` | A directory or a list of directories where the root `CMakeLists.txt`s are stored. | `${workspaceFolder}` | yes |
+| `cmake.autoDetectSourceDirectory` | When no `CMakeLists.txt` exists at the workspace root, automatically detect a single `CMakeLists.txt` in a subdirectory and use its folder as the source directory so CMake Tools activates instead of staying hidden. When several candidates are found, you are prompted to choose. Has no effect when `cmake.sourceDirectory` is set explicitly. | `true` | yes |
 | `cmake.testEnvironment` | An object containing `key:value` pairs of environment variables, which will be available when debugging, running and testing with CTest. | `{}` (no environment variables) | yes |
 | `cmake.toolset` | CMake toolset to use. | `null` | no |
 | `cmake.touchbar.advanced` | Advanced options for touchbar. | See package.json | no |

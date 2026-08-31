@@ -75,14 +75,14 @@ export class ConfigurationWebview {
             const dirtyOptions = this.options.filter(option => option.dirty);
             await this.saveCmakeCache(dirtyOptions);
             void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-            // Start configure after persisting the edited values.
-            await this.save(dirtyOptions);
+            // Clear the dirty state before configuring so the post-configure refresh
+            // (triggered via onReconfigured -> refreshPanel) takes the clean path instead
+            // of prompting to resolve conflicts against our own just-saved edits.
             this.isDirty = false;
-            // Force a post-configure refresh so the editor reflects cache changes immediately.
-            this.options = await this.getConfigurationOptions();
-            if (this.panel.visible) {
-                await this.renderWebview(this.panel, false);
-            }
+            // Start configure after persisting the edited values. Passing the dirty options lets
+            // the extension write preset-backed overrides into CMakeUserPresets.json so the edits
+            // are not clobbered by the active configure preset on reconfigure.
+            await this.save(dirtyOptions);
         }
     }
 
@@ -157,12 +157,6 @@ export class ConfigurationWebview {
                 this.options = mergedOptions;
             }
 
-            // The webview needs a re-render also for the "ignore" or "fromUI" cases
-            // to reflect all the unconflicting changes.
-            if (this.panel.visible) {
-                await this.renderWebview(this.panel, false);
-            }
-
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
             // between the webview and the file on disk.
             if (result !== ignore) {
@@ -170,6 +164,12 @@ export class ConfigurationWebview {
             }
         } else {
             this.options = await this.getConfigurationOptions();
+        }
+
+        // Re-render after both clean and dirty refreshes so external cache changes
+        // are reflected immediately while the editor is visible.
+        if (this.panel.visible) {
+            await this.renderWebview(this.panel, false);
         }
     }
 

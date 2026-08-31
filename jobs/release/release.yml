@@ -80,7 +80,14 @@ extends:
           displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
           inputs:
             script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-        - script: npm install -g @vscode/vsce@3.9.1 --include=optional --ignore-scripts=false --force
+        # Pin the transitive closure to versions published on/before 2026-06-19 so `npm install -g` only pulls
+        # package versions already saved in the cpp_PublicPackages CFS feed. Under network isolation the feed
+        # serves saved versions anonymously (HTTP 303) but returns 401 for versions it has not upstream-saved,
+        # and this no-checkout release job has no feed credential to trigger an upstream fetch. Without the date
+        # pin, @vscode/vsce@3.9.1's floating ^-ranges (markdown-it, @azure/msal-*, p-map, ...) drift onto newly
+        # published, unsaved versions and fail with E401. The full @vscode/vsce@3.9.1 closure was verified saved
+        # in the feed as of 2026-06-19; bump this date only after newer transitive versions are saved to the feed.
+        - script: npm install -g @vscode/vsce@3.9.1 --before=2026-06-19T23:59:59Z --include=optional --ignore-scripts=false --force
           displayName: 'Install vsce'
           env:
             npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/

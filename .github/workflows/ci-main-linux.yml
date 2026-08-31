@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 22
           cache: 'yarn'
 
       - name: Install Yarn
@@ -29,10 +29,10 @@ jobs:
       # Cache node_modules archive keyed on lockfile + os + arch + node version (keytar.node is arch-specific)
       - name: Restore node_modules cache
         id: node-modules-cache
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .build/node_modules_cache
-          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('yarn.lock', 'package.json') }}
 
       - name: Extract node_modules archive
         if: steps.node-modules-cache.outputs.cache-hit == 'true'
@@ -50,6 +50,16 @@ jobs:
           mkdir -p .build/node_modules_cache
           tar -czf .build/node_modules_cache/cache.tgz node_modules
 
+      # Guard the checked-in translations against manual/non-localization regressions: the ledger
+      # check fails fast (before the expensive build) if a human-reviewed translation fix was
+      # reverted. It is safe on normal PRs because it compares against the ledger, not the current
+      # English. The automatic-localization PR is covered more fully by the Localization Readiness
+      # workflow (full ledger + placeholder/variable verification with a PR comment and label), so it
+      # is skipped here to avoid a duplicate signal.
+      - name: Verify translation fixes
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || github.event.pull_request.head.ref != 'localization'
+        run: node tools/translation-verifier.js --ledger-only
+
       - name: Build the extension
         run: yarn compile-production-ci
 
@@ -65,7 +75,7 @@ jobs:
       # Cache fakebin to skip rebuild when source unchanged
       - name: Restore fakebin cache
         id: fakebin-cache
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: test/fakebin
           key: fakebin-${{ runner.os }}-${{ hashFiles('test/fakeOutputGenerator/CMakeLists.txt', 'test/fakeOutputGenerator/main.cpp', 'test/fakeOutputGenerator/configfiles/**') }}
@@ -93,7 +103,7 @@ jobs:
             test/fakebin
 
       - name: Upload build outputs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-outputs-${{ runner.os }}
           path: build-outputs.tgz
@@ -119,12 +129,12 @@ jobs:
           - { name: e2e-multi-root,      cmd: 'yarn endToEndTestsMultiRoot-only',        timeout: 25 }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 22
           cache: 'yarn'
 
       - name: Install Yarn
@@ -133,10 +143,10 @@ jobs:
       # Restore the SAME node_modules cache the build job populated (key must match).
       - name: Restore node_modules cache
         id: node-modules-cache
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .build/node_modules_cache
-          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node20-${{ hashFiles('yarn.lock', 'package.json') }}
+          key: node_modules-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('yarn.lock', 'package.json') }}
 
       - name: Extract node_modules archive
         if: steps.node-modules-cache.outputs.cache-hit == 'true'
@@ -149,7 +159,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Download build outputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: build-outputs-${{ runner.os }}
 
@@ -169,11 +179,11 @@ jobs:
 
       # Cache VS Code download for E2E / smoke / unit / integration tests
       - name: Restore VS Code cache
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .vscode-test
-          key: vscode-test-${{ runner.os }}-stable
-          restore-keys: vscode-test-${{ runner.os }}-
+          key: vscode-test-${{ runner.os }}-1.131.0
+          restore-keys: vscode-test-${{ runner.os }}-1.131.0
 
       - name: Start Xvfb
         if: matrix.suite.name != 'backend'
@@ -203,7 +213,7 @@ jobs:
 
       - name: Upload test logs if tests failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: TestLogs-${{ runner.os }}-${{ matrix.suite.name }}
           path: test/**/log.txt

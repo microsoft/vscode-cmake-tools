@@ -23,7 +23,45 @@ enum LogLevel {
     Fatal,
 }
 
-type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
+export type RevealLogKey = 'always' | 'never' | 'focus' | 'error';
+
+/**
+ * Pure decision logic for revealing the CMake output channel, factored out so it can be
+ * unit-tested without a VS Code instance.
+ *
+ * @param revealLog The `cmake.revealLog` value, controlling *how* a reveal happens.
+ * @param errorToShow When defined, indicates a build/configure result: `true` for failure.
+ *                    A failure reveal (`true`) always surfaces and is never gated.
+ * @param isAutomatic Whether the operation was triggered automatically/programmatically
+ *                    (e.g. configure-on-open, or a build invoked through the CMake Tools API
+ *                    by another extension - such as the C/C++ DevTools companion acting for
+ *                    Copilot) rather than by an explicit user action.
+ * @param revealOnAutomatic The `cmake.revealLogOnAutomaticTrigger` value. When `false`,
+ *                    automatic/programmatic proactive reveals are suppressed so they don't
+ *                    switch the panel away from a terminal the user is working in.
+ */
+export function decideReveal(revealLog: RevealLogKey, errorToShow: boolean | undefined, isAutomatic: boolean, revealOnAutomatic: boolean): { shouldShow: boolean; preserveFocus: boolean } {
+    const isFailureReveal = errorToShow === true;
+    // Suppress the proactive reveal for automatic/programmatic operations unless the user
+    // opts in. Failures (errorToShow === true) always surface so errors are never hidden.
+    if (isAutomatic && !isFailureReveal && !revealOnAutomatic) {
+        return { shouldShow: false, preserveFocus: true };
+    }
+
+    let shouldShow: boolean = false;
+    if (revealLog === 'always') {
+        shouldShow = true;
+    }
+    // won't show if no target information
+    if (revealLog === 'error' && errorToShow !== undefined) {
+        shouldShow = errorToShow;
+    }
+    const shouldFocus = (revealLog === 'focus');
+    if (shouldFocus) {
+        shouldShow = true;
+    }
+    return { shouldShow, preserveFocus: !shouldFocus };
+}
 
 /**
  * Get the name of a logging level
@@ -253,24 +291,14 @@ export class Logger {
         SingletonLogger.instance().clearOutputChannel();
     }
 
-    showChannel(error_to_show?: boolean) {
-        const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
+    showChannel(error_to_show?: boolean, isAutomatic?: boolean) {
+        const config = vscode.workspace.getConfiguration('cmake');
+        const reveal_log = config.get<RevealLogKey>('revealLog', 'always');
+        const reveal_on_automatic = config.get<boolean>('revealLogOnAutomaticTrigger', false);
 
-        let should_show: boolean = false;
-        if (reveal_log === 'always') {
-            should_show = true;
-        }
-        // won't show if no target information
-        if (reveal_log === 'error' && error_to_show !== undefined) {
-            should_show = error_to_show;
-        }
-        const should_focus = (reveal_log === 'focus');
-        if (should_focus) {
-            should_show = true;
-        }
-
-        if (should_show) {
-            SingletonLogger.instance().showChannel(!should_focus);
+        const decision = decideReveal(reveal_log, error_to_show, isAutomatic ?? false, reveal_on_automatic);
+        if (decision.shouldShow) {
+            SingletonLogger.instance().showChannel(decision.preserveFocus);
         }
     }
 
