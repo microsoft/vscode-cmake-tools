@@ -268,6 +268,301 @@ function annotate(file, title, message) {
     console.log(`::error file=${file},title=${esc(title)}::${esc(message)}`);
 }
 
+/**
+ * Emit a GitHub Actions warning annotation (non-failing, informational tier).
+ * @param {string} file
+ * @param {string} title
+ * @param {string} message
+ */
+function annotateWarning(file, title, message) {
+    const esc = (s) => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+    console.log(`::warning file=${file},title=${esc(title)}::${esc(message)}`);
+}
+
+// --- Untranslated-import detection ------------------------------------------------------------
+//
+// A newly added English source string stays English in every locale until the localization team
+// translates it in a later cycle; OneLocBuild returns the English <source> as each <target>. The
+// English source for `src/*` keys is never committed (it is derived at build time by vscode-nls-dev),
+// so we cannot compare a translation against its source. Instead we use a source-free signal:
+// a real translation of prose diverges across languages, so a string that is byte-identical across
+// many of the ~13 locales AND carries real translatable words is almost certainly untranslated
+// English. This is used only to (a) annotate the readiness comment (informational, never blocks a
+// partial import) and (b) let the pipeline skip opening a pull request that carries no translation
+// progress at all. Brands, symbols, placeholders and short labels are filtered out so legitimately
+// identical strings (e.g. "CMake", "Ninja", "{0}") are never flagged.
+
+const UNTRANSLATED_DEFAULTS = {
+    // Need at least this many locales present before cross-locale agreement is meaningful.
+    requireMinLocales: 6,
+    // Flag when a value is identical across >= max(minAgreementFloor, ceil(agreementRatio * total)).
+    agreementRatio: 0.6,
+    minAgreementFloor: 8,
+    // Minimum translatable "units" (Latin words of length >= 2 plus CJK codepoints, brands removed).
+    minUnits: 4,
+    // Product/tooling names that are legitimately identical across locales; removed before counting.
+    brandStopwords: ['cmake', 'cmakelists', 'ctest', 'cpack', 'cmakepresets', 'cmakeuserpresets',
+        'ninja', 'makefiles', 'makefile', 'xcode', 'msvc', 'clang', 'gcc', 'kit', 'kits', 'vcpkg',
+        'vsinstanceversion', 'visual', 'studio', 'json']
+};
+
+/**
+ * Normalize a value for cross-locale equality grouping only (never written back). Unifies line
+ * endings, applies Unicode NFC, and trims trailing spaces/tabs, so a stray escaping/whitespace
+ * difference does not split an otherwise-identical machine-generated value. Interior whitespace and
+ * case are deliberately preserved so genuinely distinct strings are not merged.
+ * @param {string} s
+ */
+function normalizeForAgreement(s) {
+    return s.replace(/\r\n/g, '\n').normalize('NFC').replace(/[ \t]+$/gm, '');
+}
+
+/**
+ * Remove the structural tokens that are never localized (placeholders, expansion variables, setting
+ * references, inline code spans, URLs) so only translatable prose remains for measurement.
+ * @param {string} text
+ */
+function stripStructuralTokens(text) {
+    return text
+        .replace(/https?:\/\/[^\s)]+/g, ' ')
+        .replace(/`[^`]*`/g, ' ')
+        .replace(/\$\{[^}]+\}/g, ' ')
+        .replace(/#[A-Za-z0-9_.]+#/g, ' ')
+        .replace(/\{\d+\}/g, ' ');
+}
+
+/**
+ * Count translatable "units" in a value: Latin/Cyrillic/Greek words (>= 2 letters, excluding brand
+ * stopwords) plus CJK codepoints (Han/Hiragana/Katakana/Hangul, which are not space-delimited).
+ * Structural tokens are stripped first. Brands, symbols, digits and placeholders contribute nothing,
+ * so short/technical strings score low while real sentences score high.
+ * @param {string} text
+ * @param {typeof UNTRANSLATED_DEFAULTS} [options]
+ */
+function translatableUnits(text, options) {
+    const opts = { ...UNTRANSLATED_DEFAULTS, ...(options || {}) };
+    let residue = stripStructuralTokens(text).normalize('NFC');
+    const cjk = residue.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu) || [];
+    const cjkCount = cjk.length;
+    residue = residue.replace(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu, ' ');
+    const words = residue.match(/\p{L}[\p{L}\p{M}\d'’\-]*/gu) || [];
+    const brands = new Set((opts.brandStopwords || []).map((b) => b.toLowerCase()));
+    let wordCount = 0;
+    for (const w of words) {
+        if (w.length < 2) {
+            continue;
+        }
+        if (brands.has(w.toLowerCase())) {
+            continue;
+        }
+        wordCount++;
+    }
+    return wordCount + cjkCount;
+}
+
+/**
+ * The agreement count required to flag, given the number of locales that carry the key.
+ * @param {number} total
+ * @param {typeof UNTRANSLATED_DEFAULTS} opts
+ */
+function requiredAgreement(total, opts) {
+    return Math.max(opts.minAgreementFloor, Math.ceil(opts.agreementRatio * total));
+}
+
+/**
+ * Detect likely-untranslated strings from cross-locale agreement. Pure: takes plain data so it can
+ * be unit-tested without disk access.
+ * @param {{ file: string, key: string, values: Record<string, string> }[]} entries One entry per
+ *   (locale-relative file, key), with the raw value per locale.
+ * @param {Partial<typeof UNTRANSLATED_DEFAULTS>} [options]
+ * @returns {{ file: string, key: string, value: string, agree: number, total: number, units: number, locales: string[], confidence: 'high' | 'medium' }[]}
+ */
+function detectUntranslated(entries, options) {
+    const opts = { ...UNTRANSLATED_DEFAULTS, ...(options || {}) };
+    const findings = [];
+    for (const entry of entries) {
+        const locales = Object.keys(entry.values).filter((l) => typeof entry.values[l] === 'string');
+        const total = locales.length;
+        if (total < opts.requireMinLocales) {
+            continue;
+        }
+        const groups = new Map();
+        for (const loc of locales) {
+            const nv = normalizeForAgreement(entry.values[loc]);
+            if (!groups.has(nv)) {
+                groups.set(nv, []);
+            }
+            groups.get(nv).push(loc);
+        }
+        let best = null;
+        for (const [nv, locs] of groups) {
+            if (!best || locs.length > best.locs.length) {
+                best = { nv, locs };
+            }
+        }
+        const agree = best.locs.length;
+        if (agree < requiredAgreement(total, opts)) {
+            continue;
+        }
+        if (translatableUnits(best.nv, opts) < opts.minUnits) {
+            continue;
+        }
+        findings.push({
+            file: entry.file,
+            key: entry.key,
+            value: best.nv,
+            agree,
+            total,
+            units: translatableUnits(best.nv, opts),
+            locales: best.locs.slice().sort(),
+            confidence: agree === total ? 'high' : 'medium'
+        });
+    }
+    return findings;
+}
+
+/**
+ * Decide whether an import makes real localization progress. Pure.
+ *
+ * An occurrence is "semantic" when it is an addition/deletion or its normalized value changed (a
+ * pure key reorder/reformat is not). A semantic add/update counts as "untranslated" only when THIS
+ * locale's new value is exactly the flagged English blob for its (file,key); a locale that received
+ * a real (diverging) translation this cycle counts as progress even if the same key is still English
+ * in other locales. The import is blocked from opening a PR when either every changed file is pure
+ * churn (no semantic change at all) or every semantic add/update is an untranslated English value
+ * (no real new translation). A deletion always counts as progress (pruning an obsolete key is
+ * legitimate synchronization), so an import is never blocked solely for pruning.
+ * @param {{ file: string, key: string, locale: string, base?: string, head?: string, changeType: 'add' | 'update' | 'delete' }[]} changedEntries
+ * @param {Map<string, string>} flaggedValues Map of `${file}\u0000${key}` -> the normalized English
+ *   value that made it look untranslated (from `reportUntranslated`).
+ * @returns {{ semantic: number, progress: number, untranslated: number, block: boolean, reason: string }}
+ */
+function assessImportProgress(changedEntries, flaggedValues) {
+    const flaggedValueFor = (file, key) => (flaggedValues && typeof flaggedValues.get === 'function')
+        ? flaggedValues.get(`${file}\u0000${key}`) : undefined;
+    let semantic = 0;
+    let progress = 0;
+    let untranslated = 0;
+    for (const e of changedEntries) {
+        const isSemantic = e.changeType === 'add' || e.changeType === 'delete'
+            || normalizeForAgreement(e.base || '') !== normalizeForAgreement(e.head || '');
+        if (!isSemantic) {
+            continue;
+        }
+        semantic++;
+        const flaggedValue = e.changeType === 'delete' ? undefined : flaggedValueFor(e.file, e.key);
+        // Only this locale's value being the flagged English blob makes it untranslated; a diverging
+        // (real) translation in this locale is progress even if the key is still English elsewhere.
+        if (flaggedValue !== undefined && normalizeForAgreement(e.head || '') === flaggedValue) {
+            untranslated++;
+        } else {
+            progress++;
+        }
+    }
+    let block = false;
+    let reason = '';
+    if (changedEntries.length > 0 && semantic === 0) {
+        block = true;
+        reason = 'no-semantic-change';
+    } else if (semantic > 0 && progress === 0) {
+        block = true;
+        reason = 'no-localization-progress';
+    }
+    return { semantic, progress, untranslated, block, reason };
+}
+
+/**
+ * Recursively list `*.i18n.json` files under a directory, returned as directory-relative POSIX paths.
+ * @param {string} rootDir
+ * @param {string} [rel]
+ * @returns {string[]}
+ */
+function listI18nFiles(rootDir, rel = '') {
+    const out = [];
+    const abs = path.join(rootDir, rel);
+    let entries;
+    try {
+        entries = fs.readdirSync(abs, { withFileTypes: true });
+    } catch {
+        return out;
+    }
+    for (const dirent of entries) {
+        const childRel = rel ? path.posix.join(rel, dirent.name) : dirent.name;
+        if (dirent.isDirectory()) {
+            out.push(...listI18nFiles(rootDir, childRel));
+        } else if (dirent.isFile() && dirent.name.endsWith('.i18n.json')) {
+            out.push(childRel);
+        }
+    }
+    return out;
+}
+
+/**
+ * Build the per-(file,key) locale->value map from the checked-in `i18n/<locale>/**` tree.
+ * @param {string} repoRoot
+ * @returns {{ file: string, key: string, values: Record<string, string> }[]}
+ */
+function collectLocaleEntries(repoRoot) {
+    const i18nRoot = path.join(repoRoot, 'i18n');
+    /** @type {Map<string, Map<string, Record<string, string>>>} file -> key -> {locale: value} */
+    const byFile = new Map();
+    if (!fs.existsSync(i18nRoot)) {
+        return [];
+    }
+    for (const locale of fs.readdirSync(i18nRoot)) {
+        const localeDir = path.join(i18nRoot, locale);
+        let stat;
+        try {
+            stat = fs.statSync(localeDir);
+        } catch {
+            continue;
+        }
+        if (!stat.isDirectory()) {
+            continue;
+        }
+        for (const relFile of listI18nFiles(localeDir)) {
+            let contents;
+            try {
+                contents = readI18nFile(path.join(localeDir, ...relFile.split('/')));
+            } catch {
+                continue;
+            }
+            for (const key of Object.keys(contents)) {
+                if (typeof contents[key] !== 'string') {
+                    continue;
+                }
+                if (!byFile.has(relFile)) {
+                    byFile.set(relFile, new Map());
+                }
+                const keyMap = byFile.get(relFile);
+                if (!keyMap.has(key)) {
+                    keyMap.set(key, {});
+                }
+                keyMap.get(key)[locale] = contents[key];
+            }
+        }
+    }
+    const entries = [];
+    for (const [file, keyMap] of byFile) {
+        for (const [key, values] of keyMap) {
+            entries.push({ file, key, values });
+        }
+    }
+    return entries;
+}
+
+/**
+ * Scan the checked-in translations for likely-untranslated strings. fs wrapper over the pure
+ * `detectUntranslated`. Each finding gains an `i18nPath` (a representative locale's file) for
+ * annotation.
+ * @param {string} repoRoot
+ * @param {Partial<typeof UNTRANSLATED_DEFAULTS>} [options]
+ */
+function reportUntranslated(repoRoot, options) {
+    const findings = detectUntranslated(collectLocaleEntries(repoRoot), options);
+    return findings.map((f) => ({ ...f, i18nPath: path.posix.join('i18n', f.locales[0], f.file) }));
+}
+
 function main(argv) {
     const repoRoot = path.resolve(__dirname, '..');
     const doRestore = argv.includes('--restore') || argv.includes('--restore-verified');
@@ -279,6 +574,7 @@ function main(argv) {
     // English string's placeholders would fail before the translations can be regenerated.
     const corpusOnly = argv.includes('--corpus-only');
     const ledgerOnly = argv.includes('--ledger-only');
+    const reportUnt = argv.includes('--report-untranslated');
     const runLedger = !corpusOnly;
     const runCorpus = !ledgerOnly;
 
@@ -317,6 +613,22 @@ function main(argv) {
             `${c.locale} / package.i18n.json / ${c.key}: the translation must keep the same placeholders and variables as its English source: ${cats}.`);
     }
 
+    // Informational tier: strings that look like untranslated English (identical across many
+    // locales, with real translatable content). This never fails the run — a newly added source
+    // string is always English until the next localization cycle — it only surfaces a warning so the
+    // readiness comment can list what is still awaiting translation.
+    if (reportUnt) {
+        const untranslated = reportUntranslated(repoRoot);
+        for (const u of untranslated) {
+            annotateWarning(u.i18nPath, 'Imported string still in English',
+                `${u.file} / ${u.key}: identical text in ${u.agree}/${u.total} locales (${u.locales.join(', ')}). ` +
+                `This looks like an untranslated English source string awaiting translation.`);
+        }
+        if (untranslated.length > 0) {
+            console.log(`translation-verifier: ${untranslated.length} string(s) still appear to be untranslated English (informational).`);
+        }
+    }
+
     if (failed) {
         console.error(`\ntranslation-verifier: FAILED. ${reversions.length} reverted, ${structural.length} structurally broken, ${corpus.length} with placeholder/variable mismatches.`);
         console.error('These translations were deliberately fixed and/or must preserve their placeholders; they must not be reverted or broken by an automatic localization import.');
@@ -341,7 +653,15 @@ module.exports = {
     verifyPackageCorpus,
     restore,
     CORPUS_TOKEN_CATEGORIES,
-    LEDGER_RELPATH
+    LEDGER_RELPATH,
+    UNTRANSLATED_DEFAULTS,
+    normalizeForAgreement,
+    stripStructuralTokens,
+    translatableUnits,
+    detectUntranslated,
+    assessImportProgress,
+    collectLocaleEntries,
+    reportUntranslated
 };
 
 if (require.main === module) {
