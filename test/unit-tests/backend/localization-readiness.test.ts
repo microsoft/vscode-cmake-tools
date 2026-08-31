@@ -107,6 +107,24 @@ suite('Localization readiness signal', () => {
         });
     });
 
+    suite('parseVerifierWarnings', () => {
+        test('parses the verifier ::warning lines (untranslated tier) into issues', () => {
+            const output = [
+                'translation-verifier: OK. all verified translations intact.',
+                '::warning file=i18n/chs/src/cmakeProject.i18n.json,title=Imported string still in English::src/cmakeProject.i18n.json / using.vs.instance.cmake: identical text in 13/13 locales (chs, cht, csy). This looks like an untranslated English source string awaiting translation.',
+                'translation-verifier: 1 string(s) still appear to be untranslated English (informational).'
+            ].join('\n');
+            const warnings = readiness.parseVerifierWarnings(output);
+            expect(warnings).to.have.length(1);
+            expect(warnings[0].title).to.equal('Imported string still in English');
+            expect(warnings[0].message).to.contain('using.vs.instance.cmake');
+        });
+
+        test('does not confuse ::warning with ::error lines', () => {
+            expect(readiness.parseVerifierWarnings('::error file=a,title=t::boom')).to.deep.equal([]);
+        });
+    });
+
     suite('buildReadinessComment', () => {
         test('ready body announces READY and carries the marker', () => {
             const body = readiness.buildReadinessComment({ ready: true, issues: [], shaShort: 'abcdef1', runLink: 'x' });
@@ -120,6 +138,29 @@ suite('Localization readiness signal', () => {
             const body = readiness.buildReadinessComment({ ready: false, issues, shaShort: 'abcdef1', runLink: 'x' });
             expect(body).to.contain('NOT READY');
             expect(body).to.contain('test.run.error');
+        });
+
+        test('ready body appends the Awaiting translation section when strings are still untranslated', () => {
+            const untranslated = [{ file: 'i18n/chs/src/cmakeProject.i18n.json', title: 'Imported string still in English', message: 'src/cmakeProject.i18n.json / using.vs.instance.cmake: identical text in 13/13 locales.' }];
+            const body = readiness.buildReadinessComment({ ready: true, issues: [], untranslated, shaShort: 'abcdef1', runLink: 'x' });
+            expect(body).to.contain('READY');
+            expect(body).to.not.contain('NOT READY');
+            expect(body).to.contain('Awaiting translation');
+            expect(body).to.contain('using.vs.instance.cmake');
+        });
+
+        test('ready body omits the Awaiting translation section when nothing is untranslated', () => {
+            const body = readiness.buildReadinessComment({ ready: true, issues: [], untranslated: [], shaShort: 'abcdef1', runLink: 'x' });
+            expect(body).to.not.contain('Awaiting translation');
+        });
+
+        test('not-ready body shows both the blocking issues and the Awaiting translation section', () => {
+            const issues = [{ file: 'i18n/deu/package.i18n.json', title: 'Translation placeholder/variable mismatch', message: 'k: broke {0}' }];
+            const untranslated = [{ file: 'i18n/chs/src/cmakeProject.i18n.json', title: 'Imported string still in English', message: 'using.vs.instance.cmake: identical text in 13/13 locales.' }];
+            const body = readiness.buildReadinessComment({ ready: false, issues, untranslated, shaShort: 'abcdef1', runLink: 'x' });
+            expect(body).to.contain('NOT READY');
+            expect(body).to.contain('Issues');
+            expect(body).to.contain('Awaiting translation');
         });
     });
 
@@ -275,6 +316,24 @@ suite('Localization readiness signal', () => {
                 threw = true;
             }
             expect(threw, 'an unexpected server error should not be silently swallowed').to.equal(true);
+        });
+    });
+
+    suite('untranslated warnings surface without blocking', () => {
+        test('a READY run with ::warning untranslated lines shows the section and does NOT add the blocking label', async () => {
+            const mock = makeMockGitHub({ headSha: HEAD_SHA });
+            await readiness.updateLocalizationReadiness({
+                github: mock.github, context, core,
+                verifyOutcome: 'success',
+                expectedHeadSha: HEAD_SHA,
+                verifierOutput: '::warning file=i18n/chs/src/cmakeProject.i18n.json,title=Imported string still in English::src/cmakeProject.i18n.json / using.vs.instance.cmake: identical text in 13/13 locales (chs, cht, csy).'
+            });
+            expect([...mock.labels], 'an informational warning must not add the blocking label').to.not.include(readiness.BLOCKING_LABEL);
+            expect(mock.comments).to.have.length(1);
+            expect(mock.comments[0].body).to.contain('READY');
+            expect(mock.comments[0].body).to.not.contain('NOT READY');
+            expect(mock.comments[0].body).to.contain('Awaiting translation');
+            expect(mock.comments[0].body).to.contain('using.vs.instance.cmake');
         });
     });
 });
