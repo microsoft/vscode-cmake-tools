@@ -24,6 +24,7 @@
 	"no.cl.toolset.version": "Konfigurationsvoreinstellung {0}: Für cl.exe wurde keine Toolsetversion angegeben, die standardmäßig die neueste Version verwendet",
 	"unknown.toolset.option": "Unbekannte Toolset-Option wird ignoriert: {0}",
 	"specified.vs.not.found": "Voreingestellte {0} konfigurieren: Visual Studio-Instanz, die durch {1} angegeben wurde, wurde nicht gefunden, was auf das Standardverhalten der Instanzsuche zurückgeht.",
+	"using.vendor.vs.version": "Konfigurationsvoreinstellung „{0}“: Visual-Studio-Hauptversion {1} aus den Herstellereinstellungen wird verwendet.",
 	"specified.cl.not.found": "Konfigurationsvoreinstellung {0}: Compiler {1} mit Toolset {2} und Architektur {3} wurde nicht gefunden. Möglicherweise müssen Sie  'CMake: Scan for Compilers' ausführen, sofern dieses Toolset auf Ihrem Computer vorhanden ist.",
 	"vs.not.found": "Voreinstellung {0} konfigurieren: Es wurde keine Visual Studio-Installation gefunden, die das angegebene Toolset {1} und die angegebene Architektur {2}unterstützt. Sie müssen möglicherweise den Befehl \"CMake: Scan for Compilers\" ausführen, wenn dieses Toolset auf Ihrem Computer vorhanden ist.",
 	"using.vs.instance": "Verwenden der Entwicklerumgebung von Visual Studio (Instanz {0}, Version {1}, installiert unter {2})",

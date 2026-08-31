@@ -375,6 +375,20 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
+/**
+ * Builds the failure message for a test that CTest did not report as passed and that has an
+ * "Exit Value" measurement. CTest writes a companion "Exit Code" measurement next to it: for an
+ * ordinary non zero exit it is "Failed", but when the test was killed by a signal or timed out it
+ * names the cause ("SEGFAULT", "Timeout", "ILLEGAL", ...) while "Exit Value" is typically 0, which
+ * would read like success. In that case the message names the "Exit Code" status instead.
+ */
+export function getTestFailureMessage(testName: string, output: string, exitValue: string, exitStatus: string | undefined): string {
+    if (exitStatus !== undefined && exitStatus !== 'Failed' && exitStatus !== 'Completed' && !/^-?\d+$/.test(exitStatus)) {
+        return localize('test.failed.with.signal', '{0}\nTest {1} failed with {2} (exit value {3}).', output, testName, exitStatus, exitValue);
+    }
+    return localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitValue);
+}
+
 export class CTestOutputLogger extends proc.CommandConsumer {
     override output(line: string) {
         log.info(line);
@@ -591,8 +605,18 @@ export class CTestDriver implements vscode.Disposable {
         }
         const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset, singleTestName) || [];
         if (testsToRun && testsToRun.length > 0) {
+            // If specific tests were requested but none of them match a discovered test, ctest
+            // would run with a filter that matches nothing and still exit 0 ("No tests were
+            // found!!!"), which callers (e.g. the API/Copilot) would misread as success. Only
+            // treat this as a failure when tests exist but the requested ones weren't found.
+            const availableTests = this.getTestNamesForSourceDir(driver.sourceDir) || [];
+            if (availableTests.length > 0 && !testsToRun.some(t => availableTests.includes(t))) {
+                const message = localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', '));
+                log.warning(message);
+                return { exitCode: -1, stdout: consumer?.stdout, stderr: message };
+            }
             ctestArgs.push("-R");
-            const superset = this.getTestNamesForSourceDir(driver.sourceDir) || [];
+            const superset = availableTests;
             const testsNamesRegex = getMinimalRegexFragments(superset, testsToRun).join('|');
             ctestArgs.push(testsNamesRegex);
         }
@@ -770,9 +794,17 @@ export class CTestDriver implements vscode.Disposable {
         await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, testsToRun, customizedTask);
 
         if (testsToRun && testsToRun.length > 0 && driverMap.size === 0) {
-            // A specific set of tests was requested (e.g. from the inline CodeLens) but none of
-            // them matched a discovered test id. Surface this so a "nothing ran" outcome is not silent.
-            log.warning(localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', ')));
+            // A specific set of tests was requested (e.g. from the inline CodeLens or
+            // programmatically via the API/Copilot) but none of them matched a discovered test id.
+            // Surface this so a "nothing ran" outcome is not silently reported as success.
+            const message = localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', '));
+            log.warning(message);
+            // Only fail when tests exist but the requested ones weren't found. If no tests are
+            // discovered at all, don't force a failure here (a zero-test project is not this error).
+            const availableTests = this.getTestNames() ?? [];
+            if (availableTests.length > 0) {
+                return { exitCode: -1, stdout: consumer?.stdout, stderr: message };
+            }
         }
 
         if (!this.ws.config.ctestAllowParallelJobs) {
@@ -931,13 +963,14 @@ export class CTestDriver implements vscode.Disposable {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
             const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
             const exitCode = testResult.measurements.get("Exit Value")?.value;
+            const exitStatus = testResult.measurements.get("Exit Code")?.value;
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
             if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
+                    new vscode.TestMessage(getTestFailureMessage(testName, output, exitCode, exitStatus)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {

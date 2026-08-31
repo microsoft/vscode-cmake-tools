@@ -39,7 +39,6 @@
 	"setting.new.variant": "Configurando a nova variante {0}",
 	"command.version.test.return.code": "{0} retornou o código {1}",
 	"trying.to.detect.generator": "Tentando detectar o gerador compatível com o sistema",
-	"compiler.version.return.code": "{0} retornou o código {1}",
 	"no.cached.config": "Nenhuma configuração armazenada em cache pôde ser usada para o IntelliSense",
 	"start.configure": "Iniciar a configuração",
 	"use.cached.configuration": "Usar a configuração em cache",

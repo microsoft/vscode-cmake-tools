@@ -48,6 +48,7 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { KitsController } from '@cmt/kits/kitsController';
 import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
+import { shouldUsePinnedVsInstanceCMake, vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
@@ -1170,7 +1171,7 @@ export class CMakeProject {
      */
     private showAutoDetectedSourceDirectoryNotification(sourceDir: string, config: ConfigurationReader | undefined, isConfiguring: boolean): void {
         const relativeSourceDir: string = path.relative(this.workspaceContext.folder.uri.fsPath, sourceDir) || sourceDir;
-        const changeAction: string = localize("change.source.directory", "Change\u2026");
+        const changeAction: string = localize("change.source.directory", "Change...");
         const dontAutoDetectAction: string = localize("do.not.auto.detect.source.directory", "Don't auto-detect");
         void vscode.window.showInformationMessage(
             localize("auto.detected.source.directory", "CMake Tools detected and activated the project in '{0}'.", relativeSourceDir),
@@ -1598,14 +1599,36 @@ export class CMakeProject {
     }
 
     async getCMakePathofProject(): Promise<string> {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        let overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        // When the active configure preset pins a Visual Studio instance via the vsInstanceVersion
+        // vendor field, prefer the CMake bundled with that same instance instead of the latest
+        // installed VS. Only applies on Windows, in presets mode, and only when the user has not
+        // pinned CMake themselves (neither the preset's cmakeExecutable nor the cmake.cmakePath
+        // setting); if that instance ships no bundled CMake, fall back to the normal resolution.
+        if (!overWriteCMakePathSetting && this.useCMakePresets && process.platform === 'win32') {
+            const vsInstallPath = this.configurePreset?.__vsDevEnvInstallationPath;
+            if (shouldUsePinnedVsInstanceCMake({
+                platform: process.platform,
+                useCMakePresets: this.useCMakePresets,
+                presetCMakeExecutable: this.configurePreset?.cmakeExecutable,
+                rawCMakePath: this.workspaceContext.config.rawCMakePath,
+                vsInstallPath
+            })) {
+                const bundledCMake = vsBundledCMakePath(vsInstallPath!);
+                if (await fs.exists(bundledCMake)) {
+                    log.info(localize('using.vs.instance.cmake', 'Using the CMake bundled with the Visual Studio instance selected by vsInstanceVersion: {0}', bundledCMake));
+                    overWriteCMakePathSetting = bundledCMake;
+                }
+            }
+        }
         const envOverride = await this.getCMakePathEnvironment();
         return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
 
     async getCMakeExecutable() {
         const cmakePath: string = await this.getCMakePathofProject();
-        const cmakeExe = await getCMakeExecutableInformation(cmakePath);
+        const sourceDir = this.sourceDir || this.workspaceFolder.uri.fsPath;
+        const cmakeExe = await getCMakeExecutableInformation(cmakePath, undefined, sourceDir);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',
                 'CMake version {0} may not be supported. Minimum version required is {1}.',
@@ -2662,12 +2685,17 @@ export class CMakeProject {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
-                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
+                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
             });
             await this.cacheEditorWebview.initPanel();
 
+            const refreshCacheEditor = this.onReconfigured(() => rollbar.invokeAsync(
+                localize('refresh.cache.editor.after.configure', 'Refresh the CMake Cache Editor after configure'),
+                async () => this.cacheEditorWebview?.refreshPanel()
+            ));
             this.cacheEditorWebview.panel.onDidDispose(() => {
+                refreshCacheEditor.dispose();
                 this.cacheEditorWebview = undefined;
             });
         } else {
