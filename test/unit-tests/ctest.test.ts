@@ -1,8 +1,38 @@
-import { readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments } from "@cmt/ctest";
+import { CTestDriver, readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments, getTestFailureMessage } from "@cmt/ctest";
 import { expect, getTestResourceFilePath } from "@test/util";
 import { TestMessage } from "vscode";
 
 suite('CTest test', () => {
+    test('CTest discovery uses the selected test preset environment', async () => {
+        const presetEnvironment = { CMAKE_TOOLS_TEST_ENV: 'preset-value' };
+        let executionOptions: { environment?: Record<string, string | undefined>; cwd?: string; silent?: boolean } | undefined;
+        let testsUpdated = false;
+        const driver = {
+            binaryDir: 'build',
+            async getCTestCommandEnvironment() {
+                return presetEnvironment;
+            },
+            executeCommand(_command: string, _args: string[], _consumer: unknown, options: typeof executionOptions) {
+                executionOptions = options;
+                return { result: Promise.resolve({ retc: 0, stdout: '', stderr: '' }) };
+            }
+        };
+        const ctestDriver = new CTestDriver({} as any);
+
+        const result = await ctestDriver.extractTestsCommand(
+            driver as any,
+            'ctest',
+            ['--show-only=json-v1'],
+            async () => {
+                testsUpdated = true;
+            }
+        );
+
+        expect(result).to.eq(0);
+        expect(testsUpdated).to.eq(true);
+        expect(executionOptions?.environment).to.equal(presetEnvironment);
+    });
+
     test('Parse XML test results', async () => {
         const result = await readTestResultsFile(getTestResourceFilePath('TestResults.xml'));
         expect(result!.site.testing.testList.length).to.eq(2);
@@ -21,6 +51,61 @@ suite('CTest test', () => {
     test('Bad test results file', async () => {
         const result = await readTestResultsFile(getTestResourceFilePath('TestCMakeCache.txt'));
         expect(result).to.eq(undefined);
+    });
+
+    test('Parse results with compressed output and missing/empty measurements (robustness)', async () => {
+        const result = await readTestResultsFile(getTestResourceFilePath('TestResults3.xml'));
+        // A single test lacking a <Measurement> must not throw and wipe ALL results.
+        expect(result).to.not.eq(undefined);
+        expect(result!.site.testing.test.length).to.eq(3);
+
+        const byName = (name: string) => result!.site.testing.test.find(t => t.name === name)!;
+
+        // base64 + (gzip-labelled) zlib-compressed output decodes correctly (e.g. fmt's large gtest output).
+        expect(byName('compressed-test').output).to.eq('Compressed gtest output line 1\nCompressed line 2\n');
+
+        // A "Not Run" test with no <Measurement> yields empty output rather than throwing.
+        expect(byName('notrun-test').status).to.eq('notrun');
+        expect(byName('notrun-test').output).to.eq('');
+
+        // An empty <Value/> yields empty output.
+        expect(byName('empty-output-test').output).to.eq('');
+    });
+
+    test('Parse results for a test killed by a signal and name the signal in the failure message', async () => {
+        const result = await readTestResultsFile(getTestResourceFilePath('TestResults4.xml'));
+        expect(result).to.not.eq(undefined);
+        expect(result!.site.testing.test.length).to.eq(2);
+
+        const byName = (name: string) => result!.site.testing.test.find(t => t.name === name)!;
+
+        // CTest records the signal in "Exit Code" and leaves "Exit Value" at 0 for a crashed test.
+        const crashed = byName('crashing_test');
+        expect(crashed.status).to.eq('failed');
+        expect(crashed.measurements.get('Exit Code')?.value).to.eq('SEGFAULT');
+        expect(crashed.measurements.get('Exit Value')?.value).to.eq('0');
+        expect(crashed.measurements.get('Completion Status')?.value).to.eq('Completed');
+
+        // The message must name the signal instead of claiming the test "failed with exit code 0".
+        const crashedMessage = getTestFailureMessage(crashed.name, crashed.output, crashed.measurements.get('Exit Value')!.value, crashed.measurements.get('Exit Code')?.value);
+        expect(crashedMessage).to.contain('Test crashing_test failed with SEGFAULT');
+        expect(crashedMessage).to.not.contain('exit code 0');
+
+        // An ordinary failure ("Exit Code" is "Failed") keeps reporting the exit value.
+        const failed = byName('failing_test');
+        expect(failed.measurements.get('Exit Code')?.value).to.eq('Failed');
+        const failedMessage = getTestFailureMessage(failed.name, failed.output, failed.measurements.get('Exit Value')!.value, failed.measurements.get('Exit Code')?.value);
+        expect(failedMessage).to.contain('Test failing_test failed with exit code 1.');
+    });
+
+    test('Failure message falls back to the exit value without a descriptive Exit Code', () => {
+        // Older CTest results (and ordinary failures) only carry a numeric exit value.
+        expect(getTestFailureMessage('t', '', '2', undefined)).to.contain('Test t failed with exit code 2.');
+        expect(getTestFailureMessage('t', '', '2', 'Failed')).to.contain('Test t failed with exit code 2.');
+        expect(getTestFailureMessage('t', '', '2', 'Completed')).to.contain('Test t failed with exit code 2.');
+        expect(getTestFailureMessage('t', '', '2', '2')).to.contain('Test t failed with exit code 2.');
+        expect(getTestFailureMessage('t', '', '0', 'Timeout')).to.contain('Test t failed with Timeout');
+        expect(getTestFailureMessage('t', '', '0', 'SEGFAULT')).to.contain('Test t failed with SEGFAULT');
     });
 
     test('Find failure patterns in output', () => {
@@ -199,6 +284,24 @@ suite('CTest test', () => {
                 '^A\\+B\\.Test$'
             ]);
             expect(result.length).to.eq(5);
+        });
+
+        test('empty superset falls back to exact anchored matches (does not run all tests)', () => {
+            // When the full set of tests is unknown (empty superset), a specific target must
+            // not collapse to a match-everything regex; otherwise a single-test run (e.g. from
+            // the inline CodeLens) would execute the entire suite.
+            const result = getMinimalRegexFragments([], ['alpha']);
+            expect(result).to.deep.eq(['^alpha$']);
+        });
+
+        test('empty superset exact-matches each of multiple targets', () => {
+            const result = getMinimalRegexFragments([], ['alpha', 'beta']);
+            expect(result).to.have.members(['^alpha$', '^beta$']);
+        });
+
+        test('empty superset escapes regex special characters', () => {
+            const result = getMinimalRegexFragments([], ['A+B.Test']);
+            expect(result).to.deep.eq(['^A\\+B\\.Test$']);
         });
     });
 });

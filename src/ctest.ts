@@ -5,14 +5,14 @@ import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
-import { CMakeDriver } from '@cmt/drivers/drivers';
+import { CMakeDriver, ExecutableTarget } from '@cmt/drivers/drivers';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
 import * as nls from 'vscode-nls';
 import { testArgs, TestPreset } from '@cmt/presets/preset';
-import { expandString } from '@cmt/expand';
+import { expandString, ExpansionOptions } from '@cmt/expand';
 import * as proc from '@cmt/proc';
 import { ProjectController } from '@cmt/projectController';
 import { extensionManager } from '@cmt/extension';
@@ -79,7 +79,7 @@ export enum RunCTestHelperEntryPoint {
 
 interface EncodedMeasurementValue {
     $: { encoding?: BufferEncoding; compression?: string };
-    _: string;
+    _?: string;
 }
 
 interface MessyResults {
@@ -96,10 +96,10 @@ interface MessyResults {
                 FullName: string[];
                 Name: string[];
                 Path: string[];
-                Results: {
-                    NamedMeasurement:
+                Results?: {
+                    NamedMeasurement?:
                     { $: { type: string; name: string }; Value: string[] }[];
-                    Measurement: { Value: [EncodedMeasurementValue | string] }[];
+                    Measurement?: { Value: [EncodedMeasurementValue | string] }[];
                 }[];
             }[];
         }[];
@@ -187,6 +187,13 @@ export function getMinimalRegexFragments(superset: string[], targets: string[]):
 
     if (targets.length === 0) {
         return [];
+    }
+    // If we don't know the full set of tests (empty superset), we cannot safely compute
+    // minimal unique prefixes: the trie would be empty and every target would collapse to
+    // a one-character (or match-everything) prefix, causing a single-test run to execute
+    // the entire suite. Fall back to exact, anchored matches for the specific targets.
+    if (superset.length === 0) {
+        return targets.map(t => `^${util.escapeStringForRegex(t)}$`);
     }
     if (forbidden.length === 0) {
         return ["^."];
@@ -293,13 +300,21 @@ function parseXmlString<T>(xml: string): Promise<T> {
     });
 }
 
-function decodeOutputMeasurement(node: EncodedMeasurementValue | string): string {
+function decodeOutputMeasurement(node: EncodedMeasurementValue | string | undefined): string {
+    if (node === undefined) {
+        return '';
+    }
     if (typeof node === 'string') {
         return node;
     }
-    let buffer = !!node.$.encoding ? Buffer.from(node._, node.$.encoding) : Buffer.from(node._, 'utf-8');
-    if (!!node.$.compression) {
-        buffer = zlib.unzipSync(buffer as Uint8Array);
+    const raw = node._ ?? '';
+    let buffer = node.$.encoding ? Buffer.from(raw, node.$.encoding) : Buffer.from(raw, 'utf-8');
+    if (node.$.compression) {
+        try {
+            buffer = zlib.unzipSync(buffer as Uint8Array);
+        } catch {
+            // If decompression fails, keep the raw decoded bytes rather than dropping the output entirely.
+        }
     }
     return buffer.toString('utf-8');
 }
@@ -326,11 +341,12 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
                 testList: testingHead.TestList[0].Test,
                 test: testingHead.Test.map((test): Test => {
                     const measurements = new Map<string, TestMeasurement>();
-                    for (const namedMeasurement of test.Results[0].NamedMeasurement) {
+                    const results = test.Results?.[0];
+                    for (const namedMeasurement of results?.NamedMeasurement ?? []) {
                         measurements.set(namedMeasurement.$.name, {
                             type: namedMeasurement.$.type,
                             name: namedMeasurement.$.name,
-                            value: decodeOutputMeasurement(namedMeasurement.Value[0])
+                            value: decodeOutputMeasurement(namedMeasurement.Value?.[0])
                         });
                     }
                     return {
@@ -340,7 +356,7 @@ function cleanupResultsXml(messy: MessyResults): CTestResults {
                         path: test.Path[0],
                         status: test.$.Status,
                         measurements,
-                        output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0])
+                        output: decodeOutputMeasurement(results?.Measurement?.[0]?.Value?.[0])
                     };
                 })
             }
@@ -357,6 +373,20 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     } catch {
         return undefined;
     }
+}
+
+/**
+ * Builds the failure message for a test that CTest did not report as passed and that has an
+ * "Exit Value" measurement. CTest writes a companion "Exit Code" measurement next to it: for an
+ * ordinary non zero exit it is "Failed", but when the test was killed by a signal or timed out it
+ * names the cause ("SEGFAULT", "Timeout", "ILLEGAL", ...) while "Exit Value" is typically 0, which
+ * would read like success. In that case the message names the "Exit Code" status instead.
+ */
+export function getTestFailureMessage(testName: string, output: string, exitValue: string, exitStatus: string | undefined): string {
+    if (exitStatus !== undefined && exitStatus !== 'Failed' && exitStatus !== 'Completed' && !/^-?\d+$/.test(exitStatus)) {
+        return localize('test.failed.with.signal', '{0}\nTest {1} failed with {2} (exit value {3}).', output, testName, exitStatus, exitValue);
+    }
+    return localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitValue);
 }
 
 export class CTestOutputLogger extends proc.CommandConsumer {
@@ -447,11 +477,44 @@ export class CTestDriver implements vscode.Disposable {
         return items;
     };
 
-    private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset): Promise<string[] | undefined> {
+    /**
+     * Check whether any of the user's ctestArgs or ctestDefaultArgs contain ${testName}.
+     */
+    private hasTestNameVariable(): boolean {
+        const allArgs = [...this.ws.config.ctestDefaultArgs, ...this.ws.config.ctestArgs];
+        return allArgs.some(arg => arg.includes('${testName}'));
+    }
+
+    private async getCTestArgs(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, testName?: string): Promise<string[] | undefined> {
         let ctestArgs: string[];
-        const opts = driver.expansionOptions;
-        const initialArgs = await Promise.all(this.ws.config.ctestDefaultArgs.map(async (value) => expandString(value, driver.expansionOptions)));
-        const additionalArgs = await Promise.all(this.ws.config.ctestArgs.map(async (value) => expandString(value, driver.expansionOptions)));
+        const opts: ExpansionOptions = testName !== undefined
+            ? { ...driver.expansionOptions, vars: { ...driver.expansionOptions.vars, testName } }
+            : driver.expansionOptions;
+
+        // When testName is not provided, filter out args containing ${testName} to avoid
+        // passing literal "${testName}" to ctest (e.g., during test discovery or batch runs).
+        // Also removes the preceding flag arg (e.g., "--output-log") to avoid dangling flags.
+        const testNamePlaceholder = '${testName}';
+        const filterTestNameArgs = (args: string[]): string[] => {
+            if (testName !== undefined) {
+                return args;
+            }
+            const filtered: string[] = [];
+            for (let i = 0; i < args.length; i++) {
+                if (args[i].includes(testNamePlaceholder)) {
+                    // Also remove preceding flag arg if it starts with '-'
+                    if (filtered.length > 0 && filtered[filtered.length - 1].startsWith('-')) {
+                        filtered.pop();
+                    }
+                } else {
+                    filtered.push(args[i]);
+                }
+            }
+            return filtered;
+        };
+
+        const initialArgs = await Promise.all(filterTestNameArgs(this.ws.config.ctestDefaultArgs).map(async (value) => expandString(value, opts)));
+        const additionalArgs = await Promise.all(filterTestNameArgs(this.ws.config.ctestArgs).map(async (value) => expandString(value, opts)));
 
         ctestArgs = initialArgs.slice(0);
 
@@ -483,10 +546,10 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
-            log.showChannel();
+            log.showChannel(undefined, isAutomatic);
         }
 
         if (this.ws.config.testExplorerIntegrationEnabled) {
@@ -501,11 +564,16 @@ export class CTestDriver implements vscode.Disposable {
 
             const tests = this.testItemCollectionToArray(testExplorer.items);
             const run = testExplorer.createTestRun(new vscode.TestRunRequest());
-            const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
-            const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
-            const returnCode = await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
-            run.end();
-            return returnCode;
+            try {
+                const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
+                const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
+                return await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
+            } finally {
+                // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+                // Note: we intentionally do NOT swallow the error here — task/workflow callers rely on the
+                // rejection propagating (the CodeLens handler awaits and logs it).
+                run.end();
+            }
         } else {
             return vscode.window.withProgress(
                 {
@@ -530,10 +598,25 @@ export class CTestDriver implements vscode.Disposable {
             return { exitCode: -2 };
         }
 
-        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset) || [];
+        // Pass testName when exactly one test is targeted
+        const singleTestName = testsToRun && testsToRun.length === 1 ? testsToRun[0] : undefined;
+        if (singleTestName === undefined && this.hasTestNameVariable() && testsToRun && testsToRun.length > 1) {
+            log.warning(localize('testName.not.supported.multiple', '${testName} variable in ctest args is not supported when running multiple tests. The variable will not be expanded.'));
+        }
+        const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset, singleTestName) || [];
         if (testsToRun && testsToRun.length > 0) {
+            // If specific tests were requested but none of them match a discovered test, ctest
+            // would run with a filter that matches nothing and still exit 0 ("No tests were
+            // found!!!"), which callers (e.g. the API/Copilot) would misread as success. Only
+            // treat this as a failure when tests exist but the requested ones weren't found.
+            const availableTests = this.getTestNamesForSourceDir(driver.sourceDir) || [];
+            if (availableTests.length > 0 && !testsToRun.some(t => availableTests.includes(t))) {
+                const message = localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', '));
+                log.warning(message);
+                return { exitCode: -1, stdout: consumer?.stdout, stderr: message };
+            }
             ctestArgs.push("-R");
-            const superset = this.getTestNamesForSourceDir(driver.sourceDir) || [];
+            const superset = availableTests;
             const testsNamesRegex = getMinimalRegexFragments(superset, testsToRun).join('|');
             ctestArgs.push(testsNamesRegex);
         }
@@ -599,6 +682,21 @@ export class CTestDriver implements vscode.Disposable {
         );
         const messages = outputMessages.length ? outputMessages : message;
         run.failed(test, messages, duration);
+    }
+
+    /**
+     * Marks a started test for which CTest produced no matching result (e.g. the test executable was
+     * not built, so CTest reported "Not Run", or the run matched no tests). Without this, VS Code
+     * leaves the test with an empty output stream and shows a bare "The test case did not report any
+     * output." Here we attach an actionable reason to both the test output and its error state.
+     */
+    private reportMissingTestResult(test: vscode.TestItem, run: vscode.TestRun): void {
+        const reason = localize('test.did.not.run',
+            "Test '{0}' did not run and produced no output. The test executable may not have been built — build the test target, then run the test again.",
+            test.id);
+        run.appendOutput(util.normalizeCRLF(reason) + '\r\n',
+            (test.uri && test.range) ? new vscode.Location(test.uri, test.range.end) : undefined, test);
+        this.ctestErrored(test, run, new vscode.TestMessage(reason));
     }
 
     /**
@@ -695,7 +793,22 @@ export class CTestDriver implements vscode.Disposable {
 
         await this.fillDriverMap(tests, run, cancellation, driverMap, driver, ctestPath, ctestArgs, testsToRun, customizedTask);
 
+        if (testsToRun && testsToRun.length > 0 && driverMap.size === 0) {
+            // A specific set of tests was requested (e.g. from the inline CodeLens or
+            // programmatically via the API/Copilot) but none of them matched a discovered test id.
+            // Surface this so a "nothing ran" outcome is not silently reported as success.
+            const message = localize('ctest.no.matching.tests', 'None of the requested test(s) matched a discovered test: {0}. Nothing was run. Try refreshing the tests.', testsToRun.join(', '));
+            log.warning(message);
+            // Only fail when tests exist but the requested ones weren't found. If no tests are
+            // discovered at all, don't force a failure here (a zero-test project is not this error).
+            const availableTests = this.getTestNames() ?? [];
+            if (availableTests.length > 0) {
+                return { exitCode: -1, stdout: consumer?.stdout, stderr: message };
+            }
+        }
+
         if (!this.ws.config.ctestAllowParallelJobs) {
+            const usesTestName = this.hasTestNameVariable();
             for (const driver of driverMap.values()) {
                 // Sort tests alphabetically by label to match the Test Explorer display order.
                 driver.tests.sort((a, b) => (a.label).localeCompare(b.label));
@@ -707,8 +820,12 @@ export class CTestDriver implements vscode.Disposable {
 
                     run.started(test);
 
+                    // Re-expand args with ${testName} when the variable is used
+                    const baseArgs = usesTestName
+                        ? (await this.getCTestArgs(driver.driver, customizedTask, undefined, test.id) || [])
+                        : driver.ctestArgs;
                     const superset = this.getTestNamesForSourceDir(driver.driver.sourceDir) || [];
-                    const _ctestArgs = driver.ctestArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
+                    const _ctestArgs = baseArgs.concat('-R', getMinimalRegexFragments(superset, [test.id]).join('|'));
 
                     const testResults = await this.runCTestImpl(driver.driver, driver.ctestPath, _ctestArgs, cancellation, customizedTask, consumer);
 
@@ -722,9 +839,15 @@ export class CTestDriver implements vscode.Disposable {
                         if (testResult) {
                             returnCode = this.testResultsAnalysis(testResult, test, returnCode, run);
                         } else {
-                            this.ctestErrored(test, run, { message: localize('test.results.not.found', 'Test results not found.') });
+                            // Started, but CTest reported no result for it (e.g. the executable was not
+                            // built, or the run matched nothing). Surface a clear reason instead of an
+                            // empty "did not report any output".
+                            this.reportMissingTestResult(test, run);
                             returnCode = -1;
                         }
+                    } else {
+                        this.reportMissingTestResult(test, run);
+                        returnCode = -1;
                     }
                 }
             }
@@ -732,15 +855,10 @@ export class CTestDriver implements vscode.Disposable {
             /**
              * For each unique driver (i.e., driver.sourceDir), run the tests.
              */
+            const usesTestName = this.hasTestNameVariable();
             for (const driver of driverMap.values()) {
                 const uniqueDriver: CMakeDriver = driver.driver;
                 const uniqueCtestPath: string = driver.ctestPath;
-                const uniqueCtestArgs: string[] = driver.ctestArgs;
-
-                // Check if the user (or us programmatically) have already added a -j flag. If not, add it by default for parallel jobs.
-                if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
-                    uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
-                }
 
                 // If we have the test explorer enabled and this method was called from a test explorer entry point,
                 // then there may be a scenario when the user requested only a subset of tests to be ran.
@@ -752,6 +870,25 @@ export class CTestDriver implements vscode.Disposable {
                     targetTests = driver.tests;
                 } else if (testsToRun && testsToRun.length > 0) {
                     targetTests = driver.tests.filter(t => testsToRun.includes(t.id));
+                }
+
+                const effectiveTestCount = targetTests ? targetTests.length : driver.tests.length;
+
+                // When ${testName} is used and exactly one test is targeted, expand with its name
+                let uniqueCtestArgs: string[];
+                if (usesTestName && effectiveTestCount === 1) {
+                    const singleTestName = targetTests ? targetTests[0].id : driver.tests[0].id;
+                    uniqueCtestArgs = await this.getCTestArgs(uniqueDriver, customizedTask, undefined, singleTestName) || [];
+                } else if (usesTestName && effectiveTestCount > 1) {
+                    log.warning(localize('testName.not.supported.parallel', '${testName} variable in ctest args is not supported when running multiple tests in parallel. The variable will not be expanded.'));
+                    uniqueCtestArgs = driver.ctestArgs.slice();
+                } else {
+                    uniqueCtestArgs = driver.ctestArgs.slice();
+                }
+
+                // Check if the user (or us programmatically) have already added a -j flag. If not, add it by default for parallel jobs.
+                if (uniqueCtestArgs.filter(arg => arg.startsWith("-j")).length === 0) {
+                    uniqueCtestArgs.push(`-j${this.ws.config.numCTestJobs}`);
                 }
 
                 if (targetTests) {
@@ -779,6 +916,21 @@ export class CTestDriver implements vscode.Disposable {
                         }
 
                         returnCode = this.testResultsAnalysis(testResults.site.testing.test[i], _test, returnCode, run);
+                    }
+                }
+
+                // Mark any explicitly targeted test that CTest did not report (e.g. an unbuilt
+                // executable) so it doesn't silently show "did not report any output". This only
+                // applies when we selected specific tests via -R; when running all (or a
+                // preset-filtered set) an unreported test may be intentionally excluded, so we must
+                // not assume it is missing.
+                if (targetTests && !(cancellation && cancellation.isCancellationRequested)) {
+                    const reported = new Set((testResults?.site.testing.test ?? []).map(t => t.name));
+                    for (const t of targetTests) {
+                        if (!reported.has(t.id)) {
+                            this.reportMissingTestResult(t, run);
+                            returnCode = -1;
+                        }
                     }
                 }
             }
@@ -811,13 +963,14 @@ export class CTestDriver implements vscode.Disposable {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
             const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
             const exitCode = testResult.measurements.get("Exit Value")?.value;
+            const exitStatus = testResult.measurements.get("Exit Code")?.value;
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
             if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
+                    new vscode.TestMessage(getTestFailureMessage(testName, output, exitCode, exitStatus)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
@@ -1266,7 +1419,7 @@ export class CTestDriver implements vscode.Disposable {
      * @returns The exit code of the ctest command.
      */
     async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => Promise<void>): Promise<number> {
-        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true, environment: await driver.getCTestCommandEnvironment() }).result;
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
             log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
@@ -1511,7 +1664,7 @@ export class CTestDriver implements vscode.Disposable {
                 const rc = await projectCoverageConfig.project.build([projectCoverageConfig.preRunCoverageTarget]);
                 if (rc.exitCode !== 0) {
                     log.error(localize('test.preRunCoverageTargetFailure', 'Building the preRunCoverageTarget \'{0}\' on project in {1} failed. Skipping running tests.', projectCoverageConfig.preRunCoverageTarget, projectCoverageConfig.project.sourceDir));
-                    run.end();
+                    // Note: the caller (runTestHandler) owns run.end() via its finally block.
                     return rc.exitCode;
                 }
             }
@@ -1567,19 +1720,25 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         const run = testExplorer.createTestRun(request);
-        this.ctestsEnqueued(tests, run);
-        const buildSucceeded = await this.buildTests(tests, run);
-        if (buildSucceeded) {
-            if (isCoverageRun) {
-                await this.coverageCTestHelper(tests, run, cancellation);
+        try {
+            this.ctestsEnqueued(tests, run);
+            const buildSucceeded = await this.buildTests(tests, run);
+            if (buildSucceeded) {
+                if (isCoverageRun) {
+                    await this.coverageCTestHelper(tests, run, cancellation);
 
+                } else {
+                    await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, undefined, RunCTestHelperEntryPoint.TestExplorer);
+                }
             } else {
-                await this.runCTestHelper(tests, run, cancellation, undefined, undefined, undefined, false, undefined, undefined, RunCTestHelperEntryPoint.TestExplorer);
+                log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
             }
-        } else {
-            log.info(localize('test.skip.run.build.failure', "Not running tests due to build failure."));
+        } catch (e) {
+            log.error(localize('ctest.run.failed', 'Running tests failed: {0}', (e as Error)?.message ?? String(e)));
+        } finally {
+            // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+            run.end();
         }
-        run.end();
     };
 
     private async debugCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, useLaunchJson: boolean = true): Promise<number> {
@@ -1988,14 +2147,20 @@ export class CTestDriver implements vscode.Disposable {
         const tests = this.uniqueTests(requestedTests);
 
         const run = testExplorer.createTestRun(request);
-        this.ctestsEnqueued(tests, run);
-        const buildSucceeded = await this.buildTests(tests, run);
-        if (buildSucceeded) {
-            await this.debugCTestHelper(tests, run, cancellation, useLaunchJson);
-        } else {
-            log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+        try {
+            this.ctestsEnqueued(tests, run);
+            const buildSucceeded = await this.buildTests(tests, run);
+            if (buildSucceeded) {
+                await this.debugCTestHelper(tests, run, cancellation, useLaunchJson);
+            } else {
+                log.info(localize('test.skip.debug.build.failure', "Not debugging tests due to build failure."));
+            }
+        } catch (e) {
+            log.error(localize('ctest.run.failed', 'Running tests failed: {0}', (e as Error)?.message ?? String(e)));
+        } finally {
+            // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
+            run.end();
         }
-        run.end();
     };
 
     private getTestRootFolder(test: vscode.TestItem): string {
@@ -2072,14 +2237,8 @@ export class CTestDriver implements vscode.Disposable {
     private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
-            const execTargets = await project.executableTargets;
             // Precompute a lookup map from normalized executable path to target name, excluding install targets
-            const execPathToName = new Map<string, string>();
-            for (const t of execTargets) {
-                if (!t.isInstallTarget) {
-                    execPathToName.set(util.platformNormalizePath(t.path), t.name);
-                }
-            }
+            const execPathToName = this.executableTargetNamesByPath(await project.executableTargets);
             const accumulatedTestList: vscode.TestItem[] = [];
             const accumulatedTargets: string[] = [];
             let success: boolean = true;
@@ -2120,6 +2279,41 @@ export class CTestDriver implements vscode.Disposable {
             }
         };
         return overallSuccess;
+    }
+
+    /**
+     * Build a lookup from normalized executable output path to CMake target name, excluding install targets.
+     */
+    private executableTargetNamesByPath(executableTargets: ExecutableTarget[]): Map<string, string> {
+        const execPathToName = new Map<string, string>();
+        for (const target of executableTargets) {
+            if (!target.isInstallTarget) {
+                execPathToName.set(util.platformNormalizePath(target.path), target.name);
+            }
+        }
+        return execPathToName;
+    }
+
+    /**
+     * Resolve the CMake executable target(s) that must be built to run the given tests — the same mapping used by
+     * buildTestTargets (test program path -> executableTargets name, install targets skipped). Test programs that
+     * are not known CMake executable targets (e.g. python, cmake -E, or a nested ctest build-and-test) are skipped,
+     * so callers can fall back to the default build target for those.
+     */
+    public getTestBuildTargets(testNames: string[], executableTargets: ExecutableTarget[]): string[] {
+        const execPathToName = this.executableTargetNamesByPath(executableTargets);
+        const targets = new Set<string>();
+        for (const testName of testNames) {
+            const program = this.testProgram(testName);
+            if (!program) {
+                continue;
+            }
+            const targetName = execPathToName.get(util.platformNormalizePath(program));
+            if (targetName) {
+                targets.add(targetName);
+            }
+        }
+        return [...targets];
     }
 
     /**

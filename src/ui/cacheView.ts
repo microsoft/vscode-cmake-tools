@@ -12,12 +12,14 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export interface IOption {
-    key: string;    // same as CMake cache variable key names
-    type: string;   // "Bool" for boolean and "String" for anything else for now
+    key: string; // same as CMake cache variable key names
+    type: string; // "Bool" for boolean and "String" for anything else for now
     helpString: string;
     choices: string[];
-    value: string;  // value from the cache file or changed in the UI
+    value: string | boolean; // value from the cache file or changed in the UI
     dirty: boolean; // if the variable was edited in the UI
+    presetSource?: string; // where this variable is defined in presets
+    differsFromPresetValue?: boolean; // true if cache value differs from preset value
 }
 
 /**
@@ -50,7 +52,11 @@ export class ConfigurationWebview {
 
     private options: IOption[] = [];
 
-    constructor(protected cachePath: string, protected save: () => void) {
+    constructor(
+        protected cachePath: string,
+        protected save: (dirtyOptions: IOption[]) => Promise<void>,
+        protected getPresetOptionMetadata?: (options: IOption[]) => Promise<Map<string, { presetSource: string; differsFromPresetValue?: boolean }>>
+    ) {
         this.panel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
             this.cmakeCacheEditorText, // Title of the panel displayed to the user
@@ -66,11 +72,17 @@ export class ConfigurationWebview {
     async persistCacheEntries() {
         if (this.isDirty) {
             telemetry.logEvent("editCMakeCache", { command: "saveCMakeCacheUI" });
-            await this.saveCmakeCache(this.options);
+            const dirtyOptions = this.options.filter(option => option.dirty);
+            await this.saveCmakeCache(dirtyOptions);
             void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-            // start configure
-            this.save();
+            // Clear the dirty state before configuring so the post-configure refresh
+            // (triggered via onReconfigured -> refreshPanel) takes the clean path instead
+            // of prompting to resolve conflicts against our own just-saved edits.
             this.isDirty = false;
+            // Start configure after persisting the edited values. Passing the dirty options lets
+            // the extension write preset-backed overrides into CMakeUserPresets.json so the edits
+            // are not clobbered by the active configure preset on reconfigure.
+            await this.save(dirtyOptions);
         }
     }
 
@@ -145,12 +157,6 @@ export class ConfigurationWebview {
                 this.options = mergedOptions;
             }
 
-            // The webview needs a re-render also for the "ignore" or "fromUI" cases
-            // to reflect all the unconflicting changes.
-            if (this.panel.visible) {
-                await this.renderWebview(this.panel, false);
-            }
-
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
             // between the webview and the file on disk.
             if (result !== ignore) {
@@ -158,6 +164,12 @@ export class ConfigurationWebview {
             }
         } else {
             this.options = await this.getConfigurationOptions();
+        }
+
+        // Re-render after both clean and dirty refreshes so external cache changes
+        // are reflected immediately while the editor is visible.
+        if (this.panel.visible) {
+            await this.renderWebview(this.panel, false);
         }
     }
 
@@ -207,7 +219,11 @@ export class ConfigurationWebview {
 
     async saveCmakeCache(options: IOption[]) {
         const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-        await cmakeCache.saveAll(options);
+        const serializedOptions = options.map(option => ({
+            key: option.key,
+            value: util.isBoolean(option.value) ? (option.value ? 'TRUE' : 'FALSE') : option.value
+        }));
+        await cmakeCache.saveAll(serializedOptions);
     }
 
     /**
@@ -225,6 +241,18 @@ export class ConfigurationWebview {
                 options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
             }
         }
+
+        if (this.getPresetOptionMetadata) {
+            const metadataByKey = await this.getPresetOptionMetadata(options);
+            for (const option of options) {
+                const metadata = metadataByKey.get(option.key);
+                if (metadata) {
+                    option.presetSource = metadata.presetSource;
+                    option.differsFromPresetValue = metadata.differsFromPresetValue;
+                }
+            }
+        }
+
         return options;
     }
 
@@ -254,6 +282,10 @@ export class ConfigurationWebview {
         const saveButtonText = localize("save", "Save");
         const keyColumnText = localize("key", "Key");
         const valueColumnText = localize("value", "Value");
+        const sourceColumnText = localize("source", "Source");
+        const notSetInPresetsText = localize("not.set.in.presets", "Cmake Cache");
+        const differsFromPresetText = localize("differs.from.preset", "Changed in cache");
+        const matchesPresetText = localize("matches.preset", "Matches preset");
 
         let html = `
     <!DOCTYPE html>
@@ -487,6 +519,7 @@ export class ConfigurationWebview {
             <th style="width: 30px"></th>
             <th style="width: 1px; white-space: nowrap;">${keyColumnText}</th>
             <th>${valueColumnText}</th>
+            <th style="width: 1px; white-space: nowrap;">${sourceColumnText}</th>
           </tr>
           ${key}
         </table>
@@ -509,9 +542,10 @@ export class ConfigurationWebview {
 
             const id = escapeAttribute(option.key);
             let editControls = '';
+            const stringValue = util.isBoolean(option.value) ? (option.value ? 'TRUE' : 'FALSE') : String(option.value);
 
             if (option.type === "Bool") {
-                editControls = `<input class="cmake-input-bool" id="${id}" type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
+                editControls = `<input class="cmake-input-bool" id="${id}" type="checkbox" ${util.isTruthy(stringValue) ? 'checked' : ''}>
           <label id="LABEL_${id}" for="${id}"/>`;
             } else {
                 const hasChoices = option.choices.length > 0;
@@ -526,10 +560,16 @@ export class ConfigurationWebview {
                 }
             }
 
+            let sourceText = option.presetSource || notSetInPresetsText;
+            if (option.presetSource && option.differsFromPresetValue !== undefined) {
+                sourceText = `${sourceText} | ${option.differsFromPresetValue ? differsFromPresetText : matchesPresetText}`;
+            }
+
             return `<tr class="content-tr">
       <td></td>
       <td title="${escapeAttribute(option.helpString)}">${escapeHtml(option.key)}</td>
       <td>${editControls}</td>
+          <td>${escapeHtml(sourceText)}</td>
     </tr>`;
         });
 

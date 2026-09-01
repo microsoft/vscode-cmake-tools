@@ -190,6 +190,7 @@ export interface ExtensionConfigurationSettings {
     buildDirectory: string;
     installPrefix: string | null;
     sourceDirectory: string | string[];
+    autoDetectSourceDirectory: boolean;
     saveBeforeBuild: boolean;
     buildBeforeRun: boolean;
     clearOutputBeforeBuild: boolean;
@@ -540,6 +541,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.ignoreCMakeListsMissing;
     }
 
+    get autoDetectSourceDirectory(): boolean {
+        return this.configData.autoDetectSourceDirectory;
+    }
+
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
         if (communicationMode === "automatic" && this.useCMakeServer) {
@@ -766,6 +771,7 @@ export class ConfigurationReader implements vscode.Disposable {
         allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
         allowUnsupportedPresetsVersions: new vscode.EventEmitter<boolean>(),
         ignoreCMakeListsMissing: new vscode.EventEmitter<boolean>(),
+        autoDetectSourceDirectory: new vscode.EventEmitter<boolean>(),
         launchBehavior: new vscode.EventEmitter<string>(),
         automaticReconfigure: new vscode.EventEmitter<boolean>(),
         pinnedCommands: new vscode.EventEmitter<string[]>(),

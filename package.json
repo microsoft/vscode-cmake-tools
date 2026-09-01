@@ -143,6 +143,15 @@
             "path": "./syntaxes/CMakeCache.tmLanguage.json"
         }
     ],
+    "configurationDefaults": {
+        "[cmake]": {
+            "editor.quickSuggestions": {
+                "other": "on",
+                "comments": "off",
+                "strings": "on"
+            }
+        }
+    },
     "commands": [
       {
         "command": "cmake.openCMakePresets",
@@ -2398,6 +2407,12 @@
           "default": "${workspaceFolder}",
           "scope": "resource"
         },
+        "cmake.autoDetectSourceDirectory": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%cmake-tools.configuration.cmake.autoDetectSourceDirectory.markdownDescription%",
+          "scope": "resource"
+        },
         "cmake.saveBeforeBuild": {
           "type": "boolean",
           "default": true,
@@ -4063,6 +4078,12 @@
           ],
           "description": "%cmake-tools.configuration.cmake.revealLog.description%"
         },
+        "cmake.revealLogOnAutomaticTrigger": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%cmake-tools.configuration.cmake.revealLogOnAutomaticTrigger.markdownDescription%",
+          "scope": "window"
+        },
         "cmake.exportCompileCommandsFile": {
           "type": "boolean",
           "default": true,
@@ -4371,12 +4392,17 @@
           "id": "cmake-view",
           "title": "CMake",
           "icon": "$(cmake-tools-cmake-view-2)",
-          "when": "cmake:enableFullFeatureSet"
+          "when": "cmake:isInitializing || cmake:enableFullFeatureSet"
         }
       ]
     },
     "views": {
       "cmake-view": [
+        {
+          "id": "cmake.initializing",
+          "name": "%cmake-tools.configuration.views.cmake.initializing.description%",
+          "when": "cmake:isInitializing && !cmake:enableFullFeatureSet"
+        },
         {
           "id": "cmake.projectStatus",
           "name": "%cmake-tools.configuration.views.cmake.projectStatus.description%",
@@ -4404,6 +4430,11 @@
         "view": "cmake.pinnedCommands",
         "contents": "%cmake-tools.configuration.views.cmake.pinnedCommandsWelcome.description%",
         "when": "cmake:enableFullFeatureSet"
+      },
+      {
+        "view": "cmake.initializing",
+        "contents": "%cmake-tools.configuration.views.cmake.initializingWelcome.description%",
+        "when": "cmake:isInitializing && !cmake:enableFullFeatureSet"
       }
     ],
     "yamlValidation": [
@@ -4489,7 +4520,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/eslint-plugin-tslint": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.1.0",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
@@ -4527,14 +4558,14 @@
     "@types/string.prototype.matchall": "^4.0.4",
     "ajv": "^8.18.0",
     "iconv-lite": "^0.6.2",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.3.1",
     "json5": "^2.2.2",
     "minimist": "^1.2.6",
     "open": "^7.4.1",
     "p-limit": "^3.1.0",
     "rimraf": "^3.0.2",
     "string.prototype.matchall": "^4.0.10",
-    "tmp": "^0.2.6",
+    "tmp": "^0.2.7",
     "vscode-cpptools": "^7.1.1",
     "@vscode/extension-telemetry": "^0.9.6",
     "vscode-nls": "^5.0.0",
@@ -4556,11 +4587,11 @@
     "xml2js": "^0.5.0",
     "**/mocha/minimatch": "^3.1.5",
     "**/braces": "^3.0.3",
-    "js-yaml": "^4.1.1",
-    "tmp": "^0.2.6",
+    "js-yaml": "^4.3.1",
+    "tmp": "^0.2.7",
     "jws": "^4.0.1",
     "serialize-javascript": "^7.0.4",
-    "**/minimatch/brace-expansion": "^1.1.13"
+    "**/minimatch/brace-expansion": "^1.1.16"
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.22"
 }

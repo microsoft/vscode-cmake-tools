@@ -13,14 +13,10 @@ steps:
   displayName: Use Node 22.x
   inputs:
     versionSpec: 22.x
-- script: npm install -g yarn@1.22.19
-  displayName: Use Yarn 1.x (from CFS feed)
 - task: CmdLine@2
   displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
   inputs:
     script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
-- script: npm install -g @vscode/vsce
-  displayName: 'install vsce'
 - task: PowerShell@2
   displayName: Set build name
   inputs:
@@ -37,9 +33,14 @@ steps:
       $oldVersion = $JsonData.version
       $newVersion = "${{parameters.ReleaseVersion}}"
       $JsonData.version = $newVersion
+      # Embed the source commit SHA so the exact commit a (pre-)release was built
+      # from can be identified from the VSIX (see issue #4801).
+      $commitId = "$(Build.SourceVersion)"
+      $JsonData | Add-Member -NotePropertyName 'commitId' -NotePropertyValue $commitId -Force
       $JsonData | ConvertTo-Json -Depth 20 | Set-Content -Path .\package.json
       Write-Host "old version was: $oldVersion"
       Write-Host "new version is: $newVersion"
+      Write-Host "commit id is: $commitId"
       Get-Content -Path .\package.json
 - task: CmdLine@2
   displayName: Create release.flag/insiders.flag
@@ -54,6 +55,8 @@ steps:
   inputs:
     script: |
       yarn compile-production
+  env:
+    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: MSBuild@1
   displayName: Sign files
   inputs:
@@ -64,12 +67,14 @@ steps:
   inputs:
     script: |
       mkdir $(Build.ArtifactStagingDirectory)\vsix
-      if "${{parameters.IsPreRelease}}"=="1" (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+      if "${{parameters.IsPreRelease}}"=="1" (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix --pre-release) else (yarn run vsce package --yarn -o $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix)
+  env:
+    npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
 - task: CmdLine@2
   displayName: Generate Extension Manifest
   inputs:
     script: |
-      vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
+      yarn run vsce generate-manifest -i $(Build.ArtifactStagingDirectory)\vsix\cmake-tools.vsix -o $(Build.ArtifactStagingDirectory)\vsix\extension.manifest
 - task: CmdLine@2
   displayName: Prepare manifest for signing
   inputs:
