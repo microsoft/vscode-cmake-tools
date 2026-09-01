@@ -1,8 +1,38 @@
-import { readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments, getTestFailureMessage } from "@cmt/ctest";
+import { CTestDriver, readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments, getTestFailureMessage } from "@cmt/ctest";
 import { expect, getTestResourceFilePath } from "@test/util";
 import { TestMessage } from "vscode";
 
 suite('CTest test', () => {
+    test('CTest discovery uses the selected test preset environment', async () => {
+        const presetEnvironment = { CMAKE_TOOLS_TEST_ENV: 'preset-value' };
+        let executionOptions: { environment?: Record<string, string | undefined>; cwd?: string; silent?: boolean } | undefined;
+        let testsUpdated = false;
+        const driver = {
+            binaryDir: 'build',
+            async getCTestCommandEnvironment() {
+                return presetEnvironment;
+            },
+            executeCommand(_command: string, _args: string[], _consumer: unknown, options: typeof executionOptions) {
+                executionOptions = options;
+                return { result: Promise.resolve({ retc: 0, stdout: '', stderr: '' }) };
+            }
+        };
+        const ctestDriver = new CTestDriver({} as any);
+
+        const result = await ctestDriver.extractTestsCommand(
+            driver as any,
+            'ctest',
+            ['--show-only=json-v1'],
+            async () => {
+                testsUpdated = true;
+            }
+        );
+
+        expect(result).to.eq(0);
+        expect(testsUpdated).to.eq(true);
+        expect(executionOptions?.environment).to.equal(presetEnvironment);
+    });
+
     test('Parse XML test results', async () => {
         const result = await readTestResultsFile(getTestResourceFilePath('TestResults.xml'));
         expect(result!.site.testing.testList.length).to.eq(2);
