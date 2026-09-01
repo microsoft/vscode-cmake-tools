@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Festlegen nicht möglich von Kit {0}.",
 	"error.on.switch.status": "Fehler beim Wechsel des Kits ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "Die aktive Kitumgebung kann beim Auflösen von cmake.cmakePath „{0}“ nicht ausgewertet werden.",
+	"using.vs.instance.cmake": "Das mit der von vsInstanceVersion ausgewählten Visual Studio-Instanz gebündelte CMake verwenden: {0}",
 	"cmake.version.not.supported": "CMake-Version {0} wird möglicherweise nicht unterstützt. Die erforderliche Mindestversion ist {1}.",
 	"not.starting.language.server.only": "Der CMake-Treiber wird nicht gestartet, da der Modus „Nur Sprachserver“ aktiviert ist.",
 	"not.starting.no.kits": "Der CMake-Treiber wird nicht gestartet: Es wurden keine Kits ausgewählt.",

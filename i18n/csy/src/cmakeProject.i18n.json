@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Nejde nastavit sadu {0}.",
 	"error.on.switch.status": "Chyba při přepnutí sady ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "Při překladu cmake.cmakePath se nepodařilo vyhodnotit prostředí aktivní sady: {0}",
+	"using.vs.instance.cmake": "Používá se CMake, který je součástí instance sady Visual Studio vybrané pomocí vsInstanceVersion: {0}.",
 	"cmake.version.not.supported": "{0} verze CMake se nemusí podporovat. Minimální požadovaná verze je {1}.",
 	"not.starting.language.server.only": "Ovladač CMake se nespustí, protože je povolen režim pouze jazykového serveru.",
 	"not.starting.no.kits": "Nespouští se ovladač CMake: nejsou vybrané žádné sady.",
