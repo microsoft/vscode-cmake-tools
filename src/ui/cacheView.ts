@@ -556,7 +556,7 @@ export class ConfigurationWebview {
                         ).join('\n')}
                     </select>`;
                 } else {
-                    editControls = `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;" type="text">`;
+                    editControls = `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(stringValue)}" style="width: 90%;" type="text">`;
                 }
             }
 
