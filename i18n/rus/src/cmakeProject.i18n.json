@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Не удается установить набор {0}.",
 	"error.on.switch.status": "Ошибка при смене набора ({0}).",
 	"failed.to.compute.kit.env.for.cmake.path": "Не удалось оценить активную среду комплекта при разрешении cmake.cmakePath: {0}",
+	"using.vs.instance.cmake": "Использование CMake, входящего в состав экземпляра Visual Studio, выбранного с помощью vsInstanceVersion: {0}",
 	"cmake.version.not.supported": "CMake версии {0} может не поддерживаться. Минимальная требуемая версия: {1}.",
 	"not.starting.language.server.only": "Драйвер CMake не запускается, так как включен режим только языкового сервера.",
 	"not.starting.no.kits": "Драйвер CMake не запущен: не выбрано наборов.",
