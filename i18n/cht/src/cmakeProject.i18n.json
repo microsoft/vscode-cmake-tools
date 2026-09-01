@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "無法設定套件 {0}。",
 	"error.on.switch.status": "套件 ({0}) 的切換錯誤",
 	"failed.to.compute.kit.env.for.cmake.path": "在解析 cmake.cmakePath 時無法評估使用中套件環境: {0}",
+	"using.vs.instance.cmake": "使用由 vsInstanceVersion 選取的 Visual Studio 執行個體隨附的 CMake: {0}",
 	"cmake.version.not.supported": "可能不支援{0} CMake 版本。需要的最低版本為 {1}。",
 	"not.starting.language.server.only": "未啟動 CMake 驅動程式，因為已啟用僅限語言伺服器模式。",
 	"not.starting.no.kits": "未啟動 CMake 驅動程式: 未選取套件",

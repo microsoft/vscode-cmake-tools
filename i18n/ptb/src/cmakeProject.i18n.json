@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Não é possível definir o kit {0}.",
 	"error.on.switch.status": "Erro no comutador do kit ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "Não é possível avaliar o ambiente do kit ativo ao resolver cmake.cmakePath: {0}",
+	"using.vs.instance.cmake": "Usando o CMake agrupado com a instância Visual Studio selecionada pelo vsInstanceVersion: {0}",
 	"cmake.version.not.supported": "A versão do CMake {0} pode não ser compatível. A versão mínima necessária é {1}.",
 	"not.starting.language.server.only": "O driver do CMake não está sendo iniciado porque o modo somente servidor de linguagem está habilitado.",
 	"not.starting.no.kits": "Não iniciando o driver do CMake: nenhum kit selecionado",

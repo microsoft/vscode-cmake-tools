@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Nie można ustawić zestawu {0}.",
 	"error.on.switch.status": "Błąd przy przełączeniu zestawu ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "Nie można ocenić aktywnego środowiska zestawu podczas rozpoznawania polecenia cmake.cmakePath: {0}",
+	"using.vs.instance.cmake": "Korzystanie z narzędzia CMake w pakiecie z wystąpieniem programu Visual Studio wybranym przez element vsInstanceVersion: {0}",
 	"cmake.version.not.supported": "Wersja narzędzia Cmake {0} może nie być obsługiwana. Minimalna wymagana wersja to {1}.",
 	"not.starting.language.server.only": "Sterownik CMake nie jest uruchamiany, ponieważ włączono tryb tylko serwera języka.",
 	"not.starting.no.kits": "Nie można uruchomić sterownika narzędzia CMake: nie wybrano zestawu",

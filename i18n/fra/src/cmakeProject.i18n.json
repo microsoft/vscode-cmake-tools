@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "Impossible de définir le kit {0}",
 	"error.on.switch.status": "Erreur durant le changement de kit ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "Désolé, nous ne pouvons pas évaluer l’environnement du kit actif lors de la résolution de cmake.cmakePath : {0}",
+	"using.vs.instance.cmake": "Utiliser CMake fourni avec l’instance de Visual Studio sélectionnée par vsInstanceVersion : {0}",
 	"cmake.version.not.supported": "La version {0} de CMake peut ne pas être prise en charge. La version minimale requise est {1}.",
 	"not.starting.language.server.only": "Impossible de démarrer le pilote CMake, car le mode langage-serveur-uniquement est activé.",
 	"not.starting.no.kits": "Impossible de démarrer le pilote CMake : aucun kit sélectionné",
