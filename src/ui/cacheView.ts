@@ -552,8 +552,8 @@ export class ConfigurationWebview {
                 if (hasChoices) {
                     editControls = `<select class="cmake-input-select select-default" id="${id}">
                         ${option.choices.map(ch =>
-                            `<option value="${escapeAttribute(ch)}" ${ch === option.value ? 'selected' : ''}>${escapeHtml(ch)}</option>`
-                        ).join('\n')}
+        `<option value="${escapeAttribute(ch)}" ${ch === option.value ? 'selected' : ''}>${escapeHtml(ch)}</option>`
+    ).join('\n')}
                     </select>`;
                 } else {
                     editControls = `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(stringValue)}" style="width: 90%;" type="text">`;
