@@ -301,13 +301,23 @@ suite('Debug/Launch interface', () => {
             expect(terminal!.creationOptions.name).to.eq(`CMake/Launch - ${executablesTargets[0].name}`);
 
             const start = new Date();
-            // Needed to get launch target result
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // Poll for the launched executable's output file rather than waiting a single fixed
+            // interval: on loaded CI runners the launch terminal and process startup can take
+            // longer than a few seconds, which made the previous fixed 3s wait racy and flaky on
+            // Windows. We still assert the file must appear, just within a more tolerant window.
+            let exists = false;
+            const timeoutMs = 15000;
+            while ((new Date().getTime() - start.getTime()) < timeoutMs) {
+                if (fs.existsSync(createdFileOnExecution)) {
+                    exists = true;
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
 
             const elapsed = (new Date().getTime() - start.getTime()) / 1000;
             console.log(`Waited ${elapsed} seconds for output file to appear`);
 
-            const exists = fs.existsSync(createdFileOnExecution);
             // Check that it is compiled as a new file
             expect(exists).to.be.true;
         } finally {

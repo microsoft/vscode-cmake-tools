@@ -165,3 +165,72 @@ suite('expandExcludePaths tests', () => {
         expect(results).to.have.lengthOf(0);
     });
 });
+
+suite('getNestedCMakeListsDirs tests', () => {
+    const fs = require('fs') as typeof import('fs');
+    const os = require('os') as typeof import('os');
+    let root: string;
+
+    function makeFile(...segments: string[]): void {
+        const file = path.join(root, ...segments);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, '');
+    }
+
+    setup(() => {
+        root = fs.mkdtempSync(path.join(os.tmpdir(), 'cmt-nested-'));
+    });
+
+    teardown(() => {
+        fs.rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    });
+
+    test('Finds a single nested CMakeLists.txt directory', async () => {
+        makeFile('source', 'CMakeLists.txt');
+        const dirs = await util.getNestedCMakeListsDirs(root);
+        expect(dirs).to.eql([path.join(root, 'source')]);
+    });
+
+    test('Returns only the top-most CMakeLists.txt per branch', async () => {
+        makeFile('source', 'CMakeLists.txt');
+        makeFile('source', 'sub', 'CMakeLists.txt');
+        const dirs = await util.getNestedCMakeListsDirs(root);
+        expect(dirs).to.eql([path.join(root, 'source')]);
+    });
+
+    test('Excludes build and dependency directories', async () => {
+        makeFile('build', 'CMakeLists.txt');
+        makeFile('node_modules', 'pkg', 'CMakeLists.txt');
+        makeFile('out', 'CMakeLists.txt');
+        makeFile('.git', 'CMakeLists.txt');
+        makeFile('vendor', 'CMakeLists.txt');
+        makeFile('src', 'CMakeLists.txt');
+        const dirs = await util.getNestedCMakeListsDirs(root);
+        expect(dirs).to.eql([path.join(root, 'src')]);
+    });
+
+    test('Returns multiple sibling candidates sorted shallowest-first', async () => {
+        makeFile('source', 'CMakeLists.txt');
+        makeFile('tests', 'CMakeLists.txt');
+        makeFile('tools', 'deep', 'CMakeLists.txt');
+        const dirs = await util.getNestedCMakeListsDirs(root);
+        const shallowest = dirs[0].split(path.sep).length;
+        // The two depth-1 candidates come before the deeper one.
+        expect(dirs.slice(0, 2).map(d => path.basename(d)).sort()).to.eql(['source', 'tests']);
+        expect(dirs.every(d => d.split(path.sep).length >= shallowest)).to.equal(true);
+    });
+
+    test('Respects the maximum search depth', async () => {
+        makeFile('a', 'b', 'c', 'd', 'CMakeLists.txt');
+        const withinDefault = await util.getNestedCMakeListsDirs(root);
+        expect(withinDefault).to.eql([]);
+        const deeper = await util.getNestedCMakeListsDirs(root, 4);
+        expect(deeper).to.eql([path.join(root, 'a', 'b', 'c', 'd')]);
+    });
+
+    test('Returns empty when there are no nested CMakeLists.txt files', async () => {
+        makeFile('docs', 'readme.md');
+        const dirs = await util.getNestedCMakeListsDirs(root);
+        expect(dirs).to.eql([]);
+    });
+});

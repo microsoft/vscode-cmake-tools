@@ -48,6 +48,7 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { KitsController } from '@cmt/kits/kitsController';
 import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
+import { shouldUsePinnedVsInstanceCMake, vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
@@ -107,6 +108,32 @@ export enum ConfigureTrigger {
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
+}
+
+/**
+ * Classifies a {@link ConfigureTrigger} as automatic/programmatic (vs. an explicit user
+ * action). Automatic configures (configure-on-open, reconfigure on file change, build-induced
+ * reconfigure, API-driven configures, etc.) should not proactively reveal the output panel and
+ * steal it away from a terminal the user is working in, while user-initiated configures
+ * (command palette, kit/preset selection, Quick Start, launch) keep revealing as before.
+ */
+export function isAutomaticConfigureTrigger(trigger: ConfigureTrigger): boolean {
+    switch (trigger) {
+        case ConfigureTrigger.configureOnOpen:
+        case ConfigureTrigger.configureWithCache:
+        case ConfigureTrigger.cmakeListsChange:
+        case ConfigureTrigger.sourceDirectoryChange:
+        case ConfigureTrigger.compilation:
+        case ConfigureTrigger.api:
+        case ConfigureTrigger.taskProvider:
+        case ConfigureTrigger.workflow:
+        case ConfigureTrigger.runTests:
+        case ConfigureTrigger.package:
+        case ConfigureTrigger.badHomeDir:
+            return true;
+        default:
+            return false;
+    }
 }
 
 export interface DiagnosticsConfiguration {
@@ -991,89 +1018,30 @@ export class CMakeProject {
                 telemetryProperties["ignoreCMakeListsMissing"] = ignoreCMakeListsMissing.toString();
 
                 if (!ignoreCMakeListsMissing && !this.isMultiProjectFolder) {
-                    const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
-
-                    if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
-                        telemetryProperties["hasCmakeLists"] = "true";
-                    } else {
-                        telemetryProperties["hasCMakeLists"] = "false";
-                    }
-                    interface FileItem extends vscode.QuickPickItem {
-                        fullPath: string;
-                    }
-                    const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
-                        label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
-                        fullPath: file
-                    })) : [];
-
-                    // Sort files by depth. In general the user may want to select the top-most CMakeLists.txt
-                    items.sort((a, b) => {
-                        const aDepth = a.fullPath.split(path.sep).length;
-                        const bDepth = b.fullPath.split(path.sep).length;
-
-                        return aDepth - bDepth;
-                    });
-
-                    const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
-                    const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
-                    items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
-                    items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.description", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
-                    const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
-                        placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
-                    });
-                    telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel" : (selection.label === browse) ? "browse" : (selection.label === dontAskAgain) ? "dontAskAgain" : "pick";
-                    let selectedFile: string | undefined;
-                    if (!selection) {
-                        break; // User canceled it.
-                    } else if (selection.label === browse) {
-                        const openOpts: vscode.OpenDialogOptions = {
-                            canSelectMany: false,
-                            defaultUri: vscode.Uri.file(this.folderPath),
-                            filters: { "CMake files": ["txt"], "All files": ["*"] },
-                            openLabel: "Load"
-                        };
-                        const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
-                        if (cmakeListsFile) {
-                            // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
-                            selectedFile = cmakeListsFile[0].fsPath;
-                        }
-                    } else if (selection.label === dontAskAgain) {
-                        await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
-                    } else {
-                        // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
-                        // selection.label is the relative path to the selected CMakeLists.txt.
-                        selectedFile = selection.label;
-                    }
-                    if (selectedFile) {
-                        const newSourceDirectory = path.dirname(selectedFile);
-                        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
-                        // Update the PresetsController so that CMakePresets.json is
-                        // looked up relative to the new source directory (fixes #4727).
-                        await this.presetsController.updateSourceDir(this._sourceDir);
-                        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
-                        if (config) {
-                            // Updating sourceDirectory here, at the beginning of the configure process,
-                            // doesn't need to fire the settings change event (which would trigger unnecessarily
-                            // another immediate configure, which will be blocked anyway).
-                            config.updatePartial({ sourceDirectory: newSourceDirectory }, false);
-
-                            // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
-                            // we know that it exists and we don't need any other additional checks on its value,
-                            // so simply enable full feature set.
-                            await enableFullFeatureSet(true);
-
-                            if (!isConfiguring) {
-                                telemetry.logEvent(telemetryEvent, telemetryProperties);
-                                await vscode.commands.executeCommand('cmake.configure');
+                    // When the user has not set a custom source directory, try to auto-detect a single
+                    // unambiguous nested CMakeLists.txt (e.g. source/CMakeLists.txt) and adopt it without a
+                    // modal prompt, so the CMake Tools UI appears immediately instead of staying hidden.
+                    if (this.workspaceContext.config.autoDetectSourceDirectory &&
+                        this.workspaceContext.config.isDefaultValue('sourceDirectory', this.workspaceFolder.uri)) {
+                        const candidateDirs: string[] = await util.getNestedCMakeListsDirs(this.folderPath);
+                        if (candidateDirs.length > 0) {
+                            const shallowestDepth: number = candidateDirs[0].split(path.sep).length;
+                            const topMostDirs: string[] = candidateDirs.filter(dir => dir.split(path.sep).length === shallowestDepth);
+                            if (topMostDirs.length === 1) {
+                                telemetryProperties["missingCMakeListsUserAction"] = "autoDetect";
+                                await this.applyDetectedSourceDirectory(path.join(topMostDirs[0], "CMakeLists.txt"), config, isConfiguring, telemetryEvent, telemetryProperties);
+                                this.showAutoDetectedSourceDirectoryNotification(topMostDirs[0], config, isConfiguring);
                                 return true;
-                            } else {
-                                await this.reloadCMakeDriver();
                             }
                         }
+                    }
 
-                        return true;
-                    } else {
-                        telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
+                    // Otherwise fall back to manual selection. Don't pop a modal picker on open when the
+                    // user opted out of configure-on-open; an explicit configure always prompts.
+                    if (isConfiguring || (config?.configureOnOpen ?? true)) {
+                        if (await this.promptToSelectCMakeListsFile(config, isConfiguring, telemetryEvent, telemetryProperties)) {
+                            return true;
+                        }
                     }
                 }
 
@@ -1089,6 +1057,135 @@ export class CMakeProject {
         // This is a good place for an update.
         await updateFullFeatureSet();
         return false;
+    }
+
+    /**
+     * Show the QuickPick that lets the user choose which CMakeLists.txt to use as the source
+     * directory when the workspace root has none. Returns true if a source directory was applied.
+     */
+    private async promptToSelectCMakeListsFile(config: ConfigurationReader | undefined, isConfiguring: boolean, telemetryEvent: string | undefined, telemetryProperties: telemetry.Properties): Promise<boolean> {
+        const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
+
+        if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
+            telemetryProperties["hasCMakeLists"] = "true";
+        } else {
+            telemetryProperties["hasCMakeLists"] = "false";
+        }
+        interface FileItem extends vscode.QuickPickItem {
+            fullPath: string;
+        }
+        const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
+            label: util.getRelativePath(file, this.folderPath) + "/CMakeLists.txt",
+            fullPath: file
+        })) : [];
+
+        // Sort files by depth. In general the user may want to select the top-most CMakeLists.txt
+        items.sort((a, b) => {
+            const aDepth = a.fullPath.split(path.sep).length;
+            const bDepth = b.fullPath.split(path.sep).length;
+
+            return aDepth - bDepth;
+        });
+
+        const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
+        const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
+        items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
+        items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.description", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
+        const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
+            placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
+        });
+        telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "cancel" : (selection.label === browse) ? "browse" : (selection.label === dontAskAgain) ? "dontAskAgain" : "pick";
+        let selectedFile: string | undefined;
+        if (!selection) {
+            return false; // User canceled it.
+        } else if (selection.label === browse) {
+            const openOpts: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                defaultUri: vscode.Uri.file(this.folderPath),
+                filters: { "CMake files": ["txt"], "All files": ["*"] },
+                openLabel: localize("load", "Load")
+            };
+            const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
+            if (cmakeListsFile) {
+                // Keep the absolute path for CMakeLists.txt files that are located outside of the workspace folder.
+                selectedFile = cmakeListsFile[0].fsPath;
+            }
+        } else if (selection.label === dontAskAgain) {
+            await vscode.workspace.getConfiguration('cmake', this.workspaceFolder).update('ignoreCMakeListsMissing', true, vscode.ConfigurationTarget.WorkspaceFolder);
+        } else {
+            // Keep the relative path for CMakeLists.txt files that are located inside of the workspace folder.
+            // selection.label is the relative path to the selected CMakeLists.txt.
+            selectedFile = selection.label;
+        }
+        if (selectedFile) {
+            await this.applyDetectedSourceDirectory(selectedFile, config, isConfiguring, telemetryEvent, telemetryProperties);
+            return true;
+        } else {
+            telemetryProperties["missingCMakeListsUserAction"] = "cancel-browse";
+        }
+        return false;
+    }
+
+    /**
+     * Adopt `selectedFile`'s directory as the CMake source directory: update the source dir, retarget
+     * presets, persist the setting, and enable the full feature set so the UI appears. Auto-configures
+     * only when the user has opted into configure-on-open.
+     */
+    private async applyDetectedSourceDirectory(selectedFile: string, config: ConfigurationReader | undefined, isConfiguring: boolean, telemetryEvent: string | undefined, telemetryProperties: telemetry.Properties): Promise<void> {
+        const newSourceDirectory = path.dirname(selectedFile);
+        await this.setSourceDir(await util.normalizeAndVerifySourceDir(newSourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceContext.folder.uri.fsPath)));
+        // Update the PresetsController so that CMakePresets.json is looked up relative to the new
+        // source directory (fixes #4727), and settle presets-vs-kits mode before any configure.
+        await this.presetsController.updateSourceDir(this._sourceDir);
+        await this.doUseCMakePresetsChange();
+        void vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update("sourceDirectory", this._sourceDir);
+
+        // The source directory now points to a real CMakeLists.txt, so enable the full feature set
+        // (status bar, activity-bar views and commands) even if we are not going to auto-configure.
+        // This guarantees the UI appears instead of staying hidden in partial activation.
+        await enableFullFeatureSet(true);
+
+        if (config) {
+            // Updating sourceDirectory here, at the beginning of the configure process,
+            // doesn't need to fire the settings change event (which would trigger unnecessarily
+            // another immediate configure, which will be blocked anyway).
+            config.updatePartial({ sourceDirectory: newSourceDirectory }, false);
+
+            if (!isConfiguring) {
+                if (telemetryEvent) {
+                    telemetry.logEvent(telemetryEvent, telemetryProperties);
+                }
+                // Only auto-configure when the user opted into configure-on-open.
+                if (config.configureOnOpen) {
+                    await vscode.commands.executeCommand('cmake.configure');
+                }
+            } else {
+                await this.reloadCMakeDriver();
+            }
+        }
+    }
+
+    /**
+     * Inform the user (non-modally) that a nested source directory was auto-detected and activated,
+     * offering to choose a different CMakeLists.txt or to disable auto-detection for this folder.
+     */
+    private showAutoDetectedSourceDirectoryNotification(sourceDir: string, config: ConfigurationReader | undefined, isConfiguring: boolean): void {
+        const relativeSourceDir: string = path.relative(this.workspaceContext.folder.uri.fsPath, sourceDir) || sourceDir;
+        const changeAction: string = localize("change.source.directory", "Change...");
+        const dontAutoDetectAction: string = localize("do.not.auto.detect.source.directory", "Don't auto-detect");
+        void vscode.window.showInformationMessage(
+            localize("auto.detected.source.directory", "CMake Tools detected and activated the project in '{0}'.", relativeSourceDir),
+            changeAction,
+            dontAutoDetectAction
+        ).then(async (choice) => {
+            if (choice === changeAction) {
+                // User-initiated re-selection; don't re-emit the partialActivation telemetry event
+                // (which is logged by the initial auto-detect) to avoid a duplicate, incomplete entry.
+                await this.promptToSelectCMakeListsFile(config, isConfiguring, undefined, {});
+            } else if (choice === dontAutoDetectAction) {
+                await vscode.workspace.getConfiguration('cmake', this.workspaceFolder.uri).update('autoDetectSourceDirectory', false, vscode.ConfigurationTarget.WorkspaceFolder);
+            }
+        });
     }
 
     /**
@@ -1502,14 +1599,36 @@ export class CMakeProject {
     }
 
     async getCMakePathofProject(): Promise<string> {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        let overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        // When the active configure preset pins a Visual Studio instance via the vsInstanceVersion
+        // vendor field, prefer the CMake bundled with that same instance instead of the latest
+        // installed VS. Only applies on Windows, in presets mode, and only when the user has not
+        // pinned CMake themselves (neither the preset's cmakeExecutable nor the cmake.cmakePath
+        // setting); if that instance ships no bundled CMake, fall back to the normal resolution.
+        if (!overWriteCMakePathSetting && this.useCMakePresets && process.platform === 'win32') {
+            const vsInstallPath = this.configurePreset?.__vsDevEnvInstallationPath;
+            if (shouldUsePinnedVsInstanceCMake({
+                platform: process.platform,
+                useCMakePresets: this.useCMakePresets,
+                presetCMakeExecutable: this.configurePreset?.cmakeExecutable,
+                rawCMakePath: this.workspaceContext.config.rawCMakePath,
+                vsInstallPath
+            })) {
+                const bundledCMake = vsBundledCMakePath(vsInstallPath!);
+                if (await fs.exists(bundledCMake)) {
+                    log.info(localize('using.vs.instance.cmake', 'Using the CMake bundled with the Visual Studio instance selected by vsInstanceVersion: {0}', bundledCMake));
+                    overWriteCMakePathSetting = bundledCMake;
+                }
+            }
+        }
         const envOverride = await this.getCMakePathEnvironment();
         return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
 
     async getCMakeExecutable() {
         const cmakePath: string = await this.getCMakePathofProject();
-        const cmakeExe = await getCMakeExecutableInformation(cmakePath);
+        const sourceDir = this.sourceDir || this.workspaceFolder.uri.fsPath;
+        const cmakeExe = await getCMakeExecutableInformation(cmakePath, undefined, sourceDir);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',
                 'CMake version {0} may not be supported. Minimum version required is {1}.',
@@ -1889,7 +2008,7 @@ export class CMakeProject {
                 }
 
                 if (type !== ConfigureType.ShowCommandOnly) {
-                    log.showChannel();
+                    log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
@@ -2335,9 +2454,9 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!showCommandOnly) {
-            log.showChannel();
+            log.showChannel(undefined, isAutomatic);
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
@@ -2476,7 +2595,9 @@ export class CMakeProject {
                             // remain from a previous build that had parsing enabled.
                             collections.build.clear();
                         }
-                        await this.cTestController.refreshTests(drv!);
+                        if (drv!.config.testExplorerIntegrationEnabled) {
+                            await this.cTestController.refreshTests(drv!);
+                        }
                         await this.refreshCompileDatabase(drv!.expansionOptions);
                         return {
                             exitCode: rc === null ? -1 : rc,
@@ -2498,8 +2619,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken, isAutomatic);
         return this.activeBuild;
     }
 
@@ -2564,12 +2685,17 @@ export class CMakeProject {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
-                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
+                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
             });
             await this.cacheEditorWebview.initPanel();
 
+            const refreshCacheEditor = this.onReconfigured(() => rollbar.invokeAsync(
+                localize('refresh.cache.editor.after.configure', 'Refresh the CMake Cache Editor after configure'),
+                async () => this.cacheEditorWebview?.refreshPanel()
+            ));
             this.cacheEditorWebview.panel.onDidDispose(() => {
+                refreshCacheEditor.dispose();
                 this.cacheEditorWebview = undefined;
             });
         } else {
@@ -2729,11 +2855,15 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(fromWorkflow: boolean = false): Promise<CMakeDriver> {
+    private async preTest(fromWorkflow: boolean = false, buildTargets?: string[], isAutomatic: boolean = false): Promise<CMakeDriver> {
         if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
         }
-        const buildResult = await this.build(undefined, false, false);
+        // When buildTargets is undefined, build() resolves the default build target (existing behavior for
+        // ctest/cpack/refresh/workflow callers). A single-test run passes the specific test's target instead.
+        // isAutomatic is threaded so a programmatic test run (e.g. Copilot via the API) doesn't reveal the
+        // output channel for its implicit pre-build; build failures still surface via showChannel(true).
+        const buildResult = await this.build(buildTargets, false, false, undefined, isAutomatic);
         if (buildResult.exitCode !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
@@ -2745,9 +2875,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        const drv = await this.preTest(fromWorkflow);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[], isAutomatic: boolean = false): Promise<CommandResult> {
+        const drv = await this.preTest(fromWorkflow, buildTargets, isAutomatic);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
         return retc;
     }
 
@@ -2785,7 +2915,11 @@ export class CMakeProject {
     }
 
     async runTest(testName: string): Promise<CommandResult> {
-        return this.ctest(false, undefined, [testName]);
+        // Build only the target that produces this test's executable (issue #4515 / PR #4881) instead of the
+        // default/ALL target. getTestBuildTargets returns [] for non-CMake test commands or when the program
+        // can't be mapped to a target; in that case we fall back to the default build (existing behavior).
+        const buildTargets = this.cTestController.getTestBuildTargets([testName], await this.executableTargets);
+        return this.ctest(false, undefined, [testName], undefined, buildTargets.length ? buildTargets : undefined);
     }
 
     async debugCTest(testName: string): Promise<vscode.DebugSession | null> {

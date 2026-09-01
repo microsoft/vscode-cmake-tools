@@ -633,6 +633,100 @@ suite('Diagnostics', () => {
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
         expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
     });
+    test('No linker error on Zephyr build status line "-- Zephyr version: ..." (issue #4910)', () => {
+        const lines = ['-- Zephyr version: 4.3.0 (/path/to/zephyr), build: v4.3.0'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    });
+    test('#4954: GNULD does not mis-capture a GCC "file:line:col:   required from here" backtrace line', () => {
+        // A C++ template backtrace line whose enclosing "In instantiation of" context was not seen by
+        // the GCC parser (e.g. a second instantiation block) must NOT be claimed by GNULD with the
+        // source line appended to the file path. Previously this produced a Problems entry whose
+        // resource was "<file>:<line>", which VS Code could not open.
+        const lines = ['/home/user/proj/subproject/src/TestFile.cpp:232:90:   required from here'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    });
+    test('No linker error on generic CMake status lines containing "build:" (issue #4910)', () => {
+        const lines = ['-- Some tool version: 1.0 (/path/to/tool), build: v1.0'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    });
+    test('#4954: GNULD does not mis-capture an intermediate "required from \'...\'" backtrace line', () => {
+        const lines = [`/usr/include/c++/13/bits/stl_construct.h:115:21:   required from 'void std::_Construct(_Tp*, _Args&& ...)'`];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+    });
+    test('#4954: full make_shared two-block template error yields the GCC error but no bogus GNULD diagnostics', () => {
+        // Mirrors real g++ output for `std::make_shared<A>(1, 2)` where A has a 1-arg ctor: two
+        // instantiation backtrace blocks, the second with no preceding "In instantiation of" line.
+        const lines = [
+            `/usr/include/c++/13/bits/stl_construct.h: In instantiation of 'constexpr void std::_Construct(_Tp*, _Args&& ...) [with _Tp = A; _Args = {int, int}]':`,
+            '/usr/include/c++/13/bits/alloc_traits.h:657:19:   required from \'static constexpr void std::allocator_traits<std::allocator<void> >::construct(...)\'',
+            '/home/user/proj/src/TestFile.cpp:11:33:   required from here',
+            '/usr/include/c++/13/bits/stl_construct.h:115:28: error: no matching function for call to \'construct_at(A*&, int, int)\'',
+            '/usr/include/c++/13/bits/stl_construct.h:94:5: note:   template argument deduction/substitution failed:',
+            '/usr/include/c++/13/bits/stl_construct.h:115:21:   required from \'constexpr void std::_Construct(_Tp*, _Args&& ...)\'',
+            '/home/user/proj/src/TestFile.cpp:11:33:   required from here',
+            '/usr/include/c++/13/bits/stl_construct.h:96:17: error: no matching function for call to \'A::A(int, int)\''
+        ];
+        feedLines(build_consumer, [], lines);
+        // No GNULD diagnostic should be produced for any of the compiler backtrace lines.
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        // The genuine GCC errors are still captured, and none of their files carry a trailing ":line".
+        expect(build_consumer.compilers.gcc.diagnostics.length).to.be.greaterThan(0);
+        for (const diag of build_consumer.compilers.gcc.diagnostics) {
+            expect(/:\d+$/.test(diag.file), `file should not end with :line, got "${diag.file}"`).to.be.false;
+        }
+    });
+    test('#4954 regression guard: a genuine bare linker "file:line: message" still parses as GNULD', () => {
+        const lines = ['/path/to/file:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+        expect(diag.file).to.eq('/path/to/file');
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.message).to.eq('message');
+    });
+    test('#4954 regression guard: a Windows bare linker "C:\\\\path\\\\file:line: message" still parses', () => {
+        const lines = ['C:\\src\\file.cpp:42: message'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        expect(build_consumer.compilers.gnuld.diagnostics[0].file).to.eq('C:\\src\\file.cpp');
+        expect(build_consumer.compilers.gnuld.diagnostics[0].location.start.line).to.eq(41);
+    });
+    test('#4954 regression guard: a multiple-definition bare linker line (the #4341 case) still parses as GNULD', () => {
+        const lines = ['foo.o:/path/to/file.c:42: multiple definition of symbol_x'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+        expect(diag.file).to.eq('foo.o:/path/to/file.c');
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.message).to.eq('multiple definition of symbol_x');
+    });
+    test('#4954 regression guard: a genuine "undefined reference" linker line still parses as GNULD', () => {
+        const lines = ['/home/user/proj/src/main.cpp:42: undefined reference to foo()'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gnuld.diagnostics[0];
+        expect(diag.file).to.eq('/home/user/proj/src/main.cpp');
+        expect(diag.location.start.line).to.eq(41);
+        expect(diag.message).to.eq('undefined reference to foo()');
+    });
+    test('#4954: a single-block template error is owned by GCC (no GNULD diagnostic)', () => {
+        const lines = [
+            `/usr/include/c++/13/bits/shared_ptr.h: In instantiation of 'std::shared_ptr<_Tp> std::make_shared(_Args&& ...) [with _Tp = A; _Args = {int, int}]':`,
+            '/home/user/proj/src/main.cpp:11:33:   required from here',
+            '/usr/include/c++/13/bits/shared_ptr.h:408:59: error: no matching function for call to \'A::A(int, int)\''
+        ];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        expect(build_consumer.compilers.gcc.diagnostics[0].file).to.eq('/usr/include/c++/13/bits/shared_ptr.h');
+    });
     test('Parsing GHS Diagnostics', () => {
         const lines = [
             '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign'

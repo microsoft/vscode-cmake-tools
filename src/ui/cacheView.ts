@@ -50,7 +50,7 @@ export class ConfigurationWebview {
 
     private options: IOption[] = [];
 
-    constructor(protected cachePath: string, protected save: () => void) {
+    constructor(protected cachePath: string, protected save: () => Promise<void>) {
         this.panel = vscode.window.createWebviewPanel(
             'cmakeConfiguration', // Identifies the type of the webview. Used internally
             this.cmakeCacheEditorText, // Title of the panel displayed to the user
@@ -68,9 +68,8 @@ export class ConfigurationWebview {
             telemetry.logEvent("editCMakeCache", { command: "saveCMakeCacheUI" });
             await this.saveCmakeCache(this.options);
             void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-            // start configure
-            this.save();
             this.isDirty = false;
+            await this.save();
         }
     }
 
@@ -145,12 +144,6 @@ export class ConfigurationWebview {
                 this.options = mergedOptions;
             }
 
-            // The webview needs a re-render also for the "ignore" or "fromUI" cases
-            // to reflect all the unconflicting changes.
-            if (this.panel.visible) {
-                await this.renderWebview(this.panel, false);
-            }
-
             // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
             // between the webview and the file on disk.
             if (result !== ignore) {
@@ -158,6 +151,12 @@ export class ConfigurationWebview {
             }
         } else {
             this.options = await this.getConfigurationOptions();
+        }
+
+        // Re-render after both clean and dirty refreshes so external cache changes
+        // are reflected immediately while the editor is visible.
+        if (this.panel.visible) {
+            await this.renderWebview(this.panel, false);
         }
     }
 

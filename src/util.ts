@@ -1189,6 +1189,68 @@ async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], r
 }
 
 /**
+ * Directory names that are never plausible locations for a project's root CMakeLists.txt
+ * (build outputs, dependency/vendor trees, VCS and editor metadata). They are skipped when
+ * auto-detecting a nested source directory so we don't adopt a generated or third-party file.
+ */
+const nestedSourceScanExcludedDirs: Set<string> = new Set<string>([
+    '.git', '.hg', '.svn', '.vs', '.vscode', '.cache',
+    'build', 'builds', 'out', 'bin', 'obj', 'dist',
+    'node_modules', 'cmakefiles', '_deps', 'vcpkg_installed',
+    'vendor', 'third_party', 'thirdparty', 'external', 'externals', 'submodules'
+]);
+
+/**
+ * Scans for the top-most `CMakeLists.txt` directories under `folderPath`, used to auto-detect a
+ * source directory when the workspace root itself has no `CMakeLists.txt`. Common build/dependency
+ * directories are excluded and the search is bounded to `maxDepth` directories deep (matching the
+ * extension's `workspaceContains` activation globs). Recursion stops at the first `CMakeLists.txt`
+ * found along each branch, so only the shallowest candidate per branch is returned.
+ * @param folderPath The workspace folder to search.
+ * @param maxDepth The maximum directory depth to descend (default 3).
+ * @returns The directories (not the files) that directly contain a `CMakeLists.txt`, sorted shallowest-first.
+ */
+export async function getNestedCMakeListsDirs(folderPath: string, maxDepth: number = 3): Promise<string[]> {
+    const found: string[] = [];
+    await recScanForCMakeLists(folderPath, folderPath, 0, maxDepth, found);
+    found.sort((a, b) => a.split(path.sep).length - b.split(path.sep).length);
+    return found;
+}
+
+async function recScanForCMakeLists(rootDir: string, dir: string, depth: number, maxDepth: number, found: string[]): Promise<void> {
+    let entries: string[];
+    try {
+        entries = await readDir(dir);
+    } catch (error) {
+        return;
+    }
+    // Record this directory as a candidate if it directly contains a CMakeLists.txt (but never the
+    // root, which the caller has already determined to lack one). Stop descending this branch so we
+    // only return the shallowest CMakeLists.txt per branch.
+    if (dir !== rootDir && entries.some(entry => entry.toLowerCase() === 'cmakelists.txt')) {
+        found.push(dir);
+        return;
+    }
+    if (depth >= maxDepth) {
+        return;
+    }
+    for (const item of entries) {
+        if (nestedSourceScanExcludedDirs.has(item.toLowerCase())) {
+            continue;
+        }
+        const child = path.join(dir, item);
+        try {
+            const status = await getLStat(child);
+            if (status && status.isDirectory() && !status.isSymbolicLink()) {
+                await recScanForCMakeLists(rootDir, child, depth + 1, maxDepth, found);
+            }
+        } catch (error) {
+            continue;
+        }
+    }
+}
+
+/**
  * Gets the relative path of a file from a given directory.
  * @param file The file path to get the relative path for.
  * @param dir The directory path to get the relative path from.

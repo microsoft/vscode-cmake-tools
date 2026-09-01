@@ -605,6 +605,12 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
     return toolchains.toolchains.reduce((acc, el) => {
         if (el.compiler.path) {
             const tc: CodeModelToolchain = { path: el.compiler.path, sourceFileExtensions: el.sourceFileExtensions };
+            if (el.compiler.id) {
+                tc.id = el.compiler.id;
+            }
+            if (el.compiler.version) {
+                tc.version = el.compiler.version;
+            }
             if (el.compiler.target) {
                 tc.target = el.compiler.target;
             }

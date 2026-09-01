@@ -165,25 +165,23 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             }
             driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
 
+            // getCompilerNameForTelemetry is a private instance method; access it via `any`
+            // (as other unit tests do) to validate the telemetry name-masking rules directly.
+            const nameForTelemetry = (compilerPathOrName: string): string =>
+                (driver as any).getCompilerNameForTelemetry(compilerPathOrName);
+
             // A few path examples that would exercise through the telemetry reporting rules:
             // - any name that is not recognized is reported as "other"
             // - any architecture reference found in either suffix or prefix is appended to the telemetry filtered name
             //   (architecture specific keywords being arm, arm64, eabi and aarch64)
             // - include a few of the compiler names that are substrings of others
-            let compilerInfo = await driver.getCompilerVersion("drive/folder/path/aarch64_clang++");
-            expect(compilerInfo.name).to.be.eq("clang++-aarch64");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/clang_eabi");
-            expect(compilerInfo.name).to.be.eq("clang-eabi");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/cl.exe");
-            expect(compilerInfo.name).to.be.eq("cl");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/arm-xlc++");
-            expect(compilerInfo.name).to.be.eq("xlc++-arm");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/other-prefix-gcc");
-            expect(compilerInfo.name).to.be.eq("gcc");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/cc-other-suffix");
-            expect(compilerInfo.name).to.be.eq("cc");
-            compilerInfo = await driver.getCompilerVersion("drive/folder/path/unknown-arm64-compiler");
-            expect(compilerInfo.name).to.be.eq("other-arm64");
+            expect(nameForTelemetry("drive/folder/path/aarch64_clang++")).to.be.eq("clang++-aarch64");
+            expect(nameForTelemetry("drive/folder/path/clang_eabi")).to.be.eq("clang-eabi");
+            expect(nameForTelemetry("drive/folder/path/cl.exe")).to.be.eq("cl");
+            expect(nameForTelemetry("drive/folder/path/arm-xlc++")).to.be.eq("xlc++-arm");
+            expect(nameForTelemetry("drive/folder/path/other-prefix-gcc")).to.be.eq("gcc");
+            expect(nameForTelemetry("drive/folder/path/cc-other-suffix")).to.be.eq("cc");
+            expect(nameForTelemetry("drive/folder/path/unknown-arm64-compiler")).to.be.eq("other-arm64");
         }).timeout(90000);
 
         test('Set kit without a preferred generator', async function () {

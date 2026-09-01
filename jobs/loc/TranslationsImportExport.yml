@@ -58,13 +58,17 @@ extends:
           inputs:
             version: "22.x"
 
-        - script: npm install -g yarn@1.22.19
-          displayName: Use Yarn 1.x (from CFS feed)
+        - task: CmdLine@2
+          displayName: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
+          inputs:
+            script: IF EXIST %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc del %SYSTEMDRIVE%\Users\%USERNAME%\.npmrc
 
         - task: CmdLine@2
           inputs:
             script: 'yarn install'
-        
+          env:
+            npm_config_registry: https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/
+
         - task: CmdLine@2
           inputs:
             script: 'yarn run translations-export'
@@ -95,6 +99,10 @@ extends:
             LclPackageId: 'LCL-JUNO-PROD-VCMAKE'
             lsBuildXLocPackageVersion: '7.0.30510'
         
+        # translations_auto_pr.js imports the OneLocBuild output, restores any human-reviewed
+        # translation fixes it reverted (tools/translation-verifier.js --restore), and only then
+        # stages, commits, and pushes the localization branch / opens the pull request.
         - task: CmdLine@2
+          displayName: 'Import translations, restore reviewed fixes, and publish the localization PR'
           inputs:
             script: 'node ./translations_auto_pr.js microsoft vscode-cmake-tools csigs $(csigsPat) csigs csigs@users.noreply.github.com "$(Build.ArtifactStagingDirectory)/loc" vscode-extensions-localization-export/vscode-extensions'
