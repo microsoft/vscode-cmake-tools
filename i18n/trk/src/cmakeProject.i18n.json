@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "{0} seti ayarlanamıyor.",
 	"error.on.switch.status": "({0}) seti değiştirilirken hata oluştu",
 	"failed.to.compute.kit.env.for.cmake.path": "Cmake.cmakePath çözümlenirken etkin kit ortamı değerlendirilemiyor: {0}",
+	"using.vs.instance.cmake": "vsInstanceVersion ile seçilen Visual Studio örneğiyle birlikte gelen CMake’i kullanarak: {0}",
 	"cmake.version.not.supported": "CMake sürümü {0} desteklenmiyor olabilir. Gerekli en düşük sürüm: {1}.",
 	"not.starting.language.server.only": "Yalnızca dil sunucusu modu etkin olduğundan CMake sürücüsü başlatılmıyor.",
 	"not.starting.no.kits": "CMake sürücüsü başlatılmıyor: Kit seçilmedi",
