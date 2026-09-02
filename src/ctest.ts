@@ -72,6 +72,20 @@ export interface SiteData {
 
 export interface CTestResults { site: SiteData }
 
+// CTest reports the reason a test finished in its "Completion Status" measurement.
+const DISABLED_COMPLETION_STATUS = "Disabled";
+const SKIP_REGEX_COMPLETION_STATUS = "SKIP_REGULAR_EXPRESSION_MATCHED";
+
+/**
+ * A test is "disabled" (e.g. a GoogleTest DISABLED_ test, or one with the CTest DISABLED
+ * property) when CTest reports it as "Not Run (Disabled)": status "notrun" with a
+ * "Completion Status" of "Disabled". Such tests are intentionally not executed and must
+ * not be treated as failures. See issue #4267.
+ */
+function isDisabledTest(test: Test): boolean {
+    return test.measurements.get("Completion Status")?.value === DISABLED_COMPLETION_STATUS;
+}
+
 export enum RunCTestHelperEntryPoint {
     TestExplorer, // Test Explorer integration
     RunTests // Run tests command
@@ -631,7 +645,13 @@ export class CTestDriver implements vscode.Disposable {
         const returnValue: CommandResult = { exitCode: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
         if (testResults) {
             for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                const status = testResults.site.testing.test[i].status;
+                const test = testResults.site.testing.test[i];
+                // Disabled tests are reported by CTest as "notrun" but are intentionally not
+                // executed, so they must not fail the run (issue #4267).
+                if (isDisabledTest(test)) {
+                    continue;
+                }
+                const status = test.status;
                 if (status === "notrun" || status === "failed") {
                     returnValue.exitCode = -1;
                     break;
@@ -966,6 +986,7 @@ export class CTestDriver implements vscode.Disposable {
             const exitStatus = testResult.measurements.get("Exit Code")?.value;
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
+            let skipped = false;
             if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
@@ -974,8 +995,9 @@ export class CTestDriver implements vscode.Disposable {
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                if (completionStatus === "SKIP_REGULAR_EXPRESSION_MATCHED") {
+                if (completionStatus === SKIP_REGEX_COMPLETION_STATUS || completionStatus === DISABLED_COMPLETION_STATUS) {
                     run.skipped(test);
+                    skipped = true;
                 } else {
                     this.ctestErrored(
                         test,
@@ -992,7 +1014,11 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             havefailures = true;
-            returnCode = -1;
+            // A skipped/disabled test is not a failure and must not taint the overall run
+            // result (issue #4267).
+            if (!skipped) {
+                returnCode = -1;
+            }
         }
         if (!foundTestResult && !havefailures) {
             this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));

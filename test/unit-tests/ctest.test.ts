@@ -108,6 +108,62 @@ suite('CTest test', () => {
         expect(getTestFailureMessage('t', '', '0', 'SEGFAULT')).to.contain('Test t failed with SEGFAULT');
     });
 
+    suite('disabled tests are skipped, not failed (#4267)', () => {
+        // A minimal fake vscode.TestItem: no children, no uri/range.
+        const makeTestItem = (id: string) => ({ id, uri: undefined, range: undefined, children: { size: 0 } });
+
+        // A fake vscode.TestRun that records which outcome was reported for each test.
+        const makeRun = () => {
+            const calls = { skipped: [] as string[], passed: [] as string[], errored: [] as string[], failed: [] as string[] };
+            const run = {
+                appendOutput: () => {},
+                skipped: (t: any) => calls.skipped.push(t.id),
+                passed: (t: any) => calls.passed.push(t.id),
+                errored: (t: any) => calls.errored.push(t.id),
+                failed: (t: any) => calls.failed.push(t.id)
+            };
+            return { run, calls };
+        };
+
+        test('CTest reports a disabled test as notrun with completion status "Disabled"', async () => {
+            const result = await readTestResultsFile(getTestResourceFilePath('TestResults5.xml'));
+            const disabled = result!.site.testing.test.find(t => t.name === 'Suite2.DoesntRun')!;
+            expect(disabled.status).to.eq('notrun');
+            expect(disabled.measurements.get('Completion Status')?.value).to.eq('Disabled');
+        });
+
+        test('A disabled test is marked skipped and does not fail the run', async () => {
+            const result = await readTestResultsFile(getTestResourceFilePath('TestResults5.xml'));
+            const disabled = result!.site.testing.test.find(t => t.name === 'Suite2.DoesntRun')!;
+            const driver = new CTestDriver({} as any);
+            const { run, calls } = makeRun();
+
+            const returnCode = (driver as any).testResultsAnalysis(disabled, makeTestItem('Suite2.DoesntRun'), 0, run);
+
+            expect(calls.skipped).to.deep.eq(['Suite2.DoesntRun']);
+            expect(calls.errored).to.be.empty;
+            expect(calls.failed).to.be.empty;
+            expect(calls.passed).to.be.empty;
+            // A disabled test must not taint the overall run result.
+            expect(returnCode).to.eq(0);
+        });
+
+        test('An ordinary passing test is still reported as passed', async () => {
+            const result = await readTestResultsFile(getTestResourceFilePath('TestResults5.xml'));
+            const passing = result!.site.testing.test.find(t => t.name === 'Suite1.Test1')!;
+            const driver = new CTestDriver({} as any);
+            const { run, calls } = makeRun();
+
+            const returnCode = (driver as any).testResultsAnalysis(passing, makeTestItem('Suite1.Test1'), 0, run);
+
+            expect(calls.passed).to.deep.eq(['Suite1.Test1']);
+            expect(calls.skipped).to.be.empty;
+            expect(calls.errored).to.be.empty;
+            expect(calls.failed).to.be.empty;
+            expect(returnCode).to.eq(0);
+        });
+    });
+
     test('Find failure patterns in output', () => {
         const DEFAULT_MESSAGE = 'Test Failed';
         const output =
