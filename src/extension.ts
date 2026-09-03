@@ -33,6 +33,7 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
+import { shouldShowInitializingView, isDefinitivelyAbsentError } from '@cmt/activation';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
@@ -62,6 +63,7 @@ let pinnedCommands: PinnedCommands;
 const log = logging.createLogger('extension');
 
 const multiProjectModeKey = 'cmake:multiProject';
+const initializingContextKey = 'cmake:isInitializing';
 export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
 export const hideDebugCommandKey = 'cmake:hideDebugCommand';
 export const hideBuildCommandKey = 'cmake:hideBuildCommand';
@@ -186,7 +188,7 @@ export class ExtensionManager implements vscode.Disposable {
             cmakePath = await workspaceContext.getCMakePath() || '';
         }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig);
+        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         if (this.workspaceConfig.testExplorerIntegrationEnabled) {
@@ -3028,6 +3030,60 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
 }
 
 /**
+ * Cheap, best-effort preflight: returns true when a non-excluded workspace folder plausibly has a
+ * CMake project (one `CMakeLists.txt` stat per configured source dir; no project/kit/preset init,
+ * subprocess, or recursive scan). Fails open — only a definitive `ENOENT`/`ENOTDIR` counts as
+ * "no project", so transient errors (e.g. `EMFILE`) and `${command:...}` source dirs still show the
+ * placeholder. A false positive is harmless: the placeholder is inert and self-clears once init settles.
+ */
+async function workspaceHasCMakeProjectForInitialization(): Promise<boolean> {
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+        try {
+            const config = ConfigurationReader.loadConfig(folder);
+
+            // Mirror ProjectController.addFolder(): skip folders excluded from CMake project detection.
+            const normalizedFolder = util.normalizePath(folder.uri.fsPath, { normCase: 'always' });
+            const isExcluded = util.expandExcludePaths(config.exclude ?? [], folder)
+                .some(excluded => util.normalizePath(excluded, { normCase: 'always' }) === normalizedFolder);
+            if (isExcluded) {
+                continue;
+            }
+
+            const sourceDirectories = Array.isArray(config.sourceDirectory) ? config.sourceDirectory : [config.sourceDirectory];
+            const expansionOptions = { ...CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath), doNotSupportCommands: true };
+            for (const sourceDirectory of sourceDirectories) {
+                if (!sourceDirectory) {
+                    continue;
+                }
+                // Can't resolve ${command:...} cheaply; fail open.
+                if (sourceDirectory.includes('${command:')) {
+                    return true;
+                }
+                let sourceDir = util.lightNormalizePath(await expandString(sourceDirectory, expansionOptions));
+                if (path.basename(sourceDir).toLocaleLowerCase() === 'cmakelists.txt') {
+                    // Tolerate a sourceDirectory pointing directly at CMakeLists.txt (matches normalizeAndVerifySourceDir).
+                    sourceDir = path.dirname(sourceDir);
+                }
+                try {
+                    await fs.stat(path.join(sourceDir, 'CMakeLists.txt'));
+                    return true;
+                } catch (statErr) {
+                    if (isDefinitivelyAbsentError((statErr as NodeJS.ErrnoException)?.code)) {
+                        continue; // Definitively absent; keep checking.
+                    }
+                    return true; // Transient/ambiguous error (e.g. EMFILE): fail open.
+                }
+            }
+        } catch (e) {
+            // Config/expansion error: fail open.
+            log.debug(localize('init.preflight.inconclusive', 'CMake initialization preflight for folder {0} was inconclusive ({1}); showing the initializing placeholder.', folder.uri.fsPath, util.errorToString(e)));
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Starts up the extension.
  * @param context The extension context
  * @returns A promise that will resolve when the extension is ready for use
@@ -3090,12 +3146,30 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
-    await extensionManager.init();
 
-    // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
+    // Two-phase reveal: show the CMake activity-bar container with an "initializing" placeholder (from
+    // viewsWelcome) as soon as the manager exists; real views/commands/status stay gated on
+    // cmake:enableFullFeatureSet until init() completes.
+    const languageServerOnlyMode = extensionManager.getWorkspaceConfig().languageServerOnlyMode;
+    // The placeholder is never shown in language-server-only mode, so skip the preflight there.
+    const hasCMakeProject = !languageServerOnlyMode && await workspaceHasCMakeProjectForInitialization();
+    const showInitializingView = shouldShowInitializingView(hasCMakeProject, languageServerOnlyMode);
+    try {
+        if (showInitializingView) {
+            // setContextValue (not setContextAndStore): this key gates only UI visibility, so it must
+            // not trigger an active-commands recompute.
+            await util.setContextValue(initializingContextKey, true);
+        }
+        await extensionManager.init();
 
-    return setup(context);
+        // need the extensionManager to be initialized for this.
+        pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
+
+        return await setup(context);
+    } finally {
+        // Always clear the placeholder so the icon never sticks on failure or when no project is found.
+        await util.setContextValue(initializingContextKey, false);
+    }
 }
 
 // Enable all or part of the CMake Tools palette commands
