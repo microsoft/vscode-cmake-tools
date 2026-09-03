@@ -269,7 +269,7 @@ export class KitsController {
     /**
      * Show UI to allow the user to select an active kit
      */
-    async selectKit(): Promise<boolean> {
+    async selectKit(reconfigureAfterSelection: boolean = true): Promise<boolean> {
         // Check that we have kits
         const state = await this.checkHaveKits();
         if (!state) {
@@ -330,7 +330,9 @@ export class KitsController {
                     this.project.notifyOnSelectedConfigurationChanged(ConfigurationType.Kit);
                 }
 
-                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure) {
+                // Skip the automatic reconfigure when the caller (e.g. configure-on-open) is going to
+                // run its own configure immediately after selection, so the project is not configured twice.
+                if (chosen_kit.kit.name !== SpecialKits.Unspecified && kitChanged && this.project.workspaceContext.config.automaticReconfigure && reconfigureAfterSelection) {
                     await this.project.configureInternal(ConfigureTrigger.selectKit, [], ConfigureType.Normal);
                 }
                 return true;
