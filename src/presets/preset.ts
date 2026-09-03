@@ -941,17 +941,16 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
             // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
             // toolset.host will be set by getToolset.
             if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
+                // If a VS major version is pinned via vendor settings, skip any instance that doesn't match it.
+                if (vendorVsVersion && !vs.installationVersion.startsWith(vendorVsVersion.toString())) {
+                    continue;
+                }
+
                 // If a toolset version is specified then check to make sure this vs instance has it installed.
                 if (toolset.version) {
                     const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
                     // forcing non-null due to false positive (toolset.version is checked in conditional)
                     if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
-                        vsInstall = vs;
-                        break;
-                    }
-                } else if (vendorVsVersion) {
-                    // If a VS major version is specified via vendor settings, match against it.
-                    if (vs.installationVersion.startsWith(vendorVsVersion.toString())) {
                         vsInstall = vs;
                         break;
                     }

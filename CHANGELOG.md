@@ -64,6 +64,7 @@ Bug Fixes:
 - Show the CMake Tools activity-bar view immediately with an "initializing" placeholder instead of hiding the entire sidebar until CMake, kit, preset, and Visual Studio developer-environment probing completes. On machines where those probes are intermittently slow (e.g. aggressive antivirus scanning of spawned processes, or extension-host file-handle exhaustion), the sidebar no longer disappears for minutes during activation. Project commands, menus, and status items remain gated on full readiness, so nothing runs against a partially-initialized project. [#5027](https://github.com/microsoft/vscode-cmake-tools/pull/5027)
 - Refresh the open CMake Cache Editor when configuration changes cache values externally. [#3635](https://github.com/microsoft/vscode-cmake-tools/issues/3635)
 - Preserve `CMakeCache.txt` on folder open with CMake Presets when the active configure preset specifies no generator, so `cmake.configureOnOpen` performs an incremental configure instead of deleting the cache and reconfiguring from scratch. [#5049](https://github.com/microsoft/vscode-cmake-tools/issues/5049)
+- Fix the `vsInstanceVersion` vendor field being ignored when a configure preset also specifies a `toolset`, causing the developer environment to be bootstrapped from the latest installed Visual Studio instance having the toolset compiler instead of the pinned major version. The pinned version is now applied as a filter before matching the requested toolset. [#5074](https://github.com/microsoft/vscode-cmake-tools/issues/5074)
 
 ## 1.23.52
 
