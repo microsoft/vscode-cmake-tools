@@ -26,6 +26,20 @@ const log = logging.createLogger('TaskProvider');
 
 const endOfLine: string = "\r\n";
 
+/**
+ * Decide whether the active project should be used for a task scoped to `taskWorkspaceFolder`.
+ *
+ * A workspace folder can host multiple CMake projects (for example multiple `cmake.sourceDirectory`
+ * entries selected via the active folder). In that case looking a project up purely by folder path
+ * always returns the folder's first project, ignoring the selected active folder (#4512). When the
+ * active project belongs to the task's workspace folder we should prefer it; only otherwise do we
+ * fall back to a folder-based lookup.
+ */
+export function activeProjectBelongsToFolder(activeProject: CMakeProject | undefined, taskWorkspaceFolder: vscode.WorkspaceFolder): boolean {
+    return activeProject !== undefined &&
+        util.platformNormalizePath(activeProject.workspaceFolder.uri.fsPath) === util.platformNormalizePath(taskWorkspaceFolder.uri.fsPath);
+}
+
 export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
@@ -497,7 +511,15 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
             this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.fsPath + endOfLine));
-            project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            // Prefer the active project when it belongs to this task's workspace folder, so the task
+            // honors the active folder in a workspace folder that hosts multiple CMake projects (for
+            // example several `cmake.sourceDirectory` entries). Only fall back to the folder's project
+            // when there is no active project or it belongs to a different workspace folder; otherwise
+            // getProjectForFolder would always return the folder's first project and ignore the
+            // selected active folder (#4512).
+            if (!activeProjectBelongsToFolder(project, this.workspaceFolder)) {
+                project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            }
         }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));
