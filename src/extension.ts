@@ -50,7 +50,7 @@ import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDe
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
-import { deIntegrateTestExplorer } from "@cmt/ctest";
+import { deIntegrateTestExplorer, CTestLaunchConfigurationProvider } from "@cmt/ctest";
 import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
 import { CMakeListsModifier } from './cmakeListsModifier';
@@ -2693,6 +2693,14 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             new DynamicDebugConfigurationProvider(),
             vscode.DebugConfigurationProviderTriggerKind.Dynamic)
     );
+
+    // Resolve the ${cmake.test*} placeholders when a test's launch configuration is started directly
+    // from the Run and Debug view (F5), rather than only from the Test Explorer (issue #4574).
+    const ctestLaunchResolver = new CTestLaunchConfigurationProvider(ext.projectController);
+    for (const debugType of ["cppdbg", "cppvsdbg", "lldb", "lldb-dap", "gdb"]) {
+        context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(debugType, ctestLaunchResolver));
+    }
+    log.debug(localize('registered.ctest.launch.resolver', 'Registered CTest launch configuration resolver for external debugger types.'));
 
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [

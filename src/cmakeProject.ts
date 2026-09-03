@@ -3109,6 +3109,16 @@ export class CMakeProject {
         return this.ctest(false, undefined, [testName], undefined, buildTargets.length ? buildTargets : undefined);
     }
 
+    /**
+     * Resolve the `${cmake.test*}` placeholders for a launch configuration that was started from the
+     * Run and Debug view (F5). Delegates to the CTest controller, which prompts the user to select a
+     * test when needed. Returns the substituted configuration, or `undefined` to abort the launch.
+     */
+    async resolveCTestLaunchConfiguration(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration | undefined> {
+        const drv = await this.getCMakeDriverInstance();
+        return this.cTestController.resolveLaunchConfigurationForTest(config, drv);
+    }
+
     async debugCTest(testName: string): Promise<vscode.DebugSession | null> {
         const drv = await this.getCMakeDriverInstance();
         if (!drv) {
