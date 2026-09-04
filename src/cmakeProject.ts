@@ -995,7 +995,7 @@ export class CMakeProject {
      * configure. This should be called by a derived driver before any
      * configuration tasks are run
      */
-    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader): Promise<boolean> {
+    public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader, isAutomaticPrompt: boolean = false): Promise<boolean> {
         let telemetryEvent: string | undefined;
         const telemetryProperties: telemetry.Properties = {};
 
@@ -1038,8 +1038,13 @@ export class CMakeProject {
 
                     // Otherwise fall back to manual selection. Don't pop a modal picker on open when the
                     // user opted out of configure-on-open; an explicit configure always prompts.
+                    // Also don't pop a modal picker on automatic startup prompts (e.g. workspace
+                    // open during activation) because that would cancel any quick pick the user
+                    // or another extension already has on screen (#5000). In that case
+                    // `promptToSelectCMakeListsFile` shows a non-modal notification and only
+                    // opens the modal when the user explicitly clicks the action button.
                     if (isConfiguring || (config?.configureOnOpen ?? true)) {
-                        if (await this.promptToSelectCMakeListsFile(config, isConfiguring, telemetryEvent, telemetryProperties)) {
+                        if (await this.promptToSelectCMakeListsFile(config, isConfiguring, telemetryEvent, telemetryProperties, isAutomaticPrompt)) {
                             return true;
                         }
                     }
@@ -1063,7 +1068,7 @@ export class CMakeProject {
      * Show the QuickPick that lets the user choose which CMakeLists.txt to use as the source
      * directory when the workspace root has none. Returns true if a source directory was applied.
      */
-    private async promptToSelectCMakeListsFile(config: ConfigurationReader | undefined, isConfiguring: boolean, telemetryEvent: string | undefined, telemetryProperties: telemetry.Properties): Promise<boolean> {
+    private async promptToSelectCMakeListsFile(config: ConfigurationReader | undefined, isConfiguring: boolean, telemetryEvent: string | undefined, telemetryProperties: telemetry.Properties, isAutomaticPrompt: boolean = false): Promise<boolean> {
         const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folderPath);
 
         if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
@@ -1091,6 +1096,29 @@ export class CMakeProject {
         const dontAskAgain: string = localize("do.not.ask.again", "[Don't Show Again]");
         items.push({ label: browse, fullPath: "", description: localize("search.for.cmakelists", "Search for CMakeLists.txt on this computer") });
         items.push({ label: dontAskAgain, fullPath: "", description: localize("do.not.ask.again.description", "Do not ask for CMakeLists.txt again in this folder. This will enable the cmake.ignoreCMakeListsMissing setting.") });
+        // When this is an automatic startup prompt (e.g. workspace open during activation),
+        // we must not pop a quick pick because it would cancel any quick pick the user or
+        // another extension already has on screen (#5000). Show a non-modal notification
+        // instead, and only open the modal when the user explicitly clicks the action
+        // button. Manual invocations (status bar / command palette / explicit configure)
+        // always pass `isAutomaticPrompt === false` and continue to show the modal.
+        if (isAutomaticPrompt) {
+            const selectButton = localize("startup.select.cmakelists.button", "Select CMakeLists.txt");
+            const chosen = await vscode.window.showInformationMessage(
+                localize(
+                    "startup.missing.cmakelists",
+                    "CMake Tools needs a CMakeLists.txt in {0} to configure. Click \"Select CMakeLists.txt\" to choose one.",
+                    this.folderName
+                ),
+                selectButton
+            );
+            if (chosen !== selectButton) {
+                telemetryProperties["missingCMakeListsUserAction"] = "cancel";
+                return false;
+            }
+            // User chose to pick: fall through to the modal path on this attempt.
+            telemetryProperties["missingCMakeListsUserAction"] = "pick";
+        }
         const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
             placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
         });
@@ -1201,7 +1229,7 @@ export class CMakeProject {
         const workspace: string = this.workspaceFolder.uri.fsPath;
         let drv: CMakeDriver;
         const preferredGenerators = this.getPreferredGenerators();
-        const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config);
+        const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config, false);
         let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
         const fileApi = 'fileapi';
         const serverApi = 'serverapi';

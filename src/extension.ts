@@ -142,6 +142,17 @@ export class ExtensionManager implements vscode.Disposable {
     private contextValues: {[key: string]: any} = {};
     private extensionActiveCommandsInfo: ExtensionActiveCommandsInfo | null = null;
     private localizedStrings: {[key: string]: string} = {};
+    /**
+     * Set while a workspace-open prompt is in progress so the inner prompt
+     * helpers can detect that the user did not invoke them. The startup flow
+     * (`postWorkspaceOpen`) may need to surface a missing kit, configure
+     * preset, or CMakeLists.txt; opening a quick pick during activation
+     * cancels any quick pick the user or another extension already has on
+     * screen. When this flag is set the helpers show a non-modal
+     * notification instead and only open the modal on explicit user action.
+     * Reset in a `finally` so a thrown error cannot leave it stuck.
+     */
+    private _isPostWorkspaceOpenPrompt = false;
     private onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
     private readonly extensionActiveCommandsEmitter = new vscode.EventEmitter<void>();
     private readonly workspaceConfig: ConfigurationReader = ConfigurationReader.create();
@@ -588,6 +599,16 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
+            // During workspace-open auto-prompts we must not pop the modal picker, since
+            // that would cancel whatever quick pick the user or another extension opened
+            // during activation (#5000). Surface the need via a non-modal notification
+            // and let the user invoke the manual command from the button or the status
+            // bar / palette. The notification is fire-and-forget so it cannot block
+            // whatever called us.
+            if (this._isPostWorkspaceOpenPrompt) {
+                void this.notifyMissingConfigurePreset(cmakeProject);
+                return false;
+            }
             const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
@@ -607,6 +628,11 @@ export class ExtensionManager implements vscode.Disposable {
                 await cmakeProject.kitsController.setKitByName(SpecialKits.Unspecified);
                 return true;
             }
+            // See the matching comment in the presets branch above for the rationale.
+            if (this._isPostWorkspaceOpenPrompt) {
+                void this.notifyMissingKit(cmakeProject);
+                return false;
+            }
             // Ask the user what they want.
             const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath);
             if (!didChooseKit && !cmakeProject.activeKit) {
@@ -615,6 +641,49 @@ export class ExtensionManager implements vscode.Disposable {
             }
             // Return whether we have an active kit defined.
             return !!cmakeProject.activeKit;
+        }
+    }
+
+    /**
+     * Show a non-modal notification prompting the user to pick a configure preset.
+     * Used on workspace open so we do not steal the user's active quick pick (#5000).
+     * The button invokes the manual selection command, which then runs the regular
+     * modal picker path.
+     */
+    private async notifyMissingConfigurePreset(cmakeProject: CMakeProject): Promise<void> {
+        const selectButton = localize('startup.select.configure.preset.button', 'Select Configure Preset');
+        const chosen = await vscode.window.showInformationMessage(
+            localize(
+                'startup.missing.configure.preset',
+                'CMake Tools needs a configure preset to build {0}. Click "Select Configure Preset" to choose one.',
+                cmakeProject.folderName
+            ),
+            selectButton
+        );
+        if (chosen === selectButton) {
+            // Clear the flag so the manual command path shows the modal normally.
+            this._isPostWorkspaceOpenPrompt = false;
+            await this.selectConfigurePreset(cmakeProject.workspaceFolder);
+        }
+    }
+
+    /**
+     * Show a non-modal notification prompting the user to pick a kit. Mirrors
+     * `notifyMissingConfigurePreset`; see #5000 for the reason this exists.
+     */
+    private async notifyMissingKit(cmakeProject: CMakeProject): Promise<void> {
+        const selectButton = localize('startup.select.kit.button', 'Select Kit');
+        const chosen = await vscode.window.showInformationMessage(
+            localize(
+                'startup.missing.kit',
+                'CMake Tools needs a kit to build {0}. Click "Select Kit" to choose one.',
+                cmakeProject.folderName
+            ),
+            selectButton
+        );
+        if (chosen === selectButton) {
+            this._isPostWorkspaceOpenPrompt = false;
+            await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath);
         }
     }
 
@@ -762,6 +831,21 @@ export class ExtensionManager implements vscode.Disposable {
             log.debug('Skipping CMake project integration during workspace open because language-server-only mode is enabled.');
             return;
         }
+        // The startup path may end up asking the user to pick a kit, configure preset,
+        // or CMakeLists.txt. Those prompts run during extension activation, so popping
+        // a modal would cancel any quick pick the user or another extension already
+        // has on screen. Flag the path so the inner helpers can show a non-modal
+        // notification instead (#5000). Always cleared in `finally` so a thrown
+        // error cannot leave it stuck and silently suppress later modals.
+        this._isPostWorkspaceOpenPrompt = true;
+        try {
+            await this.postWorkspaceOpenImpl(project);
+        } finally {
+            this._isPostWorkspaceOpenPrompt = false;
+        }
+    }
+
+    private async postWorkspaceOpenImpl(project: CMakeProject) {
         const rootFolder: vscode.WorkspaceFolder = project.workspaceFolder;
         // Scan for kits even under presets mode, so we can create presets from compilers.
         // Silent re-scan when detecting a breaking change in the kits definition.
@@ -779,7 +863,11 @@ export class ExtensionManager implements vscode.Disposable {
             // configureOnOpen (the handler only auto-configures when configureOnOpen is enabled), so a
             // nested project still surfaces its UI instead of staying hidden.
             if (hascmakelists) {
-                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, project.workspaceContext.config);
+                // Pass `true` for `isAutomaticPrompt` so the precondition handler shows a
+                // non-modal notification when it cannot auto-detect a CMakeLists.txt, instead
+                // of popping a quick pick during activation (#5000). The notification's
+                // button clears the flag and invokes the manual picker.
+                await project.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, project.workspaceContext.config, this._isPostWorkspaceOpenPrompt);
             }
         } else {
             if (shouldConfigure) {
