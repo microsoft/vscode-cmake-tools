@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "先設定 CMake 專案，再嘗試編輯快取。",
 	"project.not.yet.configured": "尚未設定此專案",
 	"configure.now.button": "立即設定",
+	"preset.source.user": "使用者預設值",
+	"preset.source.project": "專案預設值",
 	"cache.load.failed": "找不到任何 CMakeCache.txt 檔案。請先設定專案!",
 	"refresh.cache.editor.after.configure": "設定後重新整理 CMake 快取編輯器",
 	"set.up.before.selecting.target": "先設定 CMake 專案，再選取目標。",

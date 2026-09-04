@@ -39,6 +39,11 @@
 	"yes": "Ano",
 	"no": "Ne",
 	"never.debug.with.launch.prompt": "Chcete v tomto pracovním prostoru vždy ladit testy bez konfigurace spuštění?",
+	"ctest.launch.discovered.tests": "CTest launch resolver discovered {0} test(s).",
+	"ctest.launch.no.tests": "This launch configuration resolves to a specific CTest test, but no tests were found. Configure and build your project so tests are discovered, then try again (or start debugging a test from the Test Explorer).",
+	"ctest.launch.pick.test": "Select the CTest test to debug",
+	"ctest.launch.resolved.program": "CTest launch resolver resolved test '{0}' to program '{1}'.",
+	"ctest.launch.no.program": "Could not determine the executable for CTest test '{0}'. Build the test's target, then try again.",
 	"no.launch.config": "Nenašly se žádné konfigurace spuštění.",
 	"choose.launch.config": "Zvolte konfiguraci spuštění, se kterou chcete test ladit.",
 	"test.skip.debug.build.failure": "Kvůli selhání sestavení se neladí testy.",
@@ -49,5 +54,8 @@
 	"build.failed": "Sestavení selhalo",
 	"run.tests.profile": "Spustit testy",
 	"run.tests.with.coverage.profile": "Spustit testy s rozsahem testování",
-	"debug.tests.profile": "Ladit testy"
+	"debug.tests.profile": "Ladit testy",
+	"ctest.launch.resolve.invoked": "CTest launch resolver invoked for debug type '{0}'.",
+	"ctest.launch.no.project": "Cannot resolve the CTest program for this launch configuration because no CMake project is associated with it.",
+	"ctest.launch.resolve.failed": "Failed to resolve the CTest launch configuration: {0}"
 }

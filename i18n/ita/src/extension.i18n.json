@@ -59,6 +59,7 @@
 	"started": "avviato",
 	"cmake.finished.returned": "{0} terminato (ha restituito {1})",
 	"cmake.finished.returned.unserializable": "{0} terminato (ha restituito un valore non serializzabile)",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "Caricamento dei comandi dell'estensione",
 	"register.command": "Registra il comando {0} dell'estensione CMakeTools",
 	"bookmark.target.not.resolved": "Non è possibile risolvere il segnalibro \"{0}\" in una destinazione. Potrebbe essere necessario riconfigurare il progetto.",

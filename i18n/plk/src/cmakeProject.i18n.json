@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "Skonfiguruj projekt narzędzia CMake przed próbą edytowania pamięci podręcznej.",
 	"project.not.yet.configured": "Ten projekt nie został jeszcze skonfigurowany",
 	"configure.now.button": "Skonfiguruj teraz",
+	"preset.source.user": "User preset",
+	"preset.source.project": "Project preset",
 	"cache.load.failed": "Nie znaleziono pliku CMakeCache.txt. Najpierw skonfiguruj projekt.",
 	"refresh.cache.editor.after.configure": "Odśwież edytor pamięci podręcznej narzędzia CMake po skonfigurowaniu",
 	"set.up.before.selecting.target": "Skonfiguruj projekt narzędzia CMake przed wybraniem elementu docelowego.",

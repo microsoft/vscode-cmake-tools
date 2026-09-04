@@ -59,6 +59,7 @@
 	"started": "시작됨",
 	"cmake.finished.returned": "{0} 완료({1}이(가) 반환됨)",
 	"cmake.finished.returned.unserializable": "{0} 완료(직렬화할 수 없는 값이 반환됨)",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "확장 명령을 로드하는 중",
 	"register.command": "CMakeTools 확장 명령 {0} 등록",
 	"bookmark.target.not.resolved": "책갈피 \"{0}\"를 대상에 연결할 수 없습니다. 프로젝트를 다시 구성해야 할 수 있습니다.",

@@ -59,6 +59,7 @@
 	"started": "запущено",
 	"cmake.finished.returned": "{0} завершено (возвращено {1}).",
 	"cmake.finished.returned.unserializable": "{0} завершено (возвращено несериализуемое значение).",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
 	"bookmark.target.not.resolved": "Не удалось преобразовать закладку \"{0}\" в целевой объект. Возможно, необходимо заново настроить проект.",

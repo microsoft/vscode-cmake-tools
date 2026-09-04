@@ -59,6 +59,7 @@
 	"started": "uruchomiony",
 	"cmake.finished.returned": "Zakończono {0} (zwrócono {1})",
 	"cmake.finished.returned.unserializable": "Zakończono {0} (zwrócono wartość, której nie można serializować)",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "Ładowanie poleceń rozszerzenia",
 	"register.command": "Zarejestruj polecenie rozszerzenia CMakeTools {0}",
 	"bookmark.target.not.resolved": "Nie można przypisać zakładki „{0}” do elementu docelowego. Może być konieczne ponowne skonfigurowanie projektu.",

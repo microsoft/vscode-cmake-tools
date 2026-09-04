@@ -16,5 +16,9 @@
 	"search": "Поиск",
 	"save": "Сохранить",
 	"key": "Ключ",
-	"value": "Значение"
+	"value": "Значение",
+	"source": "Источник",
+	"not.set.in.presets": "Кэш CMake",
+	"differs.from.preset": "Изменено в кэше",
+	"matches.preset": "Соответствует предустановке"
 }

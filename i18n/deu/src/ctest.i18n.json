@@ -39,6 +39,11 @@
 	"yes": "Ja",
 	"no": "Nein",
 	"never.debug.with.launch.prompt": "Möchten Sie in diesem Arbeitsbereich Tests immer ohne Startkonfiguration debuggen?",
+	"ctest.launch.discovered.tests": "CTest launch resolver discovered {0} test(s).",
+	"ctest.launch.no.tests": "This launch configuration resolves to a specific CTest test, but no tests were found. Configure and build your project so tests are discovered, then try again (or start debugging a test from the Test Explorer).",
+	"ctest.launch.pick.test": "Select the CTest test to debug",
+	"ctest.launch.resolved.program": "CTest launch resolver resolved test '{0}' to program '{1}'.",
+	"ctest.launch.no.program": "Could not determine the executable for CTest test '{0}'. Build the test's target, then try again.",
 	"no.launch.config": "Keine Startkonfigurationen gefunden.",
 	"choose.launch.config": "Wählen Sie eine Startkonfiguration aus, mit der der Test gedebuggt werden soll.",
 	"test.skip.debug.build.failure": "Debuggen für Tests kann aufgrund eines Buildfehlers nicht ausgeführt werden.",
@@ -49,5 +54,8 @@
 	"build.failed": "Fehler beim Buildvorgang",
 	"run.tests.profile": "Tests ausführen",
 	"run.tests.with.coverage.profile": "Tests mit Abdeckung ausführen",
-	"debug.tests.profile": "Tests debuggen"
+	"debug.tests.profile": "Tests debuggen",
+	"ctest.launch.resolve.invoked": "CTest launch resolver invoked for debug type '{0}'.",
+	"ctest.launch.no.project": "Cannot resolve the CTest program for this launch configuration because no CMake project is associated with it.",
+	"ctest.launch.resolve.failed": "Failed to resolve the CTest launch configuration: {0}"
 }
