@@ -39,6 +39,11 @@
 	"yes": "是",
 	"no": "否",
 	"never.debug.with.launch.prompt": "你是否希望在此工作区中始终无启动配置调试测试?",
+	"ctest.launch.discovered.tests": "CTest launch resolver discovered {0} test(s).",
+	"ctest.launch.no.tests": "This launch configuration resolves to a specific CTest test, but no tests were found. Configure and build your project so tests are discovered, then try again (or start debugging a test from the Test Explorer).",
+	"ctest.launch.pick.test": "Select the CTest test to debug",
+	"ctest.launch.resolved.program": "CTest launch resolver resolved test '{0}' to program '{1}'.",
+	"ctest.launch.no.program": "Could not determine the executable for CTest test '{0}'. Build the test's target, then try again.",
 	"no.launch.config": "未找到启动配置。",
 	"choose.launch.config": "选择要调试测试的启动配置。",
 	"test.skip.debug.build.failure": "由于生成失败而未调试测试。",
@@ -49,5 +54,8 @@
 	"build.failed": "生成失败",
 	"run.tests.profile": "运行测试",
 	"run.tests.with.coverage.profile": "运行覆盖率测试",
-	"debug.tests.profile": "调试测试"
+	"debug.tests.profile": "调试测试",
+	"ctest.launch.resolve.invoked": "CTest launch resolver invoked for debug type '{0}'.",
+	"ctest.launch.no.project": "Cannot resolve the CTest program for this launch configuration because no CMake project is associated with it.",
+	"ctest.launch.resolve.failed": "Failed to resolve the CTest launch configuration: {0}"
 }

@@ -59,6 +59,7 @@
 	"started": "已启动",
 	"cmake.finished.returned": "{0} 已完成(已返回 {1})",
 	"cmake.finished.returned.unserializable": "{0} 已完成(已返回不可序列化的值)",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "正在加载扩展命令",
 	"register.command": "注册 CMakeTools 扩展命令 {0}",
 	"bookmark.target.not.resolved": "书签“{0}”无法解析为目标。可能需要重新配置项目。",

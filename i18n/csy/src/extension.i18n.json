@@ -59,6 +59,7 @@
 	"started": "spuštěno",
 	"cmake.finished.returned": "Dokončeno: {0} (vráceno: {1})",
 	"cmake.finished.returned.unserializable": "Dokončeno: {0} (vrácena neserializovatelná hodnota)",
+	"registered.ctest.launch.resolver": "Registered CTest launch configuration resolver for external debugger types.",
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
 	"bookmark.target.not.resolved": "Záložku {0} nelze přeložit na cíl. Možná bude nutné projekt znovu nakonfigurovat.",
