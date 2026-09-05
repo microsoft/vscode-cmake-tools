@@ -5386,9 +5386,9 @@ nan@^2.12.1:
   integrity sha1-k37TReY9lIE2KnlC1JxIYNJ+6r0=
 
 nanoid@^3.1.31, nanoid@^3.3.7:
-  version "3.3.11"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/nanoid/-/nanoid-3.3.11.tgz#4f4f112cefbe303202f2199838128936266d185b"
-  integrity sha1-T08RLO++MDIC8hmYOBKJNiZtGFs=
+  version "3.3.18"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/nanoid/-/nanoid-3.3.18.tgz#f66a2de1199ffde0fcf21c8a5f13106b1c081913"
+  integrity sha1-9mot4Rmf/eD88hyKXxMQaxwIGRM=
 
 nanomatch@^1.2.9:
   version "1.2.13"
