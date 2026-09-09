@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "Configurez votre projet CMake avant d'essayer de modifier le cache.",
 	"project.not.yet.configured": "Ce projet n'a pas encore été configuré",
 	"configure.now.button": "Configurer",
+	"preset.source.user": "Préréglage utilisateur",
+	"preset.source.project": "Préréglage du projet",
 	"cache.load.failed": "Non, le fichier CMakeCache.txt a été trouvé. Configurez d'abord le projet !",
 	"refresh.cache.editor.after.configure": "Actualisez l’Éditeur du cache CMake après la configuration",
 	"set.up.before.selecting.target": "Configurez votre projet CMake avant de sélectionner une cible.",

@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "Před pokusem o úpravu mezipaměti nastavte svůj projekt CMake.",
 	"project.not.yet.configured": "Tento projekt ještě není nakonfigurovaný.",
 	"configure.now.button": "Nakonfigurovat",
+	"preset.source.user": "Předvolba uživatele",
+	"preset.source.project": "Předvolba projektu",
 	"cache.load.failed": "Nenašel se žádný soubor CMakeCache.txt. Nejdříve prosím nakonfigurujte projekt.",
 	"refresh.cache.editor.after.configure": "Po konfiguraci aktualizujte editor mezipaměti CMake",
 	"set.up.before.selecting.target": "Před výběrem cíle nastavte projekt CMake.",

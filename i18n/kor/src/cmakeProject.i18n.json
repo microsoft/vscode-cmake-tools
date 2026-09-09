@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "캐시 편집을 시도하기 전에 CMake 프로젝트를 설정합니다.",
 	"project.not.yet.configured": "이 프로젝트는 아직 구성되지 않았습니다.",
 	"configure.now.button": "지금 구성",
+	"preset.source.user": "사용자 미리 설정",
+	"preset.source.project": "프로젝트 미리 설정",
 	"cache.load.failed": "CMakeCache.txt 파일을 찾을 수 없습니다. 먼저 프로젝트를 구성하세요.",
 	"refresh.cache.editor.after.configure": "구성 후 CMake 캐시 편집기 새로 고침",
 	"set.up.before.selecting.target": "대상을 선택하기 전에 CMake 프로젝트를 설정합니다.",

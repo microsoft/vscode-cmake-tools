@@ -39,6 +39,11 @@
 	"yes": "是",
 	"no": "否",
 	"never.debug.with.launch.prompt": "您想在此工作區中，一律在沒有啟動設定的情況下除錯測試嗎？",
+	"ctest.launch.discovered.tests": "CTest 啟動解析器發現 {0} 個測試。",
+	"ctest.launch.no.tests": "此啟動設定會解析為特定的 CTest 測試，但找不到任何測試。請設定並建置您的專案，以便探索到測試，然後再試一次 (或從測試總管啟動測試偵錯)。",
+	"ctest.launch.pick.test": "選取要偵錯的 CTest 測試",
+	"ctest.launch.resolved.program": "CTest 啟動解析器已將測試 '{0}' 解析為程式 '{1}'。",
+	"ctest.launch.no.program": "無法判斷 CTest 測試 '{0}' 的可執行檔。請先建置該測試的目標，然後再試一次。",
 	"no.launch.config": "找不到啟動設定。",
 	"choose.launch.config": "選擇要對測試進行偵錯的啟動設定。",
 	"test.skip.debug.build.failure": "由於建置失敗，沒有偵錯中的測試。",
@@ -49,5 +54,8 @@
 	"build.failed": "建置失敗",
 	"run.tests.profile": "執行測試",
 	"run.tests.with.coverage.profile": "執行涵蓋範圍測試",
-	"debug.tests.profile": "偵錯測試"
+	"debug.tests.profile": "偵錯測試",
+	"ctest.launch.resolve.invoked": "已針對偵錯類型 '{0}' 呼叫 CTest 啟動解析器。",
+	"ctest.launch.no.project": "無法解析此啟動設定的 CTest 程式，因為沒有與其相關聯的 CMake 專案。",
+	"ctest.launch.resolve.failed": "無法解析 CTest 啟動設定： {0}"
 }

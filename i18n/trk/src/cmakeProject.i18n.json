@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "Önbelleği düzenlemeyi denemeden önce CMake projenizi ayarlayın.",
 	"project.not.yet.configured": "Bu proje henüz yapılandırılmadı",
 	"configure.now.button": "Şimdi Yapılandır",
+	"preset.source.user": "Kullanıcı ön ayarı",
+	"preset.source.project": "Proje ön ayarı",
 	"cache.load.failed": "CMakeCache.txt dosyası bulunamadı. Lütfen önce projeyi yapılandırın!",
 	"refresh.cache.editor.after.configure": "Yapılandırma işleminden sonra CMake Önbellek Düzenleyicisi'ni yenileyin",
 	"set.up.before.selecting.target": "Bir hedef seçmeden önce CMake projenizi ayarlayın.",

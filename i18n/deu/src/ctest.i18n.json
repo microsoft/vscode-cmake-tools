@@ -39,6 +39,11 @@
 	"yes": "Ja",
 	"no": "Nein",
 	"never.debug.with.launch.prompt": "Möchten Sie in diesem Arbeitsbereich Tests immer ohne Startkonfiguration debuggen?",
+	"ctest.launch.discovered.tests": "CTest-Start-Resolver hat {0} Test(s) entdeckt.",
+	"ctest.launch.no.tests": "Diese Startkonfiguration verweist auf einen bestimmten CTest-Test, aber es wurden keine Tests gefunden. Konfigurieren und erstellen Sie Ihr Projekt, damit Tests erkannt werden, und versuchen Sie es dann erneut (oder starten Sie das Debuggen eines Tests im Test-Explorer).",
+	"ctest.launch.pick.test": "Wählen Sie den CTest-Test zum Debuggen aus",
+	"ctest.launch.resolved.program": "Der CTest-Startresolver hat den Test '{0}' zum Programmieren '{1}' aufgelöst.",
+	"ctest.launch.no.program": "Die ausführbare Datei für den CTest-Test konnte nicht ermittelt '{0}'. Erstellen Sie das Ziel des Tests, und versuchen Sie es dann noch mal.",
 	"no.launch.config": "Keine Startkonfigurationen gefunden.",
 	"choose.launch.config": "Wählen Sie eine Startkonfiguration aus, mit der der Test gedebuggt werden soll.",
 	"test.skip.debug.build.failure": "Debuggen für Tests kann aufgrund eines Buildfehlers nicht ausgeführt werden.",
@@ -49,5 +54,8 @@
 	"build.failed": "Fehler beim Buildvorgang",
 	"run.tests.profile": "Tests ausführen",
 	"run.tests.with.coverage.profile": "Tests mit Abdeckung ausführen",
-	"debug.tests.profile": "Tests debuggen"
+	"debug.tests.profile": "Tests debuggen",
+	"ctest.launch.resolve.invoked": "CTest-Startauflöser für Debugtyp „{0}“ aufgerufen.",
+	"ctest.launch.no.project": "Das CTest-Programm für diese Startkonfiguration kann nicht ermittelt werden, da ihr kein CMake-Projekt zugeordnet ist.",
+	"ctest.launch.resolve.failed": "Fehler beim Auflösen der CTest-Startkonfiguration: {0}"
 }

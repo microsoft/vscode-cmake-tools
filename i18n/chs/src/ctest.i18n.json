@@ -39,6 +39,11 @@
 	"yes": "是",
 	"no": "否",
 	"never.debug.with.launch.prompt": "你是否希望在此工作区中始终无启动配置调试测试?",
+	"ctest.launch.discovered.tests": "CTest 启动解析程序发现了 {0} 个测试。",
+	"ctest.launch.no.tests": "此启动配置解析为特定的 CTest 测试，但未找到任何测试。配置并生成项目以发现测试，然后重试(或从测试资源管理器开始调试测试)。",
+	"ctest.launch.pick.test": "选择要调试的 CTest 测试",
+	"ctest.launch.resolved.program": "CTest 启动解析程序已将测试“{0}”解析为程序“{1}”。",
+	"ctest.launch.no.program": "无法确定 CTest 测试“{0}”的可执行文件。请生成测试的目标，然后重试。",
 	"no.launch.config": "未找到启动配置。",
 	"choose.launch.config": "选择要调试测试的启动配置。",
 	"test.skip.debug.build.failure": "由于生成失败而未调试测试。",
@@ -49,5 +54,8 @@
 	"build.failed": "生成失败",
 	"run.tests.profile": "运行测试",
 	"run.tests.with.coverage.profile": "运行覆盖率测试",
-	"debug.tests.profile": "调试测试"
+	"debug.tests.profile": "调试测试",
+	"ctest.launch.resolve.invoked": "为调试类型“{0}”调用了 CTest 启动解析程序。",
+	"ctest.launch.no.project": "无法解析此启动配置的 CTest 程序，因为没有关联的 CMake 项目。",
+	"ctest.launch.resolve.failed": "解析 CTest 启动配置失败: {0}"
 }
