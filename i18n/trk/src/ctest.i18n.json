@@ -39,6 +39,11 @@
 	"yes": "Evet",
 	"no": "Hayır",
 	"never.debug.with.launch.prompt": "Bu çalışma alanında testleri her zaman bir başlatma yapılandırması olmadan hata ayıklamak ister misiniz?",
+	"ctest.launch.discovered.tests": "CTest başlatma çözümleyicisi {0} test buldu.",
+	"ctest.launch.no.tests": "Bu başlatma yapılandırması belirli bir CTest testine karşılık gelir, ancak herhangi bir test bulunamadı. Testlerin algılanması için projenizi yapılandırın ve derleyin, ardından tekrar deneyin (veya Test Gezgini'nden bir testin hata ayıklamasına başlayın).",
+	"ctest.launch.pick.test": "Hata ayıklama yapmak istediğiniz CTest testini seçin",
+	"ctest.launch.resolved.program": "CTest başlatma çözümleyicisi, ‘{0}’ adlı testi ‘{1}’ adlı programa çözümledi.",
+	"ctest.launch.no.program": "CTest testi ‘{0}’ için yürütülebilir dosya belirlenemedi. Testin hedefini derleyin, ardından tekrar deneyin.",
 	"no.launch.config": "Başlatma yapılandırması bulunamadı.",
 	"choose.launch.config": "Testte hata ayıklamak için bir başlatma yapılandırması seçin.",
 	"test.skip.debug.build.failure": "Derleme hatası nedeniyle testlerde hata ayıklama gerçekleştirilemiyor.",
@@ -49,5 +54,8 @@
 	"build.failed": "Derleme başarısız",
 	"run.tests.profile": "Testleri Çalıştır",
 	"run.tests.with.coverage.profile": "Testleri Kapsam ile Çalıştır",
-	"debug.tests.profile": "Testlerdeki Hataları Ayıkla"
+	"debug.tests.profile": "Testlerdeki Hataları Ayıkla",
+	"ctest.launch.resolve.invoked": "CTest başlatma çözümleyicisi, '{0}' hata ayıklama türü için çağrıldı.",
+	"ctest.launch.no.project": "Bu başlatma yapılandırması için CTest programı çözümlenemiyor, çünkü bu yapılandırmaya ilişkili hiçbir CMake projesi bulunmuyor.",
+	"ctest.launch.resolve.failed": "CTest başlatma yapılandırması çözümlenemedi: {0}"
 }

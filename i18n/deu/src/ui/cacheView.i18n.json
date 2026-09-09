@@ -16,5 +16,9 @@
 	"search": "Suchen",
 	"save": "Speichern",
 	"key": "Schlüssel",
-	"value": "Wert"
+	"value": "Wert",
+	"source": "Quelle",
+	"not.set.in.presets": "CMake-Cache",
+	"differs.from.preset": "Im Cache geändert",
+	"matches.preset": "Entspricht der Voreinstellung"
 }

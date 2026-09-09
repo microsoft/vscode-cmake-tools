@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "キャッシュを編集しようとする前に、CMake プロジェクトを設定してください。",
 	"project.not.yet.configured": "このプロジェクトはまだ構成されていません",
 	"configure.now.button": "今すぐ構成",
+	"preset.source.user": "ユーザー プリセット",
+	"preset.source.project": "プロジェクトのプリセット",
 	"cache.load.failed": "CMakeCache.txt ファイルが見つかりませんでした。最初にプロジェクトを構成してください。",
 	"refresh.cache.editor.after.configure": "構成後に CMake キャッシュ エディターを更新する",
 	"set.up.before.selecting.target": "ターゲットを選択する前に、CMake プロジェクトを設定してください。",

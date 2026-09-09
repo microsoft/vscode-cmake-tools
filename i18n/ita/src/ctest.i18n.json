@@ -39,6 +39,11 @@
 	"yes": "Sì",
 	"no": "No",
 	"never.debug.with.launch.prompt": "Si desidera eseguire sempre il debug dei test senza una configurazione di avvio in quest'area di lavoro?",
+	"ctest.launch.discovered.tests": "Il resolver di avvio di CTest ha rilevato {0} test.",
+	"ctest.launch.no.tests": "Questa configurazione di avvio fa riferimento a un test CTest specifico, ma non è stato trovato alcun test. Configurare e compilare il progetto in modo che i test vengano individuati, quindi riprovare (o avviare il debug di un test da Esplora test).",
+	"ctest.launch.pick.test": "Selezionare il test CTest per il debug",
+	"ctest.launch.resolved.program": "Il resolver di avvio CTest ha risolto il '{0}' di test per programmare '{1}'.",
+	"ctest.launch.no.program": "Non è stato possibile determinare l'eseguibile per il test CTest '{0}'. Compilare la destinazione del test, quindi riprovare.",
 	"no.launch.config": "Non sono state trovate configurazioni di avvio.",
 	"choose.launch.config": "Scegliere una configurazione di avvio con cui eseguire il debug del test.",
 	"test.skip.debug.build.failure": "Non è possibile eseguire il debug dei test a causa di un errore di compilazione.",
@@ -49,5 +54,8 @@
 	"build.failed": "Compilazione non riuscita",
 	"run.tests.profile": "Esegui i test",
 	"run.tests.with.coverage.profile": "Esegui test con code coverage",
-	"debug.tests.profile": "Esegui il debug dei test"
+	"debug.tests.profile": "Esegui il debug dei test",
+	"ctest.launch.resolve.invoked": "Resolver di avvio CTest richiamato per il tipo di debug '{0}'.",
+	"ctest.launch.no.project": "Non è possibile risolvere il programma CTest per questa configurazione di avvio perché non è associato ad alcun progetto CMake.",
+	"ctest.launch.resolve.failed": "Non è possibile risolvere la configurazione di avvio di CTest: {0}"
 }
