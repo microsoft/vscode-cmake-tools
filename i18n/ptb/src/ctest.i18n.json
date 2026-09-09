@@ -39,6 +39,11 @@
 	"yes": "Sim",
 	"no": "Não",
 	"never.debug.with.launch.prompt": "Deseja sempre depurar testes sem uma configuração de inicialização neste workspace?",
+	"ctest.launch.discovered.tests": "O resolvedor de inicialização do CTest descobriu {0} testes.",
+	"ctest.launch.no.tests": "Esta configuração de inicialização é resolvida para um teste CTest específico, mas nenhum teste foi encontrado. Configure e compile seu projeto para que os testes sejam descobertos e tente novamente (ou inicie a depuração de um teste no Gerenciador de Testes).",
+	"ctest.launch.pick.test": "Selecione o teste CTest a ser depurado",
+	"ctest.launch.resolved.program": "O resolvedor de inicialização do CTest resolveu o '{0}' de teste para programar '{1}'.",
+	"ctest.launch.no.program": "Não foi possível determinar o executável do teste CTest '{0}'. Compile o destino do teste e tente novamente.",
 	"no.launch.config": "Nenhuma configuração de inicialização encontrada.",
 	"choose.launch.config": "Escolha uma configuração de inicialização para depurar o teste.",
 	"test.skip.debug.build.failure": "Não está depurando testes devido a uma falha de compilação.",
@@ -49,5 +54,8 @@
 	"build.failed": "Ocorreu um erro na compilação",
 	"run.tests.profile": "Executar Testes",
 	"run.tests.with.coverage.profile": "Execute testes com cobertura",
-	"debug.tests.profile": "Depurar Testes"
+	"debug.tests.profile": "Depurar Testes",
+	"ctest.launch.resolve.invoked": "Resolvedor de inicialização do CTest invocado para o tipo de depuração '{0}'.",
+	"ctest.launch.no.project": "Não é possível resolver o programa CTest para esta configuração de inicialização porque nenhum projeto CMake está associado a ela.",
+	"ctest.launch.resolve.failed": "Falha ao resolver a configuração de inicialização do CTest: {0}"
 }

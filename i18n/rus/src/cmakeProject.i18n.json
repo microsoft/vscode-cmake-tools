@@ -161,6 +161,8 @@
 	"set.up.before.edit.cache": "Настройте проект CMake перед изменением кэша.",
 	"project.not.yet.configured": "Этот проект еще не настроен.",
 	"configure.now.button": "Настроить сейчас",
+	"preset.source.user": "Пользовательская предустановка",
+	"preset.source.project": "Предустановка проекта",
 	"cache.load.failed": "Файл CMakeCache.txt не найден. Сначала настройте проект.",
 	"refresh.cache.editor.after.configure": "Обновление редактора кэша CMake после настройки",
 	"set.up.before.selecting.target": "Настройте проект CMake перед выбором целевого объекта.",

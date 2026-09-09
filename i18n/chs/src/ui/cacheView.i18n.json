@@ -16,5 +16,9 @@
 	"search": "搜索",
 	"save": "保存",
 	"key": "缓存键",
-	"value": "值"
+	"value": "值",
+	"source": "源",
+	"not.set.in.presets": "Cmake 缓存",
+	"differs.from.preset": "已在缓存中更改",
+	"matches.preset": "匹配预设"
 }
