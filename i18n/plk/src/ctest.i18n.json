@@ -39,6 +39,11 @@
 	"yes": "Tak",
 	"no": "Nie",
 	"never.debug.with.launch.prompt": "Czy chcesz zawsze debugować testy bez konfiguracji uruchamiania w tym obszarze roboczym?",
+	"ctest.launch.discovered.tests": "Program rozpoznawania nazw podczas uruchamiania narzędzia CTest wykryło testy ({0}).",
+	"ctest.launch.no.tests": "Ta konfiguracja uruchamiania rozpoznaje określone testy narzędzia CTest, ale nie znaleziono żadnych testów. Skonfiguruj i skompiluj projekt, aby wykrywać testy, a potem spróbuj ponownie (albo rozpocznij debugowanie testu z Eksploratora testów).",
+	"ctest.launch.pick.test": "Wybierz test narzędzia CTest do debugowania",
+	"ctest.launch.resolved.program": "Program rozpoznawania nazw podczas uruchamiania narzędzia CTest rozpoznał test „{0}” jako program „{1}”.",
+	"ctest.launch.no.program": "Nie można określić pliku wykonywalnego dla testu narzędzia CTest „{0}”. Skompiluj element docelowy testu, a potem spróbuj ponownie.",
 	"no.launch.config": "Nie znaleziono konfiguracji uruchamiania.",
 	"choose.launch.config": "Wybierz konfigurację uruchamiania do debugowania testu.",
 	"test.skip.debug.build.failure": "Testy nie są debugowane z powodu niepowodzenia kompilacji.",
@@ -49,5 +54,8 @@
 	"build.failed": "Kompilacja nie powiodła się",
 	"run.tests.profile": "Uruchamianie testów",
 	"run.tests.with.coverage.profile": "Uruchamiaj testy z pokryciem",
-	"debug.tests.profile": "Debugowanie testów"
+	"debug.tests.profile": "Debugowanie testów",
+	"ctest.launch.resolve.invoked": "Program rozpoznawania nazw podczas uruchamiania narzędzia CTest został wywołany dla typu debugowania „{0}”.",
+	"ctest.launch.no.project": "Nie można rozpoznać programu CTest dla tej konfiguracji uruchamiania, ponieważ nie jest z nią skojarzony żaden projekt CMake.",
+	"ctest.launch.resolve.failed": "Nie można rozpoznać konfiguracji uruchamiania narzędzia CTest: {0}"
 }

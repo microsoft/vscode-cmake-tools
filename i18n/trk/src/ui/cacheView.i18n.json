@@ -16,5 +16,9 @@
 	"search": "Ara",
 	"save": "Kaydet",
 	"key": "Anahtar",
-	"value": "Değer"
+	"value": "Değer",
+	"source": "Kaynak",
+	"not.set.in.presets": "Cmake Önbelleği",
+	"differs.from.preset": "Önbellekte değiştirildi",
+	"matches.preset": "Ön ayarla eşleşir"
 }
