@@ -72,6 +72,20 @@ export interface SiteData {
 
 export interface CTestResults { site: SiteData }
 
+// CTest reports the reason a test finished in its "Completion Status" measurement.
+const DISABLED_COMPLETION_STATUS = "Disabled";
+const SKIP_REGEX_COMPLETION_STATUS = "SKIP_REGULAR_EXPRESSION_MATCHED";
+
+/**
+ * A test is "disabled" (e.g. a GoogleTest DISABLED_ test, or one with the CTest DISABLED
+ * property) when CTest reports it as "Not Run (Disabled)": status "notrun" with a
+ * "Completion Status" of "Disabled". Such tests are intentionally not executed and must
+ * not be treated as failures. See issue #4267.
+ */
+function isDisabledTest(test: Test): boolean {
+    return test.measurements.get("Completion Status")?.value === DISABLED_COMPLETION_STATUS;
+}
+
 export enum RunCTestHelperEntryPoint {
     TestExplorer, // Test Explorer integration
     RunTests // Run tests command
@@ -375,6 +389,20 @@ export async function readTestResultsFile(testXml: string): Promise<CTestResults
     }
 }
 
+/**
+ * Builds the failure message for a test that CTest did not report as passed and that has an
+ * "Exit Value" measurement. CTest writes a companion "Exit Code" measurement next to it: for an
+ * ordinary non zero exit it is "Failed", but when the test was killed by a signal or timed out it
+ * names the cause ("SEGFAULT", "Timeout", "ILLEGAL", ...) while "Exit Value" is typically 0, which
+ * would read like success. In that case the message names the "Exit Code" status instead.
+ */
+export function getTestFailureMessage(testName: string, output: string, exitValue: string, exitStatus: string | undefined): string {
+    if (exitStatus !== undefined && exitStatus !== 'Failed' && exitStatus !== 'Completed' && !/^-?\d+$/.test(exitStatus)) {
+        return localize('test.failed.with.signal', '{0}\nTest {1} failed with {2} (exit value {3}).', output, testName, exitStatus, exitValue);
+    }
+    return localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitValue);
+}
+
 export class CTestOutputLogger extends proc.CommandConsumer {
     override output(line: string) {
         log.info(line);
@@ -617,7 +645,13 @@ export class CTestDriver implements vscode.Disposable {
         const returnValue: CommandResult = { exitCode: 0, stdout: consumer?.stdout, stderr: consumer?.stderr };
         if (testResults) {
             for (let i = 0; i < testResults.site.testing.test.length; i++) {
-                const status = testResults.site.testing.test[i].status;
+                const test = testResults.site.testing.test[i];
+                // Disabled tests are reported by CTest as "notrun" but are intentionally not
+                // executed, so they must not fail the run (issue #4267).
+                if (isDisabledTest(test)) {
+                    continue;
+                }
+                const status = test.status;
                 if (status === "notrun" || status === "failed") {
                     returnValue.exitCode = -1;
                     break;
@@ -949,18 +983,21 @@ export class CTestDriver implements vscode.Disposable {
             const failureDurationStr = testResult.measurements.get("Execution Time")?.value;
             const failureDuration = failureDurationStr ? parseFloat(failureDurationStr) * 1000 : undefined;
             const exitCode = testResult.measurements.get("Exit Value")?.value;
+            const exitStatus = testResult.measurements.get("Exit Code")?.value;
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
+            let skipped = false;
             if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
                     run,
-                    new vscode.TestMessage(localize('test.failed.with.exit.code', '{0}\nTest {1} failed with exit code {2}.', output, testName, exitCode)),
+                    new vscode.TestMessage(getTestFailureMessage(testName, output, exitCode, exitStatus)),
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                if (completionStatus === "SKIP_REGULAR_EXPRESSION_MATCHED") {
+                if (completionStatus === SKIP_REGEX_COMPLETION_STATUS || completionStatus === DISABLED_COMPLETION_STATUS) {
                     run.skipped(test);
+                    skipped = true;
                 } else {
                     this.ctestErrored(
                         test,
@@ -977,7 +1014,11 @@ export class CTestDriver implements vscode.Disposable {
             }
 
             havefailures = true;
-            returnCode = -1;
+            // A skipped/disabled test is not a failure and must not taint the overall run
+            // result (issue #4267).
+            if (!skipped) {
+                returnCode = -1;
+            }
         }
         if (!foundTestResult && !havefailures) {
             this.ctestFailed(test, run, new vscode.TestMessage(localize('test.results.not.found', 'Test results not found.')));
@@ -1404,7 +1445,7 @@ export class CTestDriver implements vscode.Disposable {
      * @returns The exit code of the ctest command.
      */
     async extractTestsCommand(driver: CMakeDriver, ctestPath: string, ctestArgs: string[], updateTests: (result: proc.ExecutionResult) => Promise<void>): Promise<number> {
-        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true }).result;
+        const result = await driver.executeCommand(ctestPath, ctestArgs, undefined, { cwd: driver.binaryDir, silent: true, environment: await driver.getCTestCommandEnvironment() }).result;
         if (result.retc !== 0) {
             // There was an error running CTest. Odd...
             log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
@@ -1883,7 +1924,7 @@ export class CTestDriver implements vscode.Disposable {
         if (this.tests) {
             for (const test of this.tests.tests) {
                 if (test.name === testName) {
-                    return test.command[0];
+                    return test.command?.[0] ?? '';
                 }
             }
         } else if (this.legacyTests) {
@@ -1911,7 +1952,7 @@ export class CTestDriver implements vscode.Disposable {
         if (this.tests) {
             for (const test of this.tests.tests) {
                 if (test.name === testName) {
-                    return test.command.slice(1);
+                    return test.command?.slice(1) ?? [];
                 }
             }
         }
@@ -2037,6 +2078,95 @@ export class CTestDriver implements vscode.Disposable {
         return allConfigItems;
     }
 
+    /**
+     * The `${cmake.testProgram}`, `${cmake.testArgs}`, `${cmake.testWorkingDirectory}` and
+     * `${cmake.testEnvironment}` placeholders are not real VS Code variables; they are only
+     * meaningful for a specific CTest test. This returns true if the given launch configuration
+     * references any of them.
+     */
+    public static configReferencesTestPlaceholders(config: vscode.DebugConfiguration): boolean {
+        const marker = '${cmake.test';
+        const scan = (value: unknown): boolean => {
+            if (typeof value === 'string') {
+                return value.includes(marker);
+            }
+            if (Array.isArray(value)) {
+                return value.some(scan);
+            }
+            if (value && typeof value === 'object') {
+                return Object.values(value as Record<string, unknown>).some(scan);
+            }
+            return false;
+        };
+        return scan(config);
+    }
+
+    /**
+     * Substitute the `${cmake.test*}` placeholders in a launch configuration for the given test.
+     */
+    private applyTestPlaceholderSubstitutions(config: vscode.DebugConfiguration, testName: string): vscode.DebugConfiguration {
+        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testProgram}', this.testProgram(testName));
+        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
+
+        // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
+        // since we need to replace the quotes as well.
+        config = this.replaceArrayItems(config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+
+        // Replace cmake.testEnvironment with the test's ENVIRONMENT property as an array of { name, value } objects.
+        const testEnv = this.testEnvironment(testName);
+        const testEnvArray = Object.entries(testEnv).map(([name, value]) => ({ name, value }));
+        config = this.replaceValueInObject<vscode.DebugConfiguration>(config, '${cmake.testEnvironment}', testEnvArray);
+        return config;
+    }
+
+    /**
+     * Resolve the `${cmake.test*}` placeholders in a launch configuration that is started directly
+     * from the Run and Debug view (i.e., via F5) rather than from the Test Explorer. Because that
+     * entry point has no associated test, the user is prompted to pick one of the discovered CTest
+     * tests. Returns the substituted configuration, or `undefined` to abort the launch (no tests
+     * were found, or the user cancelled the pick).
+     */
+    public async resolveLaunchConfigurationForTest(config: vscode.DebugConfiguration, driver: CMakeDriver | null): Promise<vscode.DebugConfiguration | undefined> {
+        if (!CTestDriver.configReferencesTestPlaceholders(config)) {
+            return config;
+        }
+
+        // Refresh from the driver so that this.tests carries the full CTest information (in
+        // particular each test's `command`, which is what ${cmake.testProgram} resolves to). The
+        // Test Explorer may have only populated a lighter-weight view, so we cannot rely on
+        // getTestNames() alone having usable program paths.
+        if (driver) {
+            await this.refreshTests(driver);
+        }
+
+        const testNames = this.getTestNames();
+        log.debug(localize('ctest.launch.discovered.tests', 'CTest launch resolver discovered {0} test(s).', String(testNames?.length ?? 0)));
+        if (testNames === undefined || testNames.length === 0) {
+            void vscode.window.showErrorMessage(localize('ctest.launch.no.tests', 'This launch configuration resolves to a specific CTest test, but no tests were found. Configure and build your project so tests are discovered, then try again (or start debugging a test from the Test Explorer).'));
+            return undefined;
+        }
+
+        let testName: string | undefined;
+        if (testNames.length === 1) {
+            testName = testNames[0];
+        } else {
+            testName = await vscode.window.showQuickPick(testNames.sort(), { placeHolder: localize('ctest.launch.pick.test', 'Select the CTest test to debug') });
+        }
+
+        if (testName === undefined) {
+            return undefined;
+        }
+
+        const program = this.testProgram(testName);
+        log.debug(localize('ctest.launch.resolved.program', 'CTest launch resolver resolved test \'{0}\' to program \'{1}\'.', testName, program));
+        if (!program) {
+            void vscode.window.showErrorMessage(localize('ctest.launch.no.program', 'Could not determine the executable for CTest test \'{0}\'. Build the test\'s target, then try again.', testName));
+            return undefined;
+        }
+
+        return this.applyTestPlaceholderSubstitutions(config, testName);
+    }
+
     private async debugCTestImpl(workspaceFolder: vscode.WorkspaceFolder, testName: string, cancellation: vscode.CancellationToken, preSelectedConfig?: ConfigItem): Promise<void> {
         const magicValue = sessionNum++;
         let chosenConfig: ConfigItem | undefined = preSelectedConfig;
@@ -2068,17 +2198,7 @@ export class CTestDriver implements vscode.Disposable {
 
         // Commands can't be used to replace array (i.e., args); and both test program and test args requires folder and
         // test name as parameters, which means one launch config for each test. So replacing them here is a better way.
-        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testProgram}', this.testProgram(testName));
-        chosenConfig.config = this.replaceAllInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
-
-        // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
-        // since we need to replace the quotes as well.
-        chosenConfig.config = this.replaceArrayItems(chosenConfig.config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
-
-        // Replace cmake.testEnvironment with the test's ENVIRONMENT property as an array of { name, value } objects.
-        const testEnv = this.testEnvironment(testName);
-        const testEnvArray = Object.entries(testEnv).map(([name, value]) => ({ name, value }));
-        chosenConfig.config = this.replaceValueInObject<vscode.DebugConfiguration>(chosenConfig.config, '${cmake.testEnvironment}', testEnvArray);
+        chosenConfig.config = this.applyTestPlaceholderSubstitutions(chosenConfig.config, testName);
 
         // Identify the session we started
         chosenConfig.config[magicKey] = magicValue;
@@ -2407,5 +2527,43 @@ export function deIntegrateTestExplorer(): void {
     if (testExplorer) {
         testExplorer.dispose();
         testExplorer = undefined;
+    }
+}
+
+/**
+ * Resolves the `${cmake.test*}` placeholders in third-party debugger launch configurations (e.g.,
+ * cppdbg, cppvsdbg, lldb) when they are started directly from the Run and Debug view (F5), so users
+ * are not required to launch such configurations exclusively from the Test Explorer. When a
+ * placeholder is present but no test context exists, the user is prompted to choose one of the
+ * discovered CTest tests. Configurations that do not reference these placeholders (including those
+ * already substituted by the Test Explorer flow) are returned unchanged.
+ */
+export class CTestLaunchConfigurationProvider implements vscode.DebugConfigurationProvider {
+    constructor(private readonly projectController: ProjectController) {}
+
+    async resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, debugConfiguration: vscode.DebugConfiguration, _token?: vscode.CancellationToken): Promise<vscode.DebugConfiguration | undefined | null> {
+        const referencesPlaceholders = CTestDriver.configReferencesTestPlaceholders(debugConfiguration);
+        if (!referencesPlaceholders) {
+            return debugConfiguration;
+        }
+        log.debug(localize('ctest.launch.resolve.invoked', 'CTest launch resolver invoked for debug type \'{0}\'.', debugConfiguration.type));
+
+        try {
+            const project = folder
+                ? await this.projectController.getProjectForFolder(folder.uri.fsPath)
+                : this.projectController.getActiveCMakeProject();
+
+            if (!project) {
+                void vscode.window.showErrorMessage(localize('ctest.launch.no.project', 'Cannot resolve the CTest program for this launch configuration because no CMake project is associated with it.'));
+                return undefined;
+            }
+
+            return await project.resolveCTestLaunchConfiguration(debugConfiguration);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            log.error(localize('ctest.launch.resolve.failed', 'Failed to resolve the CTest launch configuration: {0}', message), e instanceof Error ? (e.stack ?? '') : '');
+            void vscode.window.showErrorMessage(localize('ctest.launch.resolve.failed', 'Failed to resolve the CTest launch configuration: {0}', message));
+            return undefined;
+        }
     }
 }

@@ -234,6 +234,7 @@ export type VendorVsSettings = {
 export interface ConfigurePreset extends PresetPrivate, api.ConfigurePreset {
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
+    __vsDevEnvInstallationPath?: string; // Private field: install path of the VS instance pinned via the vsInstanceVersion vendor field, used to prefer that instance's bundled CMake.
 }
 
 export interface InheritsConfigurePreset extends api.InheritsConfigurePreset, PresetPrivate {}
@@ -974,6 +975,15 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     } else {
         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+
+        // When the VS instance was pinned via the vsInstanceVersion vendor field, remember its
+        // installation path so cmake discovery can prefer the CMake bundled with that same instance
+        // (see CMakeProject.getCMakePathofProject). Only do this for the vendor-pinned case so the
+        // default "latest VS" cmake behavior is preserved for every other preset.
+        if (vendorVsVersion && vsInstall.installationVersion.startsWith(vendorVsVersion.toString())) {
+            opts.preset.__vsDevEnvInstallationPath = vsInstall.installationPath;
+        }
+
         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
         const compilerEnv = vsEnv ?? EnvironmentUtils.create();
 

@@ -40,6 +40,15 @@ suite('Generator mismatch detection', () => {
         test('Returns true switching from Unix Makefiles to Ninja', () => {
             expect(generatorMismatch('Ninja', 'Unix Makefiles')).to.be.true;
         });
+
+        // #5049: In CMake presets mode a configure preset may omit "generator", leaving
+        // this.generator null/undefined. doInit() must then trust the existing cache (no mismatch)
+        // instead of deleting CMakeCache.txt and forcing a clean configure on every folder open.
+        test('#5049: preset without a generator never mismatches the cached default', () => {
+            expect(generatorMismatch(undefined, 'Unix Makefiles')).to.be.false;
+            expect(generatorMismatch(undefined, 'Ninja Multi-Config')).to.be.false;
+            expect(generatorMismatch(undefined, 'Visual Studio 17 2022')).to.be.false;
+        });
     });
 
     suite('CMakeCache.parseCache integration', () => {

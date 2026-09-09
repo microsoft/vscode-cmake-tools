@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20260819-1604-Experimental"
+	Name="(empty)"
+	Generator="ctest-4.2.3"
+	OSName="Linux"
+	Hostname="localhost"
+	>
+	<Testing>
+		<StartDateTime>Aug 19 16:04 UTC</StartDateTime>
+		<StartTestTime>1787241865</StartTestTime>
+		<TestList>
+			<Test>./crashing_test</Test>
+			<Test>./failing_test</Test>
+		</TestList>
+		<Test Status="failed">
+			<Name>crashing_test</Name>
+			<Path>.</Path>
+			<FullName>./crashing_test</FullName>
+			<FullCommandLine>/home/user/testbug/build/crash</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="text/string" name="Exit Code">
+					<Value>SEGFAULT</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Exit Value">
+					<Value>0</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>0.00196</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>/home/user/testbug/build/crash</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value></Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<Test Status="failed">
+			<Name>failing_test</Name>
+			<Path>.</Path>
+			<FullName>./failing_test</FullName>
+			<FullCommandLine>/home/user/testbug/build/fail</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="text/string" name="Exit Code">
+					<Value>Failed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Exit Value">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>0.00102</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>/home/user/testbug/build/fail</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value>assertion failed
+</Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<EndDateTime>Aug 19 16:04 UTC</EndDateTime>
+		<EndTestTime>1787241866</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

@@ -39,7 +39,6 @@
 	"setting.new.variant": "Yeni {0} varyantı ayarlanıyor",
 	"command.version.test.return.code": "{0},{1} kodunu geri döndürdü",
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
-	"compiler.version.return.code": "{0},{1} kodunu geri döndürdü",
 	"no.cached.config": "Önbelleğe alınmış yapılandırma IntelliSense için kullanılamadı",
 	"start.configure": "Yapılandırmayı başlat",
 	"use.cached.configuration": "Önbelleğe alınmış yapılandırmayı kullan",

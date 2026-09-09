@@ -39,7 +39,6 @@
 	"setting.new.variant": "Neue Variante wird festgelegt: {0}",
 	"command.version.test.return.code": "{0} hat folgenden Code zurückgegeben: {1}",
 	"trying.to.detect.generator": "Es wird versucht, einen vom System unterstützten Generator zu ermitteln.",
-	"compiler.version.return.code": "{0} hat folgenden Code zurückgegeben: {1}",
 	"no.cached.config": "Für IntelliSense konnte keine zwischengespeicherte Konfiguration verwendet werden.",
 	"start.configure": "Konfiguration starten",
 	"use.cached.configuration": "Zwischengespeicherte Konfiguration verwenden",

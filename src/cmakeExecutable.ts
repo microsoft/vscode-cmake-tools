@@ -25,7 +25,18 @@ export interface CMakeExecutable {
 
 const cmakeInfo = new Map<string, CMakeExecutable>();
 
-export async function getCMakeExecutableInformation(path: string, config?: ConfigurationReader): Promise<CMakeExecutable> {
+/**
+ * Query a cmake binary for its version and capabilities.
+ *
+ * @param path Path to the cmake executable.
+ * @param config Optional configuration used to provide the child process environment.
+ * @param cwd Optional working directory to run the probe in. This matters for users
+ * whose `cmake` is provided by a directory-based version manager (mise, asdf, vfox, ...):
+ * their shims resolve the tool version by walking up from the current working directory,
+ * so the probe must run inside the project. When omitted, the child process inherits the
+ * extension host's `process.cwd()`, which is not guaranteed to be the workspace folder.
+ */
+export async function getCMakeExecutableInformation(path: string, config?: ConfigurationReader, cwd?: string): Promise<CMakeExecutable> {
     const cmake: CMakeExecutable = {
         path,
         isPresent: false,
@@ -38,8 +49,10 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
     // what causes 'path' to be undefined here.
     if (path && path.length !== 0) {
         const normalizedPath = util.platformNormalizePath(path);
-        if (cmakeInfo.has(normalizedPath)) {
-            const cmakeExe: CMakeExecutable = cmakeInfo.get(normalizedPath)!;
+        const normalizedCwd = cwd !== undefined ? util.platformNormalizePath(cwd) : '';
+        const cacheKey = `${normalizedPath}@${normalizedCwd}`;
+        if (cmakeInfo.has(cacheKey)) {
+            const cmakeExe: CMakeExecutable = cmakeInfo.get(cacheKey)!;
             if (cmakeExe.isPresent) {
                 await setCMakeDebuggerAvailableContext(
                     cmakeExe.isDebuggerSupported?.valueOf() ?? false
@@ -51,7 +64,7 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
         }
 
         try {
-            const execOpt: proc.ExecutionOptions = { showOutputOnError: true, environment: config?.environment };
+            const execOpt: proc.ExecutionOptions = { showOutputOnError: true, environment: config?.environment, cwd: cwd || undefined };
             const execVersion = await proc.execute(path, ['--version'], null, execOpt).result;
             if (execVersion.retc === 0 && execVersion.stdout) {
                 console.assert(execVersion.stdout);
@@ -83,7 +96,7 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
             }
         } catch {
         }
-        cmakeInfo.set(normalizedPath, cmake);
+        cmakeInfo.set(cacheKey, cmake);
     }
     return cmake;
 }

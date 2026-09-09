@@ -39,7 +39,6 @@
 	"setting.new.variant": "正在設定新的變化 {0}",
 	"command.version.test.return.code": "{0} 傳回代碼 {1}",
 	"trying.to.detect.generator": "正在嘗試偵測系統支援的產生器",
-	"compiler.version.return.code": "{0} 傳回代碼 {1}",
 	"no.cached.config": "沒有可用於 IntelliSense 的快取設定",
 	"start.configure": "啟動設定",
 	"use.cached.configuration": "使用快取的設定",

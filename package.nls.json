@@ -358,6 +358,8 @@
         ]
     },
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
+    "cmake-tools.configuration.views.cmake.initializing.description": "CMake",
+    "cmake-tools.configuration.views.cmake.initializingWelcome.description": "CMake Tools is initializing...\nThe project views will appear once startup completes.",
     "cmake-tools.configuration.views.cmake.pinnedCommands.description": "Pinned Commands",
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files.",
     "cmake-tools.configuration.cmake.revealLog.description": "Configures the settings for showing the log and focusing on the output channel.",
