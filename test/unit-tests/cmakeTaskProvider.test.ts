@@ -14,9 +14,8 @@ function workspaceFolderStub(workspaceFolderPath: string): vscode.WorkspaceFolde
     return { uri: vscode.Uri.file(workspaceFolderPath) } as any as vscode.WorkspaceFolder;
 }
 
-// Regression tests for #4512: a `cmake` task scoped to a workspace folder that hosts multiple
-// projects (e.g. several cmake.sourceDirectory entries) must honor the active project instead of
-// always falling back to the folder's first project.
+// Regression tests for #4512: a `cmake` task must honor the active project, not always fall back
+// to the folder's first project.
 suite('CMake task provider active-project selection (#4512)', () => {
     test('prefers the active project when it belongs to the task workspace folder', () => {
         const folder = process.platform === 'win32' ? 'C:\\ws' : '/ws';
