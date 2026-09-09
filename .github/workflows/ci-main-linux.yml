@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
+        run: bash ./.github/scripts/yarn-install.sh --frozen-lockfile
 
       - name: Create node_modules archive
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
@@ -156,7 +156,7 @@ jobs:
       # Fallback: install fresh if the build job's cache was evicted between jobs (rare).
       - name: Install dependencies (fallback)
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: yarn install --frozen-lockfile
+        run: bash ./.github/scripts/yarn-install.sh --frozen-lockfile
 
       - name: Download build outputs
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
