@@ -26,6 +26,15 @@ const log = logging.createLogger('TaskProvider');
 
 const endOfLine: string = "\r\n";
 
+/**
+ * Whether the active project belongs to the task's workspace folder. Used to prefer the active
+ * project over a folder-based lookup, which would ignore the selected active folder (#4512).
+ */
+export function activeProjectBelongsToFolder(activeProject: CMakeProject | undefined, taskWorkspaceFolder: vscode.WorkspaceFolder): boolean {
+    return activeProject !== undefined &&
+        util.platformNormalizePath(activeProject.workspaceFolder.uri.fsPath) === util.platformNormalizePath(taskWorkspaceFolder.uri.fsPath);
+}
+
 export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     type: string;
     label: string;
@@ -497,7 +506,11 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         let project: CMakeProject | undefined = getActiveProject();
         if (this.workspaceFolder !== undefined) {
             this.writeEmitter.fire(localize("workspace.is", "Workspace is {0}", this.workspaceFolder.uri.fsPath + endOfLine));
-            project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            // Prefer the active project when it belongs to this folder; otherwise getProjectForFolder
+            // returns the folder's first project and ignores the selected active folder (#4512).
+            if (!activeProjectBelongsToFolder(project, this.workspaceFolder)) {
+                project = await extensionManager?.getProjectForFolder(this.workspaceFolder);
+            }
         }
         if (!project) {
             log.debug(localize("cmake.tools.not.found", 'CMake Tools not found.'));

@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "No se puede establecer el kit {0}.",
 	"error.on.switch.status": "Error en el conmutador del kit ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "No se puede evaluar el entorno del kit activo al resolver cmake.cmakePath: {0}",
+	"using.vs.instance.cmake": "Uso de CMake agrupado con la instancia de Visual Studio seleccionada por vsInstanceVersion: {0}",
 	"cmake.version.not.supported": "Es posible que no se admita la versión de CMake {0}. La versión mínima requerida es {1}.",
 	"not.starting.language.server.only": "No se inicia el controlador de CMake porque el modo de solo servidor de lenguaje está habilitado.",
 	"not.starting.no.kits": "No se inicia el controlador de CMake: no hay ningún kit seleccionado",

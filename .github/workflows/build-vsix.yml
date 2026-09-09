@@ -33,9 +33,11 @@ jobs:
           include: "package.json"
           exclude: ".git"
 
+      - name: Install dependencies
+        run: bash ./.github/scripts/yarn-install.sh
+
       - name: Build the VSIX
-        run:  |
-          yarn install
+        run: |
           yarn run compile-production
           yarn run package
 

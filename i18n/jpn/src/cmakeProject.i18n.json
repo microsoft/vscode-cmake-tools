@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "キット {0} を設定できません。",
 	"error.on.switch.status": "キットの切り替えでエラーが発生しました ({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "cmake.cmakePath の解決中にアクティブなキット環境を評価できません: {0}",
+	"using.vs.instance.cmake": "vsInstanceVersion: {0} で選択された Visual Studio インスタンスに同梱されている CMake を使用しています",
 	"cmake.version.not.supported": "CMake バージョン {0} はサポートされていない可能性があります。最低限必要なバージョンは {1} です。",
 	"not.starting.language.server.only": "言語サーバー専用モードが有効になっているため、CMake ドライバーは起動されません。",
 	"not.starting.no.kits": "CMake ドライバーは起動していません: キットが選択されていません",

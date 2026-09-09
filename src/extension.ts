@@ -50,7 +50,7 @@ import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDe
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
-import { deIntegrateTestExplorer } from "@cmt/ctest";
+import { deIntegrateTestExplorer, CTestLaunchConfigurationProvider } from "@cmt/ctest";
 import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
 import { CMakeListsModifier } from './cmakeListsModifier';
@@ -151,6 +151,7 @@ export class ExtensionManager implements vscode.Disposable {
         { language: this.CMAKE_LANGUAGE, scheme: "untitled" }
     ];
     private languageServicesDisposables: vscode.Disposable[] = [];
+    private languageServiceData?: LanguageServiceData;
 
     private updateTouchBarVisibility(config: TouchBarConfig) {
         const touchBarVisible = config.visibility === "default";
@@ -165,10 +166,10 @@ export class ExtensionManager implements vscode.Disposable {
      */
     public async init() {
         if (this.workspaceConfig.enableLanguageServices) {
-            await this.enableLanguageServices();
-            this.workspaceConfig.onChange('enableLanguageServices', async (value) => {
+            this.enableLanguageServices();
+            this.workspaceConfig.onChange('enableLanguageServices', (value) => {
                 if (value) {
-                    await this.enableLanguageServices();
+                    this.enableLanguageServices();
                 } else {
                     this.disposeLanguageServices();
                     telemetry.logEvent('disableLanguageServices');
@@ -476,26 +477,33 @@ export class ExtensionManager implements vscode.Disposable {
     private cppToolsAPI?: cpt.CppToolsApi;
     private configProviderRegistered?: boolean = false;
 
-    private async enableLanguageServices() {
-        try {
-            const languageServices = await LanguageServiceData.create();
-            this.languageServicesDisposables.push(vscode.languages.registerHoverProvider(
-                this.CMAKE_SELECTOR,
-                languageServices
-            ));
-            this.languageServicesDisposables.push(vscode.languages.registerCompletionItemProvider(
-                this.CMAKE_SELECTOR,
-                languageServices
-            ));
-        } catch {
+    private enableLanguageServices() {
+        // Defensive guard against duplicate registrations if this is called
+        // more than once (e.g. via the enableLanguageServices onChange handler).
+        this.disposeLanguageServices();
+
+        // Construct the provider synchronously; the bundled language-service
+        // data is loaded on first hover/completion rather than during
+        // activation. Register the providers and language configuration
+        // immediately so language services work without blocking activation on
+        // any asset I/O.
+        const languageServices = LanguageServiceData.create(() => {
             log.error(
                 localize(
                     "language.service.failed",
                     "Failed to initialize language services"
                 )
             );
-        }
-
+        });
+        this.languageServiceData = languageServices;
+        this.languageServicesDisposables.push(vscode.languages.registerHoverProvider(
+            this.CMAKE_SELECTOR,
+            languageServices
+        ));
+        this.languageServicesDisposables.push(vscode.languages.registerCompletionItemProvider(
+            this.CMAKE_SELECTOR,
+            languageServices
+        ));
         this.languageServicesDisposables.push(vscode.languages.setLanguageConfiguration(
             this.CMAKE_LANGUAGE,
             {
@@ -550,7 +558,10 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private disposeLanguageServices() {
+        this.languageServiceData?.dispose();
+        this.languageServiceData = undefined;
         this.languageServicesDisposables.forEach(sub => sub.dispose());
+        this.languageServicesDisposables = [];
     }
 
     private getWorkspaceFolder(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
@@ -2696,6 +2707,14 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             new DynamicDebugConfigurationProvider(),
             vscode.DebugConfigurationProviderTriggerKind.Dynamic)
     );
+
+    // Resolve the ${cmake.test*} placeholders when a test's launch configuration is started directly
+    // from the Run and Debug view (F5), rather than only from the Test Explorer (issue #4574).
+    const ctestLaunchResolver = new CTestLaunchConfigurationProvider(ext.projectController);
+    for (const debugType of ["cppdbg", "cppvsdbg", "lldb", "lldb-dap", "gdb"]) {
+        context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(debugType, ctestLaunchResolver));
+    }
+    log.debug(localize('registered.ctest.launch.resolver', 'Registered CTest launch configuration resolver for external debugger types.'));
 
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [

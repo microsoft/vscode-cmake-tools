@@ -1725,7 +1725,7 @@ export class PresetsController implements vscode.Disposable {
         return { insertSpaces, tabSize };
     }
 
-    async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<vscode.TextEditor | undefined> {
+    async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false, showInEditor = true): Promise<vscode.TextEditor | undefined> {
         const presetsFilePath = isUserPresets ? this.userPresetsPath : this.presetsPath;
         const indent = this.getIndentationSettings();
         try {
@@ -1733,6 +1733,10 @@ export class PresetsController implements vscode.Disposable {
         } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
+        }
+
+        if (!showInEditor) {
+            return undefined;
         }
 
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));

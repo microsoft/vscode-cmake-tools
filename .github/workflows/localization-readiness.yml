@@ -58,7 +58,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.gate.outputs.is_loc == 'true'
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: bash ./.github/scripts/yarn-install.sh --frozen-lockfile --ignore-scripts
 
       - name: Verify imported translations
         id: verify
@@ -66,11 +66,11 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          node tools/translation-verifier.js 2>&1 | tee translation-verifier-output.txt
+          node tools/translation-verifier.js --report-untranslated 2>&1 | tee translation-verifier-output.txt
 
       - name: Update localization readiness signal
         if: always() && steps.gate.outputs.is_loc == 'true'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           VERIFY_OUTCOME: ${{ steps.verify.outcome }}
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}

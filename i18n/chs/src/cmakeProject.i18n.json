@@ -80,6 +80,7 @@
 	"unable.to.set.kit": "无法设置工具包 {0}。",
 	"error.on.switch.status": "工具包的切换出错({0})",
 	"failed.to.compute.kit.env.for.cmake.path": "解析 cmake.cmakePath 时无法评估活动工具包环境: {0}",
+	"using.vs.instance.cmake": "使用由 vsInstanceVersion {0} 选择的 Visual Studio 实例捆绑的 CMake",
 	"cmake.version.not.supported": "CMake 版本 {0} 可能不受支持。所需的最低版本为 {1}。",
 	"not.starting.language.server.only": "未启动 CMake 驱动程序，因为已启用仅语言服务器模式。",
 	"not.starting.no.kits": "未启动 CMake 驱动程序: 未选择任何工具包",

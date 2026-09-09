@@ -8,6 +8,7 @@ import * as which from 'which';
 import * as vscode from 'vscode';
 
 import { vsInstallations } from '@cmt/installs/visualStudio';
+import { vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { expandString } from '@cmt/expand';
 import { fs } from '@cmt/pr';
 import * as util from '@cmt/util';
@@ -339,7 +340,7 @@ class Paths {
 
             for (const install of vs_installations) {
                 const bundled_tool_path = {
-                    cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
+                    cmake: vsBundledCMakePath(install.installationPath),
                     ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe',
                     instanceId: install.instanceId,
                     version: util.parseVersion(install.installationVersion)
