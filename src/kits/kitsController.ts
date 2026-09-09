@@ -73,21 +73,25 @@ export async function accumulateDirsToScan(folder: string, progress: ProgressHan
         log.debug(localize('skip.unreadable.dir', 'Skipping directory that could not be read while scanning for kits: {0} ({1})', folder, e.code ?? e.message ?? String(e)));
         return files;
     }
-    for (const file of entries) {
-        if (cancel.isCancellationRequested) {
-            break;
-        }
-        const filePath = path.join(folder, file);
-        let isDirectory = false;
-        try {
-            isDirectory = (await fs.stat(filePath)).isDirectory();
-        } catch (e: any) {
-            log.debug(localize('skip.unstattable.entry', 'Skipping entry that could not be inspected while scanning for kits: {0} ({1})', filePath, e.code ?? e.message ?? String(e)));
-            continue;
-        }
-        if (depth > 0 && isDirectory) {
-            files.push(...await accumulateDirsToScan(filePath, progress, cancel, depth - 1));
-            files.push(filePath);
+    // At the deepest level nothing is traversed or added, so skip the loop
+    // entirely to avoid stat-ing every entry in large directories.
+    if (depth > 0) {
+        for (const file of entries) {
+            if (cancel.isCancellationRequested) {
+                break;
+            }
+            const filePath = path.join(folder, file);
+            let isDirectory = false;
+            try {
+                isDirectory = (await fs.stat(filePath)).isDirectory();
+            } catch (e: any) {
+                log.debug(localize('skip.unstattable.entry', 'Skipping entry that could not be inspected while scanning for kits: {0} ({1})', filePath, e.code ?? e.message ?? String(e)));
+                continue;
+            }
+            if (isDirectory) {
+                files.push(...await accumulateDirsToScan(filePath, progress, cancel, depth - 1));
+                files.push(filePath);
+            }
         }
     }
 
