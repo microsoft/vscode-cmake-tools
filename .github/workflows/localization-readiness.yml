@@ -58,7 +58,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.gate.outputs.is_loc == 'true'
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: bash ./.github/scripts/yarn-install.sh --frozen-lockfile --ignore-scripts
 
       - name: Verify imported translations
         id: verify
