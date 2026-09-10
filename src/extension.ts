@@ -45,6 +45,7 @@ import { DirectoryContext } from '@cmt/workspace';
 import { ProjectStatus } from '@cmt/ui/projectStatus';
 import { PinnedCommands } from '@cmt/ui/pinnedCommands';
 import { TestCodeLensProvider } from './ui/testCodeLensProvider';
+import { debugTestFromCodeLensCommand, resolveTestProject, runTestFromCodeLensCommand } from '@cmt/ui/testCodeLensRouting';
 import { StatusBar } from '@cmt/status';
 import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDebugger/debugAdapterNamedPipeServerDescriptorFactory';
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
@@ -1975,15 +1976,14 @@ export class ExtensionManager implements vscode.Disposable {
 
     /**
      * Run a test by name (called from CodeLens).
-     * Finds the active project that contains this test and runs it.
+     * Routes to the project identified by the CodeLens, never by test name alone.
      */
-    async runTestFromCodeLens(testName: string) {
+    async runTestFromCodeLens(testName: string, projectId?: string) {
+        const project = this.resolveProjectForTestCodeLens(testName, projectId);
+        if (!project) {
+            return;
+        }
         try {
-            const project = this.findProjectForTest(testName) ?? this.getActiveProject();
-            if (!project) {
-                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
-                return;
-            }
             log.info(localize('codelens.run.test', "Running test from CodeLens: '{0}'", testName));
             // Note: `await` is required so that a rejection from the async run is caught below
             // (and the test run is finalized) instead of escaping this handler silently.
@@ -1995,25 +1995,32 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     /**
-     * Finds the CMake project that owns a test with the given name, falling back to undefined
-     * when no project reports it (callers then use the active project).
+     * Resolves the CMake project that a test CodeLens action belongs to, using the project identity
+     * carried in the CodeLens arguments. Multiple projects in a workspace can define tests with the
+     * same name, so falling back to the first project reporting the name would run the wrong test.
+     * When the identity is missing or stale, this reports the problem and runs nothing.
      */
-    private findProjectForTest(testName: string): CMakeProject | undefined {
-        return this.projectController.getAllCMakeProjects()
-            .find(project => (project.cTestController.getTestNames() ?? []).includes(testName));
+    private resolveProjectForTestCodeLens(testName: string, projectId: string | undefined): CMakeProject | undefined {
+        const resolution = resolveTestProject(this.projectController.getAllCMakeProjects(), projectId, testName);
+        if (resolution.project) {
+            return resolution.project;
+        }
+
+        log.error(`Unable to resolve the CMake project for test '${testName}' (projectId: '${projectId ?? ''}', reason: ${resolution.error}).`);
+        void vscode.window.showErrorMessage(localize('codelens.test.project.not.found', "Unable to find the CMake project that owns the test '{0}'. Refresh the tests and try again.", testName));
+        return undefined;
     }
 
     /**
      * Debug a test by name (called from CodeLens).
-     * Finds the active project that contains this test and debugs it.
+     * Routes to the project identified by the CodeLens, never by test name alone.
      */
-    async debugTestFromCodeLens(testName: string) {
+    async debugTestFromCodeLens(testName: string, projectId?: string) {
+        const project = this.resolveProjectForTestCodeLens(testName, projectId);
+        if (!project) {
+            return;
+        }
         try {
-            const project = this.findProjectForTest(testName) ?? this.getActiveProject();
-            if (!project) {
-                void vscode.window.showErrorMessage(localize('no.active.cmake.project', 'No active CMake project.'));
-                return;
-            }
             log.info(localize('codelens.debug.test', "Debugging test from CodeLens: '{0}'", testName));
             return await project.debugCTest(testName);
         } catch (err) {
@@ -3018,8 +3025,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         }),
         vscode.commands.registerCommand('cmake.outline.runTest', (what: CTestTestNode) => runCommand('runTest', what.folder, what.testName, what.sourceDir)),
         vscode.commands.registerCommand('cmake.outline.debugTest', (what: CTestTestNode) => runCommand('debugCTest', what.folder, what.testName, what.sourceDir)),
-        vscode.commands.registerCommand('cmake.runTestFromCodeLens', (testName: string) => ext?.runTestFromCodeLens(testName)),
-        vscode.commands.registerCommand('cmake.debugTestFromCodeLens', (testName: string) => ext?.debugTestFromCodeLens(testName)),
+        vscode.commands.registerCommand(runTestFromCodeLensCommand, (testName: string, projectId?: string) => ext?.runTestFromCodeLens(testName, projectId)),
+        vscode.commands.registerCommand(debugTestFromCodeLensCommand, (testName: string, projectId?: string) => ext?.debugTestFromCodeLens(testName, projectId)),
         vscode.commands.registerCommand('cmake.outline.compileFile', (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
         // vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
         vscode.commands.registerCommand('cmake.outline.selectWorkspace', (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
