@@ -970,10 +970,7 @@ export class CMakeProject {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
-        if (this.automaticReconfigureTimer) {
-            clearTimeout(this.automaticReconfigureTimer);
-            this.automaticReconfigureTimer = undefined;
-        }
+        this.cancelAutomaticReconfigure();
     }
 
     /**
@@ -1966,6 +1963,12 @@ export class CMakeProject {
     }
 
     async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
+        // A configure is starting, so any pending save-triggered automatic reconfigure is now
+        // redundant: this configure will pick up the latest CMakeLists.txt. Cancelling it here makes
+        // the "command takes ownership" behavior deterministic rather than relying solely on the
+        // debounce window — e.g. the Test Explorer, where VS Code's testing.saveBeforeStart writes
+        // the file (scheduling the automatic reconfigure) just before the test's configure runs (#4794).
+        this.cancelAutomaticReconfigure();
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // Don't show a progress bar when the extension is using Cache for configuration.
@@ -2472,13 +2475,21 @@ export class CMakeProject {
 
     // Debounced entry point for the save-watcher's automatic reconfigure (see #4794).
     private scheduleAutomaticReconfigure(): void {
-        if (this.automaticReconfigureTimer) {
-            clearTimeout(this.automaticReconfigureTimer);
-        }
+        this.cancelAutomaticReconfigure();
         this.automaticReconfigureTimer = setTimeout(() => {
             this.automaticReconfigureTimer = undefined;
             void this.runAutomaticReconfigure();
         }, CMakeProject.automaticReconfigureDebounceMs);
+    }
+
+    // Cancel a pending (not yet fired) save-triggered automatic reconfigure. Called both when
+    // scheduling a new one and when a configure begins, so a command's configure deterministically
+    // supersedes the redundant watcher reconfigure (#4794).
+    private cancelAutomaticReconfigure(): void {
+        if (this.automaticReconfigureTimer) {
+            clearTimeout(this.automaticReconfigureTimer);
+            this.automaticReconfigureTimer = undefined;
+        }
     }
 
     private async runAutomaticReconfigure(): Promise<void> {

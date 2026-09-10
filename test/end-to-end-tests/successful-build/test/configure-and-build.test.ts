@@ -160,8 +160,9 @@ suite('Build', () => {
     // fail with "Configuration is already in progress". Saving the file (either by the command's own
     // maybeAutoSaveAll() or by VS Code's testing.saveBeforeStart) fires the save-watcher, which
     // started a redundant automatic reconfigure that raced the command's own configure. The watcher
-    // reconfigure is now (a) suppressed outright during a command-initiated save and (b) debounced so
-    // an imminent build/test/configure command can take ownership before it runs.
+    // reconfigure is now (a) suppressed outright during a command-initiated save, (b) debounced so
+    // an imminent build/test/configure command can take ownership before it runs, and (c) cancelled
+    // outright the moment any command-initiated configure begins.
     test('automatic reconfigure after a CMake file save yields to command-initiated configures (#4794)', async () => {
         testEnv.config.updatePartial({ configureOnEdit: true });
         // Ensure the project is configured so a driver (and its cmakeFiles list) exists.
@@ -190,8 +191,19 @@ suite('Build', () => {
             await waitPastDebounce();
             expect(reconfigures).to.eq(0, 'a scheduled reconfigure must yield once a command owns the configure');
 
-            // A plain user save (no command in flight) still auto-reconfigures after the debounce.
+            // A command-initiated configure must cancel a pending (already scheduled) automatic
+            // reconfigure. This is what makes the Test Explorer flow deterministic rather than a timing
+            // bet: VS Code's testing.saveBeforeStart schedules the reconfigure, then the test's configure
+            // runs and cancels it — regardless of how long the debounce is (#4794).
             (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri); // schedules the debounced reconfigure
+            expect((cmakeProject as any).automaticReconfigureTimer, 'a normal save should schedule the debounced reconfigure').to.not.be.undefined;
+            expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
+            expect((cmakeProject as any).automaticReconfigureTimer, 'a command-initiated configure must cancel the pending automatic reconfigure').to.be.undefined;
+            await waitPastDebounce();
+
+            // A plain user save (no command in flight) still auto-reconfigures after the debounce.
+            const reconfiguresBeforePlainSave = reconfigures;
             const reconfigured = new Promise<void>(resolve => {
                 const once = cmakeProject.onReconfigured(() => {
                     once.dispose();
@@ -200,7 +212,7 @@ suite('Build', () => {
             });
             await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
             await reconfigured;
-            expect(reconfigures).to.be.greaterThan(0, 'a normal user save should still trigger an automatic reconfigure');
+            expect(reconfigures).to.be.greaterThan(reconfiguresBeforePlainSave, 'a normal user save should still trigger an automatic reconfigure');
         } finally {
             sub.dispose();
         }
