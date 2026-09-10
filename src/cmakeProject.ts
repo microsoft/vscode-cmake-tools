@@ -1769,7 +1769,16 @@ export class CMakeProject {
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
-                    const expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
+                    let expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
+                    // If the destination is an existing directory, copy the file into it rather than
+                    // treating the directory itself as the target file. Without this, copyFile() fails
+                    // with "EISDIR: illegal operation on a directory" (see #4062). This mirrors the
+                    // behavior of mergedCompileCommands below.
+                    if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
+                        expandedDest = util.platformNormalizePath(path.join(expandedDest, 'compile_commands.json'));
+                    }
+                    // Skip when the destination resolves to the source file itself; copying a file
+                    // onto itself truncates it, leaving an empty compile_commands.json (see #4062).
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);
                         try {
