@@ -13,6 +13,7 @@ import paths from '@cmt/paths';
 import { compareVersions, VSInstallation, vsInstallations, enumerateMsvcToolsets, varsForVSInstallation, getVcVarsBatScript } from '@cmt/installs/visualStudio';
 import { EnvironmentUtils, EnvironmentWithNull } from '@cmt/environmentVariables';
 import { UseVsDeveloperEnvironment } from '@cmt/config';
+import { matchesVsInstance } from '@cmt/presets/vsInstanceSelection';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -940,26 +941,17 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         for (const vs of vsInstalls) {
             // Check for existence of vcvars script to determine whether desired host/target architecture is supported.
             // toolset.host will be set by getToolset.
-            if (await getVcVarsBatScript(vs, toolset.host!, arch)) {
-                // If a toolset version is specified then check to make sure this vs instance has it installed.
-                if (toolset.version) {
-                    const availableToolsets = await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion);
-                    // forcing non-null due to false positive (toolset.version is checked in conditional)
-                    if (availableToolsets?.find(t => t.startsWith(toolset.version!))) {
-                        vsInstall = vs;
-                        break;
-                    }
-                } else if (vendorVsVersion) {
-                    // If a VS major version is specified via vendor settings, match against it.
-                    if (vs.installationVersion.startsWith(vendorVsVersion.toString())) {
-                        vsInstall = vs;
-                        break;
-                    }
-                } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
-                    // If no toolset version specified then choose the latest VS instance for the given generator
-                    vsInstall = vs;
-                    break;
-                }
+            const hasVcVars = !!await getVcVarsBatScript(vs, toolset.host!, arch);
+            const availableToolsets = hasVcVars && toolset.version
+                ? await enumerateMsvcToolsets(vs.installationPath, vs.installationVersion)
+                : undefined;
+            if (matchesVsInstance({
+                installationVersion: vs.installationVersion,
+                availableToolsets,
+                hasVcVars
+            }, { vendorVsVersion, toolsetVersion: toolset.version, vsGeneratorVersion })) {
+                vsInstall = vs;
+                break;
             }
         }
     }
