@@ -3293,10 +3293,13 @@ export class CMakeProject {
             debugConfig.cwd = testInfo.workingDirectory;
         }
 
-        // Merge CTest ENVIRONMENT properties into the debug environment
+        // Debug the test with the same environment CTest would run it with (test preset environment
+        // in presets mode, kit/variant environment in kits mode, plus the environment settings), then
+        // layer the test's own CTest ENVIRONMENT property and finally the launch configuration's
+        // environment on top, so explicit launch overrides still win.
         const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
         const combinedEnvVars = [...testEnvVars, ...(debugConfig.environment ?? [])];
-        const launchEnv = await this.getTargetLaunchEnvironment(drv, combinedEnvVars);
+        const launchEnv = await this.getCTestLaunchEnvironment(drv, combinedEnvVars);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
@@ -3799,8 +3802,6 @@ export class CMakeProject {
      * This is also the point to fixing the issue #1987
      */
     async getTargetLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
-        let env = util.fromDebuggerEnvironmentVars(debugEnv);
-
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
 
@@ -3808,10 +3809,32 @@ export class CMakeProject {
             log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
-        env = EnvironmentUtils.merge([configureEnv, env]);
+        return this.mergeLaunchEnvironment(configureEnv, debugEnv);
+    }
+
+    /**
+     * Environment used when debugging a CTest test. It is built on the very same environment CTest
+     * itself is run with (`getCTestCommandEnvironment`), so that debugging a test behaves like
+     * running it: in presets mode that is the test preset's environment, in kits/variants mode the
+     * kit and variant environment, in both cases plus the `cmake.environment`/`cmake.testEnvironment`
+     * settings. Test-specific and launch configuration variables are layered on top by the caller.
+     */
+    async getCTestLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
+        const ctestEnv = await drv?.getCTestCommandEnvironment();
+        return this.mergeLaunchEnvironment(ctestEnv, debugEnv);
+    }
+
+    /**
+     * Layers the explicit debug/launch environment variables on top of a base environment, expanding
+     * their values against that base. Later entries of `debugEnv` win over earlier ones.
+     */
+    private async mergeLaunchEnvironment(baseEnv: Environment | undefined, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
+        let env = util.fromDebuggerEnvironmentVars(debugEnv);
+
+        env = EnvironmentUtils.merge([baseEnv, env]);
 
         if (debugEnv) {
-            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: baseEnv };
             for (const envPair of debugEnv) {
                 env[envPair.name] = await expandString(envPair.value, options);
             }
