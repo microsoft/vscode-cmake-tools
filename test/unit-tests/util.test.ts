@@ -37,6 +37,45 @@ suite('Utils test', () => {
     });
 });
 
+suite('modernizeCMakeDiagnosticFlag tests', () => {
+    const legacyToModern: [legacy: string, modern: string][] = [
+        ['--no-warn-unused-cli', '-Wno-unused-cli'],
+        ['--warn-uninitialized', '-Wuninitialized'],
+        ['-Wdev', '-Wauthor'],
+        ['-Wno-dev', '-Wno-author'],
+        ['-Werror=dev', '-Werror=author'],
+        ['-Wno-error=dev', '-Wno-error=author']
+    ];
+
+    test('translates deprecated flags on CMake >= 4.4', () => {
+        for (const [legacy, modern] of legacyToModern) {
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, { major: 4, minor: 4, patch: 0 })).to.eq(modern);
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, { major: 4, minor: 4, patch: 2 })).to.eq(modern);
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, { major: 5, minor: 0, patch: 0 })).to.eq(modern);
+        }
+    });
+
+    test('preserves legacy flags on CMake < 4.4', () => {
+        for (const [legacy] of legacyToModern) {
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, { major: 4, minor: 3, patch: 2 })).to.eq(legacy);
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, { major: 3, minor: 31, patch: 0 })).to.eq(legacy);
+        }
+    });
+
+    test('preserves legacy flags when the CMake version is unknown', () => {
+        for (const [legacy] of legacyToModern) {
+            expect(util.modernizeCMakeDiagnosticFlag(legacy, undefined)).to.eq(legacy);
+        }
+    });
+
+    test('leaves non-deprecated and unknown flags unchanged on CMake >= 4.4', () => {
+        const unchanged = ['-Wdeprecated', '-Wno-deprecated', '--warn-unused-cli', '--check-system-vars', '-Werror=deprecated', '-Wno-error=deprecated', '-DFOO=bar'];
+        for (const flag of unchanged) {
+            expect(util.modernizeCMakeDiagnosticFlag(flag, { major: 4, minor: 4, patch: 0 })).to.eq(flag);
+        }
+    });
+});
+
 // Shared test helper for creating mock workspace folders
 function createMockWorkspaceFolder(fsPath: string, name: string): vscode.WorkspaceFolder {
     return {

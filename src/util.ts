@@ -783,6 +783,43 @@ export function versionLessOrEquals(lhs: Version | string, rhs: Version | string
 }
 
 /**
+ * CMake version at which the legacy configure diagnostic flags (such as
+ * `--no-warn-unused-cli`, `-Wdev`, and `--warn-uninitialized`) were deprecated in favor of
+ * the category-based `-W` diagnostics documented in the cmake-diagnostics(7) manual.
+ */
+export const cmakeDiagnosticFlagsDeprecatedVersion: Version = { major: 4, minor: 4, patch: 0 };
+
+/**
+ * Maps legacy CMake configure diagnostic flags to their modern (category-based) equivalents.
+ * Only flags that CMake 4.4 actually deprecated are listed; other diagnostic flags
+ * (e.g. `-Wdeprecated`, `--warn-unused-cli`, `--check-system-vars`) are still current and
+ * must be left unchanged.
+ */
+const modernCMakeDiagnosticFlags: { [legacy: string]: string } = {
+    '--no-warn-unused-cli': '-Wno-unused-cli',
+    '--warn-uninitialized': '-Wuninitialized',
+    '-Wdev': '-Wauthor',
+    '-Wno-dev': '-Wno-author',
+    '-Werror=dev': '-Werror=author',
+    '-Wno-error=dev': '-Wno-error=author'
+};
+
+/**
+ * Translates a legacy CMake configure diagnostic flag to its modern equivalent when the active
+ * CMake version has deprecated the legacy spelling (>= 4.4). The new spellings do not exist in
+ * older CMake, so when the version is unknown or older than 4.4 the legacy flag is preserved.
+ * Flags that were never deprecated, and unknown flags, are returned unchanged.
+ * @param flag The diagnostic flag CMake Tools would emit.
+ * @param cmakeVersion The version of the active CMake, if known.
+ */
+export function modernizeCMakeDiagnosticFlag(flag: string, cmakeVersion?: Version): string {
+    if (cmakeVersion && versionGreaterOrEquals(cmakeVersion, cmakeDiagnosticFlagsDeprecatedVersion)) {
+        return modernCMakeDiagnosticFlags[flag] ?? flag;
+    }
+    return flag;
+}
+
+/**
  * Compares two values by converting them to JSON strings and comparing the strings.
  * @param a The first value to compare.
  * @param b The second value to compare.
