@@ -586,7 +586,7 @@ export class ExtensionManager implements vscode.Disposable {
      * @returns `false` if there is not active CMakeProject, or it has no active kit
      * and the user cancelled the kit selection dialog.
      */
-    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject): Promise<boolean> {
+    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject, reconfigureAfterSelection: boolean = true): Promise<boolean> {
         if (!cmakeProject) {
             cmakeProject = this.getActiveProject();
         }
@@ -599,7 +599,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
+            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder, reconfigureAfterSelection);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
             }
@@ -619,7 +619,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
             // Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath);
+            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath, reconfigureAfterSelection);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
@@ -758,7 +758,10 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject): Promise<ConfigureResult> {
-        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project)) {
+        // Selection is only a prerequisite here; this method runs its own configure right after, so
+        // suppress the selection-time automatic reconfigure to avoid configuring the project twice
+        // (e.g. configure-on-open opening the preset picker and then configuring). See #5050.
+        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project, false)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
 
@@ -1350,7 +1353,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
     * Show UI to allow the user to select an active kit
     */
-    async selectKit(folder?: vscode.WorkspaceFolder, sourceDirectory?: string): Promise<string> {
+    async selectKit(folder?: vscode.WorkspaceFolder, sourceDirectory?: string, reconfigureAfterSelection: boolean = true): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
             return '';
@@ -1378,7 +1381,7 @@ export class ExtensionManager implements vscode.Disposable {
         }
 
         const activeProject = this.getActiveProject();
-        const kitSelected = await targetProject.kitsController.selectKit();
+        const kitSelected = await targetProject.kitsController.selectKit(reconfigureAfterSelection);
 
         let kitSelectionType;
         const selectedKit = targetProject?.activeKit;
@@ -2491,7 +2494,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active configure preset
      */
-    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectConfigurePreset(folder?: vscode.WorkspaceFolder, reconfigureAfterSelection: boolean = true): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
             return '';
@@ -2507,7 +2510,7 @@ export class ExtensionManager implements vscode.Disposable {
             return '';
         }
 
-        const presetSelected = await project.presetsController.selectConfigurePreset();
+        const presetSelected = await project.presetsController.selectConfigurePreset(undefined, reconfigureAfterSelection);
         const configurePreset = project.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
