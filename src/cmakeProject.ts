@@ -3662,10 +3662,14 @@ export class CMakeProject {
     }
 
     async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
-        // Return cached result for named targets to avoid duplicate builds when
-        // multiple ${input:...} variables resolve the same target in quick succession.
-        if (name) {
-            const cached = this._prepareCache.get(name);
+        // Short-lived cache to coalesce duplicate builds when several substitutions resolve the same
+        // target in quick succession within a single launch (e.g. a launch.json using both
+        // ${command:cmake.launchTargetPath} and ${command:cmake.launchTargetDirectory}, or multiple
+        // ${input:...} variables). For the active launch target (no explicit name) we resolve its
+        // current name so those substitutions share one build too. See #5051.
+        const cacheKey = name ?? (await this.getCurrentLaunchTarget())?.name;
+        if (cacheKey) {
+            const cached = this._prepareCache.get(cacheKey);
             if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
                 && await fs.exists(cached.result.path)) {
                 return cached.result;
@@ -3731,10 +3735,7 @@ export class CMakeProject {
 
         }
 
-        // Cache the result for named targets
-        if (name) {
-            this._prepareCache.set(name, { timestamp: Date.now(), result: chosen });
-        }
+        this._prepareCache.set(chosen.name, { timestamp: Date.now(), result: chosen });
 
         return chosen;
     }

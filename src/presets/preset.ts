@@ -2197,7 +2197,7 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
     return preset;
 }
 
-export function configureArgs(preset: ConfigurePreset): string[] {
+export function configureArgs(preset: ConfigurePreset, cmakeVersion?: util.Version): string[] {
     const result: string[] = [];
 
     // CacheVariables
@@ -2228,21 +2228,21 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     // Warnings
     if (preset.warnings) {
         if (preset.warnings.dev !== undefined) {
-            result.push(preset.warnings.dev ? '-Wdev' : '-Wno-dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.warnings.dev ? '-Wdev' : '-Wno-dev', cmakeVersion));
         }
         if (preset.warnings.deprecated !== undefined) {
             result.push(preset.warnings.deprecated ? '-Wdeprecated' : '-Wno-deprecated');
         }
 
-        preset.warnings.uninitialized && result.push('--warn-uninitialized');
-        preset.warnings.unusedCli === false && result.push('--no-warn-unused-cli');
+        preset.warnings.uninitialized && result.push(util.modernizeCMakeDiagnosticFlag('--warn-uninitialized', cmakeVersion));
+        preset.warnings.unusedCli === false && result.push(util.modernizeCMakeDiagnosticFlag('--no-warn-unused-cli', cmakeVersion));
         preset.warnings.systemVars && result.push('--check-system-vars');
     }
 
     // Errors
     if (preset.errors) {
         if (preset.errors.dev !== undefined) {
-            result.push(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev', cmakeVersion));
         }
         if (preset.errors.deprecated !== undefined) {
             result.push(preset.errors.deprecated ? '-Werror=deprecated' : '-Wno-error=deprecated');
