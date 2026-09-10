@@ -156,6 +156,33 @@ suite('Build', () => {
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
     }).timeout(100000);
 
+    // Regression test for #4062: pointing cmake.copyCompileCommands at a directory used to fail
+    // with "EISDIR: illegal operation on a directory". The file should instead be copied into the
+    // directory as compile_commands.json.
+    test('Copy compile_commands.json into a directory destination (#4062)', async () => {
+        const destDir = path.join(testEnv.projectFolder.location, 'compdb_dest_dir');
+        const destFile = path.join(destDir, 'compile_commands.json');
+        try {
+            await fs.mkdir_p(destDir);
+            const newSettings: Partial<ExtensionConfigurationSettings> = {};
+            if (process.platform === 'win32') {
+                newSettings.generator = 'Ninja'; // VS generators don't create compile_commands.json
+            }
+            newSettings.copyCompileCommands = destDir;
+            testEnv.config.updatePartial(newSettings);
+            const retc = (await cmakeProject.cleanConfigure(ConfigureTrigger.runTests)).exitCode;
+            expect(retc).to.eq(0);
+            expect(await fs.exists(destFile), 'compile_commands.json was not copied into the directory').to.be.true;
+        } finally {
+            if (await fs.exists(destFile)) {
+                await fs.unlink(destFile);
+            }
+            if (await fs.exists(destDir)) {
+                await fs.rmdir(destDir);
+            }
+        }
+    }).timeout(100000);
+
     // Regression test for #4794: clicking Run Test / Build with an unsaved CMakeLists.txt used to
     // fail with "Configuration is already in progress". Saving the file (either by the command's own
     // maybeAutoSaveAll() or by VS Code's testing.saveBeforeStart) fires the save-watcher, which
