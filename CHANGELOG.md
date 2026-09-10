@@ -76,6 +76,7 @@ Bug Fixes:
 - Avoid configuring a project twice during configure-on-open when a configure preset (or kit) has to be selected first. The selection no longer performs its own automatic reconfigure when the configure that requested the selection is about to run. [#5050](https://github.com/microsoft/vscode-cmake-tools/issues/5050)
 - Fix clicking "Run Test" (or build/launch) with an unsaved `CMakeLists.txt` failing with "Configuration is already in progress" and requiring a second click. The automatic reconfigure triggered by saving the file no longer races the command's own configure. [#4794](https://github.com/microsoft/vscode-cmake-tools/issues/4794)
 - Stop passing CMake configure diagnostic flags that CMake 4.4 deprecated (`--no-warn-unused-cli`, `--warn-uninitialized`, `-Wdev`/`-Wno-dev`, `-Werror=dev`/`-Wno-error=dev`), which caused a deprecation warning on every configure. On CMake 4.4 and newer these are emitted using the modern category-based spellings (`-Wno-unused-cli`, `-Wuninitialized`, `-Wauthor`/`-Wno-author`, `-Werror=author`/`-Wno-error=author`); older CMake versions continue to receive the legacy flags. [#4999](https://github.com/microsoft/vscode-cmake-tools/issues/4999)
+- Fix configure presets selecting a Visual Studio developer environment that ignores `vsInstanceVersion` when a toolset is specified. The selected installation must satisfy both constraints, without falling back to another version when the pinned version lacks the toolset. [#5074](https://github.com/microsoft/vscode-cmake-tools/issues/5074)
 
 ## 1.23.52
 
