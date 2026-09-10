@@ -77,6 +77,7 @@ Bug Fixes:
 - Fix clicking "Run Test" (or build/launch) with an unsaved `CMakeLists.txt` failing with "Configuration is already in progress" and requiring a second click. The automatic reconfigure triggered by saving the file no longer races the command's own configure. [#4794](https://github.com/microsoft/vscode-cmake-tools/issues/4794)
 - Stop passing CMake configure diagnostic flags that CMake 4.4 deprecated (`--no-warn-unused-cli`, `--warn-uninitialized`, `-Wdev`/`-Wno-dev`, `-Werror=dev`/`-Wno-error=dev`), which caused a deprecation warning on every configure. On CMake 4.4 and newer these are emitted using the modern category-based spellings (`-Wno-unused-cli`, `-Wuninitialized`, `-Wauthor`/`-Wno-author`, `-Werror=author`/`-Wno-error=author`); older CMake versions continue to receive the legacy flags. [#4999](https://github.com/microsoft/vscode-cmake-tools/issues/4999)
 - Fix configure presets selecting a Visual Studio developer environment that ignores `vsInstanceVersion` when a toolset is specified. The selected installation must satisfy both constraints, without falling back to another version when the pinned version lacks the toolset. [#5074](https://github.com/microsoft/vscode-cmake-tools/issues/5074)
+- Fix `cmake.preConfigureTask` hanging when a task finishes immediately or has no process execution. Cancelling configure now settles the wait and terminates the pre-configure task, and task listeners are cleaned up on completion or failure. [#4960](https://github.com/microsoft/vscode-cmake-tools/pull/4960)
 
 ## 1.23.52
 
