@@ -3,6 +3,7 @@
  */ /** */
 
 import * as path from 'path';
+import * as nodeFs from 'fs';
 import * as vscode from 'vscode';
 import * as lodash from "lodash";
 
@@ -37,7 +38,7 @@ import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
-import { BuildDirectoryRefusalReason, isSafeToDeleteBuildDirectory, withInProgressFlag } from '@cmt/drivers/buildDirectoryGuard';
+import { BuildDirectoryRefusalReason, isSafeToDeleteBuildDirectoryResolved, withInProgressFlag } from '@cmt/drivers/buildDirectoryGuard';
 import { CommandResult } from 'vscode-cmake-tools';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -660,8 +661,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * directory, a workspace folder, or an entire drive. Logs a localized error and
      * returns false when the deletion must be skipped.
      */
-    private canSafelyDeleteBuildDirectory(buildDir: string): boolean {
-        const result = isSafeToDeleteBuildDirectory(buildDir, this.sourceDir, this.knownWorkspaceRoots);
+    private async canSafelyDeleteBuildDirectory(buildDir: string): Promise<boolean> {
+        // The native realpath is what makes this check trustworthy: it collapses Windows 8.3
+        // short names, junctions and symbolic links, extended-length prefixes and casing, so a
+        // build directory that is the source directory under another spelling is still caught.
+        const result = await isSafeToDeleteBuildDirectoryResolved(buildDir, this.sourceDir, this.knownWorkspaceRoots, { realpath: candidate => nodeFs.realpathSync.native(candidate) });
         if (result.safe) {
             return true;
         }
@@ -701,6 +705,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const cache = this.cachePath;
         const deletingWholeBuildDir = this.config.deleteBuildDirOnCleanConfigure;
         const cmake_files = deletingWholeBuildDir ? build_dir : path.join(build_dir, 'CMakeFiles');
+        // Check before removing anything at all, so that an unsafe build directory does not
+        // lose its CMakeCache.txt to a deletion that is about to be refused.
+        if (deletingWholeBuildDir && !await this.canSafelyDeleteBuildDirectory(build_dir)) {
+            return;
+        }
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', encodeURI(cache)));
             try {
@@ -710,9 +719,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
         }
         if (await fs.exists(cmake_files)) {
-            if (deletingWholeBuildDir && !this.canSafelyDeleteBuildDirectory(build_dir)) {
-                return;
-            }
             log.info(localize('removing', 'Removing {0}', encodeURI(cmake_files)));
             await fs.rmdir(cmake_files);
         }
@@ -744,7 +750,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanBuildDirectory() {
         const build_dir = this.binaryDir;
         if (await fs.exists(build_dir)) {
-            if (!this.canSafelyDeleteBuildDirectory(build_dir)) {
+            if (!await this.canSafelyDeleteBuildDirectory(build_dir)) {
                 return;
             }
             log.info(localize('removing', 'Removing {0}', encodeURI(build_dir)));

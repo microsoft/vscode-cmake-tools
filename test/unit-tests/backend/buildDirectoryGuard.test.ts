@@ -1,7 +1,9 @@
 import { expect } from 'chai';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
-import { BuildDirectoryRefusalReason, isSafeToDeleteBuildDirectory, withInProgressFlag } from '@cmt/drivers/buildDirectoryGuard';
+import { BuildDirectoryRefusalReason, isSafeToDeleteBuildDirectory, isSafeToDeleteBuildDirectoryResolved, RealpathFunction, withInProgressFlag } from '@cmt/drivers/buildDirectoryGuard';
 
 const win32 = path.win32;
 const posix = path.posix;
@@ -101,6 +103,134 @@ suite('Build directory deletion guard', () => {
         const sourceDir = process.platform === 'win32' ? 'C:\\src\\project' : '/home/user/project';
         expect(isSafeToDeleteBuildDirectory(sourceDir, sourceDir, []).safe).to.be.false;
         expect(isSafeToDeleteBuildDirectory(path.join(sourceDir, 'build'), sourceDir, []).safe).to.be.true;
+    });
+});
+
+suite('Build directory deletion guard resolved against the filesystem', () => {
+    function fakeRealpath(map: Record<string, string>): RealpathFunction {
+        return (candidate: string) => {
+            if (candidate in map) {
+                return map[candidate];
+            }
+            return candidate;
+        };
+    }
+
+    test('refuses a build directory that is the source directory under a Windows 8.3 short name', async () => {
+        const shortName = 'C:\\Users\\HANNIA~1\\.copilot';
+        const longName = 'C:\\Users\\hanniavalera\\.copilot';
+        const options = { realpath: fakeRealpath({ [shortName]: longName }), pathApi: win32 };
+
+        expect(isSafeToDeleteBuildDirectory(shortName, longName, [], win32).safe, 'the lexical check alone cannot see through 8.3 names').to.be.true;
+
+        const result = await isSafeToDeleteBuildDirectoryResolved(shortName, longName, [longName], options);
+        expect(result.safe).to.be.false;
+        expect(result.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+    });
+
+    test('refuses a build directory reached through a junction or symbolic link', async () => {
+        const junctioned = 'Q:\\repos\\cmt-integ\\node_modules\\isexe';
+        const real = 'Q:\\repos\\vscode-cmake-tools\\node_modules\\isexe';
+        const options = { realpath: fakeRealpath({ [junctioned]: real }), pathApi: win32 };
+
+        const sameDirectory = await isSafeToDeleteBuildDirectoryResolved(junctioned, real, [], options);
+        expect(sameDirectory.safe).to.be.false;
+        expect(sameDirectory.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+
+        const ancestor = await isSafeToDeleteBuildDirectoryResolved(junctioned, `${real}\\sub\\project`, [], options);
+        expect(ancestor.safe).to.be.false;
+        expect(ancestor.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectoryAncestor);
+    });
+
+    test('refuses a build directory whose trailing whitespace makes it the parent of the source directory', async () => {
+        const binaryDir = '/tmp/source ';
+        const sourceDir = '/tmp/source /child';
+        const options = { realpath: fakeRealpath({}), pathApi: posix };
+
+        const result = await isSafeToDeleteBuildDirectoryResolved(binaryDir, sourceDir, [], options);
+        expect(result.safe).to.be.false;
+        expect(result.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectoryAncestor);
+        expect(result.resolvedBinaryDir, 'the validated path must be the path that would be deleted').to.equal('/tmp/source ');
+
+        // The pure guard must not trim either, otherwise it validates a different directory.
+        expect(isSafeToDeleteBuildDirectory(binaryDir, sourceDir, [], posix).safe).to.be.false;
+    });
+
+    test('refuses a case-only difference on case insensitive volumes (macOS)', async () => {
+        const binaryDir = '/Users/x/Proj';
+        const sourceDir = '/Users/x/proj';
+        const options = { realpath: fakeRealpath({ [binaryDir]: sourceDir }), pathApi: posix };
+
+        const result = await isSafeToDeleteBuildDirectoryResolved(binaryDir, sourceDir, [], options);
+        expect(result.safe).to.be.false;
+        expect(result.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+    });
+
+    test('refuses extended-length and device roots', async () => {
+        for (const root of ['\\\\?\\C:\\', '\\\\?\\c:', '\\\\?\\UNC\\server\\share', '\\\\?\\UNC\\server\\share\\', '\\\\.\\C:\\']) {
+            const result = await isSafeToDeleteBuildDirectoryResolved(root, 'C:\\src\\project', [], { realpath: fakeRealpath({}), pathApi: win32 });
+            expect(result.safe, `expected ${root} to be refused`).to.be.false;
+            expect(result.reason, `expected ${root} to be refused as a filesystem root`).to.equal(BuildDirectoryRefusalReason.FilesystemRoot);
+        }
+    });
+
+    test('compares extended-length paths against their ordinary spelling', async () => {
+        const options = { realpath: fakeRealpath({}), pathApi: win32 };
+
+        const sourceDirectory = await isSafeToDeleteBuildDirectoryResolved('\\\\?\\C:\\src\\project', 'C:\\src\\project', [], options);
+        expect(sourceDirectory.safe).to.be.false;
+        expect(sourceDirectory.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+
+        const buildDirectory = await isSafeToDeleteBuildDirectoryResolved('\\\\?\\C:\\src\\project\\build', 'C:\\src\\project', [], options);
+        expect(buildDirectory.safe).to.be.true;
+    });
+
+    test('still allows a normal out-of-source build directory', async () => {
+        const options = { realpath: fakeRealpath({}), pathApi: win32 };
+        const result = await isSafeToDeleteBuildDirectoryResolved('C:\\src\\project\\build', 'C:\\src\\project', ['C:\\src\\project'], options);
+        expect(result.safe).to.be.true;
+        expect(result.reason).to.be.undefined;
+    });
+
+    test('falls back to the lexical check when realpath fails', async () => {
+        const failing: RealpathFunction = () => {
+            const error: NodeJS.ErrnoException = new Error('ENOENT: no such file or directory');
+            error.code = 'ENOENT';
+            throw error;
+        };
+        const refused = await isSafeToDeleteBuildDirectoryResolved('C:\\src\\project', 'C:\\src\\project', [], { realpath: failing, pathApi: win32 });
+        expect(refused.safe).to.be.false;
+        expect(refused.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+
+        const allowed = await isSafeToDeleteBuildDirectoryResolved('C:\\src\\project\\build', 'C:\\src\\project', [], { realpath: failing, pathApi: win32 });
+        expect(allowed.safe).to.be.true;
+    });
+
+    test('refuses a real on-disk link that points at the source directory', async () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cmt-guard-'));
+        const real = path.join(root, 'real-source');
+        const link = path.join(root, 'link-to-source');
+        try {
+            fs.mkdirSync(real);
+            fs.symlinkSync(real, link, process.platform === 'win32' ? 'junction' : 'dir');
+        } catch {
+            // Creating links can require privileges we do not have; the fake-realpath tests
+            // above already cover the behavior.
+            fs.rmSync(root, { recursive: true, force: true });
+            return;
+        }
+        try {
+            const result = await isSafeToDeleteBuildDirectoryResolved(link, real, [], { realpath: candidate => fs.realpathSync.native(candidate) });
+            expect(result.safe).to.be.false;
+            expect(result.reason).to.equal(BuildDirectoryRefusalReason.SourceDirectory);
+
+            const sibling = path.join(root, 'build');
+            fs.mkdirSync(sibling);
+            const allowed = await isSafeToDeleteBuildDirectoryResolved(sibling, real, [], { realpath: candidate => fs.realpathSync.native(candidate) });
+            expect(allowed.safe).to.be.true;
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
     });
 });
 
