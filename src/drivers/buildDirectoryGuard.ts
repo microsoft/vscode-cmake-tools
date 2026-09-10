@@ -47,23 +47,47 @@ function isUsablePath(value: string | undefined | null): value is string {
 }
 
 /**
+ * Rewrites the Windows extended-length (`\\?\C:\...`) and device (`\\.\C:\...`) prefixes,
+ * including their UNC form (`\\?\UNC\server\share`), into their ordinary spelling so that
+ * the root and ancestor math below sees the same path shape in either notation.
+ */
+function stripExtendedLengthPrefix(value: string, pathApi: path.PlatformPath): string {
+    if (pathApi.sep !== '\\') {
+        return value;
+    }
+    if (/^\\\\[?.]\\UNC\\/i.test(value)) {
+        return `\\\\${value.slice(8)}`;
+    }
+    if (/^\\\\[?.]\\/.test(value)) {
+        const withoutPrefix = value.slice(4);
+        // `\\?\C:` denotes the drive root; without the separator it would look drive relative.
+        return /^[a-zA-Z]:$/.test(withoutPrefix) ? `${withoutPrefix}\\` : withoutPrefix;
+    }
+    return value;
+}
+
+/**
  * Resolves a path with the given path implementation, dropping trailing separators and
  * collapsing `.`/`..` segments. Returns undefined when the path is unusable or relative,
  * since resolving a relative path would silently pull in the current working directory.
+ *
+ * The value is deliberately *not* trimmed: whitespace is legal in a path on some platforms,
+ * and validating a trimmed path while deleting the untrimmed one would validate a different
+ * directory than the one that gets removed.
  */
 function resolveAbsolute(value: string | undefined | null, pathApi: path.PlatformPath): string | undefined {
     if (!isUsablePath(value)) {
         return undefined;
     }
-    const trimmed = value.trim();
-    if (!pathApi.isAbsolute(trimmed)) {
+    const normalized = stripExtendedLengthPrefix(value, pathApi);
+    if (!pathApi.isAbsolute(normalized)) {
         return undefined;
     }
-    return pathApi.resolve(trimmed);
+    return pathApi.resolve(normalized);
 }
 
 function isFilesystemRoot(resolved: string, pathApi: path.PlatformPath): boolean {
-    return pathApi.dirname(resolved) === resolved;
+    return pathApi.dirname(resolved) === resolved || pathApi.parse(resolved).root === resolved;
 }
 
 /**
@@ -157,6 +181,54 @@ export function isSafeToDeleteBuildDirectory(binaryDir: string, sourceDir: strin
     }
 
     return { safe: true, resolvedBinaryDir };
+}
+
+/**
+ * Resolves a path to its canonical form on disk. On Windows this collapses 8.3 short names,
+ * junctions/symbolic links and casing; on macOS it returns the canonical casing.
+ */
+export type RealpathFunction = (candidate: string) => Promise<string> | string;
+
+export interface ResolvedBuildDirectoryGuardOptions {
+    /** Native realpath implementation, e.g. `fs.realpathSync.native`. */
+    realpath: RealpathFunction;
+    /** Path implementation to use; overridable so both platforms can be tested. */
+    pathApi?: path.PlatformPath;
+}
+
+/**
+ * Resolves a path to its canonical filesystem identity. Any failure (missing path,
+ * permission error, ...) falls back to the value as given, so the lexical guard still runs.
+ */
+async function canonicalize(value: string, realpath: RealpathFunction): Promise<string> {
+    if (!isUsablePath(value)) {
+        return value;
+    }
+    try {
+        const canonical = await realpath(value);
+        return isUsablePath(canonical) ? canonical : value;
+    } catch {
+        return value;
+    }
+}
+
+/**
+ * Canonical-identity version of {@link isSafeToDeleteBuildDirectory}.
+ *
+ * Comparing path strings alone is not sufficient: on Windows the very same directory can be
+ * spelled as an 8.3 short name (`C:\Users\HANNIA~1\...`), reached through a junction or
+ * symbolic link, or written with different casing or an extended-length prefix, and on macOS
+ * volumes are usually case insensitive. Each operand is therefore canonicalized through the
+ * native realpath before the lexical rules are applied.
+ */
+export async function isSafeToDeleteBuildDirectoryResolved(binaryDir: string, sourceDir: string, workspaceRoots: string[] = [], options: ResolvedBuildDirectoryGuardOptions): Promise<BuildDirectorySafetyResult> {
+    const canonicalBinaryDir = await canonicalize(binaryDir, options.realpath);
+    const canonicalSourceDir = await canonicalize(sourceDir, options.realpath);
+    const canonicalWorkspaceRoots: string[] = [];
+    for (const workspaceRoot of workspaceRoots) {
+        canonicalWorkspaceRoots.push(await canonicalize(workspaceRoot, options.realpath));
+    }
+    return isSafeToDeleteBuildDirectory(canonicalBinaryDir, canonicalSourceDir, canonicalWorkspaceRoots, options.pathApi ?? path);
 }
 
 /**
