@@ -1963,12 +1963,6 @@ export class CMakeProject {
     }
 
     async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extraArgs: string[] = [], type: ConfigureType = ConfigureType.Normal, debuggerInformation?: DebuggerInformation, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
-        // A configure is starting, so any pending save-triggered automatic reconfigure is now
-        // redundant: this configure will pick up the latest CMakeLists.txt. Cancelling it here makes
-        // the "command takes ownership" behavior deterministic rather than relying solely on the
-        // debounce window — e.g. the Test Explorer, where VS Code's testing.saveBeforeStart writes
-        // the file (scheduling the automatic reconfigure) just before the test's configure runs (#4794).
-        this.cancelAutomaticReconfigure();
         const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
 
         // Don't show a progress bar when the extension is using Cache for configuration.
@@ -2002,6 +1996,12 @@ export class CMakeProject {
             return result;
         }
 
+        // A real configure is now committed (we're past the cache-only early returns), so any pending
+        // save-triggered automatic reconfigure is redundant — this configure picks up the latest
+        // CMakeLists.txt. Cancelling it here makes "the command takes ownership" deterministic rather
+        // than a debounce-timing bet: e.g. the Test Explorer, where VS Code's testing.saveBeforeStart
+        // schedules the reconfigure just before the test's own configure runs (#4794).
+        this.cancelAutomaticReconfigure();
         const res = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Window,
