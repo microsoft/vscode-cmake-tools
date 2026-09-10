@@ -73,6 +73,7 @@ Bug Fixes:
 - Avoid building the project multiple times when a single `launch.json` configuration uses several `${command:cmake.launchTargetPath}`-style substitutions (e.g. `cmake.launchTargetDirectory` plus `cmake.launchTargetPath`). All such substitutions in one launch now share a single build; a later launch still rebuilds as needed. [#5051](https://github.com/microsoft/vscode-cmake-tools/issues/5051)
 - Preserve `CMakeCache.txt` on folder open with CMake Presets when the active configure preset specifies no generator, so `cmake.configureOnOpen` performs an incremental configure instead of deleting the cache and reconfiguring from scratch. [#5049](https://github.com/microsoft/vscode-cmake-tools/issues/5049)
 - Stop checking user kits for missing compilers on every activation, and no longer treat transient filesystem errors (such as file-handle exhaustion) as a missing compiler, which could prompt to remove valid kits. Stale kits are still detected during a kit/compiler scan. [#5035](https://github.com/microsoft/vscode-cmake-tools/pull/5035)
+- Avoid configuring a project twice during configure-on-open when a configure preset (or kit) has to be selected first. The selection no longer performs its own automatic reconfigure when the configure that requested the selection is about to run. [#5050](https://github.com/microsoft/vscode-cmake-tools/issues/5050)
 
 ## 1.23.52
 
