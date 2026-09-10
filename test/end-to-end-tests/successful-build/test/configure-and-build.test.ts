@@ -156,35 +156,53 @@ suite('Build', () => {
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
     }).timeout(100000);
 
-    // Regression test for #4794: clicking test/build with an unsaved CMakeLists.txt used to fail
-    // with "Configuration is already in progress". The command's maybeAutoSaveAll() saves the file,
-    // which fires the save-watcher and starts a redundant automatic reconfigure that races the
-    // command's own configure. maybeAutoSaveAll() now sets _suppressCMakeFileReconfigure so the
-    // watcher-triggered reconfigure is skipped while a command-initiated save is in progress.
-    test('CMake file save during a command-initiated save does not trigger a redundant reconfigure (#4794)', async () => {
+    // Regression test for #4794: clicking Run Test / Build with an unsaved CMakeLists.txt used to
+    // fail with "Configuration is already in progress". Saving the file (either by the command's own
+    // maybeAutoSaveAll() or by VS Code's testing.saveBeforeStart) fires the save-watcher, which
+    // started a redundant automatic reconfigure that raced the command's own configure. The watcher
+    // reconfigure is now (a) suppressed outright during a command-initiated save and (b) debounced so
+    // an imminent build/test/configure command can take ownership before it runs.
+    test('automatic reconfigure after a CMake file save yields to command-initiated configures (#4794)', async () => {
         testEnv.config.updatePartial({ configureOnEdit: true });
         // Ensure the project is configured so a driver (and its cmakeFiles list) exists.
         expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
 
         const cmakeListsUri = vscode.Uri.file(path.join(testEnv.projectFolder.location, 'CMakeLists.txt'));
+        // Comfortably longer than the 500ms automatic-reconfigure debounce.
+        const waitPastDebounce = () => new Promise<void>(resolve => setTimeout(resolve, 2000));
 
         let reconfigures = 0;
         const sub = cmakeProject.onReconfigured(() => {
             reconfigures++;
         });
         try {
-            // While a command-initiated save is in progress the watcher-triggered reconfigure must
-            // be suppressed, so the command's own configure never collides with it.
+            // A command-initiated save (flag set by maybeAutoSaveAll) must not auto-reconfigure at all.
             (cmakeProject as any)._suppressCMakeFileReconfigure = true;
             await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
-            expect(reconfigures).to.eq(0, 'watcher reconfigure should be suppressed during a command-initiated save');
+            await waitPastDebounce();
+            expect(reconfigures).to.eq(0, 'a command-initiated save must not trigger the watcher reconfigure');
 
-            // A normal user save (no command-initiated save in flight) must still auto-reconfigure.
+            // If a command takes ownership after a normal save has already scheduled the debounced
+            // reconfigure, the scheduled reconfigure must be skipped when its timer fires.
             (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri); // schedules the debounced reconfigure
+            (cmakeProject as any)._suppressCMakeFileReconfigure = true;     // command now owns the configure
+            await waitPastDebounce();
+            expect(reconfigures).to.eq(0, 'a scheduled reconfigure must yield once a command owns the configure');
+
+            // A plain user save (no command in flight) still auto-reconfigures after the debounce.
+            (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            const reconfigured = new Promise<void>(resolve => {
+                const once = cmakeProject.onReconfigured(() => {
+                    once.dispose();
+                    resolve();
+                });
+            });
             await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
-            expect(reconfigures).to.eq(1, 'watcher reconfigure should still run for a normal user save');
+            await reconfigured;
+            expect(reconfigures).to.be.greaterThan(0, 'a normal user save should still trigger an automatic reconfigure');
         } finally {
             sub.dispose();
         }
-    }).timeout(100000);
+    }).timeout(120000);
 });

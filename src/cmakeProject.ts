@@ -235,6 +235,16 @@ export class CMakeProject {
     // watcher-triggered reconfigure during command-initiated saves; the command performs its own
     // configure when needed, so nothing is lost. Manual user saves are unaffected.
     private _suppressCMakeFileReconfigure = false;
+
+    // The save-watcher's automatic reconfigure is debounced so that a build/test/configure command
+    // started by the same user action can take ownership of the configure instead of racing it.
+    // This is what covers the Test Explorer's "Run Test": VS Code's `testing.saveBeforeStart` saves
+    // the dirty CMakeLists.txt itself — before invoking our test-run handler — so the save happens
+    // outside `maybeAutoSaveAll()` and the flag above can't see it. Deferring the reconfigure lets
+    // the imminent build/test configure grab the lock first, after which this reconfigure is skipped
+    // because a configure/build is already in progress (see #4794).
+    private static readonly automaticReconfigureDebounceMs = 500;
+    private automaticReconfigureTimer?: NodeJS.Timeout;
     get useCMakePresets(): boolean {
         return this._useCMakePresets;
     }
@@ -959,6 +969,10 @@ export class CMakeProject {
         rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
+        }
+        if (this.automaticReconfigureTimer) {
+            clearTimeout(this.automaticReconfigureTimer);
+            this.automaticReconfigureTimer = undefined;
         }
     }
 
@@ -2445,20 +2459,43 @@ export class CMakeProject {
                 // to avoid racing it and producing "Configuration is already in progress" (#4794).
                 log.debug(localize('cmakefile.save.suppress.reconfigure',
                     'Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.'));
-            } else if (driver && !driver.configOrBuildInProgress()) {
-                if (driver.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
-                    if (this.workspaceContext.config.clearOutputBeforeBuild) {
-                        log.clearOutputChannel();
-                    }
-                    await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
-                }
-            } else {
-                log.warning(localize('cmakelists.save.could.not.reconfigure',
-                    'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
-                log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
+            } else if (driver && driver.config.configureOnEdit) {
+                // Debounce the automatic reconfigure so that a build/test/configure command started
+                // by the same user action — including one that itself caused this save, e.g. the
+                // Test Explorer where VS Code's testing.saveBeforeStart writes the file before our
+                // test-run handler runs — can take ownership of the configure first. When the timer
+                // fires we re-check and skip if a configure/build is already in progress (#4794).
+                this.scheduleAutomaticReconfigure();
             }
         }
+    }
+
+    // Debounced entry point for the save-watcher's automatic reconfigure (see #4794).
+    private scheduleAutomaticReconfigure(): void {
+        if (this.automaticReconfigureTimer) {
+            clearTimeout(this.automaticReconfigureTimer);
+        }
+        this.automaticReconfigureTimer = setTimeout(() => {
+            this.automaticReconfigureTimer = undefined;
+            void this.runAutomaticReconfigure();
+        }, CMakeProject.automaticReconfigureDebounceMs);
+    }
+
+    private async runAutomaticReconfigure(): Promise<void> {
+        const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
+        // If a command-initiated save is in progress, or a configure/build already started (for
+        // example the build/test that prompted the save), that operation owns the configure — skip
+        // this redundant automatic reconfigure so the two don't collide (#4794).
+        if (this._suppressCMakeFileReconfigure || !driver || !driver.config.configureOnEdit || driver.configOrBuildInProgress()) {
+            log.debug(localize('cmakelists.save.skip.reconfigure',
+                'Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.'));
+            return;
+        }
+        log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+        if (this.workspaceContext.config.clearOutputBeforeBuild) {
+            log.clearOutputChannel();
+        }
+        await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
     }
 
     async tasksBuildCommandDrv(drv: CMakeDriver): Promise<string | null> {
