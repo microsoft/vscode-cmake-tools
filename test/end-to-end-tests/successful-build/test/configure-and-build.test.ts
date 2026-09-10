@@ -11,6 +11,7 @@ import {
     getMatchingProjectKit
 } from '@test/util';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 const workername: string = process.platform;
 
@@ -153,5 +154,37 @@ suite('Build', () => {
         retc = (await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode;
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
+    }).timeout(100000);
+
+    // Regression test for #4794: clicking test/build with an unsaved CMakeLists.txt used to fail
+    // with "Configuration is already in progress". The command's maybeAutoSaveAll() saves the file,
+    // which fires the save-watcher and starts a redundant automatic reconfigure that races the
+    // command's own configure. maybeAutoSaveAll() now sets _suppressCMakeFileReconfigure so the
+    // watcher-triggered reconfigure is skipped while a command-initiated save is in progress.
+    test('CMake file save during a command-initiated save does not trigger a redundant reconfigure (#4794)', async () => {
+        testEnv.config.updatePartial({ configureOnEdit: true });
+        // Ensure the project is configured so a driver (and its cmakeFiles list) exists.
+        expect((await cmakeProject.configureInternal(ConfigureTrigger.runTests)).exitCode).to.eq(0);
+
+        const cmakeListsUri = vscode.Uri.file(path.join(testEnv.projectFolder.location, 'CMakeLists.txt'));
+
+        let reconfigures = 0;
+        const sub = cmakeProject.onReconfigured(() => {
+            reconfigures++;
+        });
+        try {
+            // While a command-initiated save is in progress the watcher-triggered reconfigure must
+            // be suppressed, so the command's own configure never collides with it.
+            (cmakeProject as any)._suppressCMakeFileReconfigure = true;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
+            expect(reconfigures).to.eq(0, 'watcher reconfigure should be suppressed during a command-initiated save');
+
+            // A normal user save (no command-initiated save in flight) must still auto-reconfigure.
+            (cmakeProject as any)._suppressCMakeFileReconfigure = false;
+            await cmakeProject.doCMakeFileChangeReconfigure(cmakeListsUri);
+            expect(reconfigures).to.eq(1, 'watcher reconfigure should still run for a normal user save');
+        } finally {
+            sub.dispose();
+        }
     }).timeout(100000);
 });

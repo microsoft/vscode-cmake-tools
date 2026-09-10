@@ -226,6 +226,15 @@ export class CMakeProject {
      * Whether we use presets
      */
     private _useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+
+    // When a command (build, test, launch, etc.) triggers `maybeAutoSaveAll()`, the resulting
+    // `saveAll()` fires the save watcher, which would otherwise start a redundant automatic
+    // reconfigure for any dirty CMake file (CMakeLists.txt or an included `.cmake`). That racing
+    // reconfigure conflicts with the command's own configure and surfaces as
+    // "Configuration is already in progress" (see #4794). This flag suppresses the
+    // watcher-triggered reconfigure during command-initiated saves; the command performs its own
+    // configure when needed, so nothing is lost. Manual user saves are unaffected.
+    private _suppressCMakeFileReconfigure = false;
     get useCMakePresets(): boolean {
         return this._useCMakePresets;
     }
@@ -2199,64 +2208,75 @@ export class CMakeProject {
             this.presetsController.suppressWatcherReapply = true;
         }
 
-        // Save open files before we configure/build
-        if (this.workspaceContext.config.saveBeforeBuild) {
-            if (!showCommandOnly) {
-                log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+        // Suppress the watcher-triggered reconfigure for the CMake files this command is about
+        // to save.  The calling command (build, test, launch, etc.) performs its own configure
+        // when needed, so the save-watcher's fire-and-forget reconfigure would be redundant and
+        // would race the command's configure ("Configuration is already in progress" — see #4794).
+        // Kept set for the lifetime of this method and always cleared in the finally so a throw
+        // from saveAll()/the prompt/reapplyPresets() can never permanently disable configure-on-edit.
+        this._suppressCMakeFileReconfigure = true;
+        try {
+            // Save open files before we configure/build
+            if (this.workspaceContext.config.saveBeforeBuild) {
+                if (!showCommandOnly) {
+                    log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+                }
+
+                const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+                const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
+
+                const saveGood = await vscode.workspace.saveAll();
+                if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
+                    log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
+                    const yesButtonTitle: string = localize('yes.button', 'Yes');
+                    const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
+                    const chosen =
+                        await vscode.window.showErrorMessage<vscode.MessageItem>(
+                            localize(
+                                "not.saved.continue.anyway",
+                                "Not all open documents were saved. Would you like to continue anyway?"
+                            ),
+                            {
+                                title: yesButtonTitle,
+                                isCloseAffordance: false
+                            },
+                            {
+                                title: yesAndDoNotShowAgain,
+                                isCloseAffordance: false
+                            },
+                            {
+                                title: localize("no.button", "No"),
+                                isCloseAffordance: true
+                            }
+                        );
+
+                    if (chosen?.title === yesAndDoNotShowAgain) {
+                        await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
+                    }
+                    const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                    if (!saved) {
+                        this.presetsController.suppressWatcherReapply = false;
+                        return false;
+                    }
+                }
             }
 
-            const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
-            const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
-
-            const saveGood = await vscode.workspace.saveAll();
-            if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
-                log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
-                const yesButtonTitle: string = localize('yes.button', 'Yes');
-                const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
-                const chosen =
-                    await vscode.window.showErrorMessage<vscode.MessageItem>(
-                        localize(
-                            "not.saved.continue.anyway",
-                            "Not all open documents were saved. Would you like to continue anyway?"
-                        ),
-                        {
-                            title: yesButtonTitle,
-                            isCloseAffordance: false
-                        },
-                        {
-                            title: yesAndDoNotShowAgain,
-                            isCloseAffordance: false
-                        },
-                        {
-                            title: localize("no.button", "No"),
-                            isCloseAffordance: true
-                        }
-                    );
-
-                if (chosen?.title === yesAndDoNotShowAgain) {
-                    await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
-                }
-                const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
-                if (!saved) {
-                    this.presetsController.suppressWatcherReapply = false;
-                    return false;
-                }
+            // After saving, explicitly refresh presets from disk so that any
+            // just-saved changes are picked up before configure/build runs.
+            // Without this, the async file-watcher may not have completed yet
+            // (see #4502).  The configureOnEdit gate is skipped for explicit-
+            // configure paths (requireConfigureOnEdit=false) — see #4792.
+            if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
+                await this.presetsController.reapplyPresets();
             }
-        }
+            // Resume normal file-watcher behavior now that the explicit reapply
+            // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+            this.presetsController.suppressWatcherReapply = false;
 
-        // After saving, explicitly refresh presets from disk so that any
-        // just-saved changes are picked up before configure/build runs.
-        // Without this, the async file-watcher may not have completed yet
-        // (see #4502).  The configureOnEdit gate is skipped for explicit-
-        // configure paths (requireConfigureOnEdit=false) — see #4792.
-        if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
-            await this.presetsController.reapplyPresets();
+            return true;
+        } finally {
+            this._suppressCMakeFileReconfigure = false;
         }
-        // Resume normal file-watcher behavior now that the explicit reapply
-        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
-        this.presetsController.suppressWatcherReapply = false;
-
-        return true;
     }
 
     /**
@@ -2419,7 +2439,13 @@ export class CMakeProject {
             // CMakeLists.txt change event: its creation or deletion are relevant,
             // so update full/partial feature set view for this folder.
             await updateFullFeatureSet();
-            if (driver && !driver.configOrBuildInProgress()) {
+            if (this._suppressCMakeFileReconfigure) {
+                // A command (build, test, launch, etc.) initiated this save via maybeAutoSaveAll().
+                // That command performs its own configure, so skip the watcher-triggered reconfigure
+                // to avoid racing it and producing "Configuration is already in progress" (#4794).
+                log.debug(localize('cmakefile.save.suppress.reconfigure',
+                    'Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.'));
+            } else if (driver && !driver.configOrBuildInProgress()) {
                 if (driver.config.configureOnEdit) {
                     log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
                     if (this.workspaceContext.config.clearOutputBeforeBuild) {
