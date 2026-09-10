@@ -33,7 +33,6 @@ import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
-import { isLaunchConfigLike, launchTargetCacheKey } from '@cmt/launchTargetResolution';
 import { buildCmdStr, DebuggerEnvironmentVariable, ExecutionResult, ExecutionOptions } from './proc';
 import { FireLate, Property } from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
@@ -796,14 +795,6 @@ export class CMakeProject {
      */
     private readonly _prepareCache = new Map<string, { timestamp: number; result: ExecutableTarget }>();
     private static readonly PREPARE_CACHE_TTL_MS = 10_000;
-
-    /**
-     * Coalesces `prepareLaunchTargetExecutable` within a single launch/debug resolution. VS Code
-     * passes the same launch-configuration object to every `${command:cmake.launchTarget*}` variable
-     * in one resolution (and a fresh object per launch), so keying on that object builds the target
-     * at most once even when several such substitutions appear in the same configuration. See #5051.
-     */
-    private readonly _resolutionPrepareCache = new WeakMap<object, Map<string, Promise<ExecutableTarget | null>>>();
 
     /**
      * Whether CTest is enabled
@@ -3407,8 +3398,8 @@ export class CMakeProject {
      * Implementation of `cmake.launchTargetPath`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
      * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetPath(name?: string, resolutionContext?: unknown): Promise<string | null> {
-        const executable = await this.prepareLaunchTargetExecutable(name, resolutionContext);
+    async launchTargetPath(name?: string): Promise<string | null> {
+        const executable = await this.prepareLaunchTargetExecutable(name);
         if (!executable) {
             log.showChannel();
             log.warning('=======================================================');
@@ -3425,8 +3416,8 @@ export class CMakeProject {
      * Implementation of `cmake.launchTargetDirectory`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
      * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetDirectory(name?: string, resolutionContext?: unknown): Promise<string | null> {
-        const targetPath = await this.launchTargetPath(name, resolutionContext);
+    async launchTargetDirectory(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -3437,8 +3428,8 @@ export class CMakeProject {
      * Implementation of `cmake.launchTargetFilename`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
      * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetFilename(name?: string, resolutionContext?: unknown): Promise<string | null> {
-        const targetPath = await this.launchTargetPath(name, resolutionContext);
+    async launchTargetFilename(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -3449,8 +3440,8 @@ export class CMakeProject {
      * Implementation of `cmake.launchTargetName`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
      * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
-    async launchTargetNameForSubstitution(name?: string, resolutionContext?: unknown): Promise<string | null> {
-        const targetPath = await this.launchTargetPath(name, resolutionContext);
+    async launchTargetNameForSubstitution(name?: string): Promise<string | null> {
+        const targetPath = await this.launchTargetPath(name);
         if (targetPath === null) {
             return null;
         }
@@ -3596,37 +3587,15 @@ export class CMakeProject {
         }
     }
 
-    async prepareLaunchTargetExecutable(name?: string, resolutionContext?: unknown): Promise<ExecutableTarget | null> {
-        // When several ${command:cmake.launchTarget*} substitutions are resolved for a single launch
-        // (VS Code passes the same launch-config object to each), share one preparation/build instead
-        // of building once per substitution. A fresh launch object (a new launch) rebuilds normally.
-        if (isLaunchConfigLike(resolutionContext)) {
-            const key = launchTargetCacheKey(name);
-            const existing = this._resolutionPrepareCache.get(resolutionContext)?.get(key);
-            if (existing) {
-                const result = await existing;
-                // Only reuse a successful preparation whose executable still exists on disk.
-                if (result && await fs.exists(result.path)) {
-                    return result;
-                }
-            }
-            const promise = this.doPrepareLaunchTargetExecutable(name);
-            let byTarget = this._resolutionPrepareCache.get(resolutionContext);
-            if (!byTarget) {
-                byTarget = new Map<string, Promise<ExecutableTarget | null>>();
-                this._resolutionPrepareCache.set(resolutionContext, byTarget);
-            }
-            byTarget.set(key, promise);
-            return promise;
-        }
-        return this.doPrepareLaunchTargetExecutable(name);
-    }
-
-    private async doPrepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
-        // Return cached result for named targets to avoid duplicate builds when
-        // multiple ${input:...} variables resolve the same target in quick succession.
-        if (name) {
-            const cached = this._prepareCache.get(name);
+    async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+        // Short-lived cache to coalesce duplicate builds when several substitutions resolve the same
+        // target in quick succession within a single launch (e.g. a launch.json using both
+        // ${command:cmake.launchTargetPath} and ${command:cmake.launchTargetDirectory}, or multiple
+        // ${input:...} variables). For the active launch target (no explicit name) we resolve its
+        // current name so those substitutions share one build too. See #5051.
+        const cacheKey = name ?? (await this.getCurrentLaunchTarget())?.name;
+        if (cacheKey) {
+            const cached = this._prepareCache.get(cacheKey);
             if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
                 && await fs.exists(cached.result.path)) {
                 return cached.result;
@@ -3692,10 +3661,7 @@ export class CMakeProject {
 
         }
 
-        // Cache the result for named targets
-        if (name) {
-            this._prepareCache.set(name, { timestamp: Date.now(), result: chosen });
-        }
+        this._prepareCache.set(chosen.name, { timestamp: Date.now(), result: chosen });
 
         return chosen;
     }

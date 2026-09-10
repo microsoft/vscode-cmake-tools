@@ -2078,9 +2078,9 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetPath" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                return cmakeProject.launchTargetPath(targetName, args);
+                return cmakeProject.launchTargetPath(targetName);
             }
-            const targetPath = await cmakeProject.launchTargetPath(undefined, args);
+            const targetPath = await cmakeProject.launchTargetPath();
             return targetPath;
         }, folder);
     }
@@ -2091,9 +2091,9 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetDirectory" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                return cmakeProject.launchTargetDirectory(targetName, args);
+                return cmakeProject.launchTargetDirectory(targetName);
             }
-            const targetDirectory = await cmakeProject.launchTargetDirectory(undefined, args);
+            const targetDirectory = await cmakeProject.launchTargetDirectory();
             return targetDirectory;
         }, folder);
     }
@@ -2104,9 +2104,9 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetFilename" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                return cmakeProject.launchTargetFilename(targetName, args);
+                return cmakeProject.launchTargetFilename(targetName);
             }
-            const targetFilename = await cmakeProject.launchTargetFilename(undefined, args);
+            const targetFilename = await cmakeProject.launchTargetFilename();
             return targetFilename;
         }, folder);
     }
@@ -2117,9 +2117,9 @@ export class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("substitution", { command: "launchTargetName" });
         return this.queryCMakeProject(async cmakeProject => {
             if (targetName !== undefined && targetName !== null) {
-                return cmakeProject.launchTargetNameForSubstitution(targetName, args);
+                return cmakeProject.launchTargetNameForSubstitution(targetName);
             }
-            const targetFilename = await cmakeProject.launchTargetNameForSubstitution(undefined, args);
+            const targetFilename = await cmakeProject.launchTargetNameForSubstitution();
             return targetFilename;
         }, folder);
     }
