@@ -16,5 +16,9 @@
 	"search": "검색",
 	"save": "저장",
 	"key": "키",
-	"value": "값"
+	"value": "값",
+	"source": "원본",
+	"not.set.in.presets": "CMake 캐시",
+	"differs.from.preset": "캐시에서 변경됨",
+	"matches.preset": "미리 설정과 일치"
 }

@@ -49,6 +49,16 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.20")
   message(STATUS "CMake 3.20+")
 endif()
 
+# Issue #5028: Fix highlighting of escaped $< in CMake regex strings
+function(validate_configure_path value description)
+  if("${value}" MATCHES "\\$<")
+    message(FATAL_ERROR
+      "${description} must be known at configure time; generator expressions "
+      "are not supported."
+    )
+  endif()
+endfunction()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   message(STATUS "Linux")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
