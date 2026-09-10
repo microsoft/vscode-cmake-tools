@@ -54,6 +54,50 @@ export function shouldKeepUserKitAfterScan(kit: Kit, discoveredKitNames: Readonl
     return discoveredKitNames.has(kit.name);
 }
 
+/**
+ * Recursively collect subdirectories of `folder` (down to `depth` levels) to
+ * scan for kits, skipping directories that cannot be read or entries that
+ * cannot be stat-ed rather than aborting the whole scan. See #5020.
+ */
+export async function accumulateDirsToScan(folder: string, progress: ProgressHandle, cancel: vscode.CancellationToken, depth: number = 5): Promise<string[]> {
+    if (cancel.isCancellationRequested) {
+        return [];
+    }
+
+    const files: string[] = [];
+    progress.report({ message: folder });
+    let entries: string[];
+    try {
+        entries = await fs.readdir(folder);
+    } catch (e: any) {
+        log.debug(localize('skip.unreadable.dir', 'Skipping directory that could not be read while scanning for kits: {0} ({1})', folder, e.code ?? e.message ?? String(e)));
+        return files;
+    }
+    // At the deepest level nothing is traversed or added, so skip the loop
+    // entirely to avoid stat-ing every entry in large directories.
+    if (depth > 0) {
+        for (const file of entries) {
+            if (cancel.isCancellationRequested) {
+                break;
+            }
+            const filePath = path.join(folder, file);
+            let isDirectory = false;
+            try {
+                isDirectory = (await fs.stat(filePath)).isDirectory();
+            } catch (e: any) {
+                log.debug(localize('skip.unstattable.entry', 'Skipping entry that could not be inspected while scanning for kits: {0} ({1})', filePath, e.code ?? e.message ?? String(e)));
+                continue;
+            }
+            if (isDirectory) {
+                files.push(...await accumulateDirsToScan(filePath, progress, cancel, depth - 1));
+                files.push(filePath);
+            }
+        }
+    }
+
+    return files;
+}
+
 // TODO: migrate all kit related things in extension.ts to this class.
 export class KitsController {
     static additionalCompilerSearchDirs: string[] | undefined;
@@ -699,24 +743,6 @@ export class KitsController {
             canSelectMany: false,
             openLabel: localize('select.folder', 'Select Folder')
         });
-        const dirPathWithDepth = async (folder: string, progress: ProgressHandle, cancel: vscode.CancellationToken, depth: number = 5): Promise<string[]> => {
-            if (cancel.isCancellationRequested) {
-                return [];
-            }
-
-            const dir = await fs.readdir(folder);
-            const files: string[] = [];
-            progress.report({ message: folder });
-            for (const file of dir) {
-                const filePath = path.join(folder, file);
-                if (depth > 0 && (await fs.stat(filePath)).isDirectory()) {
-                    files.push(...await dirPathWithDepth(filePath, progress, cancel, depth - 1));
-                    files.push(filePath);
-                }
-            }
-
-            return files;
-        };
 
         if (!dir || dir.length === 0) {
             return;
@@ -731,7 +757,7 @@ export class KitsController {
             },
             async (progress, cancel) => {
                 accumulatedDirs.push(dir[0].fsPath);
-                accumulatedDirs.push(...(await dirPathWithDepth(dir[0].fsPath, progress, cancel)));
+                accumulatedDirs.push(...(await accumulateDirsToScan(dir[0].fsPath, progress, cancel)));
             }
         );
 
