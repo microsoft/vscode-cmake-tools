@@ -1407,7 +1407,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
         const expandedConfigureArgs = await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()})));
-        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset), expandedConfigureArgs);
+        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset, this.cmake.version), expandedConfigureArgs);
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
         const config = vscode.workspace.getConfiguration("cmake", configurationScope);
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
@@ -1434,7 +1434,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
-        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat("--no-warn-unused-cli");
+        const noWarnUnusedCliFlag = util.modernizeCMakeDiagnosticFlag("--no-warn-unused-cli", this.cmake.version);
+        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat(noWarnUnusedCliFlag);
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
         const final_flags = define_flags.concat(common_flags, init_cache_flags);
 
