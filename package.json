@@ -121,7 +121,7 @@
     "languages": [
         {
             "id": "cmake",
-            "extensions": [".cmake"],
+            "extensions": [".cmake", ".cmake.in"],
             "filenames": ["CMakelists.txt"],
             "aliases": ["CMake"]
         },
