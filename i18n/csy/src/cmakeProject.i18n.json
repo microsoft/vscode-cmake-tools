@@ -145,8 +145,6 @@
 	"targets.status": "[Není k dispozici – vyberte sadu]",
 	"cmake.cache.dir.missing": "Chybí složka obsahující mezipaměť CMake. Mezipaměť se znovu vygeneruje.",
 	"warn.skip.configure.if.cache.present": "Rozšíření zjistilo, že se momentálně vyžaduje konfigurace, ale přeskakujeme ji, protože je zapnuté nastavení cmake.skipConfigureIfCachePresent. Zkontrolujte, jestli je mezipaměť CMake synchronizovaná s posledními změnami konfigurace.",
-	"cmakefile.save.suppress.reconfigure": "Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.",
-	"cmakelists.save.skip.reconfigure": "Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.",
 	"cmakelists.save.trigger.reconfigure": "Zjistilo se uložení souboru CMakeLists.txt, probíhá pokus o automatickou změnu konfigurace...",
 	"run.build": "Sestavuje se složka: {0}",
 	"failed.to.get.cmake.driver": "Nepovedlo se získat ovladač CMake.",

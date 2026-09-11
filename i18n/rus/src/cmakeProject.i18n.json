@@ -145,8 +145,6 @@
 	"targets.status": "[Нет данных — выберите комплект]",
 	"cmake.cache.dir.missing": "Отсутствует папка, содержащая кэш CMake. Кэш будет создан повторно.",
 	"warn.skip.configure.if.cache.present": "Расширение определило, что сейчас требуется выполнить настройку, но настройка будет пропущена, так как включен параметр cmake.skipConfigureIfCachePresent. Убедитесь, что кэш CMake синхронизирован с последними изменениями конфигурации.",
-	"cmakefile.save.suppress.reconfigure": "Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.",
-	"cmakelists.save.skip.reconfigure": "Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.",
 	"cmakelists.save.trigger.reconfigure": "Обнаружено сохранение файла CMakeLists.txt, выполняется попытка автоматической повторной настройки…",
 	"run.build": "Сборка папки: {0}",
 	"failed.to.get.cmake.driver": "Драйвер CMake не получен",

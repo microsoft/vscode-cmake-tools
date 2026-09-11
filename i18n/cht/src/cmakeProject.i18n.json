@@ -145,8 +145,6 @@
 	"targets.status": "[N/A - 選取套件]",
 	"cmake.cache.dir.missing": "缺少包含 CMake 快取的資料夾。快取將會重新產生。",
 	"warn.skip.configure.if.cache.present": "延伸模組判斷目前需要設定，但由於設定 cmake.skipConfigureIfCachePresent 已開啟，我們即將跳過設定。請確定 CMake 快取與最新的設定變更同步。",
-	"cmakefile.save.suppress.reconfigure": "Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.",
-	"cmakelists.save.skip.reconfigure": "Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.",
 	"cmakelists.save.trigger.reconfigure": "偵測到儲存 CMakeLists.txt 的作業，正在嘗試自動重新設定...",
 	"run.build": "正在建置資料夾: {0}",
 	"failed.to.get.cmake.driver": "無法取得 CMake 驅動程式",

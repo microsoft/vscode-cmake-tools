@@ -145,8 +145,6 @@
 	"targets.status": "[N/A – Sélectionner un kit]",
 	"cmake.cache.dir.missing": "Le dossier contenant le cache CMake est manquant. Le cache est régénéré.",
 	"warn.skip.configure.if.cache.present": "L’extension a déterminé qu’une configuration est nécessaire pour le moment, mais nous l’avons ignorée, car le paramètre cmake.skipConfigureIfCachePresent est ACTIVÉ. Assurez-vous que le cache CMake est synchronisé avec les dernières modifications de configuration.",
-	"cmakefile.save.suppress.reconfigure": "Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.",
-	"cmakelists.save.skip.reconfigure": "Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.",
 	"cmakelists.save.trigger.reconfigure": "Enregistrement de CMakeLists.txt détecté, tentative de reconfiguration automatique...",
 	"run.build": "Génération du dossier : {0}",
 	"failed.to.get.cmake.driver": "Échec de l’obtention du pilote CMake",
