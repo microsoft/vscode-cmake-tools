@@ -81,9 +81,15 @@ suite('[Test CodeLens routing]', () => {
     });
 
     test('Project identity comparison is path normalized', () => {
-        const windowsProjects = [makeProject('C:\\work\\Project B', ['unit_tests'])];
-        const resolution = resolveTestProject(windowsProjects, 'C:/work/Project B/', 'unit_tests');
-        expect(resolution.project).to.equal(windowsProjects[0]);
+        // Redundant segments and a trailing separator must not change identity on any platform.
+        const projects = [makeProject('/work/Project B', ['unit_tests'])];
+        expect(resolveTestProject(projects, '/work/./Project B/', 'unit_tests').project).to.equal(projects[0]);
+
+        // On Windows, identity is additionally case- and separator-insensitive.
+        if (process.platform === 'win32') {
+            const windowsProjects = [makeProject('C:\\work\\Project B', ['unit_tests'])];
+            expect(resolveTestProject(windowsProjects, 'c:/WORK/Project B/', 'unit_tests').project).to.equal(windowsProjects[0]);
+        }
     });
 
     test('Project with no discovered tests is still routable by identity', () => {
