@@ -703,13 +703,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanPriorConfiguration() {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
-        const deletingWholeBuildDir = this.config.deleteBuildDirOnCleanConfigure;
+        // Deleting the whole build directory is only allowed when it is not the source or a
+        // workspace directory (or an ancestor/filesystem root). When it would be unsafe, fall back
+        // to removing just CMakeCache.txt and CMakeFiles/ - which is never destructive and still
+        // lets a clean configure or generator change recover instead of leaving stale state.
+        const deletingWholeBuildDir = this.config.deleteBuildDirOnCleanConfigure && await this.canSafelyDeleteBuildDirectory(build_dir);
         const cmake_files = deletingWholeBuildDir ? build_dir : path.join(build_dir, 'CMakeFiles');
-        // Check before removing anything at all, so that an unsafe build directory does not
-        // lose its CMakeCache.txt to a deletion that is about to be refused.
-        if (deletingWholeBuildDir && !await this.canSafelyDeleteBuildDirectory(build_dir)) {
-            return;
-        }
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', encodeURI(cache)));
             try {
