@@ -70,13 +70,18 @@ export function normalizeTestName(testName: string): string {
 }
 
 /**
- * Whether a project reports a test with this name. Returns undefined when the project has no
- * discovered tests yet, in which case ownership cannot be proven or disproven.
+ * Whether a project reports a test with this name. Returns undefined only when the project has not
+ * discovered its tests yet (getTestNames() === undefined), in which case ownership cannot be proven
+ * or disproven. A project that discovered zero tests ([]) does not own the name, so a stale CodeLens
+ * for a removed test fails safely instead of running nothing.
  */
 export function projectOwnsTestName(project: CodeLensTestProject, testName: string): boolean | undefined {
     const names = project.cTestController.getTestNames();
-    if (!names || names.length === 0) {
+    if (!names) {
         return undefined;
+    }
+    if (names.length === 0) {
+        return false;
     }
     if (names.includes(testName)) {
         return true;

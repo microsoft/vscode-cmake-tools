@@ -2181,6 +2181,7 @@ export class CMakeProject {
                     });
                 } catch (e: any) {
                     const error = e as Error;
+                    log.error(localize('configure.exception', 'Exception while configuring project: {0}', error.message), error);
                     progress.report({ message: error.message });
                     debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.due.to.error', 'Cannot configure with CMake debugger due to error: {0}', error.message));
                     return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };

@@ -98,6 +98,13 @@ suite('[Test CodeLens routing]', () => {
         expect(resolution.project).to.equal(notConfigured);
     });
 
+    test('Project that discovered zero tests does not own a stale test name', () => {
+        const emptyProject = makeProject('/work/projectD', []);
+        const resolution = resolveTestProject([emptyProject], projectIdOf(emptyProject), 'unit_tests');
+        expect(resolution.project).to.equal(undefined);
+        expect(resolution.error).to.equal(TestProjectResolutionError.TestNotInProject);
+    });
+
     test('Decorated CTest names match the parsed doctest name', () => {
         const doctestProject = makeProject('/work/projectD', ['Scenario: adds two numbers [math]']);
         const resolution = resolveTestProject([doctestProject], '/work/projectD', 'adds two numbers');
