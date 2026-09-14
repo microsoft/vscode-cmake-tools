@@ -4,6 +4,8 @@ CMake Tools supports a variety of settings that can be set at the user, or works
 
 Options that support substitution, in the table below, allow variable references to appear in their strings. See [variable substitution](#variable-substitution), below, for more information about variable expansion.
 
+When `cmake.preConfigureTask` is set, configure waits for that task to end. A task without a process exit event (such as a custom task) completes successfully; a nonzero process exit code or task startup error stops configure. Cancelling configure also cancels the wait and terminates the pre-configure task.
+
 ## CMake settings
 
 | Setting  | Description | Default value | Supports substitution |

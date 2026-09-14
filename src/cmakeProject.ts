@@ -50,6 +50,7 @@ import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
 import { shouldUsePinnedVsInstanceCMake, vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { ProjectController } from '@cmt/projectController';
+import { waitForPreConfigureTask } from '@cmt/preConfigureTaskWait';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { NamedTarget, RichTarget, FolderTarget } from '@cmt/drivers/cmakeDriver';
@@ -174,6 +175,7 @@ export class CMakeProject {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
     private disposables: vscode.Disposable[] = [];
+    private readonly preConfigureTaskCancellationSources = new Set<vscode.CancellationTokenSource>();
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public projectController: ProjectController | undefined;
     public readonly cTestController: CTestDriver;
@@ -977,6 +979,7 @@ export class CMakeProject {
      * Dispose of the extension asynchronously.
      */
     async asyncDispose() {
+        this.cancelPreConfigureTasks();
         collections.reset();
         const drv = await this.cmakeDriver;
         if (drv) {
@@ -1868,7 +1871,7 @@ export class CMakeProject {
     /**
      * Execute the preConfigureTask if configured
      */
-    private async executePreConfigureTask(configureType: ConfigureType): Promise<ConfigureResult> {
+    private async executePreConfigureTask(configureType: ConfigureType, cancellationToken?: vscode.CancellationToken): Promise<ConfigureResult> {
         const resultType = ConfigureResultType.NormalOperation;
 
         if (configureType === ConfigureType.ShowCommandOnly) {
@@ -1882,36 +1885,37 @@ export class CMakeProject {
             return { exitCode: 0, stdout: '', stderr: '', resultType: resultType };
         }
 
+        const cancellationSource = new vscode.CancellationTokenSource();
+        const taskCancellationToken = cancellationSource.token;
+        this.preConfigureTaskCancellationSources.add(cancellationSource);
+        let cancellationSubscription: vscode.Disposable | undefined;
         try {
-            // Fetch all available tasks
-            const tasks = await vscode.tasks.fetchTasks();
+            cancellationSubscription = cancellationToken?.onCancellationRequested(() => cancellationSource.cancel());
+            if (cancellationToken?.isCancellationRequested) {
+                cancellationSource.cancel();
+            }
+            const start = new Date();
+            const outcome = await waitForPreConfigureTask(vscode.tasks, async () => {
+                const tasks = await vscode.tasks.fetchTasks();
+                if (taskCancellationToken.isCancellationRequested) {
+                    throw new vscode.CancellationError();
+                }
 
-            // Find the task by label
-            const task = tasks.find(t => t.name === preConfigureTask);
+                const task = tasks.find(t => t.name === preConfigureTask);
+                if (!task) {
+                    throw new Error(localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', preConfigureTask, tasks.map(t => t.name).join(', ')));
+                }
 
-            if (!task) {
-                const errorMsg = localize('task.not.found', 'Task "{0}" not found. Available tasks: {1}', preConfigureTask, tasks.map(t => t.name).join(', '));
-                void vscode.window.showErrorMessage(errorMsg);
-                log.error(errorMsg);
-                return { exitCode: -1, stdout: '', stderr: errorMsg, resultType: resultType };
+                log.info(localize('executing.pre.configure.task', 'Executing pre-configure task: {0}', preConfigureTask));
+                return vscode.tasks.executeTask(task);
+            }, taskCancellationToken);
+
+            if (outcome.kind === 'cancelled' || taskCancellationToken.isCancellationRequested) {
+                log.info(localize('stop.on.cancellation', 'Stop on cancellation'));
+                return { exitCode: -1, stdout: '', stderr: '', resultType: ConfigureResultType.ForcedCancel };
             }
 
-            log.info(localize('executing.pre.configure.task', 'Executing pre-configure task: {0}', preConfigureTask));
-
-            const taskExecution = await vscode.tasks.executeTask(task);
-
-            const start = new Date();
-
-            const endEvent = await new Promise<vscode.TaskProcessEndEvent>(resolve => {
-                const disposable = vscode.tasks.onDidEndTaskProcess(e => {
-                    if (e.execution === taskExecution) {
-                        disposable.dispose();
-                        resolve(e);
-                    }
-                });
-            });
-
-            const exitCode = endEvent.exitCode ?? -1;
+            const exitCode = outcome.exitCode;
             const elapsed = (new Date().getTime() - start.getTime()) / 1000;
             if (exitCode === 0) {
                 log.info(localize('executed.pre.configure.task', 'Executed pre-configure task: {0} ({1}s)', preConfigureTask, elapsed));
@@ -1922,11 +1926,15 @@ export class CMakeProject {
                 log.error(errorMsg);
                 return { exitCode: exitCode, stdout: '', stderr: errorMsg, resultType: resultType };
             }
-        } catch (error: any) {
-            const errorMsg = localize('failed.to.execute.pre.configure.task', 'Failed to execute pre-configure task: {0}', error.toString());
+        } catch (error: unknown) {
+            const errorMsg = localize('failed.to.execute.pre.configure.task', 'Failed to execute pre-configure task: {0}', String(error));
             void vscode.window.showErrorMessage(errorMsg);
-            log.error(localize('pre.configure.task.error', 'Error executing pre configure task'), error);
+            log.error(localize('pre.configure.task.error', 'Error executing pre configure task'), String(error));
             return { exitCode: -1, stdout: '', stderr: errorMsg, resultType: resultType };
+        } finally {
+            cancellationSubscription?.dispose();
+            this.preConfigureTaskCancellationSources.delete(cancellationSource);
+            cancellationSource.dispose();
         }
     }
 
@@ -1977,8 +1985,10 @@ export class CMakeProject {
         // Don't show a progress bar when the extension is using Cache for configuration.
         // Using cache for configuration happens only one time.
         if (drv && drv.shouldUseCachedConfiguration(trigger)) {
-            const preConfigureResult  = await this.executePreConfigureTask(type);
+            const preConfigureResult = await this.executePreConfigureTask(type, cancellationToken);
             if (preConfigureResult.exitCode !== 0) {
+                this._onConfigureResultEmitter.fire(preConfigureResult);
+                debuggerInformation?.debuggerStoppedDueToPreconditions(preConfigureResult.stderr || localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[preConfigureResult.resultType]));
                 return preConfigureResult;
             }
 
@@ -2022,33 +2032,43 @@ export class CMakeProject {
                 const cancelInformation: ConfigureCancelInformation = {
                     canceled: false
                 };
-                const combinedCancelToken = util.createCombinedCancellationToken(cancel, cancellationToken);
-                combinedCancelToken.onCancellationRequested(() => {
-                    // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
-                    cancelInformation.canceled = true;
-                    rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
-                });
-
+                const configureCancellation = new vscode.CancellationTokenSource();
+                const combinedCancelToken = configureCancellation.token;
+                const cancellationSubscriptions: vscode.Disposable[] = [];
                 let forciblyCanceled: boolean = false;
-
-                // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
-                if (debuggerInformation) {
-                    const trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
-                        // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
-                        cancelInformation.canceled = true;
-                        forciblyCanceled = true;
-                        await this.cancelConfiguration();
-                        trackerFactoryDisposable.dispose();
-                    }));
-                }
-
-                if (type !== ConfigureType.ShowCommandOnly) {
-                    log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
-                    log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
-                }
+                let trackerFactoryDisposable: vscode.Disposable | undefined;
 
                 try {
-                    return this.doConfigure(type, progress, async consumer => {
+                    cancellationSubscriptions.push(combinedCancelToken.onCancellationRequested(() => {
+                        // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                        cancelInformation.canceled = true;
+                        rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.cancelConfiguration());
+                    }));
+                    for (const token of [cancel, cancellationToken]) {
+                        if (token) {
+                            cancellationSubscriptions.push(token.onCancellationRequested(() => configureCancellation.cancel()));
+                            if (token.isCancellationRequested) {
+                                configureCancellation.cancel();
+                            }
+                        }
+                    }
+
+                    // if there is a debugger information, we are debugging. Set up a listener for stopping a cmake debug session.
+                    if (debuggerInformation) {
+                        trackerFactoryDisposable = vscode.debug.registerDebugAdapterTrackerFactory("cmake", new DebugTrackerFactory(async () => {
+                            // We need to update the canceled information by reference before starting the cancel to ensure it's updated before the process is cancelled.
+                            cancelInformation.canceled = true;
+                            forciblyCanceled = true;
+                            await this.cancelConfiguration();
+                        }));
+                    }
+
+                    if (type !== ConfigureType.ShowCommandOnly) {
+                        log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
+                        log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
+                    }
+
+                    return await this.doConfigure(type, progress, async consumer => {
                         const isConfiguringKey = 'cmake:isConfiguring';
                         if (drv) {
                             let oldProgress = 0;
@@ -2060,12 +2080,17 @@ export class CMakeProject {
                                     progress.report({ increment });
                                 }
                             });
-                            progress.report({message: localize('checking.preconfigure', 'Checking pre-configure task')});
-                            const preConfigureResult  = await this.executePreConfigureTask(type);
-                            if (preConfigureResult.exitCode !== 0) {
-                                return preConfigureResult;
-                            }
                             try {
+                                progress.report({message: localize('checking.preconfigure', 'Checking pre-configure task')});
+                                const preConfigureResult = await this.executePreConfigureTask(type, combinedCancelToken);
+                                if (preConfigureResult.exitCode !== 0) {
+                                    debuggerInformation?.debuggerStoppedDueToPreconditions(preConfigureResult.stderr || localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[preConfigureResult.resultType]));
+                                    return preConfigureResult;
+                                }
+                                if (cancelInformation.canceled || combinedCancelToken.isCancellationRequested) {
+                                    debuggerInformation?.debuggerStoppedDueToPreconditions(localize("no.configure.with.debug.due.to.preconditions", "Cannot configure with CMake debugger due to: \"{0}\"", ConfigureResultType[ConfigureResultType.ForcedCancel]));
+                                    return { exitCode: -1, resultType: ConfigureResultType.ForcedCancel };
+                                }
                                 progress.report({ message: this.folderName });
 
                                 let result: ConfigureResult;
@@ -2144,9 +2169,9 @@ export class CMakeProject {
                                 this.onReconfiguredEmitter.fire();
                                 return result;
                             } finally {
+                                progressSub.dispose();
                                 await setContextAndStore(isConfiguringKey, false);
                                 progress.report({ message: localize('finishing.configure', 'Finishing configure') });
-                                progressSub.dispose();
                             }
                         } else {
                             progress.report({ message: localize('configure.failed', 'Failed to configure project') });
@@ -2156,9 +2181,16 @@ export class CMakeProject {
                     });
                 } catch (e: any) {
                     const error = e as Error;
+                    log.error(localize('configure.exception', 'Exception while configuring project: {0}', error.message), error);
                     progress.report({ message: error.message });
                     debuggerInformation?.debuggerStoppedDueToPreconditions(localize('no.debug.configured.due.to.error', 'Cannot configure with CMake debugger due to error: {0}', error.message));
                     return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };
+                } finally {
+                    trackerFactoryDisposable?.dispose();
+                    for (const subscription of cancellationSubscriptions) {
+                        subscription.dispose();
+                    }
+                    configureCancellation.dispose();
                 }
             }
         );
@@ -3271,10 +3303,13 @@ export class CMakeProject {
             debugConfig.cwd = testInfo.workingDirectory;
         }
 
-        // Merge CTest ENVIRONMENT properties into the debug environment
+        // Debug the test with the same environment CTest would run it with (test preset environment
+        // in presets mode, kit/variant environment in kits mode, plus the environment settings), then
+        // layer the test's own CTest ENVIRONMENT property and finally the launch configuration's
+        // environment on top, so explicit launch overrides still win.
         const testEnvVars = util.makeDebuggerEnvironmentVars(testInfo.environment);
         const combinedEnvVars = [...testEnvVars, ...(debugConfig.environment ?? [])];
-        const launchEnv = await this.getTargetLaunchEnvironment(drv, combinedEnvVars);
+        const launchEnv = await this.getCTestLaunchEnvironment(drv, combinedEnvVars);
         debugConfig.environment = util.makeDebuggerEnvironmentVars(launchEnv);
 
         await vscode.debug.startDebugging(this.workspaceFolder, debugConfig);
@@ -3308,6 +3343,7 @@ export class CMakeProject {
      * Implementation of `cmake.stop`
      */
     async stop(): Promise<boolean> {
+        this.cancelPreConfigureTasks();
         const drv = await this.cmakeDriver;
         if (!drv) {
             return false;
@@ -3321,6 +3357,7 @@ export class CMakeProject {
     }
 
     async cancelConfiguration(): Promise<boolean> {
+        this.cancelPreConfigureTasks();
         const drv = await this.cmakeDriver;
         if (!drv) {
             return false;
@@ -3330,6 +3367,12 @@ export class CMakeProject {
             await this.activeBuild;
             return true;
         }, () => false);
+    }
+
+    private cancelPreConfigureTasks(): void {
+        for (const source of this.preConfigureTaskCancellationSources) {
+            source.cancel();
+        }
     }
 
     /**
@@ -3769,8 +3812,6 @@ export class CMakeProject {
      * This is also the point to fixing the issue #1987
      */
     async getTargetLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
-        let env = util.fromDebuggerEnvironmentVars(debugEnv);
-
         // Add environment variables from ConfigureEnvironment.
         const configureEnv = await drv?.getConfigureEnvironment();
 
@@ -3778,10 +3819,32 @@ export class CMakeProject {
             log.info(localize('launch.with.overrides', `NOTE: You are launching a target and there are some environment overrides being applied from your VS Code settings.`));
         }
 
-        env = EnvironmentUtils.merge([configureEnv, env]);
+        return this.mergeLaunchEnvironment(configureEnv, debugEnv);
+    }
+
+    /**
+     * Environment used when debugging a CTest test. It is built on the very same environment CTest
+     * itself is run with (`getCTestCommandEnvironment`), so that debugging a test behaves like
+     * running it: in presets mode that is the test preset's environment, in kits/variants mode the
+     * kit and variant environment, in both cases plus the `cmake.environment`/`cmake.testEnvironment`
+     * settings. Test-specific and launch configuration variables are layered on top by the caller.
+     */
+    async getCTestLaunchEnvironment(drv: CMakeDriver | null, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
+        const ctestEnv = await drv?.getCTestCommandEnvironment();
+        return this.mergeLaunchEnvironment(ctestEnv, debugEnv);
+    }
+
+    /**
+     * Layers the explicit debug/launch environment variables on top of a base environment, expanding
+     * their values against that base. Later entries of `debugEnv` win over earlier ones.
+     */
+    private async mergeLaunchEnvironment(baseEnv: Environment | undefined, debugEnv?: DebuggerEnvironmentVariable[]): Promise<Environment> {
+        let env = util.fromDebuggerEnvironmentVars(debugEnv);
+
+        env = EnvironmentUtils.merge([baseEnv, env]);
 
         if (debugEnv) {
-            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: configureEnv };
+            const options = { ... await this.getExpansionOptions(), envOverride: env, penvOverride: baseEnv };
             for (const envPair of debugEnv) {
                 env[envPair.name] = await expandString(envPair.value, options);
             }
