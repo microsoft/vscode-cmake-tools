@@ -1558,14 +1558,18 @@ export class CTestDriver implements vscode.Disposable {
         if (this.tests) {
             const executableToSources = codeModelContent ? this.buildExecutableToSourcesMap(codeModelContent) : undefined;
 
+            function hasCommand(arr: CTestInfo['tests'][0]): arr is (CTestInfo['tests'][0] & { command: string }) {
+                return !!arr.command?.length;
+            }
+
             return this.tests.tests
-                .filter(test => test.command)
+                .filter(hasCommand)
                 .map(test => {
                     const { file: sourceFilePath, line: sourceFileLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph);
 
                     return {
                         name: test.name,
-                        executablePath: test.command![0],
+                        executablePath: test.command[0],
                         sourceFilePath,
                         sourceFileLine
                     };
