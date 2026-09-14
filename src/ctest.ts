@@ -138,10 +138,10 @@ interface CTestInfo {
     };
     kind: string; // ctestInfo
     tests: {
-        backtrace: number;
-        command: string[];
+        backtrace?: number;
+        command?: string[];
         name: string;
-        properties: { name: string; value: string | string[] }[];
+        properties?: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
 }
@@ -1124,7 +1124,7 @@ export class CTestDriver implements vscode.Disposable {
         }
 
         // 1. Use DEF_SOURCE_LINE CMake test property
-        const defSourceLineProperty = test.properties.filter(p => p.name === "DEF_SOURCE_LINE")[0];
+        const defSourceLineProperty = test.properties?.filter(p => p.name === "DEF_SOURCE_LINE")[0];
         if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
             const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
             if (match && match[1] && match[2]) {
@@ -1558,16 +1558,22 @@ export class CTestDriver implements vscode.Disposable {
         if (this.tests) {
             const executableToSources = codeModelContent ? this.buildExecutableToSourcesMap(codeModelContent) : undefined;
 
-            return this.tests.tests.map(test => {
-                const { file: sourceFilePath, line: sourceFileLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph);
+            function hasCommand(arr: CTestInfo['tests'][0]): arr is (CTestInfo['tests'][0] & { command: string }) {
+                return !!arr.command?.length;
+            }
 
-                return {
-                    name: test.name,
-                    executablePath: test.command[0],
-                    sourceFilePath,
-                    sourceFileLine
-                };
-            });
+            return this.tests.tests
+                .filter(hasCommand)
+                .map(test => {
+                    const { file: sourceFilePath, line: sourceFileLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph);
+
+                    return {
+                        name: test.name,
+                        executablePath: test.command[0],
+                        sourceFilePath,
+                        sourceFileLine
+                    };
+                });
         }
         return [];
     }
@@ -1940,7 +1946,7 @@ export class CTestDriver implements vscode.Disposable {
     private testWorkingDirectory(testName: string): string {
         const property = this.tests?.tests
             .find(test => test.name === testName)?.properties
-            .find(prop => prop.name === 'WORKING_DIRECTORY');
+            ?.find(prop => prop.name === 'WORKING_DIRECTORY');
 
         if (typeof (property?.value) === 'string') {
             return property.value;
@@ -1967,7 +1973,7 @@ export class CTestDriver implements vscode.Disposable {
         const env: { [key: string]: string } = {};
         const property = this.tests?.tests
             .find(test => test.name === testName)?.properties
-            .find(prop => prop.name === 'ENVIRONMENT');
+            ?.find(prop => prop.name === 'ENVIRONMENT');
 
         if (property) {
             const entries = Array.isArray(property.value) ? property.value : [property.value];
