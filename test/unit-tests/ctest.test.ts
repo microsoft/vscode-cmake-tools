@@ -360,4 +360,69 @@ suite('CTest test', () => {
             expect(result).to.deep.eq(['^A\\+B\\.Test$']);
         });
     });
+
+    test("getTestsForOutline", () => {
+        const ctestDriver = new CTestDriver({} as any);
+        ctestDriver.tests = {
+            backtraceGraph: {
+                commands: [],
+                files: [],
+                nodes: []
+            },
+            kind: "ctestInfo",
+            tests: [
+                {
+                    name: "a-target_NOT_BUILT",
+                    properties: [
+                        {
+                            name: "WORKING_DIRECTORY",
+                            value: "/tmp"
+                        }
+                    ]
+                },
+                {
+                    command: [
+                        "/tmp/another-target",
+                        "--gtest_filter=Another.Test"
+                    ],
+                    name: "Another.Test",
+                    properties: [
+                        {
+                            name: "DEF_SOURCE_LINE",
+                            value: "/tmp/src.cpp:42"
+                        }
+                    ]
+                },
+                {
+                    command: ["/tmp/yet-another-target"],
+                    name: "YetAnother.Test"
+                },
+                {
+                    command: [],
+                    name: "YetAnother.Test2"
+                },
+                {
+                    name: "no-exe_NOT_BUILT"
+                }
+            ],
+            version: {
+                major: 1,
+                minor: 0
+            }
+        };
+        expect(ctestDriver.getTestsForOutline()).to.deep.eq([
+            {
+                name: 'Another.Test',
+                executablePath: '/tmp/another-target',
+                sourceFilePath: '/tmp/src.cpp',
+                sourceFileLine: 42
+            },
+            {
+                name: "YetAnother.Test",
+                executablePath: '/tmp/yet-another-target',
+                sourceFilePath: undefined,
+                sourceFileLine: undefined
+            }
+        ]);
+    });
 });
