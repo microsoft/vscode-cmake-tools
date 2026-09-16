@@ -20,6 +20,7 @@ import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitD
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
+import { parseInstallComponents } from '@cmt/installComponents';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
@@ -1838,6 +1839,60 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return (await child.result.finally(() => {
             this.cmakeBuildRunner.setBuildInProgress(false);
         })).retc;
+    }
+
+    /**
+     * Discover the names of the install components defined by the configured
+     * project. CMake does not expose install component names through the File
+     * API, so we parse the generated `cmake_install.cmake` scripts, which
+     * contain `CMAKE_INSTALL_COMPONENT STREQUAL "<name>"` guards for every
+     * component (including FILES-based installs that the File API omits).
+     */
+    async getInstallComponents(): Promise<string[]> {
+        const searchRoot = this.binaryDir;
+        if (!await fs.exists(searchRoot)) {
+            return [];
+        }
+        const scriptPaths: string[] = [];
+        (await fs.walk(searchRoot)).forEach((e: { name: string; path: string }) => {
+            if (e.name === 'cmake_install.cmake') {
+                scriptPaths.push(e.path);
+            }
+        });
+        const scriptContents: string[] = [];
+        for (const scriptPath of scriptPaths) {
+            try {
+                scriptContents.push(await fs.readFile(scriptPath));
+            } catch (e) {
+                log.debug(localize('failed.to.read.install.script', 'Failed to read {0}: {1}', scriptPath, util.errorToString(e)));
+            }
+        }
+        return parseInstallComponents(scriptContents);
+    }
+
+    /**
+     * Install a single component using `cmake --install <dir> --component <name>`.
+     * Unlike `cmake.install`, this does not build first; it installs the already
+     * built artifacts for the requested component.
+     */
+    async installComponent(component: string, consumer?: proc.OutputConsumer): Promise<number | null> {
+        if (this.isConfigInProgress) {
+            await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+            return -1;
+        }
+        if (this.cmakeBuildRunner.isBuildInProgress()) {
+            await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+            return -1;
+        }
+        const args = ['--install', this.binaryDir];
+        if (this.isMultiConfFast) {
+            args.push('--config', this.currentBuildType);
+        }
+        args.push('--component', component);
+        const env = await this.getCMakeBuildCommandEnvironment();
+        log.debug(localize('install.component.command', 'Executing install command: {0} {1}', this.cmake.path, args.join(' ')));
+        const child = this.executeCommand(this.cmake.path, args, consumer, { environment: env });
+        return (await child.result).retc;
     }
 
     /**

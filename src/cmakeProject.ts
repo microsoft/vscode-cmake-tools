@@ -3305,6 +3305,91 @@ export class CMakeProject {
     }
 
     /**
+     * Present a quick-pick of the install components discovered for the project.
+     * Falls back to a free-text input box when no components can be discovered
+     * (mirrors the behavior of `showTargetSelector`).
+     *
+     * @returns The selected component name, or `null` if the user cancelled.
+     */
+    async showComponentSelector(): Promise<string | null> {
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            void vscode.window.showErrorMessage(localize('configure.before.selecting.component', 'Configure your CMake project before selecting an install component.'));
+            return null;
+        }
+        const components = await drv.getInstallComponents();
+        if (!components.length) {
+            return await vscode.window.showInputBox({ prompt: localize('enter.install.component', 'Enter an install component name') }) || null;
+        }
+        const chosen = await vscode.window.showQuickPick(components, {
+            placeHolder: localize('select.install.component', 'Select an install component')
+        });
+        return chosen ?? null;
+    }
+
+    /**
+     * Implementation of `cmake.installComponent`. Runs
+     * `cmake --install <dir> --component <name>` to install a single component.
+     */
+    async installComponent(component?: string, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+        const configResult = await this.ensureConfigured(cancellationToken);
+        if (configResult === null) {
+            void vscode.window.showErrorMessage(localize('configure.before.install.component', 'Configure your CMake project before installing a component.'));
+            return { exitCode: -1 };
+        } else if (configResult.exitCode !== 0) {
+            return configResult;
+        }
+        if (!component) {
+            const selected = await this.showComponentSelector();
+            if (!selected) {
+                return { exitCode: -1 };
+            }
+            component = selected;
+        }
+        const drv = await this.getCMakeDriverInstance();
+        if (!drv) {
+            void vscode.window.showErrorMessage(localize('configure.before.install.component', 'Configure your CMake project before installing a component.'));
+            return { exitCode: -1 };
+        }
+        log.showChannel();
+        const consumer = new CMakeBuildConsumer(buildLogger, drv.config);
+        try {
+            this.statusMessage.set(localize('installing.status', 'Installing'));
+            this.isBusy.set(true);
+            return await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Window,
+                    title: localize('installing.component', 'Installing component: {0}', component),
+                    cancellable: true
+                },
+                async (_progress, cancel) => {
+                    const combinedToken = util.createCombinedCancellationToken(cancel, cancellationToken);
+                    combinedToken.onCancellationRequested(() => rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()));
+                    buildLogger.info(localize('starting.install.component', 'Starting install of component {0}', component));
+                    const rc = await drv.installComponent(component!, consumer);
+                    if (rc !== 0) {
+                        log.showChannel(true);
+                    }
+                    if (rc === null) {
+                        buildLogger.info(localize('install.was.terminated', 'Install was terminated'));
+                    } else {
+                        buildLogger.info(localize('install.finished.with.code', 'Install finished with exit code {0}', rc));
+                    }
+                    return {
+                        exitCode: rc === null ? -1 : rc,
+                        stdout: consumer.stdout,
+                        stderr: consumer.stderr
+                    };
+                }
+            );
+        } finally {
+            this.statusMessage.set(localize('ready.status', 'Ready'));
+            this.isBusy.set(false);
+            consumer.dispose();
+        }
+    }
+
+    /**
      * Implementation of `cmake.stop`
      */
     async stop(): Promise<boolean> {
