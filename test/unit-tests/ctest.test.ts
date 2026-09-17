@@ -1,5 +1,10 @@
 import { CTestDriver, readTestResultsFile, searchOutputForFailures, getMinimalRegexFragments, getTestFailureMessage } from "@cmt/ctest";
+import { CodeModelContent } from "@cmt/drivers/codeModel";
 import { expect, getTestResourceFilePath } from "@test/util";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import * as sinon from "sinon";
 import { TestMessage } from "vscode";
 
 suite('CTest test', () => {
@@ -358,6 +363,122 @@ suite('CTest test', () => {
         test('empty superset escapes regex special characters', () => {
             const result = getMinimalRegexFragments([], ['A+B.Test']);
             expect(result).to.deep.eq(['^A\\+B\\.Test$']);
+        });
+    });
+
+    suite('test source location resolution (#5093)', () => {
+        // The sources of one test executable: a GoogleTest file, which declares no TEST_CASE, and two
+        // doctest-style files. They are real files in a temporary directory so that the resolver reads them.
+        const sources = ['gtest_a.cpp', 'doctest_b.cpp', 'doctest_c.cpp'];
+        let sourceDir: string;
+        let executable: string;
+        let codeModel: CodeModelContent;
+
+        setup(() => {
+            sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmt-ctest-sources-'));
+            fs.writeFileSync(path.join(sourceDir, 'gtest_a.cpp'), '#include <gtest/gtest.h>\nTEST(Suite, A) {}\n');
+            fs.writeFileSync(path.join(sourceDir, 'doctest_b.cpp'), '#include <doctest.h>\n\nTEST_CASE("alpha beta") {}\n\nTEST_CASE("gamma") {}\n');
+            fs.writeFileSync(path.join(sourceDir, 'doctest_c.cpp'), '#include <doctest.h>\nTEST_CASE("beta") {}\n');
+            executable = path.join(sourceDir, 'tests.exe');
+            codeModel = {
+                configurations: [{
+                    name: 'Debug',
+                    projects: [{
+                        name: 'project',
+                        sourceDirectory: sourceDir,
+                        targets: [{
+                            name: 'tests',
+                            type: 'EXECUTABLE',
+                            sourceDirectory: sourceDir,
+                            artifacts: [executable],
+                            fileGroups: [{ language: 'CXX', isGenerated: false, sources }]
+                        }]
+                    }]
+                }]
+            };
+        });
+
+        teardown(() => {
+            sinon.restore();
+            fs.rmSync(sourceDir, { recursive: true, force: true });
+        });
+
+        // A driver holding the given tests, as `ctest --show-only=json-v1` reports them for the executable.
+        const driverWithTests = (tests: { name: string; defSourceLine?: string }[]) => {
+            const driver = new CTestDriver({} as any);
+            driver.tests = {
+                kind: 'ctestInfo',
+                version: { major: 1, minor: 0 },
+                backtraceGraph: { commands: [], files: [], nodes: [] },
+                tests: tests.map(test => ({
+                    name: test.name,
+                    command: [executable],
+                    backtrace: 0,
+                    properties: test.defSourceLine ? [{ name: 'DEF_SOURCE_LINE', value: test.defSourceLine }] : []
+                }))
+            };
+            return driver;
+        };
+
+        // The number of calls a spied fs function received for files under the temporary source directory.
+        const callsForSources = (spy: sinon.SinonSpy) => spy.getCalls().filter(call => String(call.args[0]).startsWith(sourceDir)).length;
+
+        test('DEF_SOURCE_LINE is used as-is, without reading any source file', () => {
+            // "gamma" is declared in doctest_b.cpp, but DEF_SOURCE_LINE is authoritative and costs nothing.
+            const defSourceLine = `${path.join(sourceDir, 'gtest_a.cpp')}:2`;
+            const driver = driverWithTests([{ name: 'gamma', defSourceLine }]);
+            const readFileSync = sinon.spy(fs, 'readFileSync');
+            const existsSync = sinon.spy(fs, 'existsSync');
+
+            const [gamma] = driver.getTestsForOutline(codeModel);
+
+            expect(gamma.sourceFilePath).to.eq(path.join(sourceDir, 'gtest_a.cpp'));
+            expect(gamma.sourceFileLine).to.eq(2);
+            expect(callsForSources(readFileSync)).to.eq(0);
+            expect(callsForSources(existsSync)).to.eq(0);
+        });
+
+        test('the sources of a test executable are read once per discovery, not once per test', () => {
+            const driver = driverWithTests([{ name: 'alpha beta' }, { name: 'gamma' }, { name: 'beta' }]);
+            const readFileSync = sinon.spy(fs, 'readFileSync');
+
+            const [alphaBeta, gamma, beta] = driver.getTestsForOutline(codeModel);
+
+            expect(alphaBeta.sourceFilePath).to.eq(path.join(sourceDir, 'doctest_b.cpp'));
+            expect(alphaBeta.sourceFileLine).to.eq(3);
+            expect(gamma.sourceFilePath).to.eq(path.join(sourceDir, 'doctest_b.cpp'));
+            expect(gamma.sourceFileLine).to.eq(5);
+            expect(beta.sourceFilePath).to.eq(path.join(sourceDir, 'doctest_c.cpp'));
+            expect(beta.sourceFileLine).to.eq(2);
+            // One read per source file, however many tests the executable has.
+            expect(callsForSources(readFileSync)).to.eq(sources.length);
+        });
+
+        test('an exact declaration in a later source wins over a partial match in an earlier one', () => {
+            // "beta" is contained in "alpha beta" (doctest_b.cpp, earlier in source order), but
+            // doctest_c.cpp declares exactly "beta".
+            const [beta] = driverWithTests([{ name: 'beta' }]).getTestsForOutline(codeModel);
+
+            expect(beta.sourceFilePath).to.eq(path.join(sourceDir, 'doctest_c.cpp'));
+            expect(beta.sourceFileLine).to.eq(2);
+        });
+
+        test('a test declared in none of the sources falls back to the first source of its executable', () => {
+            const [suiteA] = driverWithTests([{ name: 'Suite.A' }]).getTestsForOutline(codeModel);
+
+            expect(suiteA.sourceFilePath).to.eq(path.join(sourceDir, 'gtest_a.cpp'));
+            expect(suiteA.sourceFileLine).to.eq(1);
+        });
+
+        test('a DEF_SOURCE_LINE at line 1 is refined to the declaration in that file', () => {
+            const defSourceLine = `${path.join(sourceDir, 'doctest_c.cpp')}:1`;
+            const readFileSync = sinon.spy(fs, 'readFileSync');
+
+            const [beta] = driverWithTests([{ name: 'beta', defSourceLine }]).getTestsForOutline(codeModel);
+
+            expect(beta.sourceFilePath).to.eq(path.join(sourceDir, 'doctest_c.cpp'));
+            expect(beta.sourceFileLine).to.eq(2);
+            expect(callsForSources(readFileSync)).to.eq(1);
         });
     });
 });
