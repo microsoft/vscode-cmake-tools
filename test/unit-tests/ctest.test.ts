@@ -164,6 +164,36 @@ suite('CTest test', () => {
         });
     });
 
+    suite('running a test from another project in a workspace with several folders (#5097)', () => {
+        const project2Program = '/project2/build/project2_tests';
+        const makeProject2 = () => {
+            const driver = new CTestDriver({} as any);
+            (driver as any)._tests = { kind: 'ctestInfo', tests: [{ name: 'project2_test_case_1', command: [project2Program] }] };
+            return { cTestController: driver };
+        };
+        const makeLeaf = () => {
+            const root = { id: '/project2', parent: undefined, children: { size: 1 } };
+            return { id: 'project2_test_case_1', parent: root, uri: undefined, range: undefined, children: { size: 0 } };
+        };
+
+        test('reads the test program from the driver of the project that owns the test', async () => {
+            const project2 = makeProject2();
+            const projectController = { getProjectForFolder: async (folder: string) => folder === '/project2' ? project2 : undefined };
+            // project1's driver has no tests of project2, as when it created the shared Test Explorer first
+            const project1Driver = new CTestDriver({} as any, projectController as any);
+            const leaf = makeLeaf();
+            const errored: string[] = [];
+            const run = { appendOutput: () => {}, errored: (t: any) => errored.push(t.id) };
+            const foundTarget = new Map<any, Map<string, any[]>>();
+
+            const resolved = await (project1Driver as any).getTestTargets(leaf, foundTarget, run);
+
+            expect(resolved).to.equal(true);
+            expect(errored).to.deep.equal([]);
+            expect(foundTarget.get(project2)?.get(project2Program)).to.deep.equal([leaf]);
+        });
+    });
+
     test('Find failure patterns in output', () => {
         const DEFAULT_MESSAGE = 'Test Failed';
         const output =
