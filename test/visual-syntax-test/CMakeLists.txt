@@ -482,3 +482,32 @@ set_target_properties(MyLib PROPERTIES
   COMPILE_DEFINITIONS_DEBUG "DEBUG=1"
   LINK_FLAGS_RELEASE "/OPT:REF"
 )
+
+# Issue #5083: add_library()/add_executable() target names must not be mistaken for
+# commands or properties, target-type keywords should be highlighted as keywords, and
+# source files whose basename collides with a keyword must stay a single argument.
+add_library(Log SHARED Log.cpp)
+add_library(source SHARED source.cpp)
+add_executable(test-exe main.cpp)
+add_library(MyLib STATIC interface.cpp object.cpp module.cpp alias.cpp global.cpp)
+add_executable(MyTool imported.cpp shared.cpp static.cpp version.cpp)
+add_library(HeaderOnly INTERFACE)
+add_library(AliasLib ALIAS MyLib)
+add_executable(WinApp WIN32 main.cpp)
+add_library(
+  MultiLine
+  STATIC
+  a.cpp
+)
+
+# Issue #5083: set_target_properties() PROPERTIES keyword and property names
+set_target_properties(exe1 PROPERTIES EXPORT_FILE_NAME "exports.h" DEBUG_POSTFIX _d)
+set_target_properties(exe1 PROPERTIES OUTPUT_NAME proj RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set_target_properties(t PROPERTIES OUTPUT_NAME version.exe FOLDER libs/bin)
+
+# Issue #5083 follow-up: generic top-level keyword lists must not split filenames or
+# paths whose basename collides with a command/property keyword outside the special
+# add_library()/set_target_properties() command rules.
+target_sources(mylib PRIVATE test.cpp Log.cpp)
+my_function(test.cpp Log.cpp type.cpp value.h)
+install(FILES test.cpp Log.cpp DESTINATION bin)
