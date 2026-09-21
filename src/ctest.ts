@@ -6,6 +6,7 @@ import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import { CMakeDriver, ExecutableTarget } from '@cmt/drivers/drivers';
+import { resolveTestBuildTargets } from '@cmt/ctestBuildTargets';
 import { CodeModelContent } from '@cmt/drivers/codeModel';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
@@ -2404,38 +2405,40 @@ export class CTestDriver implements vscode.Disposable {
     private async buildTestTargets(foundTarget: Map<CMakeProject, Map<string, vscode.TestItem[]>>, run: vscode.TestRun): Promise<boolean> {
         let overallSuccess = true;
         for (const [project, targets] of foundTarget) {
-            // Precompute a lookup map from normalized executable path to target name, excluding install targets
-            const execPathToName = this.executableTargetNamesByPath(await project.executableTargets);
             const accumulatedTestList: vscode.TestItem[] = [];
-            const accumulatedTargets: string[] = [];
-            let success: boolean = true;
-            for (const [targetPath, testList] of targets) {
-                const normalizedTargetPath = util.platformNormalizePath(targetPath);
-                const targetName = execPathToName.get(normalizedTargetPath);
-                if (targetName) {
-                    accumulatedTargets.push(targetName);
-                } else {
-                    // Test command is not a known CMake executable target (e.g. python, mpiexec, cmake -E).
-                    // Skip it from the targeted build list — it doesn't need to be built by CMake.
-                    log.info(localize('test.target.not.resolved', 'Test program \'{0}\' is not a known CMake executable target; skipping from build.', targetPath));
-                }
+            for (const testList of targets.values()) {
                 accumulatedTestList.push(...testList);
             }
-            if (accumulatedTargets.length === 0) {
-                // No CMake targets to build — all tests use non-CMake commands.
-                continue;
-            }
+
+            const resolution = resolveTestBuildTargets(targets.keys(), await project.executableTargets, util.platformNormalizePath);
+            // A test command that is not a CMake executable target (a wrapper such as bash, mpiexec or cmake -E)
+            // still usually runs something this project builds, so fall back to the default build rather than
+            // skipping the build entirely. Selections that resolve completely keep the targeted build from #4515.
+            const buildTargets = resolution.unresolvedPrograms.length === 0 ? resolution.targets : undefined;
+            let success: boolean = true;
             try {
                 if (extensionManager !== undefined && extensionManager !== null) {
                     extensionManager.cleanOutputChannel();
                 }
-                const buildResult = await project.build(accumulatedTargets, false, false);
+                for (const program of resolution.unresolvedPrograms) {
+                    log.info(localize('test.target.not.resolved.fallback', 'Test program \'{0}\' is not a known CMake executable target; building the default target(s) instead.', program));
+                }
+                const buildResult = await project.build(buildTargets, false, false);
                 if (buildResult.exitCode !== 0) {
-                    log.error(localize('build.targets.failed.with.code', 'Building targets [{0}] failed with exit code {1}.', accumulatedTargets.join(', '), buildResult.exitCode));
+                    if (buildTargets) {
+                        log.error(localize('build.targets.failed.with.code', 'Building targets [{0}] failed with exit code {1}.', buildTargets.join(', '), buildResult.exitCode));
+                    } else {
+                        log.error(localize('build.default.targets.failed.with.code', 'Building the default target(s) failed with exit code {0}.', buildResult.exitCode));
+                    }
                     success = false;
                 }
             } catch (e) {
-                log.error(localize('build.targets.threw', 'Building targets [{0}] threw an error: {1}', accumulatedTargets.join(', '), (e as Error)?.message ?? String(e)));
+                const error = (e as Error)?.message ?? String(e);
+                if (buildTargets) {
+                    log.error(localize('build.targets.threw', 'Building targets [{0}] threw an error: {1}', buildTargets.join(', '), error));
+                } else {
+                    log.error(localize('build.default.targets.threw', 'Building the default target(s) threw an error: {0}', error));
+                }
                 success = false;
             }
             if (!success) {
@@ -2449,38 +2452,14 @@ export class CTestDriver implements vscode.Disposable {
     }
 
     /**
-     * Build a lookup from normalized executable output path to CMake target name, excluding install targets.
-     */
-    private executableTargetNamesByPath(executableTargets: ExecutableTarget[]): Map<string, string> {
-        const execPathToName = new Map<string, string>();
-        for (const target of executableTargets) {
-            if (!target.isInstallTarget) {
-                execPathToName.set(util.platformNormalizePath(target.path), target.name);
-            }
-        }
-        return execPathToName;
-    }
-
-    /**
      * Resolve the CMake executable target(s) that must be built to run the given tests — the same mapping used by
      * buildTestTargets (test program path -> executableTargets name, install targets skipped). Test programs that
      * are not known CMake executable targets (e.g. python, cmake -E, or a nested ctest build-and-test) are skipped,
      * so callers can fall back to the default build target for those.
      */
     public getTestBuildTargets(testNames: string[], executableTargets: ExecutableTarget[]): string[] {
-        const execPathToName = this.executableTargetNamesByPath(executableTargets);
-        const targets = new Set<string>();
-        for (const testName of testNames) {
-            const program = this.testProgram(testName);
-            if (!program) {
-                continue;
-            }
-            const targetName = execPathToName.get(util.platformNormalizePath(program));
-            if (targetName) {
-                targets.add(targetName);
-            }
-        }
-        return [...targets];
+        const programs = testNames.map(testName => this.testProgram(testName)).filter(program => !!program);
+        return resolveTestBuildTargets(programs, executableTargets, util.platformNormalizePath).targets;
     }
 
     /**
