@@ -54,6 +54,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         mergedCompileCommands: null,
         copyCompileCommands: null,
         loadCompileCommands: true,
+        loadSarifFile: true,
         configureOnOpen: true,
         configureOnEdit: true,
         cmakeProviderExtensions: [],

@@ -2362,7 +2362,11 @@ export class CMakeProject {
         const result = await cb(consumer);
         result.stdout = consumer.stdout;
         result.stderr = consumer.stderr;
-        populateCollection(collections.cmake, consumer.diagnostics);
+        // When CMake recorded its diagnostics to a SARIF log, take them from
+        // there: the log states each diagnostic's file, line and severity
+        // outright, where the output parser has to recover them from the shape
+        // of CMake's console output.
+        populateCollection(collections.cmake, result.sarifDiagnostics ?? consumer.diagnostics);
         return result;
     }
 
