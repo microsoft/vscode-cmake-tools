@@ -108,6 +108,39 @@ suite('CTest test', () => {
         expect(getTestFailureMessage('t', '', '0', 'SEGFAULT')).to.contain('Test t failed with SEGFAULT');
     });
 
+    suite('tests without a resolved command (#5096)', () => {
+        const driverWithTests = (tests: any[]) => {
+            const driver = new CTestDriver({} as any);
+            driver.tests = {
+                kind: 'ctestInfo',
+                version: { major: 1, minor: 0 },
+                backtraceGraph: { commands: [], files: [], nodes: [] },
+                tests
+            } as any;
+            return driver;
+        };
+
+        test('An outline entry is still produced when ctest reports no command', () => {
+            // A test whose target was not built has no command, and the code lens provider
+            // used to throw on every provideCodeLenses call because of it.
+            const driver = driverWithTests([{ name: 'not-built', backtrace: 0, properties: [] }]);
+
+            const outline = driver.getTestsForOutline();
+
+            expect(outline.length).to.eq(1);
+            expect(outline[0].name).to.eq('not-built');
+            expect(outline[0].executablePath).to.eq('');
+        });
+
+        test('A built test keeps its executable path', () => {
+            const driver = driverWithTests([{ name: 'built', backtrace: 0, properties: [], command: ['/build/built', '--gtest'] }]);
+
+            const outline = driver.getTestsForOutline();
+
+            expect(outline[0].executablePath).to.eq('/build/built');
+        });
+    });
+
     suite('disabled tests are skipped, not failed (#4267)', () => {
         // A minimal fake vscode.TestItem: no children, no uri/range.
         const makeTestItem = (id: string) => ({ id, uri: undefined, range: undefined, children: { size: 0 } });
