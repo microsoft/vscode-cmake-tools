@@ -3344,7 +3344,26 @@ export class CMakeProject {
 
         if (await this.variantManager.selectVariant(name)) {
             if (this.workspaceContext.config.automaticReconfigure) {
-                await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+                // Honor cmake.skipConfigureIfCachePresent when switching variants (issue #2124).
+                // Variants can map to different build directories (e.g. build/Debug vs build/Release),
+                // each with its own cache; if the newly selected variant already has a cache and the
+                // user opted into skipping, don't force a reconfigure. When the setting is off, keep the
+                // previous behavior of always reconfiguring on a variant switch.
+                let skipConfigure = false;
+                if (this.workspaceContext.config.skipConfigureIfCachePresent) {
+                    const drv = await this.getCMakeDriverInstance();
+                    if (drv) {
+                        // Apply the newly selected variant to the driver first so that binaryDir and
+                        // cachePath resolve to the correct per-variant build directory before we check
+                        // for an existing cache (the onActiveVariantChanged handler does this
+                        // asynchronously, so we can't rely on it having run yet).
+                        await drv.setVariant(this.variantManager.activeVariantOptions, this.variantManager.activeKeywordSetting);
+                        skipConfigure = !await this.needsReconfigure();
+                    }
+                }
+                if (!skipConfigure) {
+                    await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+                }
             }
             return 0; // succeeded
         }
