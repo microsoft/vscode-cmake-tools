@@ -419,6 +419,7 @@
     "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
     "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",
     "cmake-tools.taskDefinitions.properties.preset.description": "CMake preset name. This is a configuration, build or test preset, based on the CMake command",
+    "cmake-tools.taskDefinitions.properties.args.description": "Additional arguments passed to the underlying CMake command. For build tasks these are added as `cmake --build` arguments (before the `--` build-tool-args separator), so flags such as `-j` or `--clean-first` reach CMake.",
     "cmake-tools.taskDefinitions.properties.options.description": "Additional command options",
     "cmake-tools.taskDefinitions.properties.options.cwd.description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used.",
     "cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": {
