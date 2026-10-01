@@ -18,6 +18,7 @@ import * as iwyu from '@cmt/diagnostics/iwyu';
 import { FileDiagnostic, RawDiagnostic, RawDiagnosticParser, diagnosticSeverity } from '@cmt/diagnostics/util';
 import { CustomParser } from '@cmt/diagnostics/custom';
 import { ConfigurationReader } from '@cmt/config';
+import { resolveBuildLogMethod } from '@cmt/buildLogLevel';
 import { fs } from '@cmt/pr';
 
 export class Compilers {
@@ -334,7 +335,23 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
+        this.logBySeverity = config.logBuildOutputBySeverity;
+        // Capture the severity of the diagnostic committed while processing the current line so that,
+        // when logging by severity, the line can be logged at a matching level. Diagnostic parsing and
+        // progress parsing remain independent of logging and fire on every line regardless of setting.
+        this._diagnosticSub = this.compileConsumer.onDiagnostic(({ diagnostic }) => {
+            this._currentLineSeverity = diagnostic.severity;
+        });
     }
+
+    /**
+     * When true, build output is logged at a level reflecting its severity (errors as `error`,
+     * warnings as `warning`, routine output as `debug`) so that `cmake.loggingLevel` can filter it.
+     */
+    private readonly logBySeverity: boolean;
+    private _currentLineSeverity: string | undefined;
+    private readonly _diagnosticSub: vscode.Disposable;
+
     /**
      * Event fired when the progress changes
      */
@@ -354,23 +371,49 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     dispose() {
+        this._diagnosticSub.dispose();
         this._onProgressEmitter.dispose();
         this.compileConsumer.dispose();
     }
 
-    error(line: string) {
-        this.compileConsumer.error(line);
-        if (this.logger) {
-            this.logger.error(line);
+    /**
+     * Log a build output line, honoring `cmake.logBuildOutputBySeverity`.
+     *
+     * @param line The output line to log.
+     * @param isStdErr Whether the line came from standard error.
+     */
+    private logLine(line: string, isStdErr: boolean) {
+        if (!this.logger) {
+            return;
         }
+        const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
+        switch (method) {
+            case 'error':
+                this.logger.error(line);
+                break;
+            case 'warning':
+                this.logger.warning(line);
+                break;
+            case 'debug':
+                this.logger.debug(line);
+                break;
+            default:
+                this.logger.info(line);
+                break;
+        }
+    }
+
+    error(line: string) {
+        this._currentLineSeverity = undefined;
+        this.compileConsumer.error(line);
+        this.logLine(line, true);
         super.error(line);
     }
 
     output(line: string) {
+        this._currentLineSeverity = undefined;
         this.compileConsumer.output(line);
-        if (this.logger) {
-            this.logger.info(line);
-        }
+        this.logLine(line, false);
         super.output(line);
         const progress = this._percent_re.exec(line);
         if (progress) {
