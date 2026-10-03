@@ -16,6 +16,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('cmakeListsModifier');
 
 const LIST_KEYWORDS = ['APPEND', 'PREPEND', 'INSERT'];
+const GLOB_KEYWORDS = ['GLOB', 'GLOB_RECURSE'];
 
 // Debounce interval for batching file events (in ms)
 const FILE_EVENT_DEBOUNCE_MS = 300;
@@ -378,6 +379,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
         // Collect candidates from all targets and invocations
         const candidates: CandidateEdit[] = [];
+        const globInfos: string[] = [];
         for (const target of targets) {
             const invocations = await targetSourceCommandInvocations(
                 project, target, cmakeListsASTs, settings.targetSourceCommands,
@@ -402,16 +404,25 @@ export class CMakeListsModifier implements vscode.Disposable {
                 sourceLists.sort(sourceListCompare);
 
                 for (const sourceList of sourceLists) {
-                    const resolved = this.resolveVariableSectionCandidates(
+                    const { candidates: resolved, globInfos: sectionGlobInfos, globbed } = this.resolveVariableSectionCandidates(
                         sourceList, allTopLevelInvocations, newSourceUri, project, settings, target);
+                    globInfos.push(...sectionGlobInfos);
+                    if (globbed) {
+                        // a matching glob covers the file already
+                        continue;
+                    }
+                    const hasLiteralArg = sourceList.ownArgs.some(arg => variableReferenceIdent(arg) === undefined);
                     if (resolved.length) {
                         candidates.push(...resolved);
-                        const hasLiteralArg = sourceList.ownArgs.some(arg => variableReferenceIdent(arg) === undefined);
                         if (hasLiteralArg) {
                             // Mixed section (literal args alongside ${VAR} reference(s)):
                             // keep the literal insert available as a secondary option.
                             candidates.push(this.buildAddCandidate(sourceList, newSourceUri, target));
                         }
+                        continue;
+                    }
+                    if (sectionGlobInfos.length && !hasLiteralArg) {
+                        // Pure glob-only section, skip the literal insert
                         continue;
                     }
                     candidates.push(this.buildAddCandidate(sourceList, newSourceUri, target));
@@ -420,6 +431,9 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         if (!candidates.length) {
+            if (globInfos.length) {
+                return { candidates: [], info: globInfos[0] };
+            }
             return {
                 candidates: [],
                 error: localize('no.source.command.invocations', 'No source command invocations found. {0} not added to build system.', newSourceFileName)
@@ -466,8 +480,11 @@ export class CMakeListsModifier implements vscode.Disposable {
      * range, resolve IDENT to its nearest preceding var/list assignment
      * call in the same document and build a candidate that targets that
      * variable instead.
-     * Returns an empty array when there's no reference or none can be resolved in the
-     * document because callers should fall back to the literal target-command insertion
+     * When IDENT resolves to a file(GLOB...) call, no candidate is produced,
+     * instead a note is returned in `globInfos` about the glob pattern.
+     * Returns an empty array when there's no reference or none can be
+     * resolved in the document because callers should fall back to the literal
+     * target-command insertion
      */
     private resolveVariableSectionCandidates(
         sourceList: SourceList,
@@ -476,22 +493,36 @@ export class CMakeListsModifier implements vscode.Disposable {
         project: CMakeProject,
         settings: ModifyListsSettings,
         target: codeModel.CodeModelTarget
-    ): CandidateEdit[] {
+    ): { candidates: CandidateEdit[]; globInfos: string[]; globbed: boolean } {
         const idents = Array.from(new Set(
             sourceList.ownArgs.map(variableReferenceIdent).filter((v): v is string => v !== undefined)));
-        const results: CandidateEdit[] = [];
+        const candidates: CandidateEdit[] = [];
+        const globInfos: string[] = [];
         for (const ident of idents) {
             const assignment = findPrecedingVariableAssignment(ident, allTopLevelInvocations, sourceList.invocation);
             if (!assignment) {
+                continue;
+            }
+            if (isGlobAssignment(assignment)) {
+                const newSourceFileName = path.basename(newSourceUri.fsPath);
+                const globKeyword = assignment.ast.args[0].value;
+                if (fileMatchesGlobAssignment(newSourceUri, assignment)) {
+                    return {
+                        candidates: [],
+                        globInfos: [localize('file.matches.glob', '{0} matches the glob pattern used by {1}({2} {3} ...) for target {4}; it will be picked up automatically the next time CMake configures.', newSourceFileName, assignment.command, globKeyword, ident, target.name)],
+                        globbed: true
+                    };
+                }
+                globInfos.push(localize('file.does.not.match.glob', '{0} does not match the glob pattern used by {1}({2} {3} ...) for target {4}. Add a matching pattern, or add the file manually.', newSourceFileName, assignment.command, globKeyword, ident, target.name));
                 continue;
             }
             const resolvedList = SourceList.fromCommandInvocation(project, assignment, undefined, settings)[0];
             if (!resolvedList || !resolvedList.canContain(newSourceUri)) {
                 continue;
             }
-            results.push(this.buildAddCandidate(resolvedList, newSourceUri, target));
+            candidates.push(this.buildAddCandidate(resolvedList, newSourceUri, target));
         }
-        return results;
+        return { candidates, globInfos, globbed: false };
     }
 
     /**
@@ -1383,8 +1414,8 @@ export function variableReferenceIdent(token: Token): string | undefined {
 }
 
 /**
- * Returns true if `invocation` is a set() or
- * list(APPEND|PREPEND|INSERT) call that assigns/modifies IDENT.
+ * Returns true if `invocation` is a set(), list(APPEND|PREPEND|INSERT), or
+ * file(GLOB|GLOB_RECURSE) call that assigns/modifies IDENT.
  */
 function isVariableAssignment(invocation: CommandInvocation, ident: string): boolean {
     const { command, args } = invocation.ast;
@@ -1394,7 +1425,60 @@ function isVariableAssignment(invocation: CommandInvocation, ident: string): boo
     if (command.value === 'list' && args.length > 1 && LIST_KEYWORDS.includes(args[0].value)) {
         return args[1].value === ident;
     }
+    if (command.value === 'file' && args.length > 1 && GLOB_KEYWORDS.includes(args[0].value)) {
+        return args[1].value === ident;
+    }
     return false;
+}
+
+/**
+ * True if `invocation` is a file(GLOB|GLOB_RECURSE ...)
+ */
+function isGlobAssignment(invocation: CommandInvocation): boolean {
+    const { command, args } = invocation.ast;
+    return command.value === 'file' && args.length > 0 && GLOB_KEYWORDS.includes(args[0].value);
+}
+
+/**
+ * Extracts the globbing-expression arguments from a file(GLOB|GLOB_RECURSE
+ * <var> ...) invocation, skipping the variable name and the recognized
+ * option keywords (LIST_DIRECTORIES <bool>, RELATIVE <path>,
+ * CONFIGURE_DEPENDS) that may precede the actual patterns.
+ */
+function globExpressionsOf(invocation: CommandInvocation): string[] {
+    const { args } = invocation.ast;
+    const exprs: string[] = [];
+    let i = 2; // skip the keyword and variable name
+    while (i < args.length) {
+        const value = args[i].value;
+        if (value === 'LIST_DIRECTORIES' || value === 'RELATIVE') {
+            i += 2;
+            continue;
+        }
+        if (value === 'CONFIGURE_DEPENDS') {
+            i += 1;
+            continue;
+        }
+        exprs.push(value);
+        i++;
+    }
+    return exprs;
+}
+
+/**
+ * Whether `newSourceUri` matches any globbing expression in a
+ * file(GLOB|GLOB_RECURSE ...) invocation. Patterns are resolved relative to
+ * the document's directory containing the call.
+ * GLOB_RECURSE patterns with no explicit path separator are treated as
+ * matching at any depth.
+ */
+function fileMatchesGlobAssignment(newSourceUri: vscode.Uri, invocation: CommandInvocation): boolean {
+    const recursive = invocation.ast.args[0].value === 'GLOB_RECURSE';
+    const relativePath = lightNormalizePath(path.relative(invocation.sourceDir, newSourceUri.fsPath));
+    return globExpressionsOf(invocation).some(expr => {
+        const pattern = recursive && !expr.includes('/') ? `**/${expr}` : expr;
+        return minimatch(relativePath, pattern);
+    });
 }
 
 /**
@@ -2003,8 +2087,8 @@ class SimpleSourceList extends SourceList {
         const { lparen, args } = invocation.ast;
         const found = findSourceEnd(args, 0);
         const insertOffset = found?.endOffset ?? lparen.endOffset;
-        const endArgIndex = found?.endIndex ?? 0;
-        super(insertOffset, invocation, target, 0, endArgIndex);
+        const endArgIndex = Math.max(1, found?.endIndex ?? 1);
+        super(insertOffset, invocation, target, 1, endArgIndex);
     }
 
     public get label(): string {
