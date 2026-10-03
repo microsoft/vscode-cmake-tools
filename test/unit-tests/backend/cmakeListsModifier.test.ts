@@ -1,25 +1,33 @@
 import { expect } from 'chai';
 import {
     resolveNormalized, compareSortKeys, quoteArgument,
-    CommandInvocation, topLevelInvocations, variableReferenceIdent, findPrecedingVariableAssignment
+    CommandInvocation, topLevelInvocations, variableReferenceIdent, findPrecedingVariableAssignment,
+    isGlobAssignment, globExpressionsOf, fileMatchesGlobAssignment
 } from '@cmt/cmakeListsModifier';
 import { platformNormalizePath, platformPathEquivalent, splitPath } from '@cmt/util';
 import { CMakeParser, Token } from '@cmt/cmakeParser';
-import { createMockDocument } from './vscode-mock';
+import { createMockDocument, Uri } from './vscode-mock';
 import * as path from 'path';
 
-function invocationsOf(text: string): CommandInvocation[] {
-    const doc = createMockDocument(text) as any;
+function invocationsOf(text: string, filename: string = 'CMakeLists.txt'): CommandInvocation[] {
+    const doc = createMockDocument(text, filename) as any;
     const ast = new CMakeParser(doc).parseDocument();
     return topLevelInvocations(ast.invocations.map(inv => new CommandInvocation(doc, inv)));
 }
 
-/** Parses a single command invocation and returns its argument tokens. */
+// Parses a single command invocation and returns its argument tokens
 function singleInvocationArgs(text: string): Token[] {
     const doc = createMockDocument(text) as any;
     const ast = new CMakeParser(doc).parseDocument();
     expect(ast.invocations).to.have.lengthOf(1);
     return ast.invocations[0].args;
+}
+
+// Parses a single command invocation at a given lists path
+function singleInvocationOf(text: string, filename: string = '/project/CMakeLists.txt'): CommandInvocation {
+    const invocations = invocationsOf(text, filename);
+    expect(invocations).to.have.lengthOf(1);
+    return invocations[0];
 }
 
 suite('cmakeListsModifier pure functions', () => {
@@ -257,6 +265,149 @@ suite('cmakeListsModifier pure functions', () => {
                 'list(REMOVE_ITEM MY_SOURCES a.c)\nadd_executable(demo ${MY_SOURCES})');
             const reference = invocations[1];
             expect(findPrecedingVariableAssignment('MY_SOURCES', invocations, reference)).to.be.undefined;
+        });
+
+        test('Resolves to a prior file(GLOB ...)', () => {
+            const invocations = invocationsOf(
+                'file(GLOB MY_SOURCES "src/*.cpp")\nadd_executable(demo ${MY_SOURCES})');
+            const reference = invocations[1];
+            const assignment = findPrecedingVariableAssignment('MY_SOURCES', invocations, reference);
+            expect(assignment?.command).to.equal('file');
+        });
+
+        test('Resolves to a prior file(GLOB_RECURSE ...)', () => {
+            const invocations = invocationsOf(
+                'file(GLOB_RECURSE MY_SOURCES "*.cpp")\nadd_executable(demo ${MY_SOURCES})');
+            const reference = invocations[1];
+            const assignment = findPrecedingVariableAssignment('MY_SOURCES', invocations, reference);
+            expect(assignment?.command).to.equal('file');
+        });
+
+        test('A later file(GLOB ...) wins over an earlier set() of the same variable', () => {
+            const invocations = invocationsOf(
+                'set(MY_SOURCES a.c)\nfile(GLOB MY_SOURCES "src/*.cpp")\nadd_executable(demo ${MY_SOURCES})');
+            const reference = invocations[2];
+            const assignment = findPrecedingVariableAssignment('MY_SOURCES', invocations, reference);
+            expect(assignment).to.equal(invocations[1]);
+        });
+
+        test('A later set() wins over an earlier file(GLOB ...) of the same variable', () => {
+            const invocations = invocationsOf(
+                'file(GLOB MY_SOURCES "src/*.cpp")\nset(MY_SOURCES a.c)\nadd_executable(demo ${MY_SOURCES})');
+            const reference = invocations[2];
+            const assignment = findPrecedingVariableAssignment('MY_SOURCES', invocations, reference);
+            expect(assignment).to.equal(invocations[1]);
+        });
+
+        test('Ignores unrelated file(COPY ...) calls', () => {
+            const invocations = invocationsOf(
+                'file(COPY MY_SOURCES DESTINATION out)\nadd_executable(demo ${MY_SOURCES})');
+            const reference = invocations[1];
+            expect(findPrecedingVariableAssignment('MY_SOURCES', invocations, reference)).to.be.undefined;
+        });
+    });
+
+    suite('isGlobAssignment', () => {
+        test('file(GLOB ...) is a glob assignment', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp")');
+            expect(isGlobAssignment(inv)).to.be.true;
+        });
+
+        test('file(GLOB_RECURSE ...) is a glob assignment', () => {
+            const inv = singleInvocationOf('file(GLOB_RECURSE MY_SOURCES "*.cpp")');
+            expect(isGlobAssignment(inv)).to.be.true;
+        });
+
+        test('set() is not a glob assignment', () => {
+            const inv = singleInvocationOf('set(MY_SOURCES a.c)');
+            expect(isGlobAssignment(inv)).to.be.false;
+        });
+
+        test('file(COPY ...) is not a glob assignment', () => {
+            const inv = singleInvocationOf('file(COPY MY_SOURCES DESTINATION out)');
+            expect(isGlobAssignment(inv)).to.be.false;
+        });
+    });
+
+    suite('globExpressionsOf', () => {
+        test('Single glob expression', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['src/*.cpp']);
+        });
+
+        test('Multiple glob expressions', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp" "src/*.h")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['src/*.cpp', 'src/*.h']);
+        });
+
+        test('Skips LIST_DIRECTORIES <bool>', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES LIST_DIRECTORIES false "src/*.cpp")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['src/*.cpp']);
+        });
+
+        test('Skips RELATIVE <path>', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES RELATIVE src "src/*.cpp")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['src/*.cpp']);
+        });
+
+        test('Skips CONFIGURE_DEPENDS flag', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES CONFIGURE_DEPENDS "src/*.cpp")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['src/*.cpp']);
+        });
+
+        test('Skips all recognized options together', () => {
+            const inv = singleInvocationOf(
+                'file(GLOB_RECURSE MY_SOURCES LIST_DIRECTORIES false RELATIVE src CONFIGURE_DEPENDS "*.cpp")');
+            expect(globExpressionsOf(inv)).to.deep.equal(['*.cpp']);
+        });
+
+        test('No expressions present', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES)');
+            expect(globExpressionsOf(inv)).to.deep.equal([]);
+        });
+    });
+
+    suite('fileMatchesGlobAssignment', () => {
+        test('GLOB matches a file directly under the pattern directory', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp")');
+            const uri = Uri.file('/project/src/test.cpp');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.true;
+        });
+
+        test('GLOB does not match a file in a deeper subdirectory (non-recursive)', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp")');
+            const uri = Uri.file('/project/src/nested/test.cpp');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.false;
+        });
+
+        test('GLOB does not match a different extension', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp")');
+            const uri = Uri.file('/project/src/test.h');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.false;
+        });
+
+        test('GLOB_RECURSE matches a file in a nested subdirectory', () => {
+            const inv = singleInvocationOf('file(GLOB_RECURSE MY_SOURCES "*.cpp")');
+            const uri = Uri.file('/project/src/nested/test.cpp');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.true;
+        });
+
+        test('GLOB_RECURSE matches a file at the top level too', () => {
+            const inv = singleInvocationOf('file(GLOB_RECURSE MY_SOURCES "*.cpp")');
+            const uri = Uri.file('/project/test.cpp');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.true;
+        });
+
+        test('Matches if ANY of multiple glob expressions matches', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp" "src/*.h")');
+            const uri = Uri.file('/project/src/test.h');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.true;
+        });
+
+        test('Matches none of multiple glob expressions', () => {
+            const inv = singleInvocationOf('file(GLOB MY_SOURCES "src/*.cpp" "src/*.h")');
+            const uri = Uri.file('/project/src/test.py');
+            expect(fileMatchesGlobAssignment(uri as any, inv)).to.be.false;
         });
     });
 });

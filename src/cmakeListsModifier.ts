@@ -1434,7 +1434,7 @@ function isVariableAssignment(invocation: CommandInvocation, ident: string): boo
 /**
  * True if `invocation` is a file(GLOB|GLOB_RECURSE ...)
  */
-function isGlobAssignment(invocation: CommandInvocation): boolean {
+export function isGlobAssignment(invocation: CommandInvocation): boolean {
     const { command, args } = invocation.ast;
     return command.value === 'file' && args.length > 0 && GLOB_KEYWORDS.includes(args[0].value);
 }
@@ -1445,7 +1445,7 @@ function isGlobAssignment(invocation: CommandInvocation): boolean {
  * option keywords (LIST_DIRECTORIES <bool>, RELATIVE <path>,
  * CONFIGURE_DEPENDS) that may precede the actual patterns.
  */
-function globExpressionsOf(invocation: CommandInvocation): string[] {
+export function globExpressionsOf(invocation: CommandInvocation): string[] {
     const { args } = invocation.ast;
     const exprs: string[] = [];
     let i = 2; // skip the keyword and variable name
@@ -1472,7 +1472,7 @@ function globExpressionsOf(invocation: CommandInvocation): string[] {
  * GLOB_RECURSE patterns with no explicit path separator are treated as
  * matching at any depth.
  */
-function fileMatchesGlobAssignment(newSourceUri: vscode.Uri, invocation: CommandInvocation): boolean {
+export function fileMatchesGlobAssignment(newSourceUri: vscode.Uri, invocation: CommandInvocation): boolean {
     const recursive = invocation.ast.args[0].value === 'GLOB_RECURSE';
     const relativePath = lightNormalizePath(path.relative(invocation.sourceDir, newSourceUri.fsPath));
     return globExpressionsOf(invocation).some(expr => {
