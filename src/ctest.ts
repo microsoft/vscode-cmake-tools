@@ -1617,7 +1617,7 @@ export class CTestDriver implements vscode.Disposable {
 
                 return {
                     name: test.name,
-                    executablePath: test.command[0],
+                    executablePath: test.command?.[0] ?? '',
                     sourceFilePath,
                     sourceFileLine
                 };
