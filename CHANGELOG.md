@@ -1,5 +1,8 @@
 # What's New?
 
+Bug Fixes:
+- Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
+
 ## 1.24
 
 Features:
