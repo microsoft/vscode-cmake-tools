@@ -2370,15 +2370,17 @@ export class CTestDriver implements vscode.Disposable {
                 }
             }
         } else {
-            const testProgram = this.testProgram(test.id);
-            if (!testProgram) {
-                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
-                return false;
-            }
             const folder = this.getTestRootFolder(test);
             const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                return false;
+            }
+            // Every project in a multi-root workspace shares one Test Explorer, so the driver handling this run can
+            // belong to a different project than the test. Read the program from the driver that discovered the test.
+            const testProgram = project.cTestController.testProgram(test.id);
+            if (!testProgram) {
+                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
                 return false;
             }
             if (!foundTarget.has(project)) {
