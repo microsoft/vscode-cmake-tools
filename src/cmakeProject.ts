@@ -29,6 +29,7 @@ import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
+import { resolveBuildCompletionLogMethod } from '@cmt/buildLogLevel';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -2588,6 +2589,18 @@ export class CMakeProject {
 
         let consumer: CMakeBuildConsumer | undefined;
         const isBuildingKey = 'cmake:isBuilding';
+        const logBuildResult = (rc: number | null) => {
+            if (rc === null) {
+                buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
+                return;
+            }
+            const message = localize('build.finished.with.code', 'Build finished with exit code {0}', rc);
+            if (resolveBuildCompletionLogMethod(rc, drv!.config.logBuildOutputBySeverity) === 'error') {
+                buildLogger.error(message);
+            } else {
+                buildLogger.info(message);
+            }
+        };
         try {
             this.statusMessage.set(localize('building.status', 'Building'));
             this.isBusy.set(true);
@@ -2603,11 +2616,7 @@ export class CMakeProject {
                     log.showChannel(true); // in case build has failed
                 }
                 await setContextAndStore(isBuildingKey, false);
-                if (rc === null) {
-                    buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
-                } else {
-                    buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-                }
+                logBuildResult(rc);
                 return {
                     exitCode: rc === null ? -1 : rc
                 };
@@ -2655,11 +2664,7 @@ export class CMakeProject {
                         if (rc !== 0) {
                             log.showChannel(true); // in case build has failed
                         }
-                        if (rc === null) {
-                            buildLogger.info(localize('build.was.terminated', 'Build was terminated'));
-                        } else {
-                            buildLogger.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-                        }
+                        logBuildResult(rc);
                         if (drv!.config.parseBuildDiagnostics) {
                             const fileDiags = await consumer!.compileConsumer.resolveDiagnostics(drv!.binaryDir, drv!.sourceDir);
                             if (fileDiags.length > 0) {

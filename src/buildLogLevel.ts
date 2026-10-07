@@ -38,3 +38,7 @@ export function resolveBuildLogMethod(severity: string | undefined, isStdErr: bo
             return isStdErr ? 'error' : 'debug';
     }
 }
+
+export function resolveBuildCompletionLogMethod(exitCode: number | null, logBySeverity: boolean): 'info' | 'error' {
+    return logBySeverity && exitCode !== null && exitCode !== 0 ? 'error' : 'info';
+}

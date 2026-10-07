@@ -3245,7 +3245,7 @@
         "cmake.logBuildOutputBySeverity": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "%cmake-tools.configuration.cmake.logBuildOutputBySeverity.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.logBuildOutputBySeverity.markdownDescription%",
           "scope": "window"
         },
         "cmake.touchbar.visibility": {

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { resolveBuildLogMethod } from '@cmt/buildLogLevel';
+import { resolveBuildCompletionLogMethod, resolveBuildLogMethod } from '@cmt/buildLogLevel';
 
 suite('Build log level resolution', () => {
     test('default behavior logs stdout as info and stderr as error', () => {
@@ -30,5 +30,16 @@ suite('Build log level resolution', () => {
     test('by-severity keeps unclassified stderr at error', () => {
         expect(resolveBuildLogMethod(undefined, true, true)).to.equal('error');
         expect(resolveBuildLogMethod('note', true, true)).to.equal('error');
+    });
+
+    test('by-severity logs a failed build completion at error level', () => {
+        expect(resolveBuildCompletionLogMethod(1, true)).to.equal('error');
+        expect(resolveBuildCompletionLogMethod(-1, true)).to.equal('error');
+    });
+
+    test('build completion preserves info for successful, terminated, and default behavior', () => {
+        expect(resolveBuildCompletionLogMethod(0, true)).to.equal('info');
+        expect(resolveBuildCompletionLogMethod(null, true)).to.equal('info');
+        expect(resolveBuildCompletionLogMethod(1, false)).to.equal('info');
     });
 });
