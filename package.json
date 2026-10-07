@@ -4093,7 +4093,7 @@
         "cmake.exportSarifFile": {
           "type": "boolean",
           "default": true,
-          "description": "%cmake-tools.configuration.cmake.exportSarifFile.description%",
+          "markdownDescription": "%cmake-tools.configuration.cmake.exportSarifFile.markdownDescription%",
           "scope": "resource"
         },
         "cmake.loadSarifFile": {
