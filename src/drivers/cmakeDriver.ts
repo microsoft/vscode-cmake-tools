@@ -1420,10 +1420,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             const exportCompileCommandsValue = util.cmakeify(exportCompileCommandsFile);
             expandedArgs.push(`-DCMAKE_EXPORT_COMPILE_COMMANDS:${exportCompileCommandsValue.type}=${exportCompileCommandsValue.value}`);
         }
-        // Ask CMake to record its configure diagnostics to a SARIF log, which
-        // is a more dependable account of them than its console output. Leave
-        // it to the user when the preset or configureArgs already decide
-        // CMAKE_EXPORT_SARIF (on, off, or unset) or name a --sarif-output.
+        // Add flags to export SARIF if it's requested and not controlled explicitly through cache or args.
         const exportSarifFile = config.get<boolean>("exportSarifFile") ?? true;
         const hasExportSarif = Object.prototype.hasOwnProperty.call(presetCacheVariables, exportSarifVariable)
             || argsControlSarif(expandedArgs);
@@ -1749,12 +1746,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
         }
 
-        // Export the configure diagnostics to a SARIF log, which is a more
-        // dependable account of them than CMake's console output. Only when the
-        // user has not already made the choice: via configureSettings or the
-        // variant, or via configureArgs deciding CMAKE_EXPORT_SARIF or naming a
-        // --sarif-output. (A kit's cmakeSettings are applied below and win
-        // regardless.)
+        // Add flags to export SARIF if it's requested and not controlled explicitly through the kit.
         const exportSarifFile = config.get<boolean>("exportSarifFile") ?? true;
         const hasExportSarif = Object.prototype.hasOwnProperty.call(settingMap, exportSarifVariable)
             || argsControlSarif(commonFlags);

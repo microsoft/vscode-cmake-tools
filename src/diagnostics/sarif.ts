@@ -136,14 +136,27 @@ function artifactFilePath(artifact: Sarif.ArtifactLocation | undefined, sourceDi
  * Convert a SARIF region into a range. CMake reports only the line that raised
  * the diagnostic, so whatever the region leaves out spans the whole line, just
  * as it does when the same diagnostic is parsed out of CMake's output.
+ *
+ * Returns `undefined` when the region does not place the diagnostic on a line.
+ * CMake omits the region whenever it has no line to report — a diagnostic
+ * raised while a list file was being read rather than by a command in it (the
+ * ones CMake prints as `CMake Error in CMakeLists.txt:` rather than `at
+ * CMakeLists.txt:12`), a deferred call, or a `variable_watch` dispatch. The
+ * file is known; the line genuinely is not. See `parseSarifLog` for what
+ * becomes of those.
  */
-function sarifRange(region: Sarif.Region | undefined): vscode.Range {
-    const startLine = oneLess(region?.startLine ?? 1);
-    const startColumn = region?.startColumn === undefined ? 0 : oneLess(region.startColumn);
-    const endLine = region?.endLine === undefined ? startLine : oneLess(region.endLine);
+function sarifRange(region: Sarif.Region | undefined): vscode.Range | undefined {
+    // SARIF line numbers are one-based, so anything below 1 is not a line
+    // either.
+    if (region?.startLine === undefined || region.startLine < 1) {
+        return undefined;
+    }
+    const startLine = oneLess(region.startLine);
+    const startColumn = region.startColumn === undefined ? 0 : oneLess(region.startColumn);
+    const endLine = region.endLine === undefined ? startLine : oneLess(region.endLine);
     // SARIF's `endColumn` names the column *after* the region, so making it
     // zero-based also makes it the exclusive end that `Range` wants.
-    const endColumn = region?.endColumn === undefined ? 9999 : oneLess(region.endColumn);
+    const endColumn = region.endColumn === undefined ? 9999 : oneLess(region.endColumn);
     return new vscode.Range(startLine, startColumn, endLine, endColumn);
 }
 
@@ -178,9 +191,14 @@ function relatedInformation(result: Sarif.Result, sourceDir: string): vscode.Dia
     const related: vscode.DiagnosticRelatedInformation[] = [];
     for (const location of locations) {
         const filepath = artifactFilePath(location.physicalLocation?.artifactLocation, sourceDir);
-        if (filepath) {
+        // A frame with no line of its own — a deferred call, say — is dropped
+        // for the same reason `parseSarifLog` drops such a result: there is
+        // nowhere truthful to point it at. CMake's output is read the same
+        // way, its call-stack parser matching only `<file>:<line> (<command>)`.
+        const range = sarifRange(location.physicalLocation?.region);
+        if (filepath && range) {
             related.push(new vscode.DiagnosticRelatedInformation(
-                new vscode.Location(vscode.Uri.file(filepath), sarifRange(location.physicalLocation?.region)),
+                new vscode.Location(vscode.Uri.file(filepath), range),
                 location.message?.text ?? ''));
         }
     }
@@ -190,8 +208,24 @@ function relatedInformation(result: Sarif.Result, sourceDir: string): vscode.Dia
 /**
  * Convert the results recorded in a SARIF log into diagnostics.
  *
- * Results without a file location are skipped, as VS Code has nowhere to show
- * them. They still reach the user through CMake's output channel.
+ * A result is skipped unless it names both a file and a line within it.
+ *
+ * Skipping the ones with no file at all is obvious enough — VS Code has
+ * nowhere to put them. Skipping the ones that name a file but no line is the
+ * less obvious half, and it is deliberate. Nothing in the VS Code API or in
+ * the LSP can say "this problem belongs to the file, not to a position in
+ * it": `vscode.Diagnostic` requires a `Range`, the Problems panel renders
+ * `[Ln, Col]` for every entry unconditionally, and the editor expands an empty
+ * range so that a squiggle always appears somewhere. Keeping such a result
+ * therefore cannot mean anything but line 1 — inventing a location CMake never
+ * reported, and squiggling whatever happens to sit at the top of the file.
+ * Leaving it out says less, but nothing untrue.
+ *
+ * This also matches what the same diagnostic does when it is read from CMake's
+ * output instead: `CMakeOutputConsumer` only recognises the `CMake Error at
+ * <file>:<line>` form, so the `CMake Error in <file>` form never becomes a
+ * problem there either. Either way the message still reaches the user in full
+ * through CMake's output channel.
  *
  * @param sarifLog The parsed SARIF log
  * @param sourceDir The source directory, used to resolve relative artifact paths
@@ -202,11 +236,12 @@ export function parseSarifLog(sarifLog: Sarif.Log, sourceDir: string): FileDiagn
         for (const result of run.results ?? []) {
             const physicalLocation = result.locations?.[0]?.physicalLocation;
             const filepath = artifactFilePath(physicalLocation?.artifactLocation, sourceDir);
+            const range = sarifRange(physicalLocation?.region);
             const message = result.message.text ?? result.message.markdown;
-            if (!filepath || !message) {
+            if (!filepath || !range || !message) {
                 continue;
             }
-            const diag = new vscode.Diagnostic(sarifRange(physicalLocation?.region), message, sarifSeverity(result.level));
+            const diag = new vscode.Diagnostic(range, message, sarifSeverity(result.level));
             diag.source = 'cmake';
             diag.code = result.ruleId;
             diag.relatedInformation = relatedInformation(result, sourceDir);

@@ -1847,6 +1847,12 @@ suite('CMake SARIF diagnostics', () => {
         const noLocation: Sarif.Result = { level: 'error', message: { text: 'no location at all' } };
         expect(parseSarifLog(logWith(noLocation), 'dummyPath')).to.have.length(0);
 
+        // CMake names the file but omits the region when it has no line to
+        // report. Line 1 would be an invention, so the result is left out.
+        const noLine = resultAt(1);
+        delete noLine.locations![0].physicalLocation!.region;
+        expect(parseSarifLog(logWith(noLine), 'dummyPath')).to.have.length(0);
+
         const noMessage = resultAt(1);
         noMessage.message = {};
         expect(parseSarifLog(logWith(noMessage), 'dummyPath')).to.have.length(0);
@@ -1857,7 +1863,10 @@ suite('CMake SARIF diagnostics', () => {
         result.stacks = [{
             frames: [
                 { location: { physicalLocation: { artifactLocation: { uri: 'sub.cmake' }, region: { startLine: 4 } }, message: { text: "In call to 'inner_fn' here" } } },
-                { location: { physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' }, region: { startLine: 6 } } } }
+                { location: { physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' }, region: { startLine: 6 } } } },
+                // A deferred call carries no line, so it is dropped rather
+                // than pointed at line 1
+                { location: { physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' } }, message: { text: 'DEFERRED' } } }
             ]
         }];
         const [diag] = parseSarifLog(logWith(result), 'dummyPath');
