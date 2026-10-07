@@ -17,10 +17,12 @@ export interface CMakeExecutable {
     isFileApiModeSupported?: boolean;
     isDebuggerSupported?: boolean;
     isDefaultGeneratorSupported?: boolean;
+    isSarifSupported?: boolean;
     version?: util.Version;
     minimalServerModeVersion: util.Version;
     minimalFileApiModeVersion: util.Version;
     minimalDefaultGeneratorVersion: util.Version;
+    minimalSarifVersion: util.Version;
 }
 
 const cmakeInfo = new Map<string, CMakeExecutable>();
@@ -42,7 +44,8 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
         isPresent: false,
         minimalServerModeVersion: util.parseVersion('3.7.1'),
         minimalFileApiModeVersion: util.parseVersion('3.14.0'),
-        minimalDefaultGeneratorVersion: util.parseVersion('3.15.0')
+        minimalDefaultGeneratorVersion: util.parseVersion('3.15.0'),
+        minimalSarifVersion: util.parseVersion('4.0.0')
     };
 
     // The check for 'path' seems unnecessary, but crash logs tell us otherwise. It is not clear
@@ -81,6 +84,9 @@ export async function getCMakeExecutableInformation(path: string, config?: Confi
 
                 // Support for CMake using an internal default generator when one isn't provided
                 cmake.isDefaultGeneratorSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalDefaultGeneratorVersion);
+
+                // Support for recording configure diagnostics to a SARIF log
+                cmake.isSarifSupported = util.versionGreaterOrEquals(cmake.version, cmake.minimalSarifVersion);
             }
             const capabilities = await proc.execute(path, ['-E', 'capabilities'], null, execOpt).result;
             if (capabilities.retc === 0 && capabilities.stdout) {

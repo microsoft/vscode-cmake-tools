@@ -227,6 +227,7 @@ export interface ExtensionConfigurationSettings {
     preConfigureTask: string | null;
     postConfigureTask: string | null;
     loadCompileCommands: boolean;
+    loadSarifFile: boolean;
     configureOnOpen: boolean;
     configureOnEdit: boolean;
     cmakeProviderExtensions: string[];
@@ -619,6 +620,9 @@ export class ConfigurationReader implements vscode.Disposable {
     get loadCompileCommands(): boolean {
         return this.configData.loadCompileCommands;
     }
+    get loadSarifFile(): boolean {
+        return this.configData.loadSarifFile;
+    }
     get showSystemKits(): boolean {
         return this.configData.showSystemKits;
     }
@@ -750,6 +754,7 @@ export class ConfigurationReader implements vscode.Disposable {
         preConfigureTask: new vscode.EventEmitter<string | null>(),
         postConfigureTask: new vscode.EventEmitter<string | null>(),
         loadCompileCommands: new vscode.EventEmitter<boolean>(),
+        loadSarifFile: new vscode.EventEmitter<boolean>(),
         configureOnOpen: new vscode.EventEmitter<boolean>(),
         configureOnEdit: new vscode.EventEmitter<boolean>(),
         cmakeProviderExtensions: new vscode.EventEmitter<string[]>(),

@@ -6,7 +6,9 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { CMakeSarifConsumer } from '@cmt/diagnostics/sarif';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
 
@@ -417,6 +419,91 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(driver.generatorName).to.be.eq(kitBaseline.preferredGenerator!.name);
             expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitBaseline.preferredGenerator!.name);
         }).timeout(60000);
+
+        test('Configure records its diagnostics to a SARIF log', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                // Only the File API driver asks CMake for a SARIF log.
+                this.skip();
+            }
+
+            // CMakeSarifConsumer is not wired into the driver: CMakeProject is
+            // the one that calls it, around whatever the driver does, so it is
+            // exercised here the same way CMakeProject.doConfigure() would.
+            // Constructing it before the configure runs is what lets it tell
+            // this run's log apart from a stale one.
+            const sarifConsumer = new CMakeSarifConsumer(defaultWorkspaceFolder);
+            expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(0);
+            await sarifConsumer.afterConfigure(driver.binaryDir, []);
+            // The log is turned on through CMAKE_EXPORT_SARIF, which also makes
+            // CMake create the directory it writes into.
+            expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')!.value).to.be.ok;
+            expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.true;
+            // The log was read back: this project configures without complaint,
+            // so the result is an empty list rather than the null that makes
+            // callers fall back to parsing CMake's output.
+            expect(sarifConsumer.diagnostics).to.deep.eq([]);
+        }).timeout(60000 * 2);
+
+        test('Configure reads no SARIF log when configureSettings turn CMAKE_EXPORT_SARIF off', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+            config.updatePartial({ configureSettings: { CMAKE_EXPORT_SARIF: false } });
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                this.skip();
+            }
+
+            const sarifConsumer = new CMakeSarifConsumer(defaultWorkspaceFolder);
+            expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(0);
+            await sarifConsumer.afterConfigure(driver.binaryDir, []);
+            // The user's choice is kept, so CMake writes no log and the caller
+            // falls back to parsing CMake's output.
+            expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')!.value).to.be.false;
+            expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.false;
+            expect(sarifConsumer.diagnostics).to.be.null;
+        }).timeout(60000 * 2);
+
+        test('Configure reads the SARIF log from a --sarif-output in configureArgs', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+            const sarifOutput = path.join(os.tmpdir(), `cmake-tools-sarif-output-${process.pid}.sarif`);
+            config.updatePartial({ configureArgs: ['--sarif-output', sarifOutput] });
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                this.skip();
+            }
+
+            try {
+                const sarifConsumer = new CMakeSarifConsumer(defaultWorkspaceFolder);
+                expect((await driver.cleanConfigure(ConfigureTrigger.runTests, [])).exitCode).to.be.eq(0);
+                await sarifConsumer.afterConfigure(driver.binaryDir, ['--sarif-output', sarifOutput]);
+                // --sarif-output puts the log in the user's hands, so the
+                // extension leaves CMAKE_EXPORT_SARIF alone.
+                expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')).to.be.undefined;
+                expect(fs.existsSync(sarifOutput)).to.be.true;
+                expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.false;
+                expect(sarifConsumer.diagnostics).to.deep.eq([]);
+            } finally {
+                if (fs.existsSync(sarifOutput)) {
+                    fs.unlinkSync(sarifOutput);
+                }
+            }
+        }).timeout(60000 * 2);
 
         test('Test generator switch', async function () {
             const config = ConfigurationReader.create();

@@ -4090,6 +4090,18 @@
           "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%",
           "scope": "resource"
         },
+        "cmake.exportSarifFile": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%cmake-tools.configuration.cmake.exportSarifFile.markdownDescription%",
+          "scope": "resource"
+        },
+        "cmake.loadSarifFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.loadSarifFile.description%",
+          "scope": "resource"
+        },
         "cmake.useCMakePresets": {
           "type": "string",
           "enum": [
@@ -4512,6 +4524,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.14.2",
     "@types/rimraf": "^3.0.0",
+    "@types/sarif": "^2.1.7",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
     "@types/vscode": "1.88.0",

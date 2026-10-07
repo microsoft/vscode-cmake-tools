@@ -222,6 +222,8 @@ Each matcher entry has the following properties:
 | `cmake.ctest.testSuiteDelimiterMaxOccurrence` | Maximum number of times the delimiter may be used to split the name of the test. `0` means no limit. | `0` | no |
 | `cmake.useFolderPropertyInBuildTargetDropdown` | Controls if the default build target dropdown is grouped by the CMake folder groups. | `false` | no |
 | `cmake.showTimestampsInOutput` | Show timestamps and log levels in the CMake output channel. Useful for tracking build durations. | `false` | no |
+| `cmake.exportSarifFile` | Enables writing CMake configure diagnostics to a SARIF file by setting `CMAKE_EXPORT_SARIF`. Requires CMake 4.0 or newer. | `true` | no |
+| `cmake.loadSarifFile` | Read CMake configure diagnostics from CMake's SARIF file, if generated. Requires CMake SARIF logging enabled. | `true` | no |
 ### Examples
 
 **clang-tidy** (`/path/file.cpp:10:5: warning: some message [check-name]`):

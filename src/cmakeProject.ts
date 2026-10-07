@@ -28,6 +28,7 @@ import { CPackDriver } from '@cmt/cpack';
 import { WorkflowDriver } from '@cmt/workflow';
 import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
+import { CMakeSarifConsumer } from '@cmt/diagnostics/sarif';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
@@ -2048,7 +2049,7 @@ export class CMakeProject {
                 }
 
                 try {
-                    return this.doConfigure(type, progress, async consumer => {
+                    return this.doConfigure(type, progress, drv, extraArgs, async consumer => {
                         const isConfiguringKey = 'cmake:isConfiguring';
                         if (drv) {
                             let oldProgress = 0;
@@ -2322,9 +2323,15 @@ export class CMakeProject {
 
     /**
      * Wraps pre/post configure logic around an actual configure function
+     * @param drv The driver that `cb` will run the configure through. Only used
+     * to locate the SARIF log `cb` may cause CMake to write; the driver itself
+     * is never told about SARIF, so this works the same regardless of which
+     * driver `cb` ends up calling (i.e. regardless of `cmake.cmakeCommunicationMode`).
+     * @param extraArgs The extra arguments `cb` will pass through to the driver,
+     * also only used to help locate the SARIF log.
      * @param cb The actual configure callback. Called to do the configure
      */
-    private async doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
+    private async doConfigure(type: ConfigureType, progress: ProgressHandle, drv: CMakeDriver | null, extraArgs: string[], cb: (consumer: CMakeOutputConsumer) => Promise<ConfigureResult>): Promise<ConfigureResult> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         // configureOnEdit is intentionally NOT required here. doConfigure()
         // is the explicit configure path — when the user manually triggers
@@ -2358,11 +2365,44 @@ export class CMakeProject {
             return { exitCode: -1, resultType: ConfigureResultType.Other, stderr: 'Cannot configure: No configure preset is active for this CMake project' };
         }
         const consumer = new CMakeOutputConsumer(this.sourceDir, cmakeLogger);
+        // ShowCommandOnly never actually invokes CMake, so there is nothing for
+        // a SARIF log to be found from. Constructing the consumer here, right
+        // before cb() runs CMake, is what lets it tell this run's log apart
+        // from a stale one left over from an earlier configure — see
+        // CMakeSarifConsumer's own comment for why that distinction can only be
+        // made once the run is over, not predicted going in.
+        const sarifConsumer = drv && type !== ConfigureType.ShowCommandOnly
+            && this.workspaceContext.config.loadSarifFile && (await this.getCMakeExecutable()).isSarifSupported
+            ? new CMakeSarifConsumer(this.sourceDir)
+            : undefined;
         const result = await cb(consumer);
+        if (sarifConsumer) {
+            await sarifConsumer.afterConfigure(drv!.binaryDir, await this.expandConfigureArgsForSarif(drv!, extraArgs));
+        }
         result.stdout = consumer.stdout;
         result.stderr = consumer.stderr;
-        populateCollection(collections.cmake, consumer.diagnostics);
+        // When CMake recorded its diagnostics to a SARIF log, take them from
+        // there: the log states each diagnostic's file, line and severity
+        // outright, where the output parser has to recover them from the shape
+        // of CMake's console output.
+        populateCollection(collections.cmake, sarifConsumer?.diagnostics ?? consumer.diagnostics);
         return result;
+    }
+
+    /**
+     * Expand `cmake.configureArgs` the same way the driver does, so a
+     * `--sarif-output` there can be found.
+     *
+     * In kits mode, `extraArgs` — the arguments passed to this particular
+     * configure call — are also included, mirroring
+     * `generateConfigArgsFromSettings()`. Presets mode ignores `extraArgs`
+     * entirely (a pre-existing quirk of `generateConfigArgsFromPreset()`, not
+     * something specific to SARIF), so it is left out there to match.
+     */
+    private async expandConfigureArgsForSarif(drv: CMakeDriver, extraArgs: string[]): Promise<string[]> {
+        const rawArgs = this.useCMakePresets ? this.workspaceContext.config.configureArgs : extraArgs.concat(this.workspaceContext.config.configureArgs);
+        const envOverride = await drv.getConfigureEnvironment();
+        return Promise.all(rawArgs.map(async (value) => expandString(value, { ...drv.expansionOptions, envOverride })));
     }
 
     /**
