@@ -138,10 +138,10 @@ interface CTestInfo {
     };
     kind: string; // ctestInfo
     tests: {
-        backtrace: number;
-        command: string[];
+        backtrace?: number;
+        command?: string[];
         name: string;
-        properties: { name: string; value: string | string[] }[];
+        properties?: { name: string; value: string | string[] }[];
     }[];
     version: { major: number; minor: number };
 }
@@ -428,6 +428,164 @@ interface ConfigItem extends vscode.QuickPickItem {
     detail: string;
     // Undefined for workspace launch config
     folder?: vscode.WorkspaceFolder;
+}
+
+/**
+ * A test-case declaration (`TEST_CASE("name")` and the related doctest/Catch2 macros, see
+ * `parseDoctestCases`) found in a source file.
+ */
+interface TestCaseDeclaration {
+    file: string;
+    line: number;
+    name: string;
+    normalizedName: string;
+}
+
+/**
+ * The test-case declarations parsed from source files during one test discovery run.
+ *
+ * Locating a test that has no `DEF_SOURCE_LINE` property means reading and parsing the sources of
+ * its executable, and every test of that executable considers the same files. Sharing the parsed
+ * declarations between those tests keeps discovery at one read per source file instead of one per
+ * test and source file, which froze the extension host for minutes on large suites (#5093).
+ */
+class TestCaseDeclarationCache {
+    private readonly byFile = new Map<string, TestCaseDeclaration[]>();
+    private readonly byExecutable = new Map<string, TestCaseDeclaration[]>();
+
+    /**
+     * The declarations in `file`, or none when the file does not exist or cannot be read.
+     */
+    inFile(file: string): TestCaseDeclaration[] {
+        let declarations = this.byFile.get(file);
+        if (declarations === undefined) {
+            declarations = parseTestCaseDeclarations(file);
+            this.byFile.set(file, declarations);
+        }
+        return declarations;
+    }
+
+    /**
+     * The declarations in all sources of the test executable at `executable`, in source order.
+     */
+    inSourcesOf(executable: string, target: { sourceDir: string; sources: string[] }): TestCaseDeclaration[] {
+        let declarations = this.byExecutable.get(executable);
+        if (declarations === undefined) {
+            declarations = [];
+            for (const source of target.sources) {
+                declarations.push(...this.inFile(path.resolve(target.sourceDir, source)));
+            }
+            this.byExecutable.set(executable, declarations);
+        }
+        return declarations;
+    }
+}
+
+function parseTestCaseDeclarations(file: string): TestCaseDeclaration[] {
+    try {
+        if (!fs_.existsSync(file)) {
+            return [];
+        }
+        return parseDoctestCases(fs_.readFileSync(file, 'utf8')).map(testCase => ({ file, ...testCase }));
+    } catch (e) {
+        log.trace(localize('failed.to.parse.test.case.declarations', 'Failed to parse test-case declarations in {0}: {1}', file, String(e)));
+        return [];
+    }
+}
+
+function parseDoctestCases(content: string): { name: string; normalizedName: string; line: number }[] {
+    const parsedCases: { name: string; normalizedName: string; line: number }[] = [];
+    const doctestQuotedRegex = /\b(?:TEST_CASE(?:_FIXTURE)?|TEST_CASE_TEMPLATE(?:_DEFINE|_INVOKE)?|TEMPLATE_TEST_CASE(?:_SIG)?|SCENARIO)\s*\(\s*"((?:\\"|[^"])*)"/g;
+    const doctestRawRegex = /\b(?:TEST_CASE(?:_FIXTURE)?|TEST_CASE_TEMPLATE(?:_DEFINE|_INVOKE)?|TEMPLATE_TEST_CASE(?:_SIG)?|SCENARIO)\s*\(\s*R"([A-Za-z0-9_]*)\((.*?)\)\1"/gs;
+
+    const addCase = (name: string, index: number) => {
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return;
+        }
+
+        parsedCases.push({
+            name: trimmed,
+            normalizedName: normalizeDiscoveredTestName(trimmed),
+            line: content.slice(0, index).split(/\r\n|\r|\n/).length
+        });
+    };
+
+    let match: RegExpExecArray | null;
+    while ((match = doctestQuotedRegex.exec(content)) !== null) {
+        addCase(match[1], match.index);
+    }
+    while ((match = doctestRawRegex.exec(content)) !== null) {
+        addCase(match[2], match.index);
+    }
+
+    return parsedCases;
+}
+
+function normalizeDiscoveredTestName(testName: string): string {
+    return testName
+        .toLowerCase()
+        .replace(/^\s*scenario:\s*/, '')
+        .replace(/\[[^\]]*\]/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+}
+
+/**
+ * Finds the declaration a discovered test most likely corresponds to. The name CTest reports may
+ * carry a prefix, suffix or tags on top of the declared name, so the exact name is tried first, then
+ * the normalized name, then containment of one normalized name in the other, and finally the
+ * declaration sharing the most name tokens. Within each step the earliest declaration in source order wins.
+ */
+function findTestCaseDeclaration(declarations: TestCaseDeclaration[], testName: string): TestCaseDeclaration | undefined {
+    if (declarations.length === 0) {
+        return undefined;
+    }
+
+    const exactMatch = declarations.find(declaration => declaration.name === testName);
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    const normalizedTarget = normalizeDiscoveredTestName(testName);
+
+    const normalizedExactMatch = declarations.find(declaration => declaration.normalizedName === normalizedTarget);
+    if (normalizedExactMatch) {
+        return normalizedExactMatch;
+    }
+
+    const normalizedContainsMatch = declarations.find(declaration =>
+        normalizedTarget.includes(declaration.normalizedName) || declaration.normalizedName.includes(normalizedTarget)
+    );
+    if (normalizedContainsMatch) {
+        return normalizedContainsMatch;
+    }
+
+    // Final fallback: choose the closest fuzzy match by token overlap.
+    const targetTokens = new Set(normalizedTarget.split(' ').filter(token => token.length > 0));
+    let bestMatch: TestCaseDeclaration | undefined;
+    let bestScore = 0;
+    for (const declaration of declarations) {
+        const declarationTokens = declaration.normalizedName.split(' ').filter(token => token.length > 0);
+        if (declarationTokens.length === 0 || targetTokens.size === 0) {
+            continue;
+        }
+
+        let overlap = 0;
+        for (const token of declarationTokens) {
+            if (targetTokens.has(token)) {
+                overlap++;
+            }
+        }
+
+        if (overlap > bestScore) {
+            bestScore = overlap;
+            bestMatch = declaration;
+        }
+    }
+
+    return bestMatch;
 }
 
 export class CTestDriver implements vscode.Disposable {
@@ -1105,26 +1263,25 @@ export class CTestDriver implements vscode.Disposable {
 
     /**
      * Resolves the source file and line number for a single CTest test entry.
-     * Uses a 3-step priority:
-     *  1) DEF_SOURCE_LINE test property
-     *  2) Code model executable-to-sources matching
-     *  3) Backtrace graph (falls back to CMakeLists.txt)
+     * Uses a 4-step priority:
+     *  1) DEF_SOURCE_LINE test property (written by CMake's `gtest_discover_tests()`)
+     *  2) A matching test-case declaration in the sources of the test executable (doctest, Catch2, ...)
+     *  3) The first source of the test executable, from the code model
+     *  4) Backtrace graph (falls back to CMakeLists.txt)
+     *
+     * `declarationCache` is shared by all tests of one discovery run so that no source file is read more than once.
      */
     private resolveTestSourceLocation(
         test: CTestInfo['tests'][0],
         executableToSources: Map<string, { sourceDir: string; sources: string[] }> | undefined,
-        backtraceGraph: CTestInfo['backtraceGraph'] | undefined
+        backtraceGraph: CTestInfo['backtraceGraph'] | undefined,
+        declarationCache: TestCaseDeclarationCache
     ): { file?: string; line?: number } {
         let file: string | undefined;
         let line: number | undefined;
 
-        const resolvedFromExecutableSources = this.tryResolveTestSourceFromExecutableSources(test, executableToSources);
-        if (resolvedFromExecutableSources) {
-            return resolvedFromExecutableSources;
-        }
-
         // 1. Use DEF_SOURCE_LINE CMake test property
-        const defSourceLineProperty = test.properties.filter(p => p.name === "DEF_SOURCE_LINE")[0];
+        const defSourceLineProperty = test.properties?.filter(p => p.name === "DEF_SOURCE_LINE")[0];
         if (defSourceLineProperty && defSourceLineProperty.value && typeof defSourceLineProperty.value === 'string') {
             const match = defSourceLineProperty.value.match(/(.*):(\d+)/);
             if (match && match[1] && match[2]) {
@@ -1137,7 +1294,15 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        // 2. Match test executable to CMake target sources
+        // 2. Look for the test's declaration in the sources of its executable
+        if (!file) {
+            const declaration = this.tryResolveTestSourceFromExecutableSources(test, executableToSources, declarationCache);
+            if (declaration) {
+                return declaration;
+            }
+        }
+
+        // 3. Match test executable to CMake target sources
         if (!file && test.command && test.command.length > 0 && executableToSources) {
             const testExe = util.platformNormalizePath(test.command[0]);
             const targetInfo = executableToSources.get(testExe);
@@ -1147,7 +1312,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        // 3. Backtrace graph (falls back to CMakeLists.txt)
+        // 4. Backtrace graph (falls back to CMakeLists.txt)
         if (!file && backtraceGraph) {
             const nodes = backtraceGraph.nodes;
             if (test.backtrace !== undefined && nodes[test.backtrace] !== undefined) {
@@ -1164,7 +1329,7 @@ export class CTestDriver implements vscode.Disposable {
         // and default the line to 1. If we have a concrete source file, try to find a
         // matching TEST_CASE("name") declaration in that file so each test gets its own range.
         if (file && (line === undefined || line === 1)) {
-            line = this.tryResolveDoctestLine(file, test.name) ?? line;
+            line = findTestCaseDeclaration(declarationCache.inFile(file), test.name)?.line ?? line;
         }
 
         return { file, line };
@@ -1172,7 +1337,8 @@ export class CTestDriver implements vscode.Disposable {
 
     private tryResolveTestSourceFromExecutableSources(
         test: CTestInfo['tests'][0],
-        executableToSources: Map<string, { sourceDir: string; sources: string[] }> | undefined
+        executableToSources: Map<string, { sourceDir: string; sources: string[] }> | undefined,
+        declarationCache: TestCaseDeclarationCache
     ): { file: string; line: number } | undefined {
         if (!test.command || test.command.length === 0 || !executableToSources) {
             return undefined;
@@ -1184,122 +1350,8 @@ export class CTestDriver implements vscode.Disposable {
             return undefined;
         }
 
-        for (const source of targetInfo.sources) {
-            const candidateFile = path.resolve(targetInfo.sourceDir, source);
-            const candidateLine = this.tryResolveDoctestLine(candidateFile, test.name);
-            if (candidateLine !== undefined) {
-                return {
-                    file: candidateFile,
-                    line: candidateLine
-                };
-            }
-        }
-
-        return undefined;
-    }
-
-    private tryResolveDoctestLine(filePath: string, testName: string): number | undefined {
-        try {
-            if (!fs_.existsSync(filePath)) {
-                return undefined;
-            }
-
-            const content = fs_.readFileSync(filePath, 'utf8');
-            const parsedCases = this.parseDoctestCases(content);
-            if (parsedCases.length === 0) {
-                return undefined;
-            }
-
-            const normalizedTarget = this.normalizeDiscoveredTestName(testName);
-
-            const exactMatch = parsedCases.find(testCase => testCase.name === testName);
-            if (exactMatch) {
-                return exactMatch.line;
-            }
-
-            const normalizedExactMatch = parsedCases.find(testCase => testCase.normalizedName === normalizedTarget);
-            if (normalizedExactMatch) {
-                return normalizedExactMatch.line;
-            }
-
-            const normalizedContainsMatch = parsedCases.find(testCase =>
-                normalizedTarget.includes(testCase.normalizedName) || testCase.normalizedName.includes(normalizedTarget)
-            );
-            if (normalizedContainsMatch) {
-                return normalizedContainsMatch.line;
-            }
-
-            // Final fallback: choose the closest fuzzy match by token overlap.
-            const targetTokens = new Set(normalizedTarget.split(' ').filter(token => token.length > 0));
-            let bestLine: number | undefined;
-            let bestScore = 0;
-            for (const parsedCase of parsedCases) {
-                const caseTokens = parsedCase.normalizedName.split(' ').filter(token => token.length > 0);
-                if (caseTokens.length === 0 || targetTokens.size === 0) {
-                    continue;
-                }
-
-                let overlap = 0;
-                for (const token of caseTokens) {
-                    if (targetTokens.has(token)) {
-                        overlap++;
-                    }
-                }
-
-                if (overlap > bestScore) {
-                    bestScore = overlap;
-                    bestLine = parsedCase.line;
-                }
-            }
-
-            if (bestScore > 0) {
-                return bestLine;
-            }
-
-            return undefined;
-        } catch (e) {
-            log.trace(localize('failed.to.resolve.doctest.line', 'Failed to resolve doctest source line for {0}: {1}', testName, String(e)));
-            return undefined;
-        }
-    }
-
-    private parseDoctestCases(content: string): { name: string; normalizedName: string; line: number }[] {
-        const parsedCases: { name: string; normalizedName: string; line: number }[] = [];
-        const doctestQuotedRegex = /\b(?:TEST_CASE(?:_FIXTURE)?|TEST_CASE_TEMPLATE(?:_DEFINE|_INVOKE)?|TEMPLATE_TEST_CASE(?:_SIG)?|SCENARIO)\s*\(\s*"((?:\\"|[^"])*)"/g;
-        const doctestRawRegex = /\b(?:TEST_CASE(?:_FIXTURE)?|TEST_CASE_TEMPLATE(?:_DEFINE|_INVOKE)?|TEMPLATE_TEST_CASE(?:_SIG)?|SCENARIO)\s*\(\s*R"([A-Za-z0-9_]*)\((.*?)\)\1"/gs;
-
-        const addCase = (name: string, index: number) => {
-            const trimmed = name.trim();
-            if (!trimmed) {
-                return;
-            }
-
-            parsedCases.push({
-                name: trimmed,
-                normalizedName: this.normalizeDiscoveredTestName(trimmed),
-                line: content.slice(0, index).split(/\r\n|\r|\n/).length
-            });
-        };
-
-        let match: RegExpExecArray | null;
-        while ((match = doctestQuotedRegex.exec(content)) !== null) {
-            addCase(match[1], match.index);
-        }
-        while ((match = doctestRawRegex.exec(content)) !== null) {
-            addCase(match[2], match.index);
-        }
-
-        return parsedCases;
-    }
-
-    private normalizeDiscoveredTestName(testName: string): string {
-        return testName
-            .toLowerCase()
-            .replace(/^\s*scenario:\s*/, '')
-            .replace(/\[[^\]]*\]/g, ' ')
-            .replace(/[^a-z0-9]+/g, ' ')
-            .trim()
-            .replace(/\s+/g, ' ');
+        const declaration = findTestCaseDeclaration(declarationCache.inSourcesOf(testExe, targetInfo), test.name);
+        return declaration ? { file: declaration.file, line: declaration.line } : undefined;
     }
 
     private createTestItemAndSuiteTree(testName: string, testExplorerRoot: vscode.TestItem, initializedTestExplorer: vscode.TestController, uri?: vscode.Uri): TestAndParentSuite {
@@ -1386,9 +1438,10 @@ export class CTestDriver implements vscode.Disposable {
             if (this.tests && this.tests.kind === 'ctestInfo') {
                 // Build a map from executable paths to source files using the code model
                 const executableToSources = this.buildExecutableToSourcesMap(driver.codeModelContent);
+                const declarationCache = new TestCaseDeclarationCache();
 
                 this.tests.tests.forEach(test => {
-                    const { file: testDefFile, line: testDefLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph);
+                    const { file: testDefFile, line: testDefLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph, declarationCache);
 
                     const testAndParentSuite = this.createTestItemAndSuiteTree(test.name, testExplorerRoot, initializedTestExplorer, testDefFile ? vscode.Uri.file(testDefFile) : undefined);
                     const testItem = testAndParentSuite.test;
@@ -1557,17 +1610,24 @@ export class CTestDriver implements vscode.Disposable {
     getTestsForOutline(codeModelContent?: CodeModelContent | null): { name: string; executablePath: string; sourceFilePath?: string; sourceFileLine?: number }[] {
         if (this.tests) {
             const executableToSources = codeModelContent ? this.buildExecutableToSourcesMap(codeModelContent) : undefined;
+            const declarationCache = new TestCaseDeclarationCache();
 
-            return this.tests.tests.map(test => {
-                const { file: sourceFilePath, line: sourceFileLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph);
+            function hasCommand(arr: CTestInfo['tests'][0]): arr is (CTestInfo['tests'][0] & { command: string[] }) {
+                return !!arr.command?.length;
+            }
 
-                return {
-                    name: test.name,
-                    executablePath: test.command[0],
-                    sourceFilePath,
-                    sourceFileLine
-                };
-            });
+            return this.tests.tests
+                .filter(hasCommand)
+                .map(test => {
+                    const { file: sourceFilePath, line: sourceFileLine } = this.resolveTestSourceLocation(test, executableToSources, this.tests!.backtraceGraph, declarationCache);
+
+                    return {
+                        name: test.name,
+                        executablePath: test.command[0],
+                        sourceFilePath,
+                        sourceFileLine
+                    };
+                });
         }
         return [];
     }
@@ -1940,7 +2000,7 @@ export class CTestDriver implements vscode.Disposable {
     private testWorkingDirectory(testName: string): string {
         const property = this.tests?.tests
             .find(test => test.name === testName)?.properties
-            .find(prop => prop.name === 'WORKING_DIRECTORY');
+            ?.find(prop => prop.name === 'WORKING_DIRECTORY');
 
         if (typeof (property?.value) === 'string') {
             return property.value;
@@ -1967,7 +2027,7 @@ export class CTestDriver implements vscode.Disposable {
         const env: { [key: string]: string } = {};
         const property = this.tests?.tests
             .find(test => test.name === testName)?.properties
-            .find(prop => prop.name === 'ENVIRONMENT');
+            ?.find(prop => prop.name === 'ENVIRONMENT');
 
         if (property) {
             const entries = Array.isArray(property.value) ? property.value : [property.value];
@@ -2310,15 +2370,17 @@ export class CTestDriver implements vscode.Disposable {
                 }
             }
         } else {
-            const testProgram = this.testProgram(test.id);
-            if (!testProgram) {
-                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
-                return false;
-            }
             const folder = this.getTestRootFolder(test);
             const project = await this.projectController?.getProjectForFolder(folder);
             if (!project) {
                 this.ctestErrored(test, run, { message: localize('no.project.found', 'No project found for folder {0}', folder) });
+                return false;
+            }
+            // Every project in a multi-root workspace shares one Test Explorer, so the driver handling this run can
+            // belong to a different project than the test. Read the program from the driver that discovered the test.
+            const testProgram = project.cTestController.testProgram(test.id);
+            if (!testProgram) {
+                this.ctestErrored(test, run, { message: localize('test.program.not.found', 'Could not determine the test program for test {0}', test.id) });
                 return false;
             }
             if (!foundTarget.has(project)) {
