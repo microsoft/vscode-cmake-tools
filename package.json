@@ -1035,6 +1035,13 @@
             "type": "string",
             "description": "%cmake-tools.taskDefinitions.properties.preset.description%"
           },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "%cmake-tools.taskDefinitions.properties.args.description%"
+          },
           "options": {
             "type": "object",
             "description": "%cmake-tools.taskDefinitions.properties.options.description%",

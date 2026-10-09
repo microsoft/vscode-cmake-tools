@@ -15,6 +15,7 @@ import { UseCMakePresets } from './config';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import * as expand from '@cmt/expand';
+import { mergeBuildArgs } from '@cmt/taskArgs';
 import { CommandResult } from 'vscode-cmake-tools';
 import { CompileOutputConsumer } from '@cmt/diagnostics/build';
 import collections from '@cmt/diagnostics/collections';
@@ -41,6 +42,7 @@ export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     command: string; // Command is either "build", "configure", "install", "test", "package" or "workflow".
     targets?: string[]; // only in "build" command
     preset?: string;
+    args?: string[]; // additional arguments passed to the underlying cmake command
     options?: { cwd?: string; environment?: Environment };
 }
 
@@ -229,7 +231,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
         const task = new vscode.Task(definition, workspaceFolder, taskName, CMakeTaskProvider.CMakeSourceStr,
             new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
                 // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {})
+                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, {}, resolvedDefinition.args)
             ), []);
         task.group = (commandType === CommandType.build || commandType === CommandType.cleanRebuild) ? vscode.TaskGroup.Build : undefined;
         task.detail = localize('cmake.template.task', 'CMake template {0} task', taskName);
@@ -245,7 +247,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             const workspaceFolder: vscode.WorkspaceFolder | undefined = (task.scope && typeof task.scope === 'object') ? task.scope as vscode.WorkspaceFolder : undefined;
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options)
+                    new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, resolvedDefinition.args)
                 ), []);
             return resolvedTask;
         }
@@ -265,7 +267,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
             });
             const resolvedTask: CMakeTask = new vscode.Task(definition, workspaceFolder ?? vscode.TaskScope.Workspace, definition.label, CMakeTaskProvider.CMakeSourceStr,
                 new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> => {
-                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options);
+                    const terminal = new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.targets, workspaceFolder, resolvedDefinition.preset, resolvedDefinition.options, resolvedDefinition.args);
                     const listener = terminal.onDidClose((exitCode) => {
                         listener.dispose();
                         exitCodeResolve(exitCode);
@@ -309,6 +311,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
                 command: task.definition.command,
                 targets: taskTargets || targets,
                 preset: task.definition.preset,
+                args: task.definition.args,
                 options: task.definition.options
             };
 
@@ -384,7 +387,7 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
         return this.closeEmitter.event;
     }
 
-    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }) {
+    constructor(private command: string, private targets: string[], private workspaceFolder?: vscode.WorkspaceFolder, private preset?: string, private options?: { cwd?: string; environment?: Environment }, private args?: string[]) {
         super();
     }
 
@@ -615,6 +618,16 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             }
             return -1;
         }
+
+        // Append any additional user-provided args from the task definition. They are inserted as
+        // `cmake --build` arguments, i.e. before the `--` build-tool-args separator when present, so
+        // flags such as `-j` or `--clean-first` reach CMake rather than the underlying build tool
+        // (issue #2554).
+        if (this.args && this.args.length > 0) {
+            const extraArgs: string[] = await expand.expandStrings(this.args, cmakeDriver.expansionOptions);
+            args = mergeBuildArgs(args, extraArgs);
+        }
+
         this.writeEmitter.fire(localize("build.started", "{0} task started....", taskName) + endOfLine);
         this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + endOfLine);
 
