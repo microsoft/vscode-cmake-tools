@@ -2,6 +2,15 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as logging from '@cmt/logging';
 import { ProjectController } from '@cmt/projectController';
+import { CMakeProject } from '@cmt/cmakeProject';
+import {
+    debugTestFromCodeLensCommand,
+    makeTestCodeLensCommand,
+    normalizeTestName,
+    projectIdOf,
+    runTestFromCodeLensCommand,
+    selectProjectForDocumentTest
+} from '@cmt/ui/testCodeLensRouting';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -52,17 +61,19 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
                     new vscode.Position(testLoc.line, 0)
                 );
 
-                codeLenses.push(new vscode.CodeLens(range, {
-                    title: localize('test.codelens.run', '$(run) Run'),
-                    command: 'cmake.runTestFromCodeLens',
-                    arguments: [testLoc.testName]
-                }));
+                codeLenses.push(new vscode.CodeLens(range, makeTestCodeLensCommand(
+                    runTestFromCodeLensCommand,
+                    localize('test.codelens.run', '$(run) Run'),
+                    testLoc.testName,
+                    testLoc.projectId
+                )));
 
-                codeLenses.push(new vscode.CodeLens(range, {
-                    title: localize('test.codelens.debug', '$(debug) Debug'),
-                    command: 'cmake.debugTestFromCodeLens',
-                    arguments: [testLoc.testName]
-                }));
+                codeLenses.push(new vscode.CodeLens(range, makeTestCodeLensCommand(
+                    debugTestFromCodeLensCommand,
+                    localize('test.codelens.debug', '$(debug) Debug'),
+                    testLoc.testName,
+                    testLoc.projectId
+                )));
             }
 
             return codeLenses;
@@ -99,12 +110,13 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
         const mappedLocations: TestLocation[] = [];
         const knownTestNames = new Set<string>();
         const normalizedKnownTestNames = new Set<string>();
+        const projects = this.projectController.getAllCMakeProjects();
 
-        for (const project of this.projectController.getAllCMakeProjects()) {
+        for (const project of projects) {
             const testsForOutline = project.cTestController.getTestsForOutline(project.codeModelContent);
             for (const testName of project.cTestController.getTestNames() || []) {
                 knownTestNames.add(testName);
-                normalizedKnownTestNames.add(this.normalizeTestName(testName));
+                normalizedKnownTestNames.add(normalizeTestName(testName));
             }
 
             for (const testInfo of testsForOutline) {
@@ -116,17 +128,20 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
                     mappedLocations.push({
                         testName: testInfo.name,
                         line: Math.max(0, testInfo.sourceFileLine - 1),
-                        executablePath: testInfo.executablePath
+                        executablePath: testInfo.executablePath,
+                        projectId: projectIdOf(project)
                     });
                 }
             }
         }
 
-        const parsedLocations = this.findDoctestLocations(document, knownTestNames, normalizedKnownTestNames);
-        const parsedNames = new Set(parsedLocations.map(location => location.testName));
+        const parsedLocations = this.findDoctestLocations(document, knownTestNames, normalizedKnownTestNames, projects);
+        // Keyed by project as well as by test name, so that a same-named test in another project is
+        // not dropped in favor of a parsed location belonging to a different project.
+        const parsedNames = new Set(parsedLocations.map(location => `${location.projectId}:${location.testName}`));
         const resolvedLocations = parsedLocations.length > 0
             ? [
-                ...mappedLocations.filter(location => !parsedNames.has(location.testName)),
+                ...mappedLocations.filter(location => !parsedNames.has(`${location.projectId}:${location.testName}`)),
                 ...parsedLocations
             ]
             : mappedLocations;
@@ -142,9 +157,10 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     /**
-     * Fallback for cases where ctest source metadata is missing.
+     * Fallback for cases where ctest source metadata is missing. A location is only surfaced when
+     * the owning project can be determined, so that the CodeLens always routes to a single project.
      */
-    private findDoctestLocations(document: vscode.TextDocument, knownTestNames: Set<string>, normalizedKnownTestNames: Set<string>): TestLocation[] {
+    private findDoctestLocations(document: vscode.TextDocument, knownTestNames: Set<string>, normalizedKnownTestNames: Set<string>, projects: CMakeProject[]): TestLocation[] {
         const text = document.getText();
         const locations: TestLocation[] = [];
         const doctestRegex = /\bTEST_CASE\s*\(\s*"([^"]+)"/g;
@@ -159,14 +175,21 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
             // If tests are already discovered, only show known test names.
             if (knownTestNames.size > 0
                 && !knownTestNames.has(testName)
-                && !normalizedKnownTestNames.has(this.normalizeTestName(testName))) {
+                && !normalizedKnownTestNames.has(normalizeTestName(testName))) {
+                continue;
+            }
+
+            const project = selectProjectForDocumentTest(projects, document.uri.fsPath, testName);
+            if (!project) {
+                log.debug(localize('test.codelens.owner.not.found', "Skipping CodeLens for test '{0}': unable to determine the owning CMake project.", testName));
                 continue;
             }
 
             locations.push({
                 testName,
                 line: document.positionAt(match.index).line,
-                executablePath: ''
+                executablePath: '',
+                projectId: projectIdOf(project)
             });
         }
 
@@ -176,7 +199,7 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
     private deduplicateLocations(locations: TestLocation[]): TestLocation[] {
         const deduped = new Map<string, TestLocation>();
         for (const location of locations) {
-            const key = `${location.testName}:${location.line}`;
+            const key = `${location.projectId}:${location.testName}:${location.line}`;
             if (!deduped.has(key)) {
                 deduped.set(key, location);
             }
@@ -192,16 +215,6 @@ export class TestCodeLensProvider implements vscode.CodeLensProvider {
         return filePath.toLowerCase().replace(/\\/g, '/');
     }
 
-    private normalizeTestName(testName: string): string {
-        return testName
-            .toLowerCase()
-            .replace(/^\s*scenario:\s*/, '')
-            .replace(/\[[^\]]*\]/g, ' ')
-            .replace(/[^a-z0-9]+/g, ' ')
-            .trim()
-            .replace(/\s+/g, ' ');
-    }
-
     dispose() {
         this.onDidChangeCodeLensesEmitter.dispose();
     }
@@ -211,6 +224,8 @@ interface TestLocation {
     testName: string;
     line: number;
     executablePath: string;
+    /** Identity of the CMake project that owns this test; carried in the CodeLens arguments. */
+    projectId: string;
 }
 
 interface CachedLocations {
