@@ -16,5 +16,9 @@
 	"search": "Búsqueda",
 	"save": "Guardar",
 	"key": "Clave",
-	"value": "Valor"
+	"value": "Valor",
+	"source": "Origen",
+	"not.set.in.presets": "Caché de Cmake",
+	"differs.from.preset": "Se cambió en la memoria caché",
+	"matches.preset": "Coincidencias preestablecidas"
 }

@@ -860,7 +860,13 @@ export class CMakeListsModifier implements vscode.Disposable {
         project = project ?? (uri ? this.projectForUri(uri) : undefined);
 
         if (!project) {
-            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
+            // Only surface this when the user explicitly invoked the command. On the
+            // automatic (file watcher) path, stay silent so we don't nag on every add.
+            if (always) {
+                void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
+            } else {
+                log.debug(localize('add.file.no.code.model.skip', 'Skipping automatic add of {0} to CMakeLists.txt: no valid code model.', uri?.fsPath ?? '?'));
+            }
             return;
         }
 
@@ -874,7 +880,13 @@ export class CMakeListsModifier implements vscode.Disposable {
             return;
         }
         if (!project.codeModelContent) {
-            void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
+            // Only surface this when the user explicitly invoked the command. On the
+            // automatic (file watcher) path, stay silent so we don't nag on every add.
+            if (always) {
+                void vscode.window.showWarningMessage(localize('add.file.no.code.model', 'Adding a file without a valid code model'));
+            } else {
+                log.debug(localize('add.file.no.code.model.skip', 'Skipping automatic add of {0} to CMakeLists.txt: no valid code model.', uri?.fsPath ?? '?'));
+            }
             return;
         }
 
@@ -1006,7 +1018,13 @@ export class CMakeListsModifier implements vscode.Disposable {
         project = project ?? (uri ? this.projectForUri(uri) : undefined);
 
         if (!project) {
-            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
+            // Only surface this when the user explicitly invoked the command. On the
+            // automatic (file watcher) path, stay silent so we don't nag on every delete.
+            if (always) {
+                void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
+            } else {
+                log.debug(localize('delete.file.no.code.model.skip', 'Skipping automatic removal of {0} from CMakeLists.txt: no valid code model.', uri?.fsPath ?? '?'));
+            }
             return;
         }
 
@@ -1021,7 +1039,13 @@ export class CMakeListsModifier implements vscode.Disposable {
         }
 
         if (!project.codeModelContent) {
-            void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
+            // Only surface this when the user explicitly invoked the command. On the
+            // automatic (file watcher) path, stay silent so we don't nag on every delete.
+            if (always) {
+                void vscode.window.showWarningMessage(localize('delete.file.no.code.model', 'Deleting a file without a valid code model'));
+            } else {
+                log.debug(localize('delete.file.no.code.model.skip', 'Skipping automatic removal of {0} from CMakeLists.txt: no valid code model.', uri?.fsPath ?? '?'));
+            }
             return;
         }
 

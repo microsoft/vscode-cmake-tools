@@ -16,5 +16,9 @@
 	"search": "Rechercher",
 	"save": "Enregistrer",
 	"key": "Clé",
-	"value": "Valeur"
+	"value": "Valeur",
+	"source": "Source",
+	"not.set.in.presets": "Mettre en cache CMake",
+	"differs.from.preset": "Modifié dans la mise en cache",
+	"matches.preset": "Correspond au préréglage"
 }

@@ -26,6 +26,7 @@ const originalLoad = (Module as any)._load;
             Position,
             Range,
             Uri,
+            ViewColumn: { One: 1 },
             workspace: {
                 getConfiguration: () => new Proxy({}, {
                     get: (_target: any, prop: string) => {
@@ -42,6 +43,13 @@ const originalLoad = (Module as any)._load;
             },
             window: {
                 createOutputChannel: () => noopObj,
+                createWebviewPanel: () => ({
+                    title: '',
+                    visible: true,
+                    webview: {
+                        html: ''
+                    }
+                }),
                 showErrorMessage: noop,
                 showWarningMessage: noop,
                 showInformationMessage: noop,
@@ -76,4 +84,3 @@ const originalLoad = (Module as any)._load;
     }
     return originalLoad.call(this, request, parent, isMain);
 };
-

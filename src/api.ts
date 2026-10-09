@@ -152,17 +152,17 @@ class CMakeProjectWrapper implements api.Project {
 
     build(targets?: string[]): Promise<void> {
         logApiTelemetry('build');
-        return withErrorCheck('build', () => this.project.build(targets));
+        return withErrorCheck('build', () => this.project.build(targets, undefined, undefined, undefined, true));
     }
 
     async buildWithResult(targets?: string[], cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
         logApiTelemetry('buildWithResult');
-        return this.project.build(targets, undefined, undefined, cancellationToken);
+        return this.project.build(targets, undefined, undefined, cancellationToken, true);
     }
 
     async ctestWithResult(tests?: string[], cancellationToken?: vscode.CancellationToken): Promise<api.CommandResult> {
         logApiTelemetry('ctestWithResult');
-        return this.project.ctest(undefined, new CTestOutputLogger(), tests, cancellationToken);
+        return this.project.ctest(undefined, new CTestOutputLogger(), tests, cancellationToken, undefined, true);
     }
 
     install(): Promise<void> {

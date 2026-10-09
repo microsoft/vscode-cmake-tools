@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20260902-1000-Experimental"
+	Name="(empty)"
+	Generator="ctest-3.30.3"
+	OSName="Windows"
+	Hostname="localhost"
+	>
+	<Testing>
+		<StartDateTime>Sep 02 10:00 Central Daylight Time</StartDateTime>
+		<StartTestTime>1783004664</StartTestTime>
+		<TestList>
+			<Test>./Suite1.Test1</Test>
+			<Test>./Suite2.DoesntRun</Test>
+		</TestList>
+		<Test Status="passed">
+			<Name>Suite1.Test1</Name>
+			<Path>.</Path>
+			<FullName>./Suite1.Test1</FullName>
+			<FullCommandLine>C:\build\bin\testapp.exe --gtest_filter=Suite1.Test1</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>0.037</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value></Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<Test Status="notrun">
+			<Name>Suite2.DoesntRun</Name>
+			<Path>.</Path>
+			<FullName>./Suite2.DoesntRun</FullName>
+			<FullCommandLine></FullCommandLine>
+			<Results>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Disabled</Value>
+				</NamedMeasurement>
+			</Results>
+		</Test>
+		<EndDateTime>Sep 02 10:00 Central Daylight Time</EndDateTime>
+		<EndTestTime>1783004665</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

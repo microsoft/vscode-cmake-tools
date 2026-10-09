@@ -222,7 +222,10 @@ export type OsName = "Windows" | "Linux" | "macOS";
 
 export type VendorVsSettings = {
     'microsoft.com/VisualStudioSettings/CMake/1.0': {
-        hostOS: OsName | OsName[];
+        hostOS?: OsName | OsName[];
+        intelliSenseMode?: string;
+        sourceDir?: string;
+        vsInstanceVersion?: number;
         [key: string]: any;
     };
     [key: string]: any;
@@ -231,6 +234,7 @@ export type VendorVsSettings = {
 export interface ConfigurePreset extends PresetPrivate, api.ConfigurePreset {
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
+    __vsDevEnvInstallationPath?: string; // Private field: install path of the VS instance pinned via the vsInstanceVersion vendor field, used to prefer that instance's bundled CMake.
 }
 
 export interface InheritsConfigurePreset extends api.InheritsConfigurePreset, PresetPrivate {}
@@ -906,6 +910,20 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     }
 
+    // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, check the vendor field
+    // for a preferred VS major version (e.g., 17 for VS2022, 18 for VS2026).
+    // This allows users to pin a specific VS version for the dev environment in Ninja presets.
+    let vendorVsVersion: number | undefined;
+    if (!vsInstall) {
+        const vendorSettings = (opts.preset.vendor as VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0'];
+        if (vendorSettings?.vsInstanceVersion) {
+            vendorVsVersion = vendorSettings.vsInstanceVersion;
+            log.info(localize('using.vendor.vs.version',
+                "Configure preset {0}: Using Visual Studio major version {1} from vendor settings.",
+                opts.preset.name, vendorVsVersion));
+        }
+    }
+
     // If VS instance wasn't chosen using CMAKE_GENERATOR_INSTANCE, look up a matching instance
     // that supports the specified toolset.
     if (!vsInstall) {
@@ -931,6 +949,12 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
                         vsInstall = vs;
                         break;
                     }
+                } else if (vendorVsVersion) {
+                    // If a VS major version is specified via vendor settings, match against it.
+                    if (vs.installationVersion.startsWith(vendorVsVersion.toString())) {
+                        vsInstall = vs;
+                        break;
+                    }
                 } else if (!vsGeneratorVersion || vs.installationVersion.startsWith(vsGeneratorVersion.toString())) {
                     // If no toolset version specified then choose the latest VS instance for the given generator
                     vsInstall = vs;
@@ -951,6 +975,15 @@ async function getVsDevEnv(opts: VsDevEnvOptions): Promise<EnvironmentWithNull |
         }
     } else {
         log.info(localize('using.vs.instance', "Using developer environment from Visual Studio (instance {0}, version {1}, installed at {2})", vsInstall.instanceId, vsInstall.installationVersion, `"${vsInstall.installationPath}"`));
+
+        // When the VS instance was pinned via the vsInstanceVersion vendor field, remember its
+        // installation path so cmake discovery can prefer the CMake bundled with that same instance
+        // (see CMakeProject.getCMakePathofProject). Only do this for the vendor-pinned case so the
+        // default "latest VS" cmake behavior is preserved for every other preset.
+        if (vendorVsVersion && vsInstall.installationVersion.startsWith(vendorVsVersion.toString())) {
+            opts.preset.__vsDevEnvInstallationPath = vsInstall.installationPath;
+        }
+
         const vsEnv = await varsForVSInstallation(vsInstall, toolset.host!, arch, toolset.version);
         const compilerEnv = vsEnv ?? EnvironmentUtils.create();
 
@@ -2164,7 +2197,7 @@ async function getWorkflowPresetInheritsHelper(folder: string, preset: WorkflowP
     return preset;
 }
 
-export function configureArgs(preset: ConfigurePreset): string[] {
+export function configureArgs(preset: ConfigurePreset, cmakeVersion?: util.Version): string[] {
     const result: string[] = [];
 
     // CacheVariables
@@ -2195,21 +2228,21 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     // Warnings
     if (preset.warnings) {
         if (preset.warnings.dev !== undefined) {
-            result.push(preset.warnings.dev ? '-Wdev' : '-Wno-dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.warnings.dev ? '-Wdev' : '-Wno-dev', cmakeVersion));
         }
         if (preset.warnings.deprecated !== undefined) {
             result.push(preset.warnings.deprecated ? '-Wdeprecated' : '-Wno-deprecated');
         }
 
-        preset.warnings.uninitialized && result.push('--warn-uninitialized');
-        preset.warnings.unusedCli === false && result.push('--no-warn-unused-cli');
+        preset.warnings.uninitialized && result.push(util.modernizeCMakeDiagnosticFlag('--warn-uninitialized', cmakeVersion));
+        preset.warnings.unusedCli === false && result.push(util.modernizeCMakeDiagnosticFlag('--no-warn-unused-cli', cmakeVersion));
         preset.warnings.systemVars && result.push('--check-system-vars');
     }
 
     // Errors
     if (preset.errors) {
         if (preset.errors.dev !== undefined) {
-            result.push(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev');
+            result.push(util.modernizeCMakeDiagnosticFlag(preset.errors.dev ? '-Werror=dev' : '-Wno-error=dev', cmakeVersion));
         }
         if (preset.errors.deprecated !== undefined) {
             result.push(preset.errors.deprecated ? '-Werror=deprecated' : '-Wno-error=deprecated');

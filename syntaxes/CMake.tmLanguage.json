@@ -105,8 +105,9 @@
       "endCaptures": { "0": { "name": "punctuation.definition.string.end.cmake" } }
     },
     "generatorExpression": {
+      "comment": "Do not start a generator expression at escaped $< sequences, such as CMake regex patterns matching a literal generator expression prefix.",
       "name": "meta.generator-expression.cmake",
-      "begin": "\\$<",
+      "begin": "(?<!\\\\)\\$<",
       "beginCaptures": { "0": { "name": "punctuation.definition.generator-expression.begin.cmake" } },
       "end": ">",
       "endCaptures": { "0": { "name": "punctuation.definition.generator-expression.end.cmake" } },

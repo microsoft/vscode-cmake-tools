@@ -312,7 +312,7 @@ You can substitute the value of any variable in the CMake cache by adding a `com
 You can also construct launch.json configurations that allow you to debug tests in the Test Explorer.
 
 > **Note:**
-> These launch.json configurations are to be used specifically from the UI of the Test Explorer. 
+> These configurations are primarily intended to be used from the Test Explorer UI, where the specific test being debugged is already known. You can also start them directly from the Run and Debug view (F5): because that entry point has no associated test, CMake Tools will prompt you to pick one of the discovered CTest tests and resolve the `cmake.test*` placeholders for it. If you only want these configurations to be launched from the Test Explorer, add `"presentation": { "hidden": true }` (as shown below) so they don't appear in the Run and Debug dropdown.
 
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
 the `args` field, `cmake.testWorkingDirectory` for the `cwd` field, and `cmake.testEnvironment` for the `environment` field.

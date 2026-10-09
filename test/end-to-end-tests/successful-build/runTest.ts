@@ -1,6 +1,7 @@
 import * as path from 'path';
 
 import { runTests } from '@vscode/test-electron';
+import { vscodeTestVersion } from '../../vscodeTestVersion';
 
 async function main() {
     try {
@@ -23,7 +24,7 @@ async function main() {
         };
 
         // Download VS Code, unzip it and run the integration test
-        await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
+        await runTests({ version: vscodeTestVersion, launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
     } catch (err) {
         console.error(err);
         console.error('Failed to run tests');

@@ -1,6 +1,7 @@
 import * as path from 'path';
 
 import { runTests } from '@vscode/test-electron';
+import { vscodeTestVersion } from '../../vscodeTestVersion';
 
 async function main() {
     try {
@@ -13,7 +14,7 @@ async function main() {
         const extensionTestsPath = path.resolve(__dirname, './index');
         const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/smoke/badProject');
         const launchArgs = ["--disable-extensions", "--disable-workspace-trust", testWorkspace];
-        await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
+        await runTests({ version: vscodeTestVersion, launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
 
     } catch (err) {
         console.error(err);

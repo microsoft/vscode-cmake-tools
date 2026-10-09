@@ -33,6 +33,7 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
+import { shouldShowInitializingView, isDefinitivelyAbsentError } from '@cmt/activation';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
 import { DEFAULT_VARIANTS } from '@cmt/kits/variant';
@@ -49,7 +50,7 @@ import { DebugAdapterNamedPipeServerDescriptorFactory } from '@cmt/debug/cmakeDe
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { DebugConfigurationProvider, DynamicDebugConfigurationProvider } from '@cmt/debug/cmakeDebugger/debugConfigurationProvider';
-import { deIntegrateTestExplorer } from "@cmt/ctest";
+import { deIntegrateTestExplorer, CTestLaunchConfigurationProvider } from "@cmt/ctest";
 import collections from '@cmt/diagnostics/collections';
 import { LanguageServiceData } from './languageServices/languageServiceData';
 import { CMakeListsModifier } from './cmakeListsModifier';
@@ -62,6 +63,7 @@ let pinnedCommands: PinnedCommands;
 const log = logging.createLogger('extension');
 
 const multiProjectModeKey = 'cmake:multiProject';
+const initializingContextKey = 'cmake:isInitializing';
 export const hideLaunchCommandKey = 'cmake:hideLaunchCommand';
 export const hideDebugCommandKey = 'cmake:hideDebugCommand';
 export const hideBuildCommandKey = 'cmake:hideBuildCommand';
@@ -149,6 +151,7 @@ export class ExtensionManager implements vscode.Disposable {
         { language: this.CMAKE_LANGUAGE, scheme: "untitled" }
     ];
     private languageServicesDisposables: vscode.Disposable[] = [];
+    private languageServiceData?: LanguageServiceData;
 
     private updateTouchBarVisibility(config: TouchBarConfig) {
         const touchBarVisible = config.visibility === "default";
@@ -163,10 +166,10 @@ export class ExtensionManager implements vscode.Disposable {
      */
     public async init() {
         if (this.workspaceConfig.enableLanguageServices) {
-            await this.enableLanguageServices();
-            this.workspaceConfig.onChange('enableLanguageServices', async (value) => {
+            this.enableLanguageServices();
+            this.workspaceConfig.onChange('enableLanguageServices', (value) => {
                 if (value) {
-                    await this.enableLanguageServices();
+                    this.enableLanguageServices();
                 } else {
                     this.disposeLanguageServices();
                     telemetry.logEvent('disableLanguageServices');
@@ -186,7 +189,7 @@ export class ExtensionManager implements vscode.Disposable {
             cmakePath = await workspaceContext.getCMakePath() || '';
         }
         // initialize the state of the cmake exe
-        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig);
+        await getCMakeExecutableInformation(cmakePath, this.workspaceConfig, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 
         await util.setContextValue("cmake:testExplorerIntegrationEnabled", this.workspaceConfig.testExplorerIntegrationEnabled);
         if (this.workspaceConfig.testExplorerIntegrationEnabled) {
@@ -474,26 +477,33 @@ export class ExtensionManager implements vscode.Disposable {
     private cppToolsAPI?: cpt.CppToolsApi;
     private configProviderRegistered?: boolean = false;
 
-    private async enableLanguageServices() {
-        try {
-            const languageServices = await LanguageServiceData.create();
-            this.languageServicesDisposables.push(vscode.languages.registerHoverProvider(
-                this.CMAKE_SELECTOR,
-                languageServices
-            ));
-            this.languageServicesDisposables.push(vscode.languages.registerCompletionItemProvider(
-                this.CMAKE_SELECTOR,
-                languageServices
-            ));
-        } catch {
+    private enableLanguageServices() {
+        // Defensive guard against duplicate registrations if this is called
+        // more than once (e.g. via the enableLanguageServices onChange handler).
+        this.disposeLanguageServices();
+
+        // Construct the provider synchronously; the bundled language-service
+        // data is loaded on first hover/completion rather than during
+        // activation. Register the providers and language configuration
+        // immediately so language services work without blocking activation on
+        // any asset I/O.
+        const languageServices = LanguageServiceData.create(() => {
             log.error(
                 localize(
                     "language.service.failed",
                     "Failed to initialize language services"
                 )
             );
-        }
-
+        });
+        this.languageServiceData = languageServices;
+        this.languageServicesDisposables.push(vscode.languages.registerHoverProvider(
+            this.CMAKE_SELECTOR,
+            languageServices
+        ));
+        this.languageServicesDisposables.push(vscode.languages.registerCompletionItemProvider(
+            this.CMAKE_SELECTOR,
+            languageServices
+        ));
         this.languageServicesDisposables.push(vscode.languages.setLanguageConfiguration(
             this.CMAKE_LANGUAGE,
             {
@@ -548,12 +558,10 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     private disposeLanguageServices() {
+        this.languageServiceData?.dispose();
+        this.languageServiceData = undefined;
         this.languageServicesDisposables.forEach(sub => sub.dispose());
-    }
-
-    private getProjectsForWorkspaceFolder(folder?: vscode.WorkspaceFolder): CMakeProject[]  | undefined {
-        folder = this.getWorkspaceFolder(folder);
-        return this.projectController.getProjectsForWorkspaceFolder(folder);
+        this.languageServicesDisposables = [];
     }
 
     private getWorkspaceFolder(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
@@ -578,7 +586,7 @@ export class ExtensionManager implements vscode.Disposable {
      * @returns `false` if there is not active CMakeProject, or it has no active kit
      * and the user cancelled the kit selection dialog.
      */
-    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject): Promise<boolean> {
+    private async ensureActiveConfigurePresetOrKit(cmakeProject?: CMakeProject, reconfigureAfterSelection: boolean = true): Promise<boolean> {
         if (!cmakeProject) {
             cmakeProject = this.getActiveProject();
         }
@@ -591,7 +599,7 @@ export class ExtensionManager implements vscode.Disposable {
             if (cmakeProject.configurePreset) {
                 return true;
             }
-            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder);
+            const didChoosePreset = await this.selectConfigurePreset(cmakeProject.workspaceFolder, reconfigureAfterSelection);
             if (!didChoosePreset && !cmakeProject.configurePreset) {
                 return false;
             }
@@ -611,7 +619,7 @@ export class ExtensionManager implements vscode.Disposable {
                 return true;
             }
             // Ask the user what they want.
-            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder);
+            const didChooseKit = await this.selectKit(cmakeProject.workspaceFolder, cmakeProject.folderPath, reconfigureAfterSelection);
             if (!didChooseKit && !cmakeProject.activeKit) {
                 // The user did not choose a kit and kit isn't set in other way such as setKitByName
                 return false;
@@ -750,7 +758,10 @@ export class ExtensionManager implements vscode.Disposable {
     }
 
     async configureExtensionInternal(trigger: ConfigureTrigger, project: CMakeProject): Promise<ConfigureResult> {
-        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project)) {
+        // Selection is only a prerequisite here; this method runs its own configure right after, so
+        // suppress the selection-time automatic reconfigure to avoid configuring the project twice
+        // (e.g. configure-on-open opening the preset picker and then configuring). See #5050.
+        if (trigger !== ConfigureTrigger.configureWithCache && !await this.ensureActiveConfigurePresetOrKit(project, false)) {
             return { exitCode: -1, resultType: ConfigureResultType.Other };
         }
 
@@ -1342,29 +1353,49 @@ export class ExtensionManager implements vscode.Disposable {
     /**
     * Show UI to allow the user to select an active kit
     */
-    async selectKit(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectKit(folder?: vscode.WorkspaceFolder, sourceDirectory?: string, reconfigureAfterSelection: boolean = true): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
             return '';
         }
 
-        const cmakeProject = this.getProjectsForWorkspaceFolder(folder);
-        if (!cmakeProject) {
+        // Resolve the exact project to select a kit for. When triggered automatically for a
+        // specific project (e.g. configure-on-open), the caller passes that project's source
+        // directory so we target the correct project by identity — even when a workspace folder
+        // contains multiple CMake projects, or when a different folder holds the active editor.
+        // Previously this always operated on the active project, which in a multi-root workspace
+        // caused the automatic kit prompt to be titled for, and applied to, whichever folder had
+        // the active editor rather than the folder that actually triggered configuration. #5011
+        let targetProject: CMakeProject | undefined;
+        if (sourceDirectory) {
+            targetProject = await this.projectController.getProjectForFolder(sourceDirectory);
+        } else if (folder) {
+            targetProject = await this.projectController.getProjectForFolder(folder.uri.fsPath);
+        }
+        if (!targetProject) {
+            // Manual invocation (status bar / command palette) with no folder: use the active project.
+            targetProject = this.getActiveProject();
+        }
+        if (!targetProject) {
             return '';
         }
 
         const activeProject = this.getActiveProject();
-        const kitSelected = await activeProject?.kitsController.selectKit();
+        const kitSelected = await targetProject.kitsController.selectKit(reconfigureAfterSelection);
 
         let kitSelectionType;
-        const activeKit = activeProject?.activeKit;
-        if (activeKit) {
-            this.statusBar.setActiveKitName(activeKit.name);
-            if (activeKit.name === "__unspec__") {
+        const selectedKit = targetProject?.activeKit;
+        if (selectedKit) {
+            // The status bar reflects the active project, so only update it when the kit was
+            // selected for the active project (otherwise leave the active project's kit shown).
+            if (targetProject === activeProject) {
+                this.statusBar.setActiveKitName(selectedKit.name);
+            }
+            if (selectedKit.name === "__unspec__") {
                 kitSelectionType = "unspecified";
             } else {
-                if (activeKit.visualStudio ||
-                    activeKit.visualStudioArchitecture) {
+                if (selectedKit.visualStudio ||
+                    selectedKit.visualStudioArchitecture) {
                     kitSelectionType = "vsInstall";
                 } else {
                     kitSelectionType = "compilerSet";
@@ -1380,7 +1411,7 @@ export class ExtensionManager implements vscode.Disposable {
             telemetry.logEvent('kitSelection', telemetryProperties);
         }
 
-        return kitSelected ? activeKit?.name ?? '' : '';
+        return kitSelected ? selectedKit?.name ?? '' : '';
     }
 
     /**
@@ -2463,7 +2494,7 @@ export class ExtensionManager implements vscode.Disposable {
     /**
      * Show UI to allow the user to select an active configure preset
      */
-    async selectConfigurePreset(folder?: vscode.WorkspaceFolder): Promise<string> {
+    async selectConfigurePreset(folder?: vscode.WorkspaceFolder, reconfigureAfterSelection: boolean = true): Promise<string> {
         if (util.isTestMode()) {
             log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
             return '';
@@ -2479,7 +2510,7 @@ export class ExtensionManager implements vscode.Disposable {
             return '';
         }
 
-        const presetSelected = await project.presetsController.selectConfigurePreset();
+        const presetSelected = await project.presetsController.selectConfigurePreset(undefined, reconfigureAfterSelection);
         const configurePreset = project.configurePreset;
         this.statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
 
@@ -2676,6 +2707,14 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
             new DynamicDebugConfigurationProvider(),
             vscode.DebugConfigurationProviderTriggerKind.Dynamic)
     );
+
+    // Resolve the ${cmake.test*} placeholders when a test's launch configuration is started directly
+    // from the Run and Debug view (F5), rather than only from the Test Explorer (issue #4574).
+    const ctestLaunchResolver = new CTestLaunchConfigurationProvider(ext.projectController);
+    for (const debugType of ["cppdbg", "cppvsdbg", "lldb", "lldb-dap", "gdb"]) {
+        context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(debugType, ctestLaunchResolver));
+    }
+    log.debug(localize('registered.ctest.launch.resolver', 'Registered CTest launch configuration resolver for external debugger types.'));
 
     // List of functions that will be bound commands
     const funs: (keyof ExtensionManager)[] = [
@@ -3013,6 +3052,60 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
 }
 
 /**
+ * Cheap, best-effort preflight: returns true when a non-excluded workspace folder plausibly has a
+ * CMake project (one `CMakeLists.txt` stat per configured source dir; no project/kit/preset init,
+ * subprocess, or recursive scan). Fails open — only a definitive `ENOENT`/`ENOTDIR` counts as
+ * "no project", so transient errors (e.g. `EMFILE`) and `${command:...}` source dirs still show the
+ * placeholder. A false positive is harmless: the placeholder is inert and self-clears once init settles.
+ */
+async function workspaceHasCMakeProjectForInitialization(): Promise<boolean> {
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+        try {
+            const config = ConfigurationReader.loadConfig(folder);
+
+            // Mirror ProjectController.addFolder(): skip folders excluded from CMake project detection.
+            const normalizedFolder = util.normalizePath(folder.uri.fsPath, { normCase: 'always' });
+            const isExcluded = util.expandExcludePaths(config.exclude ?? [], folder)
+                .some(excluded => util.normalizePath(excluded, { normCase: 'always' }) === normalizedFolder);
+            if (isExcluded) {
+                continue;
+            }
+
+            const sourceDirectories = Array.isArray(config.sourceDirectory) ? config.sourceDirectory : [config.sourceDirectory];
+            const expansionOptions = { ...CMakeDriver.sourceDirExpansionOptions(folder.uri.fsPath), doNotSupportCommands: true };
+            for (const sourceDirectory of sourceDirectories) {
+                if (!sourceDirectory) {
+                    continue;
+                }
+                // Can't resolve ${command:...} cheaply; fail open.
+                if (sourceDirectory.includes('${command:')) {
+                    return true;
+                }
+                let sourceDir = util.lightNormalizePath(await expandString(sourceDirectory, expansionOptions));
+                if (path.basename(sourceDir).toLocaleLowerCase() === 'cmakelists.txt') {
+                    // Tolerate a sourceDirectory pointing directly at CMakeLists.txt (matches normalizeAndVerifySourceDir).
+                    sourceDir = path.dirname(sourceDir);
+                }
+                try {
+                    await fs.stat(path.join(sourceDir, 'CMakeLists.txt'));
+                    return true;
+                } catch (statErr) {
+                    if (isDefinitivelyAbsentError((statErr as NodeJS.ErrnoException)?.code)) {
+                        continue; // Definitively absent; keep checking.
+                    }
+                    return true; // Transient/ambiguous error (e.g. EMFILE): fail open.
+                }
+            }
+        } catch (e) {
+            // Config/expansion error: fail open.
+            log.debug(localize('init.preflight.inconclusive', 'CMake initialization preflight for folder {0} was inconclusive ({1}); showing the initializing placeholder.', folder.uri.fsPath, util.errorToString(e)));
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Starts up the extension.
  * @param context The extension context
  * @returns A promise that will resolve when the extension is ready for use
@@ -3075,12 +3168,30 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
     taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
     // Load a new extension manager
     extensionManager = await ExtensionManager.create(context);
-    await extensionManager.init();
 
-    // need the extensionManager to be initialized for this.
-    pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
+    // Two-phase reveal: show the CMake activity-bar container with an "initializing" placeholder (from
+    // viewsWelcome) as soon as the manager exists; real views/commands/status stay gated on
+    // cmake:enableFullFeatureSet until init() completes.
+    const languageServerOnlyMode = extensionManager.getWorkspaceConfig().languageServerOnlyMode;
+    // The placeholder is never shown in language-server-only mode, so skip the preflight there.
+    const hasCMakeProject = !languageServerOnlyMode && await workspaceHasCMakeProjectForInitialization();
+    const showInitializingView = shouldShowInitializingView(hasCMakeProject, languageServerOnlyMode);
+    try {
+        if (showInitializingView) {
+            // setContextValue (not setContextAndStore): this key gates only UI visibility, so it must
+            // not trigger an active-commands recompute.
+            await util.setContextValue(initializingContextKey, true);
+        }
+        await extensionManager.init();
 
-    return setup(context);
+        // need the extensionManager to be initialized for this.
+        pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
+
+        return await setup(context);
+    } finally {
+        // Always clear the placeholder so the icon never sticks on failure or when no project is found.
+        await util.setContextValue(initializingContextKey, false);
+    }
 }
 
 // Enable all or part of the CMake Tools palette commands

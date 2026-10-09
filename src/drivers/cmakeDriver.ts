@@ -533,6 +533,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const commandShell = process.platform === 'win32' ? proc.determineShell(command) : false;
         const shell = options?.shell ?? (commandShell || undefined) ?? this.config.shell ?? undefined;
         const exec_options = { ...options, environment, shell };
+        // Run driver subprocesses inside the project by default so directory-based version
+        // managers (mise, asdf, vfox, ...) can resolve the tool version. Without a cwd the
+        // child inherits the extension host's process.cwd(), which may be outside the workspace.
+        if (exec_options.cwd === undefined) {
+            exec_options.cwd = this.sourceDir || undefined;
+        }
         return proc.execute(command, args, consumer, exec_options);
     }
 
@@ -1401,7 +1407,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const init_cache_flags = await this.generateInitCacheFlags();
         // Make sure that we expand the config.configureArgs. Right now, preset args are expanded upon switching to the preset.
         const expandedConfigureArgs = await Promise.all(this.config.configureArgs.map(async (value) => expand.expandString(value, { ...this.expansionOptions, envOverride: await this.getConfigureEnvironment()})));
-        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset), expandedConfigureArgs);
+        const expandedArgs = init_cache_flags.concat(preset.configureArgs(configPreset, this.cmake.version), expandedConfigureArgs);
         const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
         const config = vscode.workspace.getConfiguration("cmake", configurationScope);
         const exportCompileCommandsSetting = config.get<boolean>("exportCompileCommandsFile");
@@ -1428,7 +1434,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Cache flags will construct the command line for cmake.
         const init_cache_flags = await this.generateInitCacheFlags();
         const initial_common_flags = extra_args.concat(this.config.configureArgs);
-        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat("--no-warn-unused-cli");
+        const noWarnUnusedCliFlag = util.modernizeCMakeDiagnosticFlag("--no-warn-unused-cli", this.cmake.version);
+        const common_flags = initial_common_flags.includes("--warn-unused-cli") ? initial_common_flags.filter(f => f !== "--warn-unused-cli") : initial_common_flags.concat(noWarnUnusedCliFlag);
         const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
         const final_flags = define_flags.concat(common_flags, init_cache_flags);
 
@@ -2015,7 +2022,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     }
                 }
             } else {
-                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding };
+                const exeOpt: proc.ExecutionOptions = { environment: buildcmd.build_env, outputEncoding: outputEnc, useAutoEncoding: isAutoEncoding, cwd: this.sourceDir || undefined };
                 this.cmakeBuildRunner.setBuildProcess(this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt));
             }
             const result = await this.cmakeBuildRunner.getResult();

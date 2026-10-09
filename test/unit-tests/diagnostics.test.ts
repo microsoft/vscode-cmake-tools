@@ -1155,6 +1155,35 @@ suite('Diagnostics', () => {
         expect(diagnostic.severity).to.eq('error');
     });
 
+    test('IAR final diagnostic is flushed at end of output (#5030)', async () => {
+        // The last diagnostic of a build has no trailing line after it. Without
+        // an end-of-output flush the IAR parser would drop it, because it only
+        // emits a diagnostic once a following line arrives.
+        build_consumer.config.updatePartial({ enabledOutputParsers: ['iar'] });
+        const lines = [
+            '  #include <first>',
+            '                 ^',
+            '"C:\\foo\\a.c",10  Error[Pe020]: identifier "first" is undefined',
+            '',
+            '  #include <last>',
+            '                ^',
+            '"C:\\foo\\b.c",20  Error[Pe065]: expected a ";"'
+        ];
+        feedLines(build_consumer, [], lines);
+
+        // Before flushing, only the first diagnostic (which was terminated by the
+        // blank line) has been emitted; the last one is still buffered.
+        expect(build_consumer.compilers.iar.diagnostics).to.have.length(1);
+
+        // resolveDiagnostics flushes the parsers, so the final diagnostic appears.
+        const resolved = await build_consumer.resolveDiagnostics('dummyPath');
+        expect(build_consumer.compilers.iar.diagnostics).to.have.length(2);
+
+        const codes = resolved.map(d => d.diag.code);
+        expect(codes).to.include('Pe020');
+        expect(codes).to.include('Pe065');
+    });
+
     test('Relative file resolution', async () => {
         const project_dir = getTestResourceFilePath('driver/workspace/test_project');
         build_consumer.config.updatePartial({ enabledOutputParsers: [ 'gcc' ] });

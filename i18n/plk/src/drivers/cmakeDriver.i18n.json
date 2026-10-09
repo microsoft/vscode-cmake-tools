@@ -39,7 +39,6 @@
 	"setting.new.variant": "Ustawianie nowego wariantu {0}",
 	"command.version.test.return.code": "{0} zwrócono kod {1}",
 	"trying.to.detect.generator": "Próba wykrycia generatora obsługiwanego przez system",
-	"compiler.version.return.code": "{0} zwrócono kod {1}",
 	"no.cached.config": "Nie można użyć konfiguracji zapisanej w pamięci podręcznej w przypadku funkcji IntelliSense",
 	"start.configure": "Uruchom konfigurowanie",
 	"use.cached.configuration": "Użyj buforowanej konfiguracji",

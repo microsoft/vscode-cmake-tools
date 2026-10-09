@@ -324,3 +324,30 @@ gulp.task('lint', function () {
         .pipe(eslint.failAfterError());
 });
 
+// ****************************
+// Command: translations-verify / translations-restore
+//
+// translations-verify fails the build when a human-reviewed translation recorded in
+// jobs/loc/translation-fixes.json has been reverted, or when a package.i18n.json translation drops
+// or mangles a message placeholder ({0}) or expansion variable (${...}) relative to its English
+// source. It is meant to run in CI on the automatic-localization PR (and every other PR).
+//
+// translations-restore rewrites any reverted verified translation back to its ledger value,
+// preserving the file's comments and formatting.
+// ****************************
+const runTranslationVerifier = (extraArgs, done) => {
+    const cp = require('child_process');
+    const script = path.join(__dirname, 'tools', 'translation-verifier.js');
+    const result = cp.spawnSync(process.execPath, [script, ...extraArgs], { stdio: 'inherit' });
+    if (result.error) {
+        done(result.error);
+    } else {
+        done(result.status !== 0 ? new Error(`translation-verifier exited with code ${result.status}.`) : undefined);
+    }
+};
+
+gulp.task('translations-verify', (done) => runTranslationVerifier([], done));
+// --restore repairs reverted values and then re-verifies; propagate a non-zero result (a spawn
+// failure, or a problem that restore could not fix) so the caller knows manual work remains.
+gulp.task('translations-restore', (done) => runTranslationVerifier(['--restore'], done));
+

@@ -39,7 +39,7 @@ import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
-import { ConfigurationWebview } from '@cmt/ui/cacheView';
+import { ConfigurationWebview, IOption } from '@cmt/ui/cacheView';
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
 import * as preset from '@cmt/presets/preset';
@@ -48,6 +48,7 @@ import { Environment, EnvironmentUtils } from '@cmt/environmentVariables';
 import { KitsController } from '@cmt/kits/kitsController';
 import { PresetsController } from '@cmt/presets/presetsController';
 import paths from '@cmt/paths';
+import { shouldUsePinnedVsInstanceCMake, vsBundledCMakePath } from '@cmt/vsInstanceCMake';
 import { ProjectController } from '@cmt/projectController';
 import { MessageItem } from 'vscode';
 import { DebugTrackerFactory, DebuggerInformation, getDebuggerPipeName } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
@@ -107,6 +108,32 @@ export enum ConfigureTrigger {
     taskProvider = "taskProvider",
     selectConfigurePreset = "selectConfigurePreset",
     selectKit = "selectKit"
+}
+
+/**
+ * Classifies a {@link ConfigureTrigger} as automatic/programmatic (vs. an explicit user
+ * action). Automatic configures (configure-on-open, reconfigure on file change, build-induced
+ * reconfigure, API-driven configures, etc.) should not proactively reveal the output panel and
+ * steal it away from a terminal the user is working in, while user-initiated configures
+ * (command palette, kit/preset selection, Quick Start, launch) keep revealing as before.
+ */
+export function isAutomaticConfigureTrigger(trigger: ConfigureTrigger): boolean {
+    switch (trigger) {
+        case ConfigureTrigger.configureOnOpen:
+        case ConfigureTrigger.configureWithCache:
+        case ConfigureTrigger.cmakeListsChange:
+        case ConfigureTrigger.sourceDirectoryChange:
+        case ConfigureTrigger.compilation:
+        case ConfigureTrigger.api:
+        case ConfigureTrigger.taskProvider:
+        case ConfigureTrigger.workflow:
+        case ConfigureTrigger.runTests:
+        case ConfigureTrigger.package:
+        case ConfigureTrigger.badHomeDir:
+            return true;
+        default:
+            return false;
+    }
 }
 
 export interface DiagnosticsConfiguration {
@@ -199,6 +226,25 @@ export class CMakeProject {
      * Whether we use presets
      */
     private _useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+
+    // When a command (build, test, launch, etc.) triggers `maybeAutoSaveAll()`, the resulting
+    // `saveAll()` fires the save watcher, which would otherwise start a redundant automatic
+    // reconfigure for any dirty CMake file (CMakeLists.txt or an included `.cmake`). That racing
+    // reconfigure conflicts with the command's own configure and surfaces as
+    // "Configuration is already in progress" (see #4794). This flag suppresses the
+    // watcher-triggered reconfigure during command-initiated saves; the command performs its own
+    // configure when needed, so nothing is lost. Manual user saves are unaffected.
+    private _suppressCMakeFileReconfigure = false;
+
+    // The save-watcher's automatic reconfigure is debounced so that a build/test/configure command
+    // started by the same user action can take ownership of the configure instead of racing it.
+    // This is what covers the Test Explorer's "Run Test": VS Code's `testing.saveBeforeStart` saves
+    // the dirty CMakeLists.txt itself — before invoking our test-run handler — so the save happens
+    // outside `maybeAutoSaveAll()` and the flag above can't see it. Deferring the reconfigure lets
+    // the imminent build/test configure grab the lock first, after which this reconfigure is skipped
+    // because a configure/build is already in progress (see #4794).
+    private static readonly automaticReconfigureDebounceMs = 500;
+    private automaticReconfigureTimer?: NodeJS.Timeout;
     get useCMakePresets(): boolean {
         return this._useCMakePresets;
     }
@@ -924,6 +970,7 @@ export class CMakeProject {
         if (this.onDidOpenTextDocumentListener) {
             this.onDidOpenTextDocumentListener.dispose();
         }
+        this.cancelAutomaticReconfigure();
     }
 
     /**
@@ -1144,7 +1191,7 @@ export class CMakeProject {
      */
     private showAutoDetectedSourceDirectoryNotification(sourceDir: string, config: ConfigurationReader | undefined, isConfiguring: boolean): void {
         const relativeSourceDir: string = path.relative(this.workspaceContext.folder.uri.fsPath, sourceDir) || sourceDir;
-        const changeAction: string = localize("change.source.directory", "Change\u2026");
+        const changeAction: string = localize("change.source.directory", "Change...");
         const dontAutoDetectAction: string = localize("do.not.auto.detect.source.directory", "Don't auto-detect");
         void vscode.window.showInformationMessage(
             localize("auto.detected.source.directory", "CMake Tools detected and activated the project in '{0}'.", relativeSourceDir),
@@ -1572,14 +1619,36 @@ export class CMakeProject {
     }
 
     async getCMakePathofProject(): Promise<string> {
-        const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        let overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
+        // When the active configure preset pins a Visual Studio instance via the vsInstanceVersion
+        // vendor field, prefer the CMake bundled with that same instance instead of the latest
+        // installed VS. Only applies on Windows, in presets mode, and only when the user has not
+        // pinned CMake themselves (neither the preset's cmakeExecutable nor the cmake.cmakePath
+        // setting); if that instance ships no bundled CMake, fall back to the normal resolution.
+        if (!overWriteCMakePathSetting && this.useCMakePresets && process.platform === 'win32') {
+            const vsInstallPath = this.configurePreset?.__vsDevEnvInstallationPath;
+            if (shouldUsePinnedVsInstanceCMake({
+                platform: process.platform,
+                useCMakePresets: this.useCMakePresets,
+                presetCMakeExecutable: this.configurePreset?.cmakeExecutable,
+                rawCMakePath: this.workspaceContext.config.rawCMakePath,
+                vsInstallPath
+            })) {
+                const bundledCMake = vsBundledCMakePath(vsInstallPath!);
+                if (await fs.exists(bundledCMake)) {
+                    log.info(localize('using.vs.instance.cmake', 'Using the CMake bundled with the Visual Studio instance selected by vsInstanceVersion: {0}', bundledCMake));
+                    overWriteCMakePathSetting = bundledCMake;
+                }
+            }
+        }
         const envOverride = await this.getCMakePathEnvironment();
         return await this.workspaceContext.getCMakePath(overWriteCMakePathSetting, envOverride) || '';
     }
 
     async getCMakeExecutable() {
         const cmakePath: string = await this.getCMakePathofProject();
-        const cmakeExe = await getCMakeExecutableInformation(cmakePath);
+        const sourceDir = this.sourceDir || this.workspaceFolder.uri.fsPath;
+        const cmakeExe = await getCMakeExecutableInformation(cmakePath, undefined, sourceDir);
         if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
             rollbar.error(localize('cmake.version.not.supported',
                 'CMake version {0} may not be supported. Minimum version required is {1}.',
@@ -1720,7 +1789,16 @@ export class CMakeProject {
                 if (this.workspaceContext.config.copyCompileCommands) {
                     // Now try to copy the compdb to the user-requested path
                     const copyDest = this.workspaceContext.config.copyCompileCommands;
-                    const expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
+                    let expandedDest = util.platformNormalizePath(await expandString(copyDest, opts));
+                    // If the destination is an existing directory, copy the file into it rather than
+                    // treating the directory itself as the target file. Without this, copyFile() fails
+                    // with "EISDIR: illegal operation on a directory" (see #4062). This mirrors the
+                    // behavior of mergedCompileCommands below.
+                    if (await fs.exists(expandedDest) && (await fs.stat(expandedDest)).isDirectory()) {
+                        expandedDest = util.platformNormalizePath(path.join(expandedDest, 'compile_commands.json'));
+                    }
+                    // Skip when the destination resolves to the source file itself; copying a file
+                    // onto itself truncates it, leaving an empty compile_commands.json (see #4062).
                     if (compdbPath !== expandedDest) {
                         const parentDir = path.dirname(expandedDest);
                         try {
@@ -1927,6 +2005,12 @@ export class CMakeProject {
             return result;
         }
 
+        // A real configure is now committed (we're past the cache-only early returns), so any pending
+        // save-triggered automatic reconfigure is redundant — this configure picks up the latest
+        // CMakeLists.txt. Cancelling it here makes "the command takes ownership" deterministic rather
+        // than a debounce-timing bet: e.g. the Test Explorer, where VS Code's testing.saveBeforeStart
+        // schedules the reconfigure just before the test's own configure runs (#4794).
+        this.cancelAutomaticReconfigure();
         const res = await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Window,
@@ -1959,7 +2043,7 @@ export class CMakeProject {
                 }
 
                 if (type !== ConfigureType.ShowCommandOnly) {
-                    log.showChannel();
+                    log.showChannel(undefined, isAutomaticConfigureTrigger(trigger));
                     log.info(localize('run.configure', 'Configuring project: {0}', this.folderName), extraArgs);
                 }
 
@@ -2150,64 +2234,75 @@ export class CMakeProject {
             this.presetsController.suppressWatcherReapply = true;
         }
 
-        // Save open files before we configure/build
-        if (this.workspaceContext.config.saveBeforeBuild) {
-            if (!showCommandOnly) {
-                log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+        // Suppress the watcher-triggered reconfigure for the CMake files this command is about
+        // to save.  The calling command (build, test, launch, etc.) performs its own configure
+        // when needed, so the save-watcher's fire-and-forget reconfigure would be redundant and
+        // would race the command's configure ("Configuration is already in progress" — see #4794).
+        // Kept set for the lifetime of this method and always cleared in the finally so a throw
+        // from saveAll()/the prompt/reapplyPresets() can never permanently disable configure-on-edit.
+        this._suppressCMakeFileReconfigure = true;
+        try {
+            // Save open files before we configure/build
+            if (this.workspaceContext.config.saveBeforeBuild) {
+                if (!showCommandOnly) {
+                    log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+                }
+
+                const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
+                const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
+
+                const saveGood = await vscode.workspace.saveAll();
+                if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
+                    log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
+                    const yesButtonTitle: string = localize('yes.button', 'Yes');
+                    const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
+                    const chosen =
+                        await vscode.window.showErrorMessage<vscode.MessageItem>(
+                            localize(
+                                "not.saved.continue.anyway",
+                                "Not all open documents were saved. Would you like to continue anyway?"
+                            ),
+                            {
+                                title: yesButtonTitle,
+                                isCloseAffordance: false
+                            },
+                            {
+                                title: yesAndDoNotShowAgain,
+                                isCloseAffordance: false
+                            },
+                            {
+                                title: localize("no.button", "No"),
+                                isCloseAffordance: true
+                            }
+                        );
+
+                    if (chosen?.title === yesAndDoNotShowAgain) {
+                        await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
+                    }
+                    const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
+                    if (!saved) {
+                        this.presetsController.suppressWatcherReapply = false;
+                        return false;
+                    }
+                }
             }
 
-            const cmakeConfiguration = vscode.workspace.getConfiguration('cmake');
-            const showSaveFailedNotificationString = "showNotAllDocumentsSavedQuestion";
-
-            const saveGood = await vscode.workspace.saveAll();
-            if (!saveGood && cmakeConfiguration.get(showSaveFailedNotificationString)) {
-                log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
-                const yesButtonTitle: string = localize('yes.button', 'Yes');
-                const yesAndDoNotShowAgain: string = localize('do.not.show.not.saved.again', "Yes (don't show again)");
-                const chosen =
-                    await vscode.window.showErrorMessage<vscode.MessageItem>(
-                        localize(
-                            "not.saved.continue.anyway",
-                            "Not all open documents were saved. Would you like to continue anyway?"
-                        ),
-                        {
-                            title: yesButtonTitle,
-                            isCloseAffordance: false
-                        },
-                        {
-                            title: yesAndDoNotShowAgain,
-                            isCloseAffordance: false
-                        },
-                        {
-                            title: localize("no.button", "No"),
-                            isCloseAffordance: true
-                        }
-                    );
-
-                if (chosen?.title === yesAndDoNotShowAgain) {
-                    await cmakeConfiguration.update(showSaveFailedNotificationString, false, vscode.ConfigurationTarget.Global);
-                }
-                const saved = chosen !== undefined && (chosen.title === yesButtonTitle || chosen.title === yesAndDoNotShowAgain);
-                if (!saved) {
-                    this.presetsController.suppressWatcherReapply = false;
-                    return false;
-                }
+            // After saving, explicitly refresh presets from disk so that any
+            // just-saved changes are picked up before configure/build runs.
+            // Without this, the async file-watcher may not have completed yet
+            // (see #4502).  The configureOnEdit gate is skipped for explicit-
+            // configure paths (requireConfigureOnEdit=false) — see #4792.
+            if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
+                await this.presetsController.reapplyPresets();
             }
-        }
+            // Resume normal file-watcher behavior now that the explicit reapply
+            // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
+            this.presetsController.suppressWatcherReapply = false;
 
-        // After saving, explicitly refresh presets from disk so that any
-        // just-saved changes are picked up before configure/build runs.
-        // Without this, the async file-watcher may not have completed yet
-        // (see #4502).  The configureOnEdit gate is skipped for explicit-
-        // configure paths (requireConfigureOnEdit=false) — see #4792.
-        if (hadDirtyPresets && (!requireConfigureOnEdit || this.workspaceContext.config.configureOnEdit)) {
-            await this.presetsController.reapplyPresets();
+            return true;
+        } finally {
+            this._suppressCMakeFileReconfigure = false;
         }
-        // Resume normal file-watcher behavior now that the explicit reapply
-        // (if any) has completed.  This is a no-op when hadDirtyPresets was false.
-        this.presetsController.suppressWatcherReapply = false;
-
-        return true;
     }
 
     /**
@@ -2370,20 +2465,57 @@ export class CMakeProject {
             // CMakeLists.txt change event: its creation or deletion are relevant,
             // so update full/partial feature set view for this folder.
             await updateFullFeatureSet();
-            if (driver && !driver.configOrBuildInProgress()) {
-                if (driver.config.configureOnEdit) {
-                    log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
-                    if (this.workspaceContext.config.clearOutputBeforeBuild) {
-                        log.clearOutputChannel();
-                    }
-                    await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
-                }
-            } else {
-                log.warning(localize('cmakelists.save.could.not.reconfigure',
-                    'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
-                log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
+            if (this._suppressCMakeFileReconfigure) {
+                // A command (build, test, launch, etc.) initiated this save via maybeAutoSaveAll().
+                // That command performs its own configure, so skip the watcher-triggered reconfigure
+                // to avoid racing it and producing "Configuration is already in progress" (#4794).
+                log.debug(localize('cmakefile.save.suppress.reconfigure',
+                    'Detected saving of a CMake file during a command-initiated save; skipping the automatic reconfigure because the command will configure on its own.'));
+            } else if (driver && driver.config.configureOnEdit) {
+                // Debounce the automatic reconfigure so that a build/test/configure command started
+                // by the same user action — including one that itself caused this save, e.g. the
+                // Test Explorer where VS Code's testing.saveBeforeStart writes the file before our
+                // test-run handler runs — can take ownership of the configure first. When the timer
+                // fires we re-check and skip if a configure/build is already in progress (#4794).
+                this.scheduleAutomaticReconfigure();
             }
         }
+    }
+
+    // Debounced entry point for the save-watcher's automatic reconfigure (see #4794).
+    private scheduleAutomaticReconfigure(): void {
+        this.cancelAutomaticReconfigure();
+        this.automaticReconfigureTimer = setTimeout(() => {
+            this.automaticReconfigureTimer = undefined;
+            void this.runAutomaticReconfigure();
+        }, CMakeProject.automaticReconfigureDebounceMs);
+    }
+
+    // Cancel a pending (not yet fired) save-triggered automatic reconfigure. Called both when
+    // scheduling a new one and when a configure begins, so a command's configure deterministically
+    // supersedes the redundant watcher reconfigure (#4794).
+    private cancelAutomaticReconfigure(): void {
+        if (this.automaticReconfigureTimer) {
+            clearTimeout(this.automaticReconfigureTimer);
+            this.automaticReconfigureTimer = undefined;
+        }
+    }
+
+    private async runAutomaticReconfigure(): Promise<void> {
+        const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
+        // If a command-initiated save is in progress, or a configure/build already started (for
+        // example the build/test that prompted the save), that operation owns the configure — skip
+        // this redundant automatic reconfigure so the two don't collide (#4794).
+        if (this._suppressCMakeFileReconfigure || !driver || !driver.config.configureOnEdit || driver.configOrBuildInProgress()) {
+            log.debug(localize('cmakelists.save.skip.reconfigure',
+                'Skipping the automatic reconfigure after a CMake file change because a configure or build is already in progress.'));
+            return;
+        }
+        log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+        if (this.workspaceContext.config.clearOutputBeforeBuild) {
+            log.clearOutputChannel();
+        }
+        await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
     }
 
     async tasksBuildCommandDrv(drv: CMakeDriver): Promise<string | null> {
@@ -2405,9 +2537,9 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
+    async runBuild(targets?: string[], showCommandOnly?: boolean, taskConsumer?: proc.OutputConsumer, isBuildCommand?: boolean, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
         if (!showCommandOnly) {
-            log.showChannel();
+            log.showChannel(undefined, isAutomatic);
             log.info(localize('run.build', 'Building folder: {0}', await this.binaryDir || this.folderName), (targets && targets.length > 0) ? targets.join(', ') : '');
         }
         let drv: CMakeDriver | null;
@@ -2570,8 +2702,8 @@ export class CMakeProject {
     /**
      * Implementation of `cmake.build`
      */
-    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken): Promise<CommandResult> {
-        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken);
+    async build(targets?: string[], showCommandOnly?: boolean, isBuildCommand: boolean = true, cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+        this.activeBuild = this.runBuild(targets, showCommandOnly, undefined, isBuildCommand, cancellationToken, isAutomatic);
         return this.activeBuild;
     }
 
@@ -2625,6 +2757,192 @@ export class CMakeProject {
             .then(doc => void vscode.window.showTextDocument(doc));
     }
 
+    private getPresetCacheVariableType(option: IOption, presetCacheVariable: preset.CacheVarType | undefined): string {
+        if (option.type === 'Bool') {
+            return 'BOOL';
+        }
+
+        if (presetCacheVariable && typeof presetCacheVariable === 'object' && 'type' in presetCacheVariable && util.isString((presetCacheVariable as any).type) && (presetCacheVariable as any).type.toUpperCase() !== 'BOOL') {
+            return (presetCacheVariable as any).type;
+        }
+
+        return 'STRING';
+    }
+
+    private getPresetCacheVariableValue(option: IOption): string {
+        return util.isBoolean(option.value) ? (option.value ? 'TRUE' : 'FALSE') : String(option.value);
+    }
+
+    private getPresetCacheVariableRawValue(cacheVariable: preset.CacheVarType | undefined): string | undefined {
+        if (util.isString(cacheVariable)) {
+            return cacheVariable;
+        }
+
+        if (cacheVariable === true) {
+            return 'TRUE';
+        }
+
+        if (cacheVariable && typeof cacheVariable === 'object' && 'value' in cacheVariable) {
+            const value = cacheVariable.value;
+            if (util.isBoolean(value)) {
+                return value ? 'TRUE' : 'FALSE';
+            }
+            if (util.isString(value)) {
+                return value;
+            }
+        }
+
+        return undefined;
+    }
+
+    private findPresetDefinitionByName(name: string): preset.ConfigurePreset | undefined {
+        const userPreset = preset.userConfigurePresets(this.folderPath, true).find(configurePreset => configurePreset.name === name);
+        if (userPreset) {
+            return userPreset;
+        }
+        return preset.configurePresets(this.folderPath, true).find(configurePreset => configurePreset.name === name);
+    }
+
+    private resolvePresetVariableOrigin(
+        presetName: string,
+        variableName: string,
+        visited: Set<string> = new Set()
+    ): { presetName: string; isUserPreset: boolean; presetValue?: string } | undefined {
+        if (visited.has(presetName)) {
+            return undefined;
+        }
+        visited.add(presetName);
+
+        const configurePreset = this.findPresetDefinitionByName(presetName);
+        if (!configurePreset) {
+            return undefined;
+        }
+
+        const cacheVariable = configurePreset.cacheVariables?.[variableName];
+        if (cacheVariable !== undefined) {
+            const isUserPreset = configurePreset.isUserPreset ?? configurePreset.__file?.__path?.endsWith('CMakeUserPresets.json') ?? false;
+            return {
+                presetName: configurePreset.name,
+                isUserPreset,
+                presetValue: this.getPresetCacheVariableRawValue(cacheVariable)
+            };
+        }
+
+        if (configurePreset.inherits) {
+            const parents = util.isString(configurePreset.inherits) ? [configurePreset.inherits] : configurePreset.inherits;
+            if (parents) {
+                for (const parent of parents) {
+                    const origin = this.resolvePresetVariableOrigin(parent, variableName, visited);
+                    if (origin) {
+                        return origin;
+                    }
+                }
+            }
+        }
+
+        return undefined;
+    }
+
+    private async getCacheOptionPresetMetadata(options: IOption[]): Promise<Map<string, { presetSource: string; differsFromPresetValue?: boolean }>> {
+        const metadata = new Map<string, { presetSource: string; differsFromPresetValue?: boolean }>();
+        if (!this.useCMakePresets || !this.configurePreset) {
+            return metadata;
+        }
+
+        const activePresetName = this.configurePreset.name;
+        for (const option of options) {
+            const origin = this.resolvePresetVariableOrigin(activePresetName, option.key);
+            if (!origin) {
+                continue;
+            }
+
+            const sourceKind = origin.isUserPreset
+                ? localize('preset.source.user', 'User preset')
+                : localize('preset.source.project', 'Project preset');
+
+            let differsFromPresetValue: boolean | undefined;
+            if (origin.presetValue !== undefined) {
+                if (option.type === 'Bool') {
+                    differsFromPresetValue = util.isTruthy(String(option.value)) !== util.isTruthy(origin.presetValue);
+                } else {
+                    differsFromPresetValue = String(option.value) !== origin.presetValue;
+                }
+            }
+
+            metadata.set(option.key, {
+                presetSource: `${sourceKind}: ${origin.presetName}`,
+                differsFromPresetValue
+            });
+        }
+
+        return metadata;
+    }
+
+    private async updatePresetBackedCacheVariableOverrides(dirtyOptions: IOption[]): Promise<void> {
+        if (!this.useCMakePresets || !this.configurePreset || dirtyOptions.length === 0) {
+            return;
+        }
+
+        const presetCacheVariables = this.configurePreset.cacheVariables;
+        if (!presetCacheVariables) {
+            return;
+        }
+
+        const presetBackedOptions = dirtyOptions.filter(option => Object.prototype.hasOwnProperty.call(presetCacheVariables, option.key));
+        if (presetBackedOptions.length === 0) {
+            return;
+        }
+
+        const userPresets = preset.getOriginalUserPresetsFile(this.folderPath)
+            ?? { version: preset.getOriginalPresetsFile(this.folderPath)?.version ?? 8 };
+        userPresets.configurePresets = userPresets.configurePresets ?? [];
+
+        const currentPreset = this.configurePreset;
+        let targetPreset = currentPreset.isUserPreset
+            ? userPresets.configurePresets.find(configurePreset => configurePreset.name === currentPreset.name)
+            : undefined;
+
+        if (!targetPreset) {
+            const defaultOverrideName = `${currentPreset.name}__cacheEditorOverride`;
+            let overrideName = defaultOverrideName;
+            let suffix = 1;
+            const allPresetNames = new Set(preset.allConfigurePresets(this.folderPath, true).map(configurePreset => configurePreset.name));
+
+            while (allPresetNames.has(overrideName) && !userPresets.configurePresets.find(configurePreset => configurePreset.name === overrideName)) {
+                overrideName = `${defaultOverrideName}_${suffix++}`;
+            }
+
+            targetPreset = userPresets.configurePresets.find(configurePreset => configurePreset.name === overrideName);
+            if (!targetPreset) {
+                targetPreset = {
+                    name: overrideName,
+                    hidden: true,
+                    inherits: currentPreset.name,
+                    cacheVariables: {}
+                };
+                userPresets.configurePresets.push(targetPreset);
+            }
+        }
+
+        targetPreset.cacheVariables = targetPreset.cacheVariables ?? {};
+
+        for (const option of presetBackedOptions) {
+            const presetCacheVariable = presetCacheVariables[option.key];
+            targetPreset.cacheVariables[option.key] = {
+                type: this.getPresetCacheVariableType(option, presetCacheVariable),
+                value: this.getPresetCacheVariableValue(option)
+            };
+        }
+
+        this.presetsController.suppressWatcherReapply = true;
+        await this.presetsController.updatePresetsFile(userPresets, true, false);
+        await this.presetsController.reapplyPresets();
+
+        if (targetPreset.name !== currentPreset.name) {
+            await this.presetsController.setConfigurePreset(targetPreset.name);
+        }
+    }
+
     /**
    * Implementation of `cmake.EditCacheUI`
    */
@@ -2636,12 +2954,18 @@ export class CMakeProject {
                 return 1;
             }
 
-            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, () => {
-                void this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
-            });
+            this.cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async dirtyOptions => {
+                await this.updatePresetBackedCacheVariableOverrides(dirtyOptions);
+                await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+            }, async options => this.getCacheOptionPresetMetadata(options));
             await this.cacheEditorWebview.initPanel();
 
+            const refreshCacheEditor = this.onReconfigured(() => rollbar.invokeAsync(
+                localize('refresh.cache.editor.after.configure', 'Refresh the CMake Cache Editor after configure'),
+                async () => this.cacheEditorWebview?.refreshPanel()
+            ));
             this.cacheEditorWebview.panel.onDidDispose(() => {
+                refreshCacheEditor.dispose();
                 this.cacheEditorWebview = undefined;
             });
         } else {
@@ -2801,13 +3125,15 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(fromWorkflow: boolean = false, buildTargets?: string[]): Promise<CMakeDriver> {
+    private async preTest(fromWorkflow: boolean = false, buildTargets?: string[], isAutomatic: boolean = false): Promise<CMakeDriver> {
         if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
         }
         // When buildTargets is undefined, build() resolves the default build target (existing behavior for
         // ctest/cpack/refresh/workflow callers). A single-test run passes the specific test's target instead.
-        const buildResult = await this.build(buildTargets, false, false);
+        // isAutomatic is threaded so a programmatic test run (e.g. Copilot via the API) doesn't reveal the
+        // output channel for its implicit pre-build; build failures still surface via showChannel(true).
+        const buildResult = await this.build(buildTargets, false, false, undefined, isAutomatic);
         if (buildResult.exitCode !== 0) {
             throw new Error(localize('build.failed', 'Build failed.'));
         }
@@ -2819,9 +3145,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[]): Promise<CommandResult> {
-        const drv = await this.preTest(fromWorkflow, buildTargets);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken);
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[], isAutomatic: boolean = false): Promise<CommandResult> {
+        const drv = await this.preTest(fromWorkflow, buildTargets, isAutomatic);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
         return retc;
     }
 
@@ -2864,6 +3190,16 @@ export class CMakeProject {
         // can't be mapped to a target; in that case we fall back to the default build (existing behavior).
         const buildTargets = this.cTestController.getTestBuildTargets([testName], await this.executableTargets);
         return this.ctest(false, undefined, [testName], undefined, buildTargets.length ? buildTargets : undefined);
+    }
+
+    /**
+     * Resolve the `${cmake.test*}` placeholders for a launch configuration that was started from the
+     * Run and Debug view (F5). Delegates to the CTest controller, which prompts the user to select a
+     * test when needed. Returns the substituted configuration, or `undefined` to abort the launch.
+     */
+    async resolveCTestLaunchConfiguration(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration | undefined> {
+        const drv = await this.getCMakeDriverInstance();
+        return this.cTestController.resolveLaunchConfigurationForTest(config, drv);
     }
 
     async debugCTest(testName: string): Promise<vscode.DebugSession | null> {
@@ -3335,10 +3671,14 @@ export class CMakeProject {
     }
 
     async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
-        // Return cached result for named targets to avoid duplicate builds when
-        // multiple ${input:...} variables resolve the same target in quick succession.
-        if (name) {
-            const cached = this._prepareCache.get(name);
+        // Short-lived cache to coalesce duplicate builds when several substitutions resolve the same
+        // target in quick succession within a single launch (e.g. a launch.json using both
+        // ${command:cmake.launchTargetPath} and ${command:cmake.launchTargetDirectory}, or multiple
+        // ${input:...} variables). For the active launch target (no explicit name) we resolve its
+        // current name so those substitutions share one build too. See #5051.
+        const cacheKey = name ?? (await this.getCurrentLaunchTarget())?.name;
+        if (cacheKey) {
+            const cached = this._prepareCache.get(cacheKey);
             if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
                 && await fs.exists(cached.result.path)) {
                 return cached.result;
@@ -3404,10 +3744,7 @@ export class CMakeProject {
 
         }
 
-        // Cache the result for named targets
-        if (name) {
-            this._prepareCache.set(name, { timestamp: Date.now(), result: chosen });
-        }
+        this._prepareCache.set(chosen.name, { timestamp: Date.now(), result: chosen });
 
         return chosen;
     }

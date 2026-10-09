@@ -895,7 +895,7 @@ export class PresetsController implements vscode.Disposable {
         return userPresets.length > 0 ? userPresets : preset.workflowPresets(this.folderPath);
     }
 
-    async selectConfigurePreset(quickStart?: boolean): Promise<boolean> {
+    async selectConfigurePreset(quickStart?: boolean, reconfigureAfterSelection: boolean = true): Promise<boolean> {
         const allPresets: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
         const presets = allPresets.filter(
             _preset => {
@@ -932,7 +932,9 @@ export class PresetsController implements vscode.Disposable {
                 await this.setConfigurePreset(chosenPreset);
             }
 
-            if (this.project.workspaceContext.config.automaticReconfigure && !quickStart) {
+            // Skip the automatic reconfigure when the caller (e.g. configure-on-open) is going to
+            // run its own configure immediately after selection, so the project is not configured twice.
+            if (this.project.workspaceContext.config.automaticReconfigure && !quickStart && reconfigureAfterSelection) {
                 await this.project.configureInternal(ConfigureTrigger.selectConfigurePreset, [], ConfigureType.Normal);
             }
             return !addPreset || allPresets.length === 0;
@@ -1723,7 +1725,7 @@ export class PresetsController implements vscode.Disposable {
         return { insertSpaces, tabSize };
     }
 
-    async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<vscode.TextEditor | undefined> {
+    async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false, showInEditor = true): Promise<vscode.TextEditor | undefined> {
         const presetsFilePath = isUserPresets ? this.userPresetsPath : this.presetsPath;
         const indent = this.getIndentationSettings();
         try {
@@ -1731,6 +1733,10 @@ export class PresetsController implements vscode.Disposable {
         } catch (e: any) {
             rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
             return;
+        }
+
+        if (!showInEditor) {
+            return undefined;
         }
 
         return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));

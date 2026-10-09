@@ -90,6 +90,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.preferredGenerators` | A list of strings of generator names to try, in order, when configuring a CMake project for the first time. | `[]` | no |
 | `cmake.preRunCoverageTarget` | Target to build before running tests with coverage using the test explorer. | `null` | no |
 | `cmake.revealLog` | Controls when the CMake output log should be revealed. Possible values: `focus` (show the log and move focus to the output channel), `always` (show the log but do not move focus), `never` (do not show the log), `error` (show the log only when an error occurs). | `always` | no |
+| `cmake.revealLogOnAutomaticTrigger` | Whether automatic or programmatic CMake operations (configure-on-open, automatic reconfigure, and builds or tests invoked through the CMake Tools API, e.g. by Copilot via the C/C++ DevTools companion) reveal the CMake output channel. Failures are always shown. | `false` | no |
 | `cmake.saveBeforeBuild` | If `true` (the default), saves open text documents when build or configure is invoked before running CMake. | `true` | no |
 | `cmake.setBuildTargetSameAsLaunchTarget` | If `true`, setting the launch/debug target automatically sets the build target to match. | `false` | no |
 | `cmake.setBuildTypeOnMultiConfig` | If `true`, set build type on multi-config generators. | `false` | no |

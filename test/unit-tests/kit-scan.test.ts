@@ -6,8 +6,11 @@ import * as path from 'path';
 chai.use(chaiAsPromised);
 
 import { expect } from 'chai';
+import * as sinon from 'sinon';
+import * as vscode from 'vscode';
+import * as nodeFs from 'fs';
 import * as kit from '@cmt/kits/kit';
-import { shouldKeepUserKitAfterScan } from '@cmt/kits/kitsController';
+import { shouldKeepUserKitAfterScan, accumulateDirsToScan } from '@cmt/kits/kitsController';
 import * as triple from '@cmt/triple';
 import { fs } from '@cmt/pr';
 
@@ -693,5 +696,90 @@ suite('Kits scan test', () => {
             const detect = await kit.getKitDetect(testKit);
             expect(detect.vendor).to.eq('ClangCl');
         });
+    });
+});
+
+suite('Recursive folder accumulation for kit scan (#5020)', () => {
+    const progress = { report: () => {} };
+    let cancel: vscode.CancellationTokenSource;
+
+    setup(() => {
+        cancel = new vscode.CancellationTokenSource();
+    });
+
+    teardown(() => {
+        sinon.restore();
+        cancel.dispose();
+    });
+
+    function eacces(dir: string): NodeJS.ErrnoException {
+        const e: NodeJS.ErrnoException = new Error(`EACCES: permission denied, scandir '${dir}'`);
+        e.code = 'EACCES';
+        return e;
+    }
+
+    const dirStat = { isDirectory: () => true } as unknown as nodeFs.Stats;
+
+    test('does not throw and skips an unreadable subdirectory, keeping its readable siblings', async () => {
+        const root = path.join(path.sep, 'opt', 'rh');
+        const locked = path.join(root, 'gcc-toolset-13', 'root', 'root');
+        const gt13 = path.join(root, 'gcc-toolset-13');
+        const gt13root = path.join(gt13, 'root');
+        const gt15 = path.join(root, 'gcc-toolset-15');
+
+        const contents: Record<string, string[]> = {
+            [root]: ['gcc-toolset-13', 'gcc-toolset-15'],
+            [gt13]: ['root'],
+            [gt13root]: ['root'],
+            [gt15]: []
+        };
+
+        (sinon.stub(fs, 'readdir') as sinon.SinonStub).callsFake(async (p: nodeFs.PathLike) => {
+            if (p.toString() === locked) {
+                throw eacces(locked); // root-only directory: EACCES on scandir
+            }
+            return contents[p.toString()] ?? [];
+        });
+        (sinon.stub(fs, 'stat') as sinon.SinonStub).callsFake(async () => dirStat);
+
+        const result = await accumulateDirsToScan(root, progress, cancel.token);
+
+        // The scan completes without rejecting, and the unreadable directory's
+        // parent chain plus the readable sibling are still returned.
+        expect(result).to.include(gt15);
+        expect(result).to.include(gt13);
+        expect(result).to.include(locked); // the dir itself is listed; only its contents are skipped
+    });
+
+    test('returns empty without throwing when the root itself is unreadable', async () => {
+        const root = path.join(path.sep, 'opt', 'rh');
+        (sinon.stub(fs, 'readdir') as sinon.SinonStub).callsFake(async () => {
+            throw eacces(root);
+        });
+        const statSpy = sinon.stub(fs, 'stat');
+
+        const result = await accumulateDirsToScan(root, progress, cancel.token);
+
+        expect(result).to.deep.equal([]);
+        expect(statSpy.called).to.be.false;
+    });
+
+    test('skips entries that cannot be stat-ed (e.g. broken symlink) and continues', async () => {
+        const root = path.join(path.sep, 'opt', 'rh');
+        const good = path.join(root, 'good');
+        const broken = path.join(root, 'broken-symlink');
+
+        (sinon.stub(fs, 'readdir') as sinon.SinonStub).callsFake(async (p: nodeFs.PathLike) => (p.toString() === root ? ['good', 'broken-symlink'] : []));
+        (sinon.stub(fs, 'stat') as sinon.SinonStub).callsFake(async (p: nodeFs.PathLike) => {
+            if (p.toString() === broken) {
+                throw eacces(broken);
+            }
+            return dirStat;
+        });
+
+        const result = await accumulateDirsToScan(root, progress, cancel.token);
+
+        expect(result).to.include(good);
+        expect(result).to.not.include(broken);
     });
 });

@@ -17,18 +17,16 @@ required to debug changes to any libraries licensed under the GNU Lesser General
 
 ---------------------------------------------------------
 
-fast-uri 3.1.0 - BSD-3-Clause
+fast-uri 3.1.5 - BSD-3-Clause
 https://github.com/fastify/fast-uri
 
 Copyright 2011 Gary Court
-Copyright (c) 2021-present The Fastify team
+Copyright (c) 2021-present The Fastify team https://github.com/fastify/fastify team
 Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
 
 Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
-Copyright (c) 2021-present The Fastify team
+Copyright (c) 2021-present The Fastify team <https://github.com/fastify/fastify#team>
 All rights reserved.
-
-The Fastify team members are listed at https://github.com/fastify/fastify#team.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -64,12 +62,11 @@ The complete list of contributors can be found at:
 kitware/cmake 5e984bb35232116a54de7db39788cb162ca7c263 - BSD-3-Clause
 
 
-(c) (c) L
 (c) Copyright John
+Copyright (C) 2001
 Copyright Google LLC
 Copyright Kitware, Inc.
 Copyright (C) Howard Chu
-(c) ! ISCNTRL (c) ISSPACE
 Copyright 2007 Edd Dawson
 Copyright 2019 Google LLC
 Copyright 2020 Google LLC
@@ -87,9 +84,10 @@ Copyright (C) Michael Forney
 Copyright (C) Steve Holme, .
 Copyright (c) Facebook, Inc.
 Copyright 2011 Kitware, Inc.
+Copyright libuv contributors
 Specifies Copyright Filename
+(c) ! ISCNTRL (c) ISSPACE (c)
 COPYRIGHT MATCHES ActiveState
-Copyright (C) Daniel Stenberg
 Copyright (c) Daniel Stenberg
 Copyright (c) 2012 Ondrej Holy
 Copyright 1995-2022 Mark Adler
@@ -104,6 +102,7 @@ Copyright (c) 2004 MyCompanyName
 Copyright (c) 2013 Konrad Kleine
 Copyright (c) 2016 InfoTeCS JSC.
 Copyright (c) 2003-2008 Yuta Mori
+Copyright (c) 2003-2018 author(s)
 Copyright (c) 2008 Anselm Strauss
 Copyright (c) 2016 Martin Matuska
 Copyright (c) 2016 Tino Reichardt
@@ -119,12 +118,12 @@ Copyright 2015-2017 Kitware, Inc.
 Copyright (c) 1995-2017 Mark Adler
 Copyright (c) 1995-2019 Mark Adler
 Copyright (c) 1995-2022 Mark Adler
+Copyright (c) 1998 John D. Polstra
 Copyright (c) 2004-2017 Mark Adler
 Copyright (c) 2004-2019 Mark Adler
 Copyright 2010 Firebreath Dev Team
+Copyright (C) 1998 John D. Polstra.
 Copyright (C) Jacob Hoffman-Andrews
-Copyright (c) 1998 John D. Polstra.
-Copyright (c) 2003-2018 <author(s)>
 Copyright (c) 2004, 2010 Mark Adler
 Copyright (c) Microsoft Corporation
 copyright Alexander Chemeris. Three
@@ -143,6 +142,7 @@ Copyright (c) 2012-2014, Yann Collet
 Copyright (c) 2014 Sebastian Freundt
 Copyright (c) 2015 Okhotnikov Kirill
 Copyright libuv project contributors
+Copyright (C) 2001-2004 Damien Miller
 Copyright (c) 2007 Joerg Sonnenberger
 Copyright (c) 2008 Joerg Sonnenberger
 Copyright (c) 2009 Joerg Sonnenberger
@@ -161,18 +161,19 @@ Copyright (c) 2016 Tatsuhiro Tsujikawa
 Copyright (c) 2017 ngtcp2 contributors
 Copyright (C) Daniel Stenberg, , et al.
 Copyright (C) Simon Josefsson, , et al.
+Copyright (c) 1996-1998 John D. Polstra
 Copyright (c) 2003-2007 Kees Zeelenberg
 Copyright (c) 2012 nghttp2 contributors
 Copyright (c) 2022 nghttp2 contributors
 Copyright (c) 2022 nghttp3 contributors
 copyright (c) 1996-2019 Julian R Seward
+Copyright (C) 1996-1998 John D. Polstra.
 Copyright (c) 1995-2003, 2010 Mark Adler
 Copyright (c) 1995-2005, 2010 Mark Adler
 Copyright (c) 1995-2011, 2016 Mark Adler
 Copyright (c) 1995-2017 Jean-loup Gailly
 Copyright (c) 1995-2018 Jean-loup Gailly
 Copyright (c) 1995-2021 Jean-loup Gailly
-Copyright (c) 1996-1998 John D. Polstra.
 Copyright (c) 1996-2019 by Julian Seward
 Copyright the libuv project contributors
 Copyright (c) 2001-2019 Expat maintainers
@@ -187,9 +188,11 @@ Copyright (c) 2010-2012 Michihiro NAKAJIMA
 Copyright (c) 2011-2012 Michihiro NAKAJIMA
 Copyright (c) 2011-2012 libarchive Project
 Copyright (c) 2016-present, Facebook, Inc.
+Copyright (c) Daniel Stenberg, <daniel.se>
+Copyright (c) Internet Software Consortium
+Copyright (C) Internet Software Consortium.
 Copyright (c) 1986 by University of Toronto
 Copyright (c) 2016 Ed Schouten <ed@nuxi.nl>
-Copyright (c) Internet Software Consortium.
 copyrighted by the Free Software Foundation
 Copyright (c) 2006 Rudolf Marek SYSGO s.r.o.
 Copyright (c) 2008 - 2009 NVIDIA Corporation
@@ -199,7 +202,6 @@ Copyright (c) Howard Chu, <hyc@openldap.org>
 (c) 1995-2022 Jean-loup Gailly and Mark Adler
 Copyright (C) Bill Nagel , Exacq Technologies
 Copyright (c) Bjorn Stenberg, <bjorn@haxx.se>
-Thomas E. Dickey <dickey@clark.net> 1996,1997
 Copyright (c) 2001 The NetBSD Foundation, Inc.
 Copyright (c) 1996, David Mazieres <dm@uun.org>
 Copyright (c) 2009-2012,2014 Michihiro NAKAJIMA
@@ -211,6 +213,7 @@ Copyright (c) Howard Chu, <hyc@highlandsun.com>
 Copyright 2012, Samuel Neves <sneves@dei.uc.pt>
 copyright the Internet Systems Consortium, Inc.
 Copyright (c) 2016 Eric Rahm <erahm@mozilla.com>
+Copyright 2012 The Open Source Electronic Health
 Copyright (c) 1991 Texas Instruments Incorporated
 Copyright (c) 1998 Free Software Foundation, Inc.
 Copyright (c) 2013, Sony Mobile Communications AB
@@ -230,7 +233,6 @@ Copyright (c) 2017 Vaclav Slavik <vaclav@slavik.io>
 Copyright (c) Michael Forney, <mforney@mforney.org>
 Copyright 1995-2022 Jean-loup Gailly and Mark Adler
 Copyright 2002 Niels Provos <provos@citi.umich.edu>
-Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997
 Copyright (c) 1995-2016 Jean-loup Gailly, Mark Adler
 Copyright (c) 1995-2022 Jean-loup Gailly, Mark Adler
 Copyright (c) 1996-2022 Internet Software Consortium
@@ -263,7 +265,6 @@ Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
 Copyright (c) 2004 by Internet Systems Consortium, Inc.
 Copyright (c) 2016 Pascal Cuoq <cuoq@trust-in-soft.com>
 Copyright (c) 2022 Samanta Navarro <ferivoz@riseup.net>
-Copyright 2012 The Open Source Electronic Health Record
 Copyright (c) 2009 Andreas Henriksson <andreas@fatal.se>
 Copyright (c) 2012, 2014, 2015, 2016 Tatsuhiro Tsujikawa
 Copyright (c) 2018 Anton Maklakov <antmak.pub@gmail.com>
@@ -287,7 +288,7 @@ Copyright (c) 2011, 2018 Ben Noordhuis <info@bnoordhuis.nl>
 Copyright (c) 2018 Mariusz Zaborski <oshogbo@vexillium.org>
 Copyright (c) 1997-2000 Thai Open Source Software Center Ltd
 Copyright (c) 1999-2000 Thai Open Source Software Center Ltd
-Copyright (c) 2000 2006 Erik Edelmann <erik.edelmann@iki.fi>
+Copyright (c) 2000-2006 Erik Edelmann <erik.edelmann@iki.fi>
 Copyright (c) 2002 Greg Stein <gstein@users.sourceforge.net>
 Copyright (c) 2003 Greg Stein <gstein@users.sourceforge.net>
 Copyright (c) 2017 Alexander Bluhm <alexander.bluhm@gmx.net>
@@ -308,6 +309,7 @@ Copyright (c) 2017-2018 Rhodri James <rhodri@wildebeest.org.uk>
 Copyright (c) Przemyslaw Skibinski, Yann Collet, Facebook, Inc.
 Copyright (c) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
 Copyright (c) 2000 Clark Cooper <coopercc@users.sourceforge.net>
+Copyright (c) 2007 Free Software Foundation, Inc. http://fsf.org
 Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies)
 Copyright (c) 2011 Nokia Corporation and/or its subsidiary(-ies)
 Copyright (c) 2016 Cristian Rodriguez <crrodriguez@opensuse.org>
@@ -321,11 +323,12 @@ Copyright (c) 2017-2021 Sebastian Pipping <sebastian@pipping.org>
 Copyright (c) Jacob Hoffman-Andrews, <github@hoffman-andrews.com>
 Copyright (c) 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
 Copyright (c) Bill Nagel <wnagel@tycoint.com> , Exacq Technologies
-Copyright (c) 2007 Free Software Foundation, Inc. <http://fsf.org/>
 Copyright (c) 2002 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+Copyright (C) 2001 Alexander Peslyak and it is hereby released to the
 Copyright (c) 2007-2010 by Baptiste Lepilleur and The JsonCpp Authors
 Portions Copyright (c) 1996-2008, PostgreSQL Global Development Group
 Copyright (c) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
+Copyright (C) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska HÃ¶gskolan
 Portions Copyright (c) 1994, The Regents of the University of California
 Copyright (c) 2000-2004 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
 Copyright (c) 2000-2005 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
@@ -890,6 +893,38 @@ THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---------------------------------------------------------
 
+xmlbuilder 11.0.1 - LicenseRef-scancode-unicode AND MIT
+http://github.com/oozcitak/xmlbuilder-js
+
+Copyright (c) 2013 Ozgur Ozcitak
+
+The MIT License (MIT)
+
+Copyright (c) 2013 Ozgur Ozcitak
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+---------------------------------------------------------
+
+---------------------------------------------------------
+
 @friedemannsommer/lcov-parser 5.0.0 - MIT
 https://friedemannsommer.github.io/lcov-parser/
 
@@ -1129,18 +1164,20 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-@nevware21/ts-utils 0.11.2 - MIT
+@nevware21/ts-utils 0.14.0 - MIT
 https://github.com/nevware21/ts-utils
 
-Copyright (c) 2022 NevWare21
-Copyright (c) 2022 Nevware21
-Copyright (c) 2023 Nevware21
-Copyright (c) 2024 Nevware21
-Copyright (c) NevWare21 and contributors
+Copyright (c) 2022 NevWare21 Solutions LLC
+Copyright (c) 2023 NevWare21 Solutions LLC
+Copyright (c) 2024 NevWare21 Solutions LLC
+Copyright (c) 2025 NevWare21 Solutions LLC
+Copyright (c) 2026 NevWare21 Solutions LLC
+Copyright (c) 2022-2025 NevWare21 Solutions LLC
+Copyright (c) NevWare21 Solutions LLC and contributors
 
 MIT License
 
-Copyright (c) 2022 NevWare21
+Copyright (c) 2022 NevWare21 Solutions LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1378,7 +1415,7 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-brace-expansion 1.1.12 - MIT
+brace-expansion 1.1.18 - MIT
 https://github.com/juliangruber/brace-expansion
 
 Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
@@ -2993,7 +3030,7 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-js-yaml 4.1.1 - MIT
+js-yaml 4.3.1 - MIT
 https://github.com/nodeca/js-yaml#readme
 
 Copyright (c) 2011-2015 by Vitaly Puzrin
@@ -3643,7 +3680,7 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-tmp 0.2.4 - MIT
+tmp 0.2.7 - MIT
 http://github.com/raszi/node-tmp
 
 Copyright (c) 2014 KARASZI Istvan
@@ -3836,12 +3873,10 @@ SOFTWARE.
 
 ---------------------------------------------------------
 
-uuid 8.3.2 - MIT
+uuid 14.0.0 - MIT
 https://github.com/uuidjs/uuid#readme
 
-Copyright 2011, Sebastian Tschan https://blueimp.net
 Copyright (c) 2010-2020 Robert Kieffer and other contributors
-Copyright (c) Paul Johnston 1999 - 2009 Other contributors Greg Holt, Andrew Kepert, Ydnar, Lostinet Distributed
 
 The MIT License (MIT)
 
@@ -3975,38 +4010,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
-
-
----------------------------------------------------------
-
----------------------------------------------------------
-
-xmlbuilder 11.0.1 - MIT
-http://github.com/oozcitak/xmlbuilder-js
-
-Copyright (c) 2013 Ozgur Ozcitak
-
-The MIT License (MIT)
-
-Copyright (c) 2013 Ozgur Ozcitak
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 
 
 ---------------------------------------------------------
@@ -4301,4 +4304,3 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 ---------------------------------------------------------
-

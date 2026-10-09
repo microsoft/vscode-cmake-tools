@@ -115,6 +115,16 @@ export class CompileOutputConsumer implements OutputConsumer {
         const diags_by_file = new Map<string, vscode.Diagnostic[]>();
         const linkerHandler = this.createLinkerDiagnosticsHandler(basePaths);
 
+        // The build output has ended: flush any diagnostic a parser is still
+        // holding, so the final diagnostic of a build is not dropped (e.g. IAR
+        // only emits a diagnostic once the following line arrives).
+        for (const name in this.compilers) {
+            this.compilers[name].finish();
+        }
+        for (const [, parser] of this.customParsers) {
+            parser.finish();
+        }
+
         const by_source: Record<string, readonly RawDiagnostic[]> = {};
         for (const name in this.compilers) {
             by_source[name.toUpperCase()] = this.compilers[name].diagnostics;
