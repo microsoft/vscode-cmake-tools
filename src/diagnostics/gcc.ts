@@ -9,15 +9,15 @@ import { oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult
 // Patterns to identify and capture GCC diagnostic messages.
 const regexPatterns: RegexPattern[] = [
     {   // path/to/file:line:column: severity: message
-        regexPattern: /^(.+):(\d+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
+        regexPattern: /^(.+):(\d+):(\d+):\s+(?:[Ff]atal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Column, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/file:line: severity: message (but not starting with "path/to/ld[.exe]:")
-        regexPattern: /^(?!.*?ld(?:\.exe)?:)(.+):(\d+):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
+        regexPattern: /^(?!.*?ld(?:\.exe)?:)(.+):(\d+):\s+(?:[Ff]atal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Line, MatchType.Severity, MatchType.Message]
     },
     {   // path/to/cc1[.exe]|arm-none-eabi-gcc[.exe]: severity: message
-        regexPattern: /^(.*(?:cc1|arm-none-eabi-gcc)(?:\.exe)?):\s+(?:fatal\s+)?(\w+):\s+(.+)/,
+        regexPattern: /^(.*(?:cc1|arm-none-eabi-gcc)(?:\.exe)?):\s+(?:[Ff]atal\s+)?(\w+):\s+(.+)/,
         matchTypes: [MatchType.Full, MatchType.File, MatchType.Severity, MatchType.Message]
     }
 ];
@@ -104,7 +104,9 @@ export class Parser extends RawDiagnosticParser {
                             columnno = oneLess(mat2[i]);
                             break;
                         case MatchType.Severity:
-                            severity = mat2[i];
+                            // gfortran capitalises its severities ("Warning", "Error",
+                            // "Fatal Error") while gcc/g++ use lower case.
+                            severity = mat2[i].toLowerCase();
                             break;
                         case MatchType.Message:
                             message = mat2[i];
