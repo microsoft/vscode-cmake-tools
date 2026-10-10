@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nError de {1} de prueba con {2} (valor de salida {3}).",
 	"test.failed.with.exit.code": "{0}\nError de prueba {1} con código de salida{2}.",
+	"failed.to.parse.test.case.declarations": "No se pudieron analizar las declaraciones de casos de prueba en {0}: {1}",
 	"test.explorer.not.enabled": "Integración de ctest deshabilitada. Consulte el valor `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Pruebas",
 	"running.tests": "Ejecutando pruebas",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "Se canceló la ejecución de CTest",
 	"ctest.run.terminated": "La ejecución de CTest ha finalizado.",
 	"ctest.finished.with.code": "CTest finalizó con el código de retorno {0}",
-	"failed.to.resolve.doctest.line": "No se pudo resolver la línea de origen de doctest para {0}: {1}",
 	"folder.not.found.in.test.explorer": "No se ha encontrado la carpeta en el Explorador de pruebas: {0}",
 	"test.preset.required": "Seleccionar un valor preestablecido de prueba para detectar pruebas",
 	"ctest.error": "Error al ejecutar ctest para determinar los ejecutables de pruebas disponibles",

@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nテスト {1} が {2} (終了値 {3}) で失敗しました。",
 	"test.failed.with.exit.code": "{0}\nテスト {1} が終了コード {2} で失敗しました。",
+	"failed.to.parse.test.case.declarations": "{0} のテスト ケース宣言を解析できませんでした: {1}",
 	"test.explorer.not.enabled": "ctest 統合が無効になっています。`cmake.ctest.testExplorerIntegrationEnabled` 設定を参照してください。",
 	"ctest.testing.progress.title": "テスト中",
 	"running.tests": "テストを実行しています",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "CTest の実行が取り消されました",
 	"ctest.run.terminated": "CTest の実行が終了しました",
 	"ctest.finished.with.code": "CTest がリターン コード {0} で終了しました",
-	"failed.to.resolve.doctest.line": "{0} の doctest ソース行を解決できませんでした: {1}",
 	"folder.not.found.in.test.explorer": "フォルダーがテスト エクスプローラーに見つかりません: {0}",
 	"test.preset.required": "テストプリセットを選択してテストを選択する",
 	"ctest.error": "使用可能なテスト実行可能ファイルを特定するための ctest の実行でエラーが発生しました",
