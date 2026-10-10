@@ -54,7 +54,7 @@ jobs:
         run: yarn compile-production-ci
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
         with:
           cmakeVersion: 3.31.6
           ninjaVersion: 1.10.1
@@ -160,7 +160,7 @@ jobs:
         run: tar -xzf build-outputs.tgz
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
         with:
           # Must match the build job's cmake version. See note there.
           cmakeVersion: 3.31.6
