@@ -159,6 +159,7 @@
 	"cmake-tools.configuration.cmake.debugConfig.console.externalTerminal.description": "コンソール アプリケーションは、外部ターミナル ウィンドウで起動されます。このウィンドウは再起動のシナリオで再利用され、アプリケーションが終了しても自動的に消えません。",
 	"cmake-tools.configuration.cmake.debugConfig.console.newExternalWindow.description": "コンソール アプリケーションは、アプリケーションの停止時に終了する独自の外部コンソール ウィンドウで起動されます。コンソール以外のアプリケーションはターミナルなしで実行され、stdout および stderr は無視されます。",
 	"cmake-tools.configuration.cmake.debugConfig.logging.description": "どの種類のメッセージをコンソールに記録する必要があるかを指定します。",
+	"cmake-tools.configuration.cmake.logBuildOutputBySeverity.markdownDescription": "When enabled, build output on the `CMake/Build` channel is logged at a level that reflects its severity: compiler/linker errors and failed build summaries are logged as `error`, warnings as `warning`, and routine build output as `debug`. This lets `#cmake.loggingLevel#` filter out routine build output while keeping errors and warnings visible (for example, setting `cmake.loggingLevel` to `error` shows only build errors). When disabled (the default), all build standard output and build summaries are logged as `info`, while standard error is logged as `error`. Note: only the final line of a multi-line diagnostic is elevated.",
 	"cmake-tools.configuration.cmake.debugConfig.visualizerFile.description": "デバッグ時に使用する .natvis ファイルです。",
 	"cmake-tools.configuration.cmake.debugConfig.args.description": "プログラムのコマンド ラインに渡す引数です。",
 	"cmake-tools.configuration.cmake.debugConfig.cwd.description": "プログラムの作業ディレクトリを設定します。",

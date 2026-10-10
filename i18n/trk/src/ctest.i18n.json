@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\n{1} testi {2} ile başarısız oldu (çıkış değeri {3}).",
 	"test.failed.with.exit.code": "{0}\n{1} testi {2} çıkış kodu ile başarısız oldu.",
+	"failed.to.parse.test.case.declarations": "Failed to parse test-case declarations in {0}: {1}",
 	"test.explorer.not.enabled": "ctest tümleştirmesi devre dışı bırakıldı. Lütfen `cmake.ctest.testExplorerIntegrationEnabled` ayarına bakın.",
 	"ctest.testing.progress.title": "Test",
 	"running.tests": "Çalışan testler",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "CTest çalıştırması iptal edildi",
 	"ctest.run.terminated": "CTest çalıştırması sonlandırıldı",
 	"ctest.finished.with.code": "CTest, {0} dönüş koduyla tamamlandı",
-	"failed.to.resolve.doctest.line": "{0} için doctest kaynak satırı çözümlenemedi: {1}",
 	"folder.not.found.in.test.explorer": "Klasör Test Gezgini'nde bulunamadı: {0}",
 	"test.preset.required": "Testleri keşfetmek için bir test ön ayarı seçin",
 	"ctest.error": "Kullanılabilir test yürütülebilir dosyalarını belirlemek için ctest çalıştırılırken bir hata oluştu",
