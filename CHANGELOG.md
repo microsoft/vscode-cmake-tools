@@ -1,5 +1,9 @@
 # What's New?
 
+Bug Fixes:
+- Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
+- Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)
+
 ## 1.24
 
 Features:
@@ -23,6 +27,7 @@ Improvements:
 - Make the CMake Cache Editor ("Edit Cache (UI)") aware of cache variables defined by the active CMake configure preset: a new "Source" column shows where each variable comes from (project/user preset vs. the CMake cache) and whether it still matches the preset, and edits to preset-backed variables are now persisted as an override in `CMakeUserPresets.json` (and reconfigured with it) instead of being silently reverted by the preset on the next configure. [#4884](https://github.com/microsoft/vscode-cmake-tools/pull/4884) [@BilboBeutlin89](https://github.com/BilboBeutlin89)
 - Load the bundled language-service data (command, variable, module, and policy descriptions) on first hover/completion instead of during activation, so activation no longer blocks on reading those assets. [#5035](https://github.com/microsoft/vscode-cmake-tools/pull/5035)
 - Replace the datalist/input control with a select control for enum-valued cache entries in the CMake Cache Editor, so allowed values are chosen from a proper dropdown instead of a free-text field. [#4973](https://github.com/microsoft/vscode-cmake-tools/pull/4973)
+- Add an opt-in `cmake.logBuildOutputBySeverity` setting so build output on the CMake/Build output channel is logged at a level reflecting its severity (compiler/linker errors and failed build summaries as `error`, warnings as `warning`, routine output as `debug`), letting `cmake.loggingLevel` filter out routine build output while keeping errors and warnings visible. Disabled by default; note that only the final line of a multi-line diagnostic is elevated. [#5002](https://github.com/microsoft/vscode-cmake-tools/issues/5002)
 - Add an `args` property to `cmake` tasks so additional arguments can be passed to a build/install/clean task (for example `-j`, `-v`, or `--clean-first`). The args are inserted as `cmake --build` arguments (before the `--` build-tool-args separator) and support variable expansion. [#2554](https://github.com/microsoft/vscode-cmake-tools/issues/2554)
 
 Bug Fixes:
@@ -72,6 +77,8 @@ Bug Fixes:
 - Fix clicking "Run Test" (or build/launch) with an unsaved `CMakeLists.txt` failing with "Configuration is already in progress" and requiring a second click. The automatic reconfigure triggered by saving the file no longer races the command's own configure. [#4794](https://github.com/microsoft/vscode-cmake-tools/issues/4794)
 - Stop passing CMake configure diagnostic flags that CMake 4.4 deprecated (`--no-warn-unused-cli`, `--warn-uninitialized`, `-Wdev`/`-Wno-dev`, `-Werror=dev`/`-Wno-error=dev`), which caused a deprecation warning on every configure. On CMake 4.4 and newer these are emitted using the modern category-based spellings (`-Wno-unused-cli`, `-Wuninitialized`, `-Wauthor`/`-Wno-author`, `-Werror=author`/`-Wno-error=author`); older CMake versions continue to receive the legacy flags. [#4999](https://github.com/microsoft/vscode-cmake-tools/issues/4999)
 - Fix `cmake.copyCompileCommands` failing with "EISDIR: illegal operation on a directory" when set to a directory path, and emptying `compile_commands.json` when set to the source file itself. A directory destination now receives the file copied into it, and a destination that resolves to the source file is skipped. [#4062](https://github.com/microsoft/vscode-cmake-tools/issues/4062)
+- Fix the extension host freezing for minutes after every configure and build in projects with many CTest tests spread over many source files, for example a GoogleTest suite registered with `gtest_discover_tests()`. Test discovery re-read and re-parsed every source file of a test executable once per test while resolving test locations; the `DEF_SOURCE_LINE` property provided by CMake is now used first, and each source file is read at most once per discovery. [#5093](https://github.com/microsoft/vscode-cmake-tools/issues/5093) [@mewiof](https://github.com/mewiof)
+- Fix broken marketplace badges in `README.md`. [#4972](https://github.com/microsoft/vscode-cmake-tools/pull/4972) [@Maxxxxior](https://github.com/Maxxxxior)
 
 ## 1.23.52
 

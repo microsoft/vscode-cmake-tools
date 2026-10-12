@@ -3249,6 +3249,12 @@
           ],
           "scope": "window"
         },
+        "cmake.logBuildOutputBySeverity": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%cmake-tools.configuration.cmake.logBuildOutputBySeverity.markdownDescription%",
+          "scope": "window"
+        },
         "cmake.touchbar.visibility": {
           "type": "string",
           "default": "default",
