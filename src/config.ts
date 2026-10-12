@@ -240,6 +240,7 @@ export interface ExtensionConfigurationSettings {
     outputLogEncoding: string;
     enableTraceLogging: boolean;
     loggingLevel: LogLevelKey;
+    logBuildOutputBySeverity: boolean;
     additionalKits: string[];
     touchbar: TouchBarConfig;
     options: OptionConfig;
@@ -642,6 +643,10 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.loggingLevel;
     }
 
+    get logBuildOutputBySeverity(): boolean {
+        return this.configData.logBuildOutputBySeverity;
+    }
+
     get touchbar(): TouchBarConfig {
         return this.configData.touchbar;
     }
@@ -763,6 +768,7 @@ export class ConfigurationReader implements vscode.Disposable {
         outputLogEncoding: new vscode.EventEmitter<string>(),
         enableTraceLogging: new vscode.EventEmitter<boolean>(),
         loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+        logBuildOutputBySeverity: new vscode.EventEmitter<boolean>(),
         additionalKits: new vscode.EventEmitter<string[]>(),
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         options: new vscode.EventEmitter<OptionConfig>(),

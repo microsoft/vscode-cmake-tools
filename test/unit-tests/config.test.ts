@@ -69,6 +69,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         outputLogEncoding: 'auto',
         enableTraceLogging: false,
         loggingLevel: 'info',
+        logBuildOutputBySeverity: false,
         touchbar: {
             visibility: "default"
         },
