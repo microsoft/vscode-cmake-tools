@@ -619,10 +619,8 @@ export class CustomBuildTaskTerminal extends proc.CommandConsumer implements vsc
             return -1;
         }
 
-        // Append any additional user-provided args from the task definition. They are inserted as
-        // `cmake --build` arguments, i.e. before the `--` build-tool-args separator when present, so
-        // flags such as `-j` or `--clean-first` reach CMake rather than the underlying build tool
-        // (issue #2554).
+        // Merge task args into the generated command. Arguments before a task-provided `--` go to
+        // `cmake --build`; arguments after it go to the underlying build tool (issue #2554).
         if (this.args && this.args.length > 0) {
             const extraArgs: string[] = await expand.expandStrings(this.args, cmakeDriver.expansionOptions);
             args = mergeBuildArgs(args, extraArgs);

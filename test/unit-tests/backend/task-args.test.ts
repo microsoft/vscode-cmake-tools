@@ -36,4 +36,18 @@ suite('Task args merge', () => {
             ['--build', 'build', '-j', '--', '-v', '--']
         );
     });
+
+    test('normalizes a task-provided build-tool separator', () => {
+        const args = ['--build', 'build', '--target', 'all', '--', '-d', 'keeprsp'];
+        expect(mergeBuildArgs(args, ['-j', '8', '--', '-v'])).to.deep.equal(
+            ['--build', 'build', '--target', 'all', '-j', '8', '--', '-v', '-d', 'keeprsp']
+        );
+    });
+
+    test('adds a task-provided separator when the generated args have none', () => {
+        const args = ['--build', 'build', '--target', 'all'];
+        expect(mergeBuildArgs(args, ['--clean-first', '--', '-v'])).to.deep.equal(
+            ['--build', 'build', '--target', 'all', '--clean-first', '--', '-v']
+        );
+    });
 });
