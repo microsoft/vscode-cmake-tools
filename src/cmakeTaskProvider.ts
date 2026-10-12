@@ -42,7 +42,7 @@ export interface CMakeTaskDefinition extends vscode.TaskDefinition {
     command: string; // Command is either "build", "configure", "install", "test", "package" or "workflow".
     targets?: string[]; // only in "build" command
     preset?: string;
-    args?: string[]; // additional arguments passed to the underlying cmake command
+    args?: string[]; // additional cmake --build arguments for build-based commands
     options?: { cwd?: string; environment?: Environment };
 }
 

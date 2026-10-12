@@ -16,7 +16,7 @@
  *
  * @param args The generated build argument list.
  * @param extraArgs Additional arguments from the task definition.
- * @returns A new argument list with the extra args merged in.
+ * @returns The argument list with the extra args merged in.
  */
 export function mergeBuildArgs(args: string[], extraArgs: string[]): string[] {
     if (!extraArgs || extraArgs.length === 0) {
