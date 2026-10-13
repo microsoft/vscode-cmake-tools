@@ -420,6 +420,7 @@
     "cmake-tools.taskDefinitions.properties.command.description": "CMake command",
     "cmake-tools.taskDefinitions.properties.targets.description": "CMake build targets",
     "cmake-tools.taskDefinitions.properties.preset.description": "CMake preset name. This is a configuration, build or test preset, based on the CMake command",
+    "cmake-tools.taskDefinitions.properties.args.description": "Additional arguments for build, install, clean, and clean-rebuild tasks. Arguments before `--` are passed to `cmake --build`; arguments after `--` are passed to the underlying build tool. For clean-rebuild tasks, the arguments are applied to both the clean and build phases.",
     "cmake-tools.taskDefinitions.properties.options.description": "Additional command options",
     "cmake-tools.taskDefinitions.properties.options.cwd.description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used.",
     "cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": {
