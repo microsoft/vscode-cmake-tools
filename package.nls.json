@@ -68,6 +68,7 @@
     "cmake-tools.command.cmake.outline.fullCleanConfigureAndBuildAll.title": "Full Clean Reconfigure and Build All Projects",
     "cmake-tools.command.cmake.ctest.title": "Run Tests",
     "cmake-tools.command.cmake.ctestAll.title": "Run Tests for All Projects",
+    "cmake-tools.command.cmake.ctestParallel.title": "Run Tests in Parallel",
     "cmake-tools.command.cmake.cpack.title": "Run CPack",
     "cmake-tools.command.cmake.cpackAll.title": "Run CPack for All Projects",
     "cmake-tools.command.cmake.workflow.title": "Run Workflow",

@@ -1927,6 +1927,11 @@ export class ExtensionManager implements vscode.Disposable {
         return this.runCMakeCommandForAll(cmakeProject => cmakeProject.ctest(), this.ensureActiveTestPreset);
     }
 
+    ctestParallel(folder?: vscode.WorkspaceFolder) {
+        telemetry.logEvent("runTestsParallel", { all: "false"});
+        return this.runCMakeCommand(cmakeProject => cmakeProject.ctest(false, undefined, undefined, undefined, undefined, false, true), folder, this.ensureActiveTestPreset);
+    }
+
     cpack(folder?: vscode.WorkspaceFolder) {
         telemetry.logEvent("runCPack", { all: "false"});
         return this.runCMakeCommand(cmakeProject => cmakeProject.cpack(), folder, this.ensureActivePackagePreset);
@@ -2784,6 +2789,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
         'editCacheUI',
         'ctest',
         'ctestAll',
+        'ctestParallel',
         'cpack',
         'cpackAll',
         'workflow',
