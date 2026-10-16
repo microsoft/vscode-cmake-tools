@@ -693,6 +693,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.ctestParallel",
+        "title": "%cmake-tools.command.cmake.ctestParallel.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.projectStatus.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -1460,6 +1466,10 @@
         },
         {
           "command": "cmake.ctest",
+          "when": "cmake:enableFullFeatureSet"
+        },
+        {
+          "command": "cmake.ctestParallel",
           "when": "cmake:enableFullFeatureSet"
         },
         {

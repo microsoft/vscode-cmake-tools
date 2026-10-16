@@ -3150,9 +3150,9 @@ export class CMakeProject {
         return drv;
     }
 
-    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[], isAutomatic: boolean = false): Promise<CommandResult> {
+    async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[], isAutomatic: boolean = false, forceParallel: boolean = false): Promise<CommandResult> {
         const drv = await this.preTest(fromWorkflow, buildTargets, isAutomatic);
-        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
+        const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic, forceParallel);
         return retc;
     }
 
