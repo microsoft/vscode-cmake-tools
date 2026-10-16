@@ -37,7 +37,12 @@ suite('[Paths - which with custom PATH]', () => {
 
         // which should find it when we pass our tmpDir as the search path
         const result = await which(searchName, { path: tmpDir });
-        expect(result).to.equal(fakePath);
+        expect(result).to.not.be.null;
+        if (isWindows) {
+            expect(result!.toLowerCase()).to.equal(fakePath.toLowerCase());
+        } else {
+            expect(result).to.equal(fakePath);
+        }
     });
 
     test('which does not find executable when custom PATH does not include its directory', async () => {
