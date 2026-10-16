@@ -704,7 +704,7 @@ export class PresetsParser {
                 this.folderPath,
                 configurePreset.name,
                 true,
-                false,
+                true,
                 expansionErrors
             );
             if (inheritedPreset) {
@@ -716,7 +716,7 @@ export class PresetsParser {
                         this.workspaceFolder,
                         this._sourceDir,
                         true,
-                        false,
+                        true,
                         expansionErrors
                     )
                 );

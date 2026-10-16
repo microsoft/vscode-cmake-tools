@@ -1171,6 +1171,173 @@ suite('Presets validation, inclusion, and expansion tests', () => {
             expect(configurePreset?.environment?.UPDATE_PATH?.startsWith("C:/msys64/ucrt64/bin;")).to.be.equal(true);
             expect(configurePreset?.environment?.TEST).to.be.equal("overridden");
         });
+
+        suite('Inherited fields are expanded in the context of the inheriting preset', () => {
+            const userPresetName = "debug-log-signal";
+
+            const writeInheritedBinaryDirPresets = () => {
+                fs.writeFileSync(presetsParser.presetsPath, JSON.stringify({
+                    "version": 6,
+                    "include": ["./included.json"],
+                    "configurePresets": [
+                        {
+                            "name": "debug",
+                            "inherits": "release",
+                            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+                        }
+                    ]
+                }));
+                fs.writeFileSync(path.join(presetsParser.presetsPath, "..", "included.json"), JSON.stringify({
+                    "version": 6,
+                    "configurePresets": [
+                        {
+                            "name": "base",
+                            "hidden": true,
+                            "generator": "Ninja",
+                            "binaryDir": "${sourceDir}/build/${presetName}"
+                        },
+                        {
+                            "name": "release",
+                            "inherits": "base",
+                            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+                        }
+                    ]
+                }));
+                fs.writeFileSync(presetsParser.userPresetsPath, JSON.stringify({
+                    "version": 6,
+                    "configurePresets": [
+                        {
+                            "name": userPresetName,
+                            "inherits": ["debug"],
+                            "cacheVariables": { "LOG_SIGNAL": "ON" }
+                        }
+                    ]
+                }));
+            };
+
+            // Mirrors CMakeProject.expandConfigPresetbyName, which is what selecting a configure preset runs.
+            const selectConfigurePreset = async (name: string) => {
+                const inherited = await preset.getConfigurePresetInherits(sourceDirectory, name, true, true);
+                expect(inherited).to.not.be.null;
+                const expanded = await preset.expandConfigurePresetVariables(inherited!, sourceDirectory, name, workspaceFolder, sourceDirectory, true, true);
+                preset.updateCachedExpandedPreset(sourceDirectory, expanded, "configurePresets");
+                return expanded;
+            };
+
+            const expectBinaryDirOf = (configurePreset: preset.ConfigurePreset | undefined | null, name: string) => {
+                expect(configurePreset?.binaryDir).to.not.be.undefined;
+                expect(path.basename(configurePreset!.binaryDir!)).to.be.equal(name);
+                expect(path.basename(path.dirname(configurePreset!.binaryDir!))).to.be.equal("build");
+            };
+
+            teardown(() => {
+                const includedPath = path.join(presetsParser.presetsPath, "..", "included.json");
+                if (fs.existsSync(includedPath)) {
+                    fs.rmSync(includedPath);
+                }
+            });
+
+            test('Expanded presets caches', async () => {
+                writeInheritedBinaryDirPresets();
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+
+                expect(presetsFileErrors).to.have.lengthOf(0);
+                expectBinaryDirOf(preset.getPresetByName(preset.configurePresets(sourceDirectory), "release"), "release");
+                expectBinaryDirOf(preset.getPresetByName(preset.configurePresets(sourceDirectory), "debug"), "debug");
+                expectBinaryDirOf(preset.getPresetByName(preset.userConfigurePresets(sourceDirectory), "debug"), "debug");
+                expectBinaryDirOf(preset.getPresetByName(preset.userConfigurePresets(sourceDirectory), userPresetName), userPresetName);
+            });
+
+            test('Selecting presets', async () => {
+                writeInheritedBinaryDirPresets();
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+                expect(presetsFileErrors).to.have.lengthOf(0);
+
+                expectBinaryDirOf(await selectConfigurePreset(userPresetName), userPresetName);
+                expectBinaryDirOf(await selectConfigurePreset("debug"), "debug");
+                expectBinaryDirOf(await selectConfigurePreset(userPresetName), userPresetName);
+                expectBinaryDirOf(await selectConfigurePreset("release"), "release");
+            });
+
+            test('Selecting presets after reparsing the presets files', async () => {
+                writeInheritedBinaryDirPresets();
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+                expectBinaryDirOf(await selectConfigurePreset("debug"), "debug");
+
+                // A file watcher event reparses everything, then reapplies the selected preset.
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+                expect(presetsFileErrors).to.have.lengthOf(0);
+                expectBinaryDirOf(await selectConfigurePreset(userPresetName), userPresetName);
+                expectBinaryDirOf(preset.getPresetByName(preset.userConfigurePresets(sourceDirectory), userPresetName), userPresetName);
+            });
+
+            test('Every inherited field is expanded in the context of the inheriting preset', async () => {
+                // Each field combines macros whose value differs between the parent and the user preset:
+                // ${presetName}, ${generator} (overridden by the user preset) and $env{} (overridden by the user preset).
+                const macros = "${presetName}|${generator}|$env{FLAVOR}";
+                fs.writeFileSync(presetsParser.presetsPath, JSON.stringify({
+                    "version": 6,
+                    "configurePresets": [
+                        {
+                            "name": "parent",
+                            "generator": "Ninja",
+                            "binaryDir": `\${sourceDir}/build/${macros}`,
+                            "installDir": `\${sourceDir}/install/${macros}`,
+                            "toolchainFile": `\${sourceDir}/toolchains/${macros}.cmake`,
+                            "environment": {
+                                "FLAVOR": "parent-flavor",
+                                "EXPANDED_ENV": macros
+                            },
+                            "cacheVariables": {
+                                "STRING_VAR": macros,
+                                "TYPED_VAR": { "type": "STRING", "value": macros }
+                            }
+                        }
+                    ]
+                }));
+                fs.writeFileSync(presetsParser.userPresetsPath, JSON.stringify({
+                    "version": 6,
+                    "configurePresets": [
+                        {
+                            "name": userPresetName,
+                            "inherits": "parent",
+                            "generator": "Ninja Multi-Config",
+                            "environment": { "FLAVOR": "user-flavor" }
+                        }
+                    ]
+                }));
+
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+                expect(presetsFileErrors).to.have.lengthOf(0);
+
+                const expected = `${userPresetName}|Ninja Multi-Config|user-flavor`;
+                const expectExpandedForUserPreset = (configurePreset: preset.ConfigurePreset | null) => {
+                    expect(configurePreset).to.not.be.null;
+                    expect(path.basename(configurePreset!.binaryDir!)).to.be.equal(expected);
+                    expect(path.basename(configurePreset!.installDir!)).to.be.equal(expected);
+                    expect(path.basename(configurePreset!.toolchainFile!)).to.be.equal(`${expected}.cmake`);
+                    expect(configurePreset!.environment?.EXPANDED_ENV).to.be.equal(expected);
+                    expect(configurePreset!.cacheVariables?.STRING_VAR).to.be.equal(expected);
+                    expect(configurePreset!.cacheVariables?.TYPED_VAR).to.be.deep.equal({ type: "STRING", value: expected });
+                };
+
+                // The expanded cache, read e.g. by the build preset to get its binaryDir.
+                expectExpandedForUserPreset(preset.getPresetByName(preset.userConfigurePresets(sourceDirectory), userPresetName));
+                // Selecting the preset.
+                expectExpandedForUserPreset(await selectConfigurePreset(userPresetName));
+            });
+
+            test('Default build preset builds in the inheriting preset binaryDir', async () => {
+                writeInheritedBinaryDirPresets();
+                await presetsParser.resetPresetsFiles(new Map<string, PresetsFile>(), false, false);
+                expect(presetsFileErrors).to.have.lengthOf(0);
+
+                // The build preset is resolved from the expanded caches, without the configure preset being selected first.
+                const buildPreset = await preset.getBuildPresetInherits(sourceDirectory, preset.defaultBuildPreset.name, workspaceFolder, sourceDirectory, undefined, undefined, true, userPresetName);
+                expect(buildPreset?.__binaryDir).to.not.be.undefined;
+                expect(path.basename(buildPreset!.__binaryDir!)).to.be.equal(userPresetName);
+            });
+        });
     });
 
     teardown(async () => {
