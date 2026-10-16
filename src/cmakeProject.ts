@@ -40,10 +40,7 @@ import rollbar from '@cmt/rollbar';
 import * as telemetry from '@cmt/telemetry';
 import { VariantManager } from '@cmt/kits/variant';
 import * as nls from 'vscode-nls';
-<<<<<<< HEAD
-=======
 import { ConfigurationWebview, IOption } from '@cmt/ui/cacheView';
->>>>>>> refs/rewritten/onto
 import { enableFullFeatureSet, extensionManager, updateFullFeatureSet, setContextAndStore } from '@cmt/extension';
 import { CMakeCommunicationMode, ConfigurationReader, OptionConfig, UseCMakePresets, checkConfigureOverridesPresent } from '@cmt/config';
 import * as preset from '@cmt/presets/preset';
@@ -937,6 +934,11 @@ export class CMakeProject {
      * any time by the user making changes to the workspace configuration.
      */
     private cmakeDriver: Promise<CMakeDriver | null> = Promise.resolve(null);
+
+    /**
+     * This object manages the CMake Cache Editor GUI
+     */
+    private cacheEditorWebview: ConfigurationWebview | undefined;
 
     /**
      * Event fired just as CMakeProject is about to be disposed
@@ -2437,6 +2439,11 @@ export class CMakeProject {
         }
         const filePath = util.platformNormalizePath(uri.fsPath);
         const driver: CMakeDriver | null = await this.getCMakeDriverInstance();
+
+        // If we detect a change in the CMake cache file, refresh the webview
+        if (this.cacheEditorWebview && driver && filePath === util.platformNormalizePath(driver.cachePath)) {
+            await this.cacheEditorWebview.refreshPanel();
+        }
 
         const sourceDirectory = util.platformNormalizePath(this.sourceDir);
 
