@@ -282,6 +282,59 @@ suite('Diagnostics', () => {
         expect(diag.message).to.eq(`unused parameter ‘v’ [-Wunused-parameter]`);
         expect(diag.severity).to.eq('warning');
     });
+    test('Parsing gfortran capitalised Warning with its note (#5120)', async () => {
+        build_consumer.config.updatePartial({ enabledOutputParsers: ['gcc'] });
+        const lines = [
+            '/path/to/some/file.f03:123:45: Warning: \'J\' may be used uninitialized [-Wmaybe-uninitialized]',
+            '/path/to/some/file.f03:123:44: note: \'J\' was declared here'
+        ];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
+        expect(diag.file).to.eq('/path/to/some/file.f03');
+        expect(diag.location.start.line).to.eq(122);
+        expect(diag.location.start.character).to.eq(44);
+        expect(diag.message).to.eq('\'J\' may be used uninitialized [-Wmaybe-uninitialized]');
+        expect(diag.severity).to.eq('warning');
+        expect(diag.related).to.have.length(1);
+        expect(diag.related[0].message).to.eq('\'J\' was declared here');
+
+        const resolved = await build_consumer.resolveDiagnostics('dummyPath');
+        expect(resolved).to.have.length(1);
+        expect(resolved[0].diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
+    });
+    test('Parsing gfortran capitalised Error (#5120)', async () => {
+        build_consumer.config.updatePartial({ enabledOutputParsers: ['gcc'] });
+        const lines = ['/path/to/s.f03:2:6: Error: Invalid character in name at (1)'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
+        expect(diag.location.start.line).to.eq(1);
+        expect(diag.location.start.character).to.eq(5);
+        expect(diag.message).to.eq('Invalid character in name at (1)');
+        expect(diag.severity).to.eq('error');
+
+        const resolved = await build_consumer.resolveDiagnostics('dummyPath');
+        expect(resolved).to.have.length(1);
+        expect(resolved[0].diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+    });
+    test('Parsing gfortran Fatal Error (#5120)', async () => {
+        build_consumer.config.updatePartial({ enabledOutputParsers: ['gcc', 'gnuld'] });
+        const lines = ['/path/to/e.f03:2:7: Fatal Error: Cannot open module file \'nosuchmod.mod\' for reading at (1): No such file or directory'];
+        feedLines(build_consumer, [], lines);
+        expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+        expect(build_consumer.compilers.gnuld.diagnostics).to.have.length(0);
+        const diag = build_consumer.compilers.gcc.diagnostics[0];
+        expect(diag.file).to.eq('/path/to/e.f03');
+        expect(diag.location.start.line).to.eq(1);
+        expect(diag.location.start.character).to.eq(6);
+        expect(diag.message).to.eq('Cannot open module file \'nosuchmod.mod\' for reading at (1): No such file or directory');
+        expect(diag.severity).to.eq('error');
+
+        const resolved = await build_consumer.resolveDiagnostics('dummyPath');
+        expect(resolved).to.have.length(1);
+        expect(resolved[0].diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+    });
     test('Parsing non-diagnostic', async () => {
         const lines = ['/usr/include/c++/10/bits/stl_vector.h:98:47: optimized: basic block part vectorized using 32 byte vectors'];
         feedLines(build_consumer, [], lines);
