@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nÉchec du test {1} avec {2} (valeur de sortie {3}).",
 	"test.failed.with.exit.code": "{0}\nÉchec du test {1} avec le code de sortie {2}.",
+	"failed.to.parse.test.case.declarations": "Échec de l’analyse des déclarations de cas de test dans {0} : {1}",
 	"test.explorer.not.enabled": "l’intégration de ctest est désactivée. Consultez le paramètre `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Test",
 	"running.tests": "Exécution des tests",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "L’exécution de CTest a été annulée",
 	"ctest.run.terminated": "Exécution de CTest terminée",
 	"ctest.finished.with.code": "CTest s'est achevé avec le code de retour {0}",
-	"failed.to.resolve.doctest.line": "Nous n’avons pas pu résoudre la ligne source de doctest pour {0} : {1}",
 	"folder.not.found.in.test.explorer": "Dossier introuvable dans l’Explorateur de tests : {0}",
 	"test.preset.required": "Sélectionner une présélection de test pour découvrir les tests",
 	"ctest.error": "Une erreur s'est produite durant l'exécution de ctest pour déterminer les exécutables de test disponibles",
