@@ -1020,7 +1020,8 @@
               "package",
               "workflow",
               "clean",
-              "cleanRebuild"
+              "cleanRebuild",
+              "refresh"
             ],
             "description": "%cmake-tools.taskDefinitions.properties.command.description%"
           },
