@@ -1882,7 +1882,7 @@
         },
         {
           "command": "cmake.bookmarks.clearAll",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "navigation@1"
         }
       ],
@@ -2209,7 +2209,7 @@
         },
         {
           "command": "cmake.outline.removeBookmark",
-          "when": "view == cmake.bookmarks && cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && view == cmake.bookmarks",
           "group": "inline"
         },
         {
