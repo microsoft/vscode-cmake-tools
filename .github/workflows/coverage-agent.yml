@@ -1,0 +1,76 @@
+name: Coverage Agent
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # weekly Monday 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: 'Line-coverage threshold (0-100)'
+        required: false
+        default: '60'
+
+env:
+  THRESHOLD: ${{ github.event.inputs.threshold || '60' }}
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build (test config)
+        run: yarn pretest          # tsc -p test.tsconfig.json
+
+      # ── Coverage: backend tests (c8 uses V8 native coverage) ───────────
+      - name: Run backend tests with coverage
+        run: |
+          npx c8 \
+            --all \
+            --reporter=json-summary \
+            --reporter=text \
+            --src=src \
+            --include='src/**/*.ts' \
+            --exclude='src/**/*.d.ts' \
+            -o coverage \
+            node ./node_modules/mocha/bin/_mocha \
+              -u tdd --timeout 999999 --colors \
+              -r ts-node/register \
+              -r tsconfig-paths/register \
+              "./test/unit-tests/backend/**/*.test.ts"
+
+      # ── Unit tests (extension host — coverage not collected here) ──────
+      # c8/nyc cannot instrument the VS Code extension-host child process.
+      # This step validates tests pass; coverage comes from backend tests.
+      - name: Run unit tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: node ./out/test/unit-tests/runTest.js
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+      # ── Evaluate coverage and open issue if below threshold ───────────────
+      - name: Check coverage and open issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          THRESHOLD: ${{ env.THRESHOLD }}
+        run: node .github/scripts/check-coverage-and-open-issue.mjs
