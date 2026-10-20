@@ -1,5 +1,8 @@
 # What's New?
 
+Improvements:
+- Honor `cmake.buildBeforeRun` when running tests with **CMake: Run Tests**, the status bar, a test CodeLens, or a workflow test step. When it is `false`, CTest runs against the existing build, as the Test Explorer already does, and the project is only configured if needed. [#2933](https://github.com/microsoft/vscode-cmake-tools/issues/2933)
+
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)

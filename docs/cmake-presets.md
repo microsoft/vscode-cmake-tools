@@ -85,7 +85,7 @@ Selecte a Workflow Preset to make it the active Workflow Preset. This is the `wo
 
 ### CMake: Run Tests
 
-To invoke CTest, run **CMake: Run Tests** from the command palette.
+To invoke CTest, run **CMake: Run Tests** from the command palette. The project is built first unless `cmake.buildBeforeRun` is set to `false`, in which case CTest runs against the existing build.
 When integration with the test explorer is enabled, using `cmake.ctest.testExplorerIntegrationEnabled`, the method of test execution will depend on `cmake.ctest.allowParallelJobs`. With `cmake.ctest.allowParallelJobs` disabled, each test will be run individually so that we can accurately track progress in the Test Explorer. When it is enabled, they will all be run in parallel, which is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
 ### CMake Tools side bar Project Status View behavior
