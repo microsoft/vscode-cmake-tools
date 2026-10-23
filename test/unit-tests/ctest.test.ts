@@ -153,6 +153,31 @@ suite('CTest test', () => {
             expect(returnCode).to.eq(0);
         });
 
+        test('Tests skipped by CTest properties are marked skipped from real XML results', async () => {
+            const result = await readTestResultsFile(getTestResourceFilePath('TestResults6.xml'));
+            const skippedTests = [
+                { name: 'regex_skip', completionStatus: 'SKIP_REGULAR_EXPRESSION_MATCHED' },
+                { name: 'return_code_skip', completionStatus: 'SKIP_RETURN_CODE=1' }
+            ];
+            const driver = new CTestDriver({} as any);
+
+            for (const { name, completionStatus } of skippedTests) {
+                const skipped = result!.site.testing.test.find(t => t.name === name)!;
+                expect(skipped.status).to.eq('notrun');
+                expect(skipped.measurements.get('Completion Status')?.value).to.eq(completionStatus);
+                expect(skipped.measurements.has('Exit Value')).to.eq(false);
+
+                const { run, calls } = makeRun();
+                const returnCode = (driver as any).testResultsAnalysis(skipped, makeTestItem(name), 0, run);
+
+                expect(calls.skipped).to.deep.eq([name]);
+                expect(calls.errored).to.be.empty;
+                expect(calls.failed).to.be.empty;
+                expect(calls.passed).to.be.empty;
+                expect(returnCode).to.eq(0);
+            }
+        });
+
         test('An ordinary passing test is still reported as passed', async () => {
             const result = await readTestResultsFile(getTestResourceFilePath('TestResults5.xml'));
             const passing = result!.site.testing.test.find(t => t.name === 'Suite1.Test1')!;

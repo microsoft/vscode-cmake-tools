@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20261023-2237-Experimental"
+	Name="(empty)"
+	Generator="ctest-4.2.3"
+	OSName="Linux"
+	Hostname="localhost"
+	>
+	<Testing>
+		<StartDateTime>Oct 23 23:37 BST</StartDateTime>
+		<StartTestTime>1792795059</StartTestTime>
+		<TestList>
+			<Test>./regex_skip</Test>
+			<Test>./return_code_skip</Test>
+		</TestList>
+		<Test Status="notrun">
+			<Name>regex_skip</Name>
+			<Path>.</Path>
+			<FullName>./regex_skip</FullName>
+			<FullCommandLine>/usr/bin/cmake "-E" "echo" "skip-me"</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>SKIP_REGULAR_EXPRESSION_MATCHED</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>/usr/bin/cmake "-E" "echo" "skip-me"</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value>skip-me
+</Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<Test Status="notrun">
+			<Name>return_code_skip</Name>
+			<Path>.</Path>
+			<FullName>./return_code_skip</FullName>
+			<FullCommandLine>/usr/bin/cmake "-E" "false"</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>SKIP_RETURN_CODE=1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>/usr/bin/cmake "-E" "false"</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value></Value>
+				</Measurement>
+			</Results>
+		</Test>
+		<EndDateTime>Oct 23 23:37 BST</EndDateTime>
+		<EndTestTime>1792795059</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>
