@@ -6,6 +6,7 @@
     { "include": "#bracketComment" },
     { "include": "#lineComment" },
     { "include": "#bracketArgument" },
+    { "include": "#escape" },
     { "include": "#quoted" },
     { "include": "#generatorExpression" },
     { "include": "#variableReference" },
@@ -75,7 +76,7 @@
       ]
     },
     "unquoted": {
-      "comment": "Unquoted arguments. Escape sequences (\\n, \\;, etc.) are not highlighted here — the begin/end patterns both exclude backslash so #escape can never match. This matches the convention of the reference grammar (twxs/vs.language.cmake) and the pre-refactoring behavior. Fixing this properly would require a zero-width begin approach that adds significant complexity for negligible benefit, since escape sequences in unquoted arguments are rare in practice.",
+      "comment": "Unquoted arguments are scoped in runs between escape sequences, which are matched separately by #escape.",
       "name": "string.unquoted.cmake",
       "begin": "[^\\s()#\"\\\\][^\\s()#\"\\\\]*",
       "end": "(?=\\s|\\(|\\)|#|\"|\\\\|$)",
@@ -127,6 +128,7 @@
         { "include": "#bracketComment" },
         { "include": "#lineComment" },
         { "include": "#bracketArgument" },
+        { "include": "#escape" },
         { "include": "#quoted" },
         { "include": "#generatorExpression" },
         { "include": "#variableReference" },
