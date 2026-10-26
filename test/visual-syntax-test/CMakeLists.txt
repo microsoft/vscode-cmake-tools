@@ -34,6 +34,12 @@ file(GLOB H_FILES *.h)
 set(SOURCE_FILES ${CPP_FILES} ${H_FILES})
 add_executable(MyApp ${SOURCE_FILES})
 
+# Escapes in unquoted arguments remain part of that argument. In particular,
+# escaped quotes must not turn the rest of the file into a quoted string.
+set(ALTITUDE "328000.314159")
+add_compile_definitions(ALTITUDE_TEXT=L\"${ALTITUDE}\")
+set(SECOND_ALTITUDE L\"${ALTITUDE}\")
+
 # Issue #4508: if() operators should all get same color
 if(A AND B OR C)
   message(STATUS "test")
