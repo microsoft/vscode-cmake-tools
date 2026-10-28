@@ -1,0 +1,1042 @@
+{
+	"$schema" : "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+	"runs" : 
+	[
+		{
+			"originalUriBaseIds" : 
+			{
+				"CMAKE_BINARY_DIR" : 
+				{
+					"uri" : "file:///home/user/sarif/src/build/"
+				},
+				"CMAKE_SOURCE_DIR" : 
+				{
+					"uri" : "file:///home/user/sarif/src/"
+				}
+			},
+			"results" : 
+			[
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 4
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Top-level warning"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 4
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 5
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : ""
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 5
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 8
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from a nested function call"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 8
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "inner"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 11
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "outer"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 13
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "generated.cmake",
+									"uriBaseId" : "CMAKE_BINARY_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 1
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from a file in the build tree"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "generated.cmake",
+												"uriBaseId" : "CMAKE_BINARY_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 1
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "include"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 16
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "/home/user/sarif/outside/outside.cmake"
+								},
+								"region" : 
+								{
+									"startLine" : 1
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from a file outside the source tree"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "/home/user/sarif/outside/outside.cmake"
+											},
+											"region" : 
+											{
+												"startLine" : 1
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "include"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 17
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt:23:EVAL:2:EVAL",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 1
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from nested evaluated code"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt:23:EVAL:2:EVAL",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 1
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "cmake_language"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt:23:EVAL",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 2
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "cmake_language"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 23
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt:26:EVAL",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 3
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from a function defined in evaluated code"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt:26:EVAL",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 3
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "defined_in_eval"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 32
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "calls_defined_in_eval"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 34
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "error",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "list"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt:44:EVAL",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "list does not recognize sub-command watched_in_eval"
+					},
+					"ruleId" : "CMake.FatalError",
+					"ruleIndex" : 1,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "set"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt:44:EVAL",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 1
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "cmake_language"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 44
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "error",
+					"locations" : 
+					[
+						{
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "unbalanced.cmake",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "cmake_policy PUSH without matching POP"
+					},
+					"ruleId" : "CMake.FatalError",
+					"ruleIndex" : 1,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "include"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 52
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "error",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 19
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "A deferred error"
+					},
+					"ruleId" : "CMake.FatalError",
+					"ruleIndex" : 1,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 19
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"message" : 
+										{
+											"text" : "DEFERRED"
+										},
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "warning",
+					"locations" : 
+					[
+						{
+							"logicalLocations" : 
+							[
+								{
+									"kind" : "function",
+									"name" : "message"
+								}
+							],
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								},
+								"region" : 
+								{
+									"startLine" : 37
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "Warning from a call deferred by evaluated code"
+					},
+					"ruleId" : "CMake.Warning",
+					"ruleIndex" : 0,
+					"stacks" : 
+					[
+						{
+							"frames" : 
+							[
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "message"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 37
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"logicalLocations" : 
+										[
+											{
+												"kind" : "function",
+												"name" : "deferred_from_eval"
+											}
+										],
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt:39:EVAL",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											},
+											"region" : 
+											{
+												"startLine" : 1
+											}
+										}
+									}
+								},
+								{
+									"location" : 
+									{
+										"message" : 
+										{
+											"text" : "DEFERRED"
+										},
+										"physicalLocation" : 
+										{
+											"artifactLocation" : 
+											{
+												"uri" : "CMakeLists.txt",
+												"uriBaseId" : "CMAKE_SOURCE_DIR"
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"level" : "error",
+					"locations" : 
+					[
+						{
+							"physicalLocation" : 
+							{
+								"artifactLocation" : 
+								{
+									"uri" : "CMakeLists.txt",
+									"uriBaseId" : "CMAKE_SOURCE_DIR"
+								}
+							}
+						}
+					],
+					"message" : 
+					{
+						"text" : "cmake_policy PUSH without matching POP"
+					},
+					"ruleId" : "CMake.FatalError",
+					"ruleIndex" : 1,
+					"stacks" : 
+					[
+						{
+							"frames" : []
+						}
+					]
+				}
+			],
+			"tool" : 
+			{
+				"driver" : 
+				{
+					"name" : "CMake",
+					"rules" : 
+					[
+						{
+							"id" : "CMake.Warning",
+							"name" : "CMake Warning"
+						},
+						{
+							"id" : "CMake.FatalError",
+							"name" : "CMake Error"
+						}
+					],
+					"version" : "4.5.20261028-gcfb3000"
+				}
+			}
+		}
+	],
+	"version" : "2.1.0"
+}

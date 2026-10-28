@@ -2362,7 +2362,7 @@ export class CMakeProject {
         const result = await cb(consumer);
         result.stdout = consumer.stdout;
         result.stderr = consumer.stderr;
-        populateCollection(collections.cmake, consumer.diagnostics);
+        populateCollection(collections.cmake, result.sarifDiagnostics ?? consumer.diagnostics);
         return result;
     }
 
