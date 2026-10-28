@@ -6,6 +6,7 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiString from 'chai-string';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmakeFileApiDriver';
 import { CMakeServerDriver } from '@cmt/drivers/cmakeServerDriver';
@@ -314,7 +315,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const configure = driver.configure(ConfigureTrigger.runTests, []);
             const build = driver.build([driver.allTargetName]);
 
-            expect(await configure).to.be.deep.equal({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
+            expect(await configure).to.deep.include({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
             expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
@@ -363,7 +364,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
             const build = driver.build([driver.allTargetName]);
 
-            expect(await configure).to.be.deep.equal({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
+            expect(await configure).to.deep.include({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
             expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
@@ -417,6 +418,88 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             expect(driver.generatorName).to.be.eq(kitBaseline.preferredGenerator!.name);
             expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitBaseline.preferredGenerator!.name);
         }).timeout(60000);
+
+        test('Configure records its diagnostics to a SARIF log', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                // Only the File API driver asks CMake for a SARIF log.
+                this.skip();
+            }
+
+            // The driver works out where the log goes from the final configure
+            // arguments and snapshots it just before running CMake, which is
+            // what lets it tell this run's log apart from a stale one.
+            const result = await driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            expect(result.exitCode).to.be.eq(0);
+            // The log is turned on through CMAKE_EXPORT_SARIF, which also makes
+            // CMake create the directory it writes into.
+            expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')!.value).to.be.ok;
+            expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.true;
+            // The log was read back: this project configures without complaint,
+            // so the result is an empty list rather than the null that makes
+            // callers fall back to parsing CMake's output.
+            expect(result.sarifDiagnostics).to.deep.eq([]);
+        }).timeout(60000 * 2);
+
+        test('Configure reads no SARIF log when configureSettings turn CMAKE_EXPORT_SARIF off', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+            config.updatePartial({ configureSettings: { CMAKE_EXPORT_SARIF: false } });
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                this.skip();
+            }
+
+            const result = await driver.cleanConfigure(ConfigureTrigger.runTests, []);
+            expect(result.exitCode).to.be.eq(0);
+            // The user's choice is kept, so CMake writes no log and the caller
+            // falls back to parsing CMake's output.
+            expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')!.value).to.be.false;
+            expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.false;
+            expect(result.sarifDiagnostics).to.be.null;
+        }).timeout(60000 * 2);
+
+        test('Configure reads the SARIF log from a --sarif-output in configureArgs', async function () {
+            const config = ConfigurationReader.create();
+            const executable = await getCMakeExecutableInformation(cmakePath);
+            if (!driverSupportsCMake(executable) || !executable.isSarifSupported) {
+                this.skip();
+            }
+            const sarifOutput = path.join(os.tmpdir(), `cmake-tools-sarif-output-${process.pid}.sarif`);
+            config.updatePartial({ configureArgs: ['--sarif-output', sarifOutput] });
+
+            driver = await driver_generator(executable, config, ninjaKitDefault, defaultWorkspaceFolder, async () => true, []);
+            if (!(driver instanceof CMakeFileApiDriver)) {
+                this.skip();
+            }
+
+            try {
+                const result = await driver.cleanConfigure(ConfigureTrigger.runTests, []);
+                expect(result.exitCode).to.be.eq(0);
+                // --sarif-output only names where this run writes its log; the
+                // extension still sets CMAKE_EXPORT_SARIF in the cache.
+                expect(driver.cmakeCacheEntries.get('CMAKE_EXPORT_SARIF')!.value).to.be.ok;
+                expect(fs.existsSync(sarifOutput)).to.be.true;
+                expect(fs.existsSync(path.join(driver.binaryDir, '.cmake', 'sarif', 'cmake.sarif'))).to.be.false;
+                // The driver found the log path in its own final arguments, and
+                // read it back from there.
+                expect(result.sarifDiagnostics).to.deep.eq([]);
+            } finally {
+                if (fs.existsSync(sarifOutput)) {
+                    fs.unlinkSync(sarifOutput);
+                }
+            }
+        }).timeout(60000 * 2);
 
         test('Test generator switch', async function () {
             const config = ConfigurationReader.create();

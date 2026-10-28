@@ -223,6 +223,8 @@ Each matcher entry has the following properties:
 | `cmake.useFolderPropertyInBuildTargetDropdown` | Controls if the default build target dropdown is grouped by the CMake folder groups. | `false` | no |
 | `cmake.showTimestampsInOutput` | Show timestamps and log levels in the CMake output channel. Useful for tracking build durations. | `false` | no |
 | `cmake.logBuildOutputBySeverity` | When enabled, build output on the `CMake/Build` channel is logged at a level that reflects its severity: compiler/linker errors and failed build summaries are logged as `error`, warnings as `warning`, and routine build output as `debug`. This lets `#cmake.loggingLevel#` filter out routine build output while keeping errors and warnings visible (for example, setting `cmake.loggingLevel` to `error` shows only build errors). When disabled (the default), all build standard output and build summaries are logged as `info`, while standard error is logged as `error`. Note: only the final line of a multi-line diagnostic is elevated. | `false` | no |
+| `cmake.exportSarifFile` | Enables writing CMake configure diagnostics to a SARIF file by enabling `CMAKE_EXPORT_SARIF`. Requires CMake 4.0 or newer. | `true` | no |
+| `cmake.loadSarifFile` | Read CMake configure diagnostics from CMake's SARIF file, if detected. Requires CMake SARIF logging enabled. | `true` | no |
 ### Examples
 
 **clang-tidy** (`/path/file.cpp:10:5: warning: some message [check-name]`):

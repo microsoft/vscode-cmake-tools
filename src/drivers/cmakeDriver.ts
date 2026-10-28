@@ -13,7 +13,8 @@ import { CompileCommand } from '@cmt/compilationDatabase';
 import { ConfigurationReader, checkBuildOverridesPresent, checkConfigureOverridesPresent, checkTestOverridesPresent, checkPackageOverridesPresent, defaultNumJobs } from '@cmt/config';
 import { CMakeBuildConsumer, CompileOutputConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
-import { RawDiagnosticParser } from '@cmt/diagnostics/util';
+import { watchSarifLog } from '@cmt/diagnostics/sarif';
+import { FileDiagnostic, RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/drivers';
 import * as expand from '@cmt/expand';
 import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getVsKitPreferredGenerator } from '@cmt/kits/kit';
@@ -22,6 +23,7 @@ import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
+import { argsSpecifyExportSarif, exportSarifVariable, sarifLogPath } from '@cmt/sarifExport';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import { ConfigureArguments, VariantOption } from '@cmt/kits/variant';
@@ -75,6 +77,11 @@ export enum ConfigureResultType {
 
 export interface ConfigureResult extends CommandResult {
     resultType: ConfigureResultType;
+    /**
+     * The diagnostics CMake recorded in its SARIF log for this configure, or
+     * `null` if the log was not read.
+     */
+    sarifDiagnostics?: FileDiagnostic[] | null;
 }
 
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<boolean>;
@@ -1468,6 +1475,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return { exitCode: -1, resultType: ConfigureResultType.BuildInProgress };
         }
         this.isConfigInProgress = true;
+
+        // Function to check for updates to and read SARIF logs after a configure run.
+        let readSarifLog: (() => Promise<FileDiagnostic[] | null>) | undefined;
+
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
@@ -1517,6 +1528,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             } else {
                 expanded_flags = await this.generateConfigArgsFromSettings(extra_args, withoutCmakeSettings);
             }
+            this.addExportSarifFlag(expanded_flags);
             if (!shouldUseCachedConfiguration) {
                 log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
             }
@@ -1531,6 +1543,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
                 this._isConfiguredAtLeastOnce = true;
                 return { exitCode: retc, resultType: ConfigureResultType.NormalOperation };
             } else {
+                // Check the SARIF log file before configuring so that updates are detected.
+                if (!showCommandOnly && this.config.loadSarifFile && this.cmake.isSarifSupported) {
+                    const binaryDir = presetOverride?.binaryDir ?? this.binaryDir;
+                    readSarifLog = await watchSarifLog(sarifLogPath(expanded_flags, binaryDir, options?.cwd ?? binaryDir), this.sourceDir);
+                }
                 retc = await this.doConfigure(expanded_flags, trigger, consumer, showCommandOnly, defaultPresetName, presetOverride, options, debuggerInformation);
                 this._isConfiguredAtLeastOnce = true;
             }
@@ -1661,10 +1678,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
             telemetryProperties.Canceled = cancelInformation?.canceled ? "true" : "false";
             telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
-            return { exitCode: retc, resultType: ConfigureResultType.NormalOperation };
+            return { exitCode: retc, resultType: ConfigureResultType.NormalOperation, sarifDiagnostics: await readSarifLog?.() };
         } catch {
             log.info(localize('configure.failed', 'Failed to configure project'));
-            return { exitCode: -1, resultType: ConfigureResultType.NormalOperation };
+            return { exitCode: -1, resultType: ConfigureResultType.NormalOperation, sarifDiagnostics: await readSarifLog?.() };
         } finally {
             this.isConfigInProgress = false;
         }
@@ -1691,6 +1708,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
             flags.push('-C', init);
         }
         return flags;
+    }
+
+    /**
+     * Enable exporting SARIF log if configured and not already specified in the arguments.
+     */
+    private addExportSarifFlag(args: string[]): void {
+        const configurationScope = this.workspaceFolder ? vscode.Uri.file(this.workspaceFolder) : null;
+        const config = vscode.workspace.getConfiguration("cmake", configurationScope);
+        const exportSarifFile = config.get<boolean>("exportSarifFile") ?? true;
+        if (exportSarifFile && this.cmake.isSarifSupported && !argsSpecifyExportSarif(args)) {
+            const exportSarifValue = util.cmakeify(true);
+            args.push(`-D${exportSarifVariable}:${exportSarifValue.type}=${exportSarifValue.value}`);
+        }
     }
 
     private generateCMakeSettingsFlags(): string[] {

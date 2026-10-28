@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
+import type * as Sarif from 'sarif';
 import * as vscode from 'vscode';
 
 chai.use(chaiAsPromised);
@@ -14,6 +16,7 @@ import { ExtensionConfigurationSettings, ConfigurationReader } from '../../src/c
 import { CustomParser, BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 import { platformPathEquivalent, resolvePath } from '@cmt/util';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
+import { parseSarifLog, readSarifDiagnostics, watchSarifLog } from '@cmt/diagnostics/sarif';
 import { populateCollection, addDiagnosticToCollection, diagnosticSeverity } from '@cmt/diagnostics/util';
 import collections from '@cmt/diagnostics/collections';
 import { getTestResourceFilePath } from '@test/util';
@@ -1734,5 +1737,276 @@ suite('Diagnostics', () => {
         // GCC should claim this line, NOT the custom parser
         expect(consumer.compilers.gcc.diagnostics).to.have.length(1);
         expect(consumer.customParsers.get('greedy')!.diagnostics).to.have.length(0);
+    });
+});
+
+suite('CMake SARIF diagnostics', () => {
+    /** Build a SARIF log around a single result, the way CMake writes one. */
+    function logWith(result: Sarif.Result): Sarif.Log {
+        return {
+            version: '2.1.0',
+            runs: [{ tool: { driver: { name: 'CMake' } }, results: [result] }]
+        };
+    }
+
+    /** A result at `CMakeLists.txt:5`, which resolves under the source directory. */
+    function resultAt(line: number, level?: Sarif.Result.level): Sarif.Result {
+        return {
+            level,
+            ruleId: 'CMake.Warning',
+            message: { text: 'a message' },
+            locations: [{
+                physicalLocation: {
+                    artifactLocation: { uri: 'CMakeLists.txt' },
+                    region: { startLine: line }
+                }
+            }]
+        };
+    }
+
+    test('Parses a warning and an error from a SARIF log written by CMake', async () => {
+        const diagnostics = await readSarifDiagnostics(getTestResourceFilePath('test_cmake.sarif'), 'dummyPath');
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(2);
+
+        const [warning, error] = diagnostics!;
+        expect(warning.filepath).to.eq('dummyPath/CMakeLists.txt');
+        expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(warning.diag.source).to.eq('cmake');
+        expect(warning.diag.code).to.eq('CMake.Warning');
+        expect(warning.diag.message).to.eq('a plain warning');
+        expect(warning.diag.range.start.line).to.eq(4);  // SARIF line numbers are one-based
+
+        expect(error.filepath).to.eq('dummyPath/sub.cmake');
+        expect(error.diag.severity).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(error.diag.code).to.eq('CMake.FatalError');
+        expect(error.diag.message).to.eq('an error from a subdirectory');
+        expect(error.diag.range.start.line).to.eq(1);
+    });
+
+    test('Falls back when there is no SARIF log to read', async () => {
+        const missing = getTestResourceFilePath('no_such_file.sarif');
+        expect(await readSarifDiagnostics(missing, 'dummyPath')).to.be.null;
+    });
+
+    test('Falls back when the SARIF log cannot be parsed', async () => {
+        const malformed = path.join(os.tmpdir(), `cmake-tools-malformed-${process.pid}.sarif`);
+        fs.writeFileSync(malformed, '{ this is not valid JSON');
+        try {
+            expect(await readSarifDiagnostics(malformed, 'dummyPath')).to.be.null;
+        } finally {
+            fs.unlinkSync(malformed);
+        }
+    });
+
+    test('Maps SARIF levels onto diagnostic severities', () => {
+        const severityOf = (level?: Sarif.Result.level) => parseSarifLog(logWith(resultAt(1, level)), 'dummyPath')[0].diag.severity;
+        expect(severityOf('error')).to.eq(vscode.DiagnosticSeverity.Error);
+        expect(severityOf('warning')).to.eq(vscode.DiagnosticSeverity.Warning);
+        expect(severityOf('note')).to.eq(vscode.DiagnosticSeverity.Information);
+        expect(severityOf('none')).to.eq(vscode.DiagnosticSeverity.Information);
+        // A result with no level at all is a warning, per the SARIF spec
+        expect(severityOf(undefined)).to.eq(vscode.DiagnosticSeverity.Warning);
+    });
+
+    test('A region with only a start line spans the whole line', () => {
+        const [diag] = parseSarifLog(logWith(resultAt(14)), 'dummyPath');
+        expect(diag.diag.range.start.line).to.eq(13);
+        expect(diag.diag.range.start.character).to.eq(0);
+        expect(diag.diag.range.end.line).to.eq(13);
+        expect(diag.diag.range.end.character).to.eq(9999);
+    });
+
+    test('A fully specified region is carried over in full', () => {
+        const result = resultAt(1);
+        result.locations![0].physicalLocation!.region = { startLine: 3, startColumn: 5, endLine: 4, endColumn: 9 };
+        const [diag] = parseSarifLog(logWith(result), 'dummyPath');
+        expect(diag.diag.range.start.line).to.eq(2);
+        expect(diag.diag.range.start.character).to.eq(4);
+        expect(diag.diag.range.end.line).to.eq(3);
+        // `endColumn` names the column after the region, so it is already exclusive
+        expect(diag.diag.range.end.character).to.eq(8);
+    });
+
+    test('Resolves the absolute artifact paths that CMake actually writes', () => {
+        const absolute = resolvePath(path.join(path.sep, 'projects', 'app', 'CMakeLists.txt'), '');
+        const result = resultAt(1);
+        result.locations![0].physicalLocation!.artifactLocation = { uri: absolute };
+        const [diag] = parseSarifLog(logWith(result), 'dummyPath');
+        expect(platformPathEquivalent(diag.filepath, absolute)).to.be.true;
+    });
+
+    test('Resolves a file: URI artifact location', () => {
+        const result = resultAt(1);
+        result.locations![0].physicalLocation!.artifactLocation = { uri: 'file:///projects/app/CMakeLists.txt' };
+        const [diag] = parseSarifLog(logWith(result), 'dummyPath');
+        expect(diag.filepath).to.eq(resolvePath(vscode.Uri.parse('file:///projects/app/CMakeLists.txt').fsPath, ''));
+    });
+
+    test('Skips results that have nowhere to be shown', () => {
+        const noLocation: Sarif.Result = { level: 'error', message: { text: 'no location at all' } };
+        expect(parseSarifLog(logWith(noLocation), 'dummyPath')).to.have.length(0);
+
+        // CMake names the file but omits the region when it has no line to
+        // report. Line 1 would be an invention, so the result is left out.
+        const noLine = resultAt(1);
+        delete noLine.locations![0].physicalLocation!.region;
+        expect(parseSarifLog(logWith(noLine), 'dummyPath')).to.have.length(0);
+
+        const noMessage = resultAt(1);
+        noMessage.message = {};
+        expect(parseSarifLog(logWith(noMessage), 'dummyPath')).to.have.length(0);
+    });
+
+    test('Carries a call stack over as related information', () => {
+        const result = resultAt(2);
+        result.stacks = [{
+            frames: [
+                { location: { physicalLocation: { artifactLocation: { uri: 'sub.cmake' }, region: { startLine: 4 } }, message: { text: "In call to 'inner_fn' here" } } },
+                { location: { physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' }, region: { startLine: 6 } } } },
+                // A deferred call carries no line, so it is dropped rather
+                // than pointed at line 1
+                { location: { physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' } }, message: { text: 'DEFERRED' } } }
+            ]
+        }];
+        const [diag] = parseSarifLog(logWith(result), 'dummyPath');
+        expect(diag.diag.relatedInformation).to.have.length(2);
+        expect(diag.diag.relatedInformation![0].location.range.start.line).to.eq(3);
+        expect(diag.diag.relatedInformation![0].message).to.eq("In call to 'inner_fn' here");
+        expect(diag.diag.relatedInformation![1].location.range.start.line).to.eq(5);
+    });
+
+    test('Populates a diagnostic collection from a SARIF log', async () => {
+        const diagnostics = await readSarifDiagnostics(getTestResourceFilePath('test_cmake.sarif'), 'dummyPath');
+        const coll = vscode.languages.createDiagnosticCollection('cmake-tools-sarif-test');
+        populateCollection(coll, diagnostics!);
+        expect(coll.get(vscode.Uri.file('dummyPath/CMakeLists.txt'))!.length).to.eq(1);
+        expect(coll.get(vscode.Uri.file('dummyPath/sub.cmake'))!.length).to.eq(1);
+        coll.dispose();
+    });
+});
+
+suite('watchSarifLog', () => {
+    let binaryDir: string;
+
+    setup(() => {
+        binaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmake-tools-sarif-consumer-'));
+    });
+
+    teardown(() => {
+        fs.rmSync(binaryDir, { recursive: true, force: true });
+    });
+
+    /** Write a minimal but well-formed CMake-shaped SARIF log with one result. */
+    function writeLog(logPath: string) {
+        fs.mkdirSync(path.dirname(logPath), { recursive: true });
+        const log: Sarif.Log = {
+            version: '2.1.0',
+            runs: [{
+                tool: { driver: { name: 'CMake' } },
+                results: [{
+                    level: 'warning',
+                    message: { text: 'a message' },
+                    locations: [{ physicalLocation: { artifactLocation: { uri: 'CMakeLists.txt' }, region: { startLine: 1 } } }]
+                }]
+            }]
+        };
+        fs.writeFileSync(logPath, JSON.stringify(log));
+    }
+
+    const defaultLogPath = () => path.join(binaryDir, '.cmake', 'sarif', 'cmake.sarif');
+
+    /** Start watching `logPath`, as the driver does just before running CMake. */
+    const watching = (logPath: string) => watchSarifLog(logPath, 'dummyPath');
+
+    test('Reads a log that was written after watching started', async () => {
+        // Mirrors the real ordering: the driver snapshots the log just before
+        // the configure it is watching runs, and CMake writes (or rewrites)
+        // the log sometime during that run.
+        const readLog = await watching(defaultLogPath());
+        writeLog(defaultLogPath());
+
+        const diagnostics = await readLog();
+
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(1);
+    });
+
+    test('Ignores a log left over from an earlier configure', async () => {
+        // Nothing rewrote the log during the run being watched —
+        // SARIF logging is off now, or the run died before getting to it.
+        // Trusting the file's mere presence would misattribute an earlier
+        // run's diagnostics to this one.
+        writeLog(defaultLogPath());
+
+        const readLog = await watching(defaultLogPath());
+        expect(await readLog()).to.be.null;
+    });
+
+    test('Reads a log left over from an earlier configure once this run rewrites it', async () => {
+        // The usual case after the first configure: CMake rewrites the same
+        // file in place. Growing it by a byte keeps the test independent of
+        // how coarse the filesystem's modification times are.
+        writeLog(defaultLogPath());
+        const readLog = await watching(defaultLogPath());
+        fs.appendFileSync(defaultLogPath(), ' ');
+
+        const diagnostics = await readLog();
+
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(1);
+    });
+
+    test('Reads a log CMake wrote for reasons nothing outside it can see', async () => {
+        // The project turned SARIF logging on from inside its own CMake code —
+        // a plain set(CMAKE_EXPORT_SARIF ON) never reaches CMakeCache.txt, and
+        // a -C script or toolchain file is no more visible. The extension did
+        // not ask for the log and no argument mentions it; the freshly written
+        // file is the only evidence there is, and it is enough.
+        const readLog = await watching(defaultLogPath());
+        writeLog(defaultLogPath());
+
+        const diagnostics = await readLog();
+
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(1);
+    });
+
+    test('Reads the log of a fatally failed configure that left no usable cache', async () => {
+        // A clean build directory whose first configure died fatally: there is
+        // no CMakeCache.txt to consult at all, but CMake still recorded why it
+        // failed — which is exactly when these diagnostics matter most.
+        const readLog = await watching(defaultLogPath());
+        writeLog(defaultLogPath());
+        expect(fs.existsSync(path.join(binaryDir, 'CMakeCache.txt'))).to.be.false;
+
+        const diagnostics = await readLog();
+
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(1);
+    });
+
+    test('Reports nothing when no log was written', async () => {
+        const readLog = await watching(defaultLogPath());
+        expect(await readLog()).to.be.null;
+    });
+
+    test('Reads a log at whatever path it is given', async () => {
+        const customPath = path.join(binaryDir, 'custom.sarif');
+        const readLog = await watching(customPath);
+        writeLog(customPath);
+
+        const diagnostics = await readLog();
+
+        expect(diagnostics).to.not.be.null;
+        expect(diagnostics!.length).to.eq(1);
+    });
+
+    test('A stale log at a custom path is ignored the same way as the default location', async () => {
+        const customPath = path.join(binaryDir, 'custom.sarif');
+        writeLog(customPath);
+
+        const readLog = await watching(customPath);
+        expect(await readLog()).to.be.null;
     });
 });

@@ -685,6 +685,11 @@
     "@types/glob" "*"
     "@types/node" "*"
 
+"@types/sarif@^2.1.7":
+  version "2.1.7"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/sarif/-/sarif-2.1.7.tgz#dab4d16ba7568e9846c454a8764f33c5d98e5524"
+  integrity sha1-2rTRa6dWjphGxFSodk8zxdmOVSQ=
+
 "@types/semver@^7.3.12":
   version "7.7.1"
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/@types/semver/-/semver-7.7.1.tgz#3ce3af1a5524ef327d2da9e4fd8b6d95c8d70528"
