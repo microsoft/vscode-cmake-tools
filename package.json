@@ -3366,6 +3366,7 @@
           "type": "object",
           "default": {
             "build": {"statusBarVisibility": "inherit", "inheritDefault": "visible"},
+            "install": {"statusBarVisibility": "inherit", "inheritDefault": "visible"},
             "launch": {"statusBarVisibility": "inherit", "inheritDefault": "visible"},
             "debug": {"statusBarVisibility": "inherit", "inheritDefault": "visible"}
           },
@@ -3773,6 +3774,36 @@
                   "enumDescriptions": [
                     "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.visible.description%",
                     "%cmake-tools.configuration.cmake.options.advanced.projectStatusVisibility.hidden.description%"
+                  ]
+                }
+              }
+            },
+            "install": {
+              "type": "object",
+              "properties": {
+                "statusBarVisibility": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "icon",
+                    "hidden",
+                    "inherit"
+                  ],
+                  "markdownEnumDescriptions": [
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.visible.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.icon.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.hidden.description%",
+                    "%cmake-tools.configuration.cmake.options.advanced.statusBarVisibility.inherit.markdownDescription%"
+                  ]
+                },
+                "inheritDefault": {
+                  "type": "string",
+                  "markdownDescription": "%cmake-tools.configuration.cmake.options.advanced.inheritDefault.markdownDescription%",
+                  "enum": [
+                    "visible",
+                    "icon",
+                    "hidden"
                   ]
                 }
               }
