@@ -189,7 +189,9 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
 
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
-        shell: options.shell ?? false
+        shell: options.shell ?? false,
+        // Keep group-directed signals from build tools from reaching the extension host.
+        detached: process.platform !== 'win32'
     };
     if (options?.cwd !== undefined) {
         util.createDirIfNotExistsSync(options.cwd);
