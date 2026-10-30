@@ -33,6 +33,7 @@ import { cmakeTaskProvider, CMakeTaskProvider } from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import { ProjectOutline, ProjectNode, TargetNode, SourceFileNode, WorkspaceFolderNode, BaseNode, DirectoryNode, CTestTestNode } from '@cmt/ui/projectOutline/projectOutline';
 import { BookmarksProvider, BookmarkNode } from '@cmt/ui/bookmarks';
+import { DevToolsNotification } from '@cmt/ui/devToolsNotification';
 import { shouldShowInitializingView, isDefinitivelyAbsentError } from '@cmt/activation';
 import * as util from '@cmt/util';
 import { ProgressHandle, DummyDisposable, reportProgress, runCommand } from '@cmt/util';
@@ -3187,6 +3188,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         // need the extensionManager to be initialized for this.
         pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 
+        const devToolsNotification = new DevToolsNotification();
+        context.subscriptions.push(devToolsNotification.start(() => extensionManager?.workspaceHasAtLeastOneProject() ?? false, context.globalState));
         return await setup(context);
     } finally {
         // Always clear the placeholder so the icon never sticks on failure or when no project is found.
