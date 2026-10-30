@@ -62,7 +62,6 @@ let taskProvider: vscode.Disposable;
 let pinnedCommands: PinnedCommands;
 
 const log = logging.createLogger('extension');
-const devToolsNotification = new DevToolsNotification();
 
 const multiProjectModeKey = 'cmake:multiProject';
 const initializingContextKey = 'cmake:isInitializing';
@@ -3189,9 +3188,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
         // need the extensionManager to be initialized for this.
         pinnedCommands = new PinnedCommands(extensionManager.getWorkspaceConfig(), extensionManager.extensionContext);
 
-        const api = await setup(context);
+        const devToolsNotification = new DevToolsNotification();
         context.subscriptions.push(devToolsNotification.start(() => extensionManager?.workspaceHasAtLeastOneProject() ?? false, context.globalState));
-        return api;
+        return await setup(context);
     } finally {
         // Always clear the placeholder so the icon never sticks on failure or when no project is found.
         await util.setContextValue(initializingContextKey, false);
