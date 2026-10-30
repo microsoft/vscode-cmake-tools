@@ -8,6 +8,8 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('devtools');
 const devToolsExtensionId = 'ms-vscode.cpp-devtools';
+const copilotExtensionId = 'GitHub.copilot';
+const copilotChatExtensionId = 'GitHub.copilot-chat';
 const doNotShowAgainKey = 'ms-vscode.cmake-tools.cpp-devtools.doNotShowAgain';
 
 export class DevToolsNotification {
@@ -21,13 +23,19 @@ export class DevToolsNotification {
     }
 
     public async showIfNeeded(hasCMakeProject: boolean, globalState: vscode.Memento): Promise<void> {
-        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !hasCMakeProject || vscode.extensions.getExtension(devToolsExtensionId)) {
+        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !hasCMakeProject) {
+            return;
+        }
+
+        let devToolsExtension = vscode.extensions.getExtension(devToolsExtensionId);
+        if (devToolsExtension) {
             return;
         }
 
         const copilotInstalled = await this.isCopilotInstalled();
         log.debug(localize('devtools.copilot.installed', 'C++ DevTools suggestion eligibility: Copilot installed: {0}', copilotInstalled));
-        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !copilotInstalled || vscode.extensions.getExtension(devToolsExtensionId)) {
+        devToolsExtension = vscode.extensions.getExtension(devToolsExtensionId);
+        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !copilotInstalled || devToolsExtension) {
             return;
         }
 
@@ -47,7 +55,8 @@ export class DevToolsNotification {
     }
 
     private async isCopilotInstalled(): Promise<boolean> {
-        if (vscode.extensions.getExtension('GitHub.copilot') || vscode.extensions.getExtension('GitHub.copilot-chat')) {
+        const copilotExtension = vscode.extensions.getExtension(copilotExtensionId) || vscode.extensions.getExtension(copilotChatExtensionId);
+        if (copilotExtension) {
             return true;
         }
         if (!vscode.env.appRoot) {
