@@ -109,6 +109,10 @@ export interface AdvancedOptionConfig {
         statusBarVisibility?: StatusBarStaticOptionVisibility;
         inheritDefault?: StatusBarInheritStaticOptionVisibility;
     };
+    install?: {
+        statusBarVisibility?: StatusBarStaticOptionVisibility;
+        inheritDefault?: StatusBarInheritStaticOptionVisibility;
+    };
     launchTarget?: {
         projectStatusVisibility?: ProjectStatusOptionVisibility;
         statusBarVisibility?: StatusBarTextOptionVisibility;

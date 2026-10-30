@@ -1,5 +1,8 @@
 # What's New?
 
+Improvements:
+- Add an Install button next to Build in the status bar to configure when needed, build, and install the project without a custom task. [#4068](https://github.com/microsoft/vscode-cmake-tools/issues/4068)
+
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)

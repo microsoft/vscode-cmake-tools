@@ -78,7 +78,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.modifyLists.targetSourceCommands` | Commands to treat as target source commands when adding source files to CMake lists. Commands appearing earlier in this list will be given higher priority. Supports glob patterns. | `["target_sources", "add_executable", "add_library"]` | no |
 | `cmake.modifyLists.scopeSelection` | How to choose which of a target's visibility scopes, file sets, or source keyword parameters to edit when adding source files to CMake lists. | `"ask"` | no |
 | `cmake.modifyLists.sourceListKeywords` | Keyword arguments to user-defined functions and macros which introduce lists of source files. If left empty, all arguments consisting of only upper-case letters and underscores will be considered. Supports glob patterns. | `[]` | no |
-| `cmake.options.advanced` | Advanced options for CMake Tools. | See package.json | no |
+| `cmake.options.advanced` | Advanced options for CMake Tools. Set `install.statusBarVisibility` to `visible`, `icon`, `hidden`, or `inherit` to customize the Install status bar button. | See package.json | no |
 | `cmake.options.statusBarVisibility` | Controls visibility of the status bar. | `hidden` | no |
 | `cmake.outputLogEncoding` | Encoding to use for tool output. | `auto` | no |
 | `cmake.outlineViewType` | Project Outline View`s type. | `["list", "tree"]` | no |

@@ -603,6 +603,29 @@ class WorkflowButton extends Button {
     }
 }
 
+class InstallButton extends Button {
+    settingsName = 'install';
+
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.install';
+        this.icon = 'desktop-download';
+        this.tooltip = localize('install.tooltip', 'Build and install the project');
+    }
+
+    protected getTextNormal(): string {
+        return localize('install', 'Install');
+    }
+
+    protected getTextShort(): string {
+        return '';
+    }
+
+    protected getTooltipShort(): string | null {
+        return this.prependCMake(this.getTooltipNormal());
+    }
+}
+
 class BuildButton extends Button {
     private static readonly _build = localize('build', 'Build');
     private static readonly _stop = localize('stop', 'Stop');
@@ -875,6 +898,7 @@ export class StatusBar implements vscode.Disposable {
     private readonly _kitSelectionButton = new KitSelection(this._config, 3.4);
 
     private readonly _buildButton: BuildButton = new BuildButton(this._config, 3.35);
+    private readonly _installButton = new InstallButton(this._config, 3.34);
     private readonly _buildPresetButton = new BuildPresetSelection(this._config, 3.33);
     private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config, 3.3);
 
@@ -902,6 +926,7 @@ export class StatusBar implements vscode.Disposable {
             this._launchTargetNameButton,
             this._debugButton,
             this._buildButton,
+            this._installButton,
             this._testButton,
             this._packButton,
             this._workflowButton,
@@ -960,6 +985,7 @@ export class StatusBar implements vscode.Disposable {
     }
     setIsBusy(v: boolean): void {
         this._buildButton.isBusy = v;
+        this._installButton.hidden = v;
     }
     setActiveKitName(v: string): void {
         this._kitSelectionButton.text = v;

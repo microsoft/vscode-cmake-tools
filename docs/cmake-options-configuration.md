@@ -1,6 +1,6 @@
 # CMake Options Visibility Configuration
 
-Starting in CMake Tools 1.16, we will provide users the ability to customize their status bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter this global status bar as much as they would like to, while also having quick access to commonly performed CMake actions. By default, only `Build`, `Debug`, and `Run` will persist in the status bar. All of the CMake actions for configuring your project will now be available in the CMake Tools side bar under **Project Status** View.
+Starting in CMake Tools 1.16, we will provide users the ability to customize their status bar with related CMake items like presets, kits, variants, build, configure, and launch to allow for users to de-clutter this global status bar as much as they would like to, while also having quick access to commonly performed CMake actions. By default, only `Build`, `Install`, `Debug`, and `Run` will persist in the status bar. All of the CMake actions for configuring your project will now be available in the CMake Tools side bar under **Project Status** View.
 
 ![Screenshot of the CMake Tools side bar to the left in VS Code with the Project Status View open](images/cmake-tools-sidebar.png)
 
@@ -15,6 +15,9 @@ The default settings will be set to the following:
     "build": {
         "statusBarVisibility": "inherit"
     },
+    "install": {
+        "statusBarVisibility": "inherit"
+    },
     "launch": {
         "statusBarVisibility": "inherit"
     },
@@ -24,7 +27,7 @@ The default settings will be set to the following:
 }
 ```
 
-These settings mean that by default all settings will be hidden from the status bar, except for Build, Launch, and Debug actions.
+These settings mean that by default all settings will be hidden from the status bar, except for Build, Install, Launch, and Debug actions.
 
 To revert to the prior experience and have all of your presets display in the status bar, set your `Cmake > Options: Status Bar Visibility` setting to `visible`. This setting is overwritten by `Cmake > Options: Advanced`, so if you had added to have some options hidden through this, these options will still remain hidden. 
 
@@ -84,6 +87,10 @@ The full level of options for the CMake status can be seen below:
             "inheritDefault": "visible", "icon", "hidden", 
             "projectStatusVisibility": "visible", "hidden" 
         }, 
+        "install": {
+            "statusBarVisibility": "visible", "icon", "hidden", "inherit",
+            "inheritDefault": "visible", "icon", "hidden"
+        },
         "buildPreset": { 
             "statusBarVisibility": "visible", "icon", "compact", "hidden", "inherit", 
             "inheritDefault": "visible", "icon", "compact", "hidden", 
@@ -145,6 +152,7 @@ The full level of options for the CMake status can be seen below:
 * `kit` is associated with the active kit selected (when CMake Presets aren't present). When selected, the user can modify their active kit. To learn more about kits, please see [our kit documentation](kits.md).
 * `variant` is associated with the active variant (when CMake Presets aren't present). When selected, the user can modify their active variant. Variant status does not show on the Project Status View, but will show in the status bar when set to `visible`. To learn more about variants, please see [our variant documentation](variants.md).
 * `build` is associated with the CMake Build action. It invokes a CMake build on your build target using your build preset or variant.
+* `install` invokes `CMake: Install`, configuring when necessary and building the install target. It appears next to Build and is hidden while the project is busy; the Build button provides the Stop action.
 * `buildPreset` is associated with your active CMake Build Preset. When selected, the user can modify their active CMake Build Preset from the list detected in their CMakePresets.json and CMakeUserPresets.json (if found in project).
 * `buildTarget` is associated with your active CMake Build Target. When selected, the user can specify their active Build Target. This will be the target invoked when the user presses the `Build` icon in the status bar (if not hidden) or runs `CMake: Build Target` from the Command Palette.
 * `ctest` is associated with running CTest. When selected, it will invoke CTest on the test preset specified. If there is no test preset specified, it will run all your tests by default.
