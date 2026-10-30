@@ -1,6 +1,6 @@
 # What's New?
 
-Improvements:
+Features:
 - Stop automatically installing the C/C++ DevTools extension with CMake Tools.
 - Suggest C/C++ DevTools at most once per session when a CMake project is open, GitHub Copilot is installed (including bundled Copilot), and C/C++ DevTools is not installed. "Install" installs the extension directly. Dismissing the notification allows it to appear again after reloading or restarting VS Code; "Don't Show Again" disables future suggestions across workspaces and sessions.
 
