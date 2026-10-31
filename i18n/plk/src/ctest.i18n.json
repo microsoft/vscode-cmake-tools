@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nTest {1} nie powiódł się z {2} (wartość zakończenia {3}).",
 	"test.failed.with.exit.code": "{0}\nTest {1} zakończył się niepowodzeniem z kodem zakończenia {2}.",
+	"failed.to.parse.test.case.declarations": "Nie można przeanalizować deklaracji przypadków testowych w {0}: {1}",
 	"test.explorer.not.enabled": "integracja narzędzia CTest została wyłączona. Zobacz ustawienie `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Testowanie",
 	"running.tests": "Uruchomione testy",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "Przebieg narzędzia CTest został anulowany",
 	"ctest.run.terminated": "Praca narzędzia CTest została przerwana",
 	"ctest.finished.with.code": "Narzędzie CTest zakończyło pracę z kodem powrotnym {0}",
-	"failed.to.resolve.doctest.line": "Nie można rozpoznać wiersza źródłowego dokumentu dla {0}: {1}",
 	"folder.not.found.in.test.explorer": "Nie znaleziono folderu w Eksploratorze testów: {0}",
 	"test.preset.required": "Wybierz ustawienie wstępne testu, aby odnaleźć testy",
 	"ctest.error": "Wystąpił błąd podczas uruchamiania narzędzia ctest w celu określenia dostępnych plików wykonywalnych testu",
