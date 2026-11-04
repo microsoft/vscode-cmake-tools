@@ -718,7 +718,7 @@ export class CTestDriver implements vscode.Disposable {
         return ctestArgs;
     }
 
-    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false): Promise<CommandResult> {
+    public async runCTest(driver: CMakeDriver, customizedTask: boolean = false, testPreset?: TestPreset, consumer?: proc.CommandConsumer, specificTestsToRun?: string[], cancellationToken?: vscode.CancellationToken, isAutomatic: boolean = false, forceParallel: boolean = false): Promise<CommandResult> {
         if (!customizedTask) {
             // We don't want to focus on log channel when running tasks.
             log.showChannel(undefined, isAutomatic);
@@ -739,7 +739,7 @@ export class CTestDriver implements vscode.Disposable {
             try {
                 const ctestArgs = await this.getCTestArgs(driver, customizedTask, testPreset);
                 const combinedToken = util.createCombinedCancellationToken(run.token, cancellationToken);
-                return await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun);
+                return await this.runCTestHelper(tests, run, combinedToken, driver, undefined, ctestArgs, customizedTask, consumer, specificTestsToRun, RunCTestHelperEntryPoint.RunTests, forceParallel);
             } finally {
                 // Always finalize the run so the Test Explorer spinner clears even if a step above throws.
                 // Note: we intentionally do NOT swallow the error here — task/workflow callers rely on the
@@ -965,7 +965,7 @@ export class CTestDriver implements vscode.Disposable {
         }
     };
 
-    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.CommandConsumer, testsToRun?: string[], entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests): Promise<CommandResult> {
+    private async runCTestHelper(tests: vscode.TestItem[], run: vscode.TestRun, cancellation: vscode.CancellationToken, driver?: CMakeDriver, ctestPath?: string, ctestArgs?: string[], customizedTask: boolean = false, consumer?: proc.CommandConsumer, testsToRun?: string[], entryPoint: RunCTestHelperEntryPoint = RunCTestHelperEntryPoint.RunTests, forceParallel: boolean = false): Promise<CommandResult> {
         let returnCode: number = 0;
         const driverMap = new Map<string, { driver: CMakeDriver; ctestPath: string; ctestArgs: string[]; tests: vscode.TestItem[] }>();
 
@@ -985,7 +985,7 @@ export class CTestDriver implements vscode.Disposable {
             }
         }
 
-        if (!this.ws.config.ctestAllowParallelJobs) {
+        if (!forceParallel && !this.ws.config.ctestAllowParallelJobs) {
             const usesTestName = this.hasTestNameVariable();
             for (const driver of driverMap.values()) {
                 // Sort tests alphabetically by label to match the Test Explorer display order.
