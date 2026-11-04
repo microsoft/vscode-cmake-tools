@@ -482,6 +482,12 @@ export class ConfigurationWebview {
             document.getElementById('not-saved').classList.add('invisible');
             vscode.postMessage(false);
           }
+          function handleSaveShortcut(event) {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+              event.preventDefault();
+              save();
+            }
+          }
           function search() {
             const filter = document.getElementById('search').value.toLowerCase();
             for (const tr of document.querySelectorAll('.content-tr')) {
@@ -505,6 +511,7 @@ export class ConfigurationWebview {
               validateInput(editbox)
               editbox.oninput = () => edit(editbox);
             });
+            document.addEventListener('keydown', handleSaveShortcut);
             document.querySelector('#search').focus();
           }
         </script>

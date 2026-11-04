@@ -49,4 +49,19 @@ suite('[cacheView]', () => {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }
     });
+
+    test('registers Ctrl+S and Cmd+S shortcuts in the cache editor markup', async () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmt-cache-view-'));
+        const cachePath = path.join(tempDir, 'CMakeCache.txt');
+        try {
+            fs.writeFileSync(cachePath, '//A value changed by configure\nDERIVED_MESSAGE:STRING=Value\n');
+            const webview = new ConfigurationWebview(cachePath, async () => {});
+            await webview.renderWebview(webview.panel, true);
+
+            expect(webview.panel.webview.html).to.contain("document.addEventListener('keydown', handleSaveShortcut);");
+            expect(webview.panel.webview.html).to.contain("(event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's'");
+        } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
 });
