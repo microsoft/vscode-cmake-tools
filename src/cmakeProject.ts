@@ -1,5 +1,6 @@
 import { CMakeCache } from '@cmt/cache';
 import { CMakeExecutable, getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
+import { showCMakeInstallationMessage } from '@cmt/cmakeInstallation';
 import { CompilationDatabase } from '@cmt/compilationDatabase';
 import * as debuggerModule from '@cmt/debug/debugger';
 import collections from '@cmt/diagnostics/collections';
@@ -1680,7 +1681,11 @@ export class CMakeProject {
 
             const cmake = await this.getCMakeExecutable();
             if (!cmake.isPresent) {
-                void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
+                if (cmake.path) {
+                    void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable: {0}. Check to make sure it is installed or the value of the {1} setting contains the correct path', `"${cmake.path}"`, '"cmake.cmakePath"'));
+                } else {
+                    rollbar.takePromise('Showing CMake installation guidance', {}, showCMakeInstallationMessage(this.workspaceFolder));
+                }
                 telemetry.logEvent('CMakeExecutableNotFound');
                 return null;
             }
