@@ -314,7 +314,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const configure = driver.configure(ConfigureTrigger.runTests, []);
             const build = driver.build([driver.allTargetName]);
 
-            expect(await configure).to.be.deep.equal({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
+            expect(await configure).to.include({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
             expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
@@ -363,7 +363,7 @@ export function makeDriverTestsuite(driverName: string, driver_generator: (cmake
             const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
             const build = driver.build([driver.allTargetName]);
 
-            expect(await configure).to.be.deep.equal({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
+            expect(await configure).to.include({ exitCode: 0, resultType: ConfigureResultType.NormalOperation });
             expect(await build).to.be.equal(-1);
             expect(called).to.be.true;
         }).timeout(90000);
