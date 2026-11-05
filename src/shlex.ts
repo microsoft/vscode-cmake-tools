@@ -299,6 +299,7 @@ export function quote(str: string, opt?: ShlexOptions): string {
         return '""';
     }
     if (/[^\w@%\-+=:,./|><]/.test(str)) {
+        str = str.replace(/\\/g, '\\\\');
         str = str.replace(/"/g, '\\"');
         return `"${str}"`;
     } else {

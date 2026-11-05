@@ -107,13 +107,8 @@ class Session {
     }
 
     private runGit(command: string, withAuth: boolean = false): string {
-        const redactedCliString = `git ${gitExtraArgs(
-            this.settings.username,
-            this.settings.email,
-            withAuth ? this.settings.token : "",
-            true
-        )} ${command}`;
-        console.log(redactedCliString);
+        const safeCliPreview = `git [git-config-redacted] ${command}`;
+        console.log(safeCliPreview);
 
         const cliString = `git ${gitExtraArgs(
             this.settings.username,
