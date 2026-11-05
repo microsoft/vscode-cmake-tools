@@ -43,7 +43,7 @@ suite('cmakeListsModifier pure functions', () => {
         });
 
         test('Escapes backslash', () => {
-            expect(quoteArgument('C:\\path')).to.equal('"C:\\path"');
+            expect(quoteArgument('C:\\path')).to.equal('"C:\\\\path"');
         });
 
         test('Empty string is returned unchanged', () => {
