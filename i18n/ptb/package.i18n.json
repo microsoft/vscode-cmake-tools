@@ -288,7 +288,7 @@
 	"cmake-tools.taskDefinitions.properties.command.description": "Comando CMake",
 	"cmake-tools.taskDefinitions.properties.targets.description": "Alvos da compilação do CMake",
 	"cmake-tools.taskDefinitions.properties.preset.description": "Nome predefinido do CMake. Esta é uma configuração, compilação ou teste predefinido com base no comando CMake",
-	"cmake-tools.taskDefinitions.properties.args.description": "Argumentos adicionais para tarefas de compilação, instalação, limpeza e reconstrução limpa. Argumentos antes de '--' são passados para 'cmake --build'; Os argumentos após '--' são passados para a ferramenta de build subjacente. Para tarefas de recompilação limpa, os argumentos são aplicados às fases de limpeza e compilação.",
+	"cmake-tools.taskDefinitions.properties.args.description": "Argumentos adicionais para tarefas de compilação, instalação, limpeza e reconstrução limpa. Argumentos antes de `--` são passados para `cmake --build`; Os argumentos após `--` são passados para a ferramenta de build subjacente. Para tarefas de recompilação limpa, os argumentos são aplicados às fases de limpeza e compilação.",
 	"cmake-tools.taskDefinitions.properties.options.description": "Opções de comando adicionais",
 	"cmake-tools.taskDefinitions.properties.options.cwd.description": "O diretório de trabalho atual do programa ou script executado. Se a raiz do workspace atual do código omitido for usada.",
 	"cmake-tools.taskDefinitions.properties.options.environment.markdownDescription": "Variáveis de ambiente no formato de \"name\": \"value\".",
