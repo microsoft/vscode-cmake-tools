@@ -10,7 +10,6 @@ import * as fs_ from 'fs';
 import { walk as walk_ } from '@nodelib/fs.walk';
 import * as path from 'path';
 
-import * as rimraf from 'rimraf';
 import * as nls from 'vscode-nls';
 import * as pLimit from 'p-limit';
 
@@ -153,7 +152,7 @@ export namespace fs {
      */
     export function rmdir(dirpath: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            rimraf(dirpath, err => {
+            fs_.rm(dirpath, { recursive: true, force: true, maxRetries: 3 }, err => {
                 if (err) {
                     reject(err);
                 } else {

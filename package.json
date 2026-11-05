@@ -4516,12 +4516,12 @@
     "@types/chai": "^4.2.15",
     "@types/chai-as-promised": "^7.1.3",
     "@types/chai-string": "^1.4.2",
+    "@types/glob": "^7.2.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json5": "~0.0.30",
     "@types/lodash": "4.14.202",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.14.2",
-    "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
     "@types/vscode": "1.88.0",
@@ -4570,10 +4570,10 @@
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.3.2",
     "json5": "^2.2.2",
+    "minimatch": "^11.0.1",
     "minimist": "^1.2.6",
     "open": "^7.4.1",
     "p-limit": "^3.1.0",
-    "rimraf": "^3.0.2",
     "string.prototype.matchall": "^4.0.10",
     "tmp": "^0.2.7",
     "vscode-cpptools": "^7.1.1",
@@ -4601,7 +4601,7 @@
     "tmp": "^0.2.7",
     "jws": "^4.0.1",
     "serialize-javascript": "^7.0.4",
-    "**/minimatch/brace-expansion": "^1.1.21"
+    "*/**/minimatch/brace-expansion": "^1.1.21"
   },
   "packageManager": "yarn@1.22.22"
 }
