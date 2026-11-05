@@ -125,6 +125,28 @@ However, if you are using presets, this task will be generated in `tasks.json` f
 
 **Note**: When running this task, the test settings defined in `CMakeUserPresets.json`/`CMakePresets.json` will be used.
 
+# Refresh with CMake Tools tasks
+You can create a refresh task the same way, by running the **Tasks: Configure task** command and selecting the "CMake: refresh" template. This task refreshes the CMake test information and the Test Explorer, the same as the **CMake: Refresh Tests** command.
+
+```json
+    {
+        "type": "cmake",
+        "label": "CMake: refresh",
+        "command": "refresh",
+        "detail": "CMake template refresh task"
+    }
+```
+
+**Note**: A `type: cmake`, `command: build` task already refreshes the test information and marks prior test results as outdated when it finishes, so you do not need to chain a refresh task after it. The refresh task is useful after a build that does *not* go through a `cmake` task (for example an external/shell build task, or a build driven by another extension), where the test view would otherwise not refresh. You can chain it with `dependsOn`:
+
+```json
+        "dependsOn": [
+            "Some external build task"
+        ]
+```
+
+**Note**: The refresh task builds the default target first (like the **CMake: Refresh Tests** command) and refreshes tests using the active test preset.
+
 # Install/Clean/Clean-rebuild with CMake Tools tasks
 Similarly, you can create a Install/Clean/Clean-rebuild task from the VS Code command pallette by running the **Tasks: Configure task** command.
 
