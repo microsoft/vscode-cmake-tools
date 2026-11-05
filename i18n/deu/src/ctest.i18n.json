@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nTest {1} fehlgeschlagen mit {2} (Beendigungswert {3}).",
 	"test.failed.with.exit.code": "{0}\nFehler beim Test „{1}“ mit Exitcode „{2}“.",
+	"failed.to.parse.test.case.declarations": "Fehler beim Analysieren der Testfalldeklarationen in {0}: {1}",
 	"test.explorer.not.enabled": "ctest-Integration deaktiviert. Weitere Informationen finden Sie in der Einstellung `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Testen",
 	"running.tests": "Tests werden ausgeführt.",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "C-Testlauf wurde abgebrochen.",
 	"ctest.run.terminated": "Der CTest-Testlauf wurde beendet.",
 	"ctest.finished.with.code": "CTest wurde mit Rückgabecode {0} abgeschlossen.",
-	"failed.to.resolve.doctest.line": "Fehler beim Auflösen der doctest-Quellzeile für {0}: {1}",
 	"folder.not.found.in.test.explorer": "Der Ordner wurde im Test-Explorer nicht gefunden: {0}",
 	"test.preset.required": "Eine Testvoreinstellung zum Ermitteln von Tests auswählen",
 	"ctest.error": "Fehler beim Ausführen von CTest zum Ermitteln verfügbarer ausführbarer Testdateien.",
