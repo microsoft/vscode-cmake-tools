@@ -16,6 +16,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('cmakeListsModifier');
 
 const LIST_KEYWORDS = ['APPEND', 'PREPEND', 'INSERT'];
+const GLOB_KEYWORDS = ['GLOB', 'GLOB_RECURSE'];
 
 // Debounce interval for batching file events (in ms)
 const FILE_EVENT_DEBOUNCE_MS = 300;
@@ -307,6 +308,7 @@ export class CMakeListsModifier implements vscode.Disposable {
         const buildType = await project.currentBuildType();
         const newSourceFileName = path.basename(newSourceUri.fsPath);
         const cmakeListsASTs = await findCMakeLists(project, newSourceUri);
+        const allTopLevelInvocations = topLevelInvocations(invocationsFromCMakeASTs(cmakeListsASTs));
 
         function sourceListCompare(a: SourceList, b: SourceList) {
             return a.compare(newSourceUri, b);
@@ -377,6 +379,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
         // Collect candidates from all targets and invocations
         const candidates: CandidateEdit[] = [];
+        const globInfos: string[] = [];
         for (const target of targets) {
             const invocations = await targetSourceCommandInvocations(
                 project, target, cmakeListsASTs, settings.targetSourceCommands,
@@ -401,12 +404,36 @@ export class CMakeListsModifier implements vscode.Disposable {
                 sourceLists.sort(sourceListCompare);
 
                 for (const sourceList of sourceLists) {
+                    const { candidates: resolved, globInfos: sectionGlobInfos, globbed } = this.resolveVariableSectionCandidates(
+                        sourceList, allTopLevelInvocations, newSourceUri, project, settings, target);
+                    globInfos.push(...sectionGlobInfos);
+                    if (globbed) {
+                        // a matching glob covers the file already
+                        continue;
+                    }
+                    const hasLiteralArg = sourceList.ownArgs.some(arg => variableReferenceIdent(arg) === undefined);
+                    if (resolved.length) {
+                        candidates.push(...resolved);
+                        if (hasLiteralArg) {
+                            // Mixed section (literal args alongside ${VAR} reference(s)):
+                            // keep the literal insert available as a secondary option.
+                            candidates.push(this.buildAddCandidate(sourceList, newSourceUri, target));
+                        }
+                        continue;
+                    }
+                    if (sectionGlobInfos.length && !hasLiteralArg) {
+                        // Pure glob-only section, skip the literal insert
+                        continue;
+                    }
                     candidates.push(this.buildAddCandidate(sourceList, newSourceUri, target));
                 }
             }
         }
 
         if (!candidates.length) {
+            if (globInfos.length) {
+                return { candidates: [], info: globInfos[0] };
+            }
             return {
                 candidates: [],
                 error: localize('no.source.command.invocations', 'No source command invocations found. {0} not added to build system.', newSourceFileName)
@@ -449,6 +476,56 @@ export class CMakeListsModifier implements vscode.Disposable {
     }
 
     /**
+     * For each DISTINCT ${IDENT} reference in `sourceList`'s own argument
+     * range, resolve IDENT to its nearest preceding var/list assignment
+     * call in the same document and build a candidate that targets that
+     * variable instead.
+     * When IDENT resolves to a file(GLOB...) call, no candidate is produced,
+     * instead a note is returned in `globInfos` about the glob pattern.
+     * Returns an empty array when there's no reference or none can be
+     * resolved in the document because callers should fall back to the literal
+     * target-command insertion
+     */
+    private resolveVariableSectionCandidates(
+        sourceList: SourceList,
+        allTopLevelInvocations: CommandInvocation[],
+        newSourceUri: vscode.Uri,
+        project: CMakeProject,
+        settings: ModifyListsSettings,
+        target: codeModel.CodeModelTarget
+    ): { candidates: CandidateEdit[]; globInfos: string[]; globbed: boolean } {
+        const idents = Array.from(new Set(
+            sourceList.ownArgs.map(variableReferenceIdent).filter((v): v is string => v !== undefined)));
+        const candidates: CandidateEdit[] = [];
+        const globInfos: string[] = [];
+        for (const ident of idents) {
+            const assignment = findPrecedingVariableAssignment(ident, allTopLevelInvocations, sourceList.invocation);
+            if (!assignment) {
+                continue;
+            }
+            if (isGlobAssignment(assignment)) {
+                const newSourceFileName = path.basename(newSourceUri.fsPath);
+                const globKeyword = assignment.ast.args[0].value;
+                if (fileMatchesGlobAssignment(newSourceUri, assignment)) {
+                    return {
+                        candidates: [],
+                        globInfos: [localize('file.matches.glob', '{0} matches the glob pattern used by {1}({2} {3} ...) for target {4}; it will be picked up automatically the next time CMake configures.', newSourceFileName, assignment.command, globKeyword, ident, target.name)],
+                        globbed: true
+                    };
+                }
+                globInfos.push(localize('file.does.not.match.glob', '{0} does not match the glob pattern used by {1}({2} {3} ...) for target {4}. Add a matching pattern, or add the file manually.', newSourceFileName, assignment.command, globKeyword, ident, target.name));
+                continue;
+            }
+            const resolvedList = SourceList.fromCommandInvocation(project, assignment, undefined, settings)[0];
+            if (!resolvedList || !resolvedList.canContain(newSourceUri)) {
+                continue;
+            }
+            candidates.push(this.buildAddCandidate(resolvedList, newSourceUri, target));
+        }
+        return { candidates, globInfos, globbed: false };
+    }
+
+    /**
      * Collect all candidate edits for removing a source file.
      */
     private async collectRemoveCandidates(
@@ -463,6 +540,7 @@ export class CMakeListsModifier implements vscode.Disposable {
 
         const buildType = await project.currentBuildType();
         const cmakeListsASTs = await findCMakeLists(project, deletedUri);
+        const allTopLevelInvocations = topLevelInvocations(invocationsFromCMakeASTs(cmakeListsASTs));
         const candidates: CandidateEdit[] = [];
         const errors: EditError[] = [];
 
@@ -497,6 +575,28 @@ export class CMakeListsModifier implements vscode.Disposable {
                     errors.push(deleteEdits.dirtyError);
                 }
                 candidates.push(...deleteEdits.candidates);
+
+                // Follow any ${IDENT} references in this invocation's own args to their
+                // assignment and look for the deleted file there too
+                const idents = Array.from(new Set(
+                    invocation.ast.args.map(variableReferenceIdent).filter((v): v is string => v !== undefined)));
+                for (const ident of idents) {
+                    const assignment = findPrecedingVariableAssignment(ident, allTopLevelInvocations, invocation);
+                    if (!assignment) {
+                        continue;
+                    }
+                    const key = `${assignment.document.fileName}:${assignment.offset}`;
+                    if (seen.has(key)) {
+                        continue;
+                    }
+                    seen.add(key);
+                    const refDeleteEdits = this.buildDeleteCandidates(
+                        deletedUri, assignment, `${ident} (referenced by target ${target.name})`, target);
+                    if (refDeleteEdits.dirtyError) {
+                        errors.push(refDeleteEdits.dirtyError);
+                    }
+                    candidates.push(...refDeleteEdits.candidates);
+                }
             }
         }
 
@@ -1233,7 +1333,7 @@ function sourceCommandInvocationsFromCMakeLists(
 /**
  * filter out invocations between function()/endfunction() or macro()/endmacro()
  */
-function topLevelInvocations(allInvocations: CommandInvocation[]) {
+export function topLevelInvocations(allInvocations: CommandInvocation[]) {
     const topLevelInvocations: CommandInvocation[] = [];
     let depth = 0;
     for (const invocation of allInvocations) {
@@ -1297,6 +1397,110 @@ function invocationsFromCMakeASTs(cmakeListsASTs: CMakeAST[]): CommandInvocation
         }
     }
     return Array.from(generator());
+}
+
+/**
+ * Detects whole-token ${IDENT} arguments and resolves IDENT to the nearest
+ * preceding set()/list(APPEND|PREPEND|INSERT) call in the document.
+ */
+const VARIABLE_REFERENCE_RE = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/;
+
+/**
+ * Returns IDENT if `token` is an EXACT, whole-token `${IDENT}` reference
+ * (e.g. "${SOURCES}")
+ */
+export function variableReferenceIdent(token: Token): string | undefined {
+    return token.value.match(VARIABLE_REFERENCE_RE)?.[1];
+}
+
+/**
+ * Returns true if `invocation` is a set(), list(APPEND|PREPEND|INSERT), or
+ * file(GLOB|GLOB_RECURSE) call that assigns/modifies IDENT.
+ */
+function isVariableAssignment(invocation: CommandInvocation, ident: string): boolean {
+    const { command, args } = invocation.ast;
+    if (command.value === 'set') {
+        return args.length > 0 && args[0].value === ident;
+    }
+    if (command.value === 'list' && args.length > 1 && LIST_KEYWORDS.includes(args[0].value)) {
+        return args[1].value === ident;
+    }
+    if (command.value === 'file' && args.length > 1 && GLOB_KEYWORDS.includes(args[0].value)) {
+        return args[1].value === ident;
+    }
+    return false;
+}
+
+/**
+ * True if `invocation` is a file(GLOB|GLOB_RECURSE ...)
+ */
+export function isGlobAssignment(invocation: CommandInvocation): boolean {
+    const { command, args } = invocation.ast;
+    return command.value === 'file' && args.length > 0 && GLOB_KEYWORDS.includes(args[0].value);
+}
+
+/**
+ * Extracts the globbing-expression arguments from a file(GLOB|GLOB_RECURSE
+ * <var> ...) invocation, skipping the variable name and the recognized
+ * option keywords (LIST_DIRECTORIES <bool>, RELATIVE <path>,
+ * CONFIGURE_DEPENDS) that may precede the actual patterns.
+ */
+export function globExpressionsOf(invocation: CommandInvocation): string[] {
+    const { args } = invocation.ast;
+    const exprs: string[] = [];
+    let i = 2; // skip the keyword and variable name
+    while (i < args.length) {
+        const value = args[i].value;
+        if (value === 'LIST_DIRECTORIES' || value === 'RELATIVE') {
+            i += 2;
+            continue;
+        }
+        if (value === 'CONFIGURE_DEPENDS') {
+            i += 1;
+            continue;
+        }
+        exprs.push(value);
+        i++;
+    }
+    return exprs;
+}
+
+/**
+ * Whether `newSourceUri` matches any globbing expression in a
+ * file(GLOB|GLOB_RECURSE ...) invocation. Patterns are resolved relative to
+ * the document's directory containing the call.
+ * GLOB_RECURSE patterns with no explicit path separator are treated as
+ * matching at any depth.
+ */
+export function fileMatchesGlobAssignment(newSourceUri: vscode.Uri, invocation: CommandInvocation): boolean {
+    const recursive = invocation.ast.args[0].value === 'GLOB_RECURSE';
+    const relativePath = lightNormalizePath(path.relative(invocation.sourceDir, newSourceUri.fsPath));
+    return globExpressionsOf(invocation).some(expr => {
+        const pattern = recursive && !expr.includes('/') ? `**/${expr}` : expr;
+        return minimatch(relativePath, pattern);
+    });
+}
+
+/**
+ * Finds the nearest set()/list() invocation that assigns `ident`,
+ * searching backward (by document order) through `invocations`, scoped to
+ * the ones found in the same document as `reference` (placed strictly
+ * before it - expected to already be topLevelInvocations(invocationsFromCMakeASTs(...))).
+ *
+ * Note that it only searches the local document.
+ * Parent-scope / cross-file / if()-block CMake scoping rules are not
+ * modeled, matching the existing fidelity of variableSourceLists().
+ */
+export function findPrecedingVariableAssignment(
+    ident: string,
+    invocations: CommandInvocation[],
+    reference: CommandInvocation
+): CommandInvocation | undefined {
+    const matches = invocations.filter(inv =>
+        platformPathEquivalent(inv.document.fileName, reference.document.fileName) &&
+        inv.offset < reference.offset &&
+        isVariableAssignment(inv, ident));
+    return matches[matches.length - 1];
 }
 
 function findSourceInArgs(
@@ -1390,7 +1594,7 @@ function targetSortKeys(target: codeModel.CodeModelTarget): (number|string)[] {
     ];
 }
 
-class CommandInvocation {
+export class CommandInvocation {
     public readonly sourceDir;
     public readonly builtin;
 
@@ -1571,8 +1775,17 @@ abstract class SourceList {
          * for target source lists, the target name. For variable source lists,
          * the variable name
          * */
-        public destination: string
+        public destination: string,
+        /** Index (inclusive) of the first arg token */
+        public startArgIndex: number,
+        /** Index (exclusive) of the last arg token */
+        public endArgIndex: number
     ) { }
+
+    /** Tokens belonging to list's own arg range */
+    public get ownArgs(): Token[] {
+        return this.invocation.ast.args.slice(this.startArgIndex, this.endArgIndex);
+    }
 
     public get insertPosition() {
         return this.invocation.document.positionAt(this.insertOffset);
@@ -1733,9 +1946,12 @@ class ScopeSourceList extends SourceList {
         // When there are no source files yet (e.g. target_sources(mylib PRIVATE)),
         // fall back to the end of the last keyword token so the insertion
         // goes right after the keyword rather than at offset 0.
-        const insertOffset = findEndOfSourceList(args, index)
+        const listStart = index;
+        const found = findSourceEnd(args, listStart);
+        const insertOffset = found?.endOffset
             ?? (index > 0 ? args[index - 1].endOffset : invocation.ast.lparen.endOffset);
-        super(insertOffset, invocation, target);
+        const endArgIndex = found?.endIndex ?? listStart;
+        super(insertOffset, invocation, target, listStart, endArgIndex);
         this.scope = scope;
         if (fileSetName) {
             this.fileSet = {
@@ -1842,9 +2058,12 @@ class MultiValueSourceList extends SourceList {
     ) {
         const { args } = invocation.ast;
         const keyword = args[index++].value;
+        const listStart = index;
         // Fall back to keyword's endOffset when no source files follow it yet.
-        const insertOffset = findEndOfSourceList(args, index) ?? args[index - 1].endOffset;
-        super(insertOffset, invocation, target);
+        const found = findSourceEnd(args, listStart);
+        const insertOffset = found?.endOffset ?? args[listStart - 1].endOffset;
+        const endArgIndex = found?.endIndex ?? listStart;
+        super(insertOffset, invocation, target, listStart, endArgIndex);
         this.keyword = keyword;
     }
 
@@ -1866,8 +2085,10 @@ class MultiValueSourceList extends SourceList {
 class SimpleSourceList extends SourceList {
     constructor(invocation: CommandInvocation, target: string) {
         const { lparen, args } = invocation.ast;
-        const insertOffset = findEndOfSourceList(args, 0) ?? lparen.endOffset;
-        super(insertOffset, invocation, target);
+        const found = findSourceEnd(args, 0);
+        const insertOffset = found?.endOffset ?? lparen.endOffset;
+        const endArgIndex = Math.max(1, found?.endIndex ?? 1);
+        super(insertOffset, invocation, target, 1, endArgIndex);
     }
 
     public get label(): string {
@@ -1893,9 +2114,11 @@ abstract class VariableSourceList extends SourceList {
         const { args } = invocation.ast;
         const variable = args[variableIndex].value;
         // Fall back to the preceding token's endOffset when no values follow.
-        const insertOffset = findEndOfSourceList(args, listIndex)
+        const found = findSourceEnd(args, listIndex);
+        const insertOffset = found?.endOffset
             ?? (listIndex > 0 ? args[listIndex - 1].endOffset : invocation.ast.lparen.endOffset);
-        super(insertOffset, invocation, variable);
+        const endArgIndex = found?.endIndex ?? listIndex;
+        super(insertOffset, invocation, variable, listIndex, endArgIndex);
         this.variable = variable;
         this.sourceVariables = settings.sourceVariables;
     }
@@ -1960,7 +2183,7 @@ function isCxxModule(uri: vscode.Uri): boolean {
     );
 }
 
-function findEndOfSourceList(args: Token[], index: number) {
+function findSourceEnd(args: Token[], index: number): { endOffset: number; endIndex: number } | null {
     const startIndex = index;
     while (index < args.length && !args[index].value.match(/^[A-Z_]+$/)) {
         index++;
@@ -1969,7 +2192,7 @@ function findEndOfSourceList(args: Token[], index: number) {
         return null;
     }
     const finalToken = args[index - 1];
-    return finalToken.endOffset;
+    return { endOffset: finalToken.endOffset, endIndex: index };
 }
 
 function freshLineIndent(invocation: CommandInvocation, insertPos: vscode.Position) {
