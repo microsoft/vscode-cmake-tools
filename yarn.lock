@@ -6590,10 +6590,10 @@ semver@^7.6.0, semver@^7.6.2:
   resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/semver/-/semver-7.7.4.tgz#28464e36060e991fa7a11d0279d2d3f3b57a7e8a"
   integrity sha1-KEZONgYOmR+noR0CedLT87V6foo=
 
-serialize-javascript@^6.0.2, serialize-javascript@^7.0.4:
-  version "7.0.4"
-  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/serialize-javascript/-/serialize-javascript-7.0.4.tgz#c517735bd5b7631dd1fc191ee19cbb713ff8e05c"
-  integrity sha1-xRdzW9W3Yx3R/Bke4Zy7cT/44Fw=
+serialize-javascript@^6.0.2, serialize-javascript@^7.1.3:
+  version "7.1.3"
+  resolved "https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/serialize-javascript/-/serialize-javascript-7.1.3.tgz#c8f3a5355d5c52d76f4d61389172747a71f22ef6"
+  integrity sha512-kYEnegpAxWFjUw3dSYdSM9zVlTrsxDbsSkq/qd3B7VanqyJ+JdDy6qVyuqVGBhSfuD/rLZQEKuXsO5KZFCrVYQ==
 
 set-blocking@^2.0.0, set-blocking@~2.0.0:
   version "2.0.0"

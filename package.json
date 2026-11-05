@@ -4600,7 +4600,7 @@
     "js-yaml": "^4.3.2",
     "tmp": "^0.2.7",
     "jws": "^4.0.1",
-    "serialize-javascript": "^7.0.4",
+    "serialize-javascript": "^7.1.3",
     "*/**/minimatch/brace-expansion": "^1.1.21"
   },
   "packageManager": "yarn@1.22.22"
