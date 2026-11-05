@@ -3,6 +3,7 @@
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)
+- Fix tests using CTest's `SKIP_RETURN_CODE` property being shown as errored in the Test Explorer. They are now reported as skipped. [#5117](https://github.com/microsoft/vscode-cmake-tools/issues/5117) [@arghness](https://github.com/arghness)
 
 ## 1.24
 

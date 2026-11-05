@@ -75,6 +75,7 @@ export interface CTestResults { site: SiteData }
 // CTest reports the reason a test finished in its "Completion Status" measurement.
 const DISABLED_COMPLETION_STATUS = "Disabled";
 const SKIP_REGEX_COMPLETION_STATUS = "SKIP_REGULAR_EXPRESSION_MATCHED";
+const SKIP_RETURN_CODE_COMPLETION_STATUS_PREFIX = "SKIP_RETURN_CODE=";
 
 /**
  * A test is "disabled" (e.g. a GoogleTest DISABLED_ test, or one with the CTest DISABLED
@@ -1145,7 +1146,12 @@ export class CTestDriver implements vscode.Disposable {
             const completionStatus = testResult.measurements.get("Completion Status")?.value;
 
             let skipped = false;
-            if (exitCode !== undefined) {
+            if (completionStatus === SKIP_REGEX_COMPLETION_STATUS
+                || completionStatus?.startsWith(SKIP_RETURN_CODE_COMPLETION_STATUS_PREFIX)
+                || completionStatus === DISABLED_COMPLETION_STATUS) {
+                run.skipped(test);
+                skipped = true;
+            } else if (exitCode !== undefined) {
                 this.ctestFailed(
                     test,
                     run,
@@ -1153,16 +1159,11 @@ export class CTestDriver implements vscode.Disposable {
                     failureDuration
                 );
             } else if (completionStatus !== undefined) {
-                if (completionStatus === SKIP_REGEX_COMPLETION_STATUS || completionStatus === DISABLED_COMPLETION_STATUS) {
-                    run.skipped(test);
-                    skipped = true;
-                } else {
-                    this.ctestErrored(
-                        test,
-                        run,
-                        new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
-                    );
-                }
+                this.ctestErrored(
+                    test,
+                    run,
+                    new vscode.TestMessage(localize('test.failed.with.completion.status', 'Test {0} failed with completion status "{1}".', testName, completionStatus))
+                );
             } else {
                 this.ctestErrored(
                     test,
