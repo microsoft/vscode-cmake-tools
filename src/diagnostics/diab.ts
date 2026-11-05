@@ -10,7 +10,9 @@ export const REGEX = /\"(.*)\",\s+(?:line\s+(\d+):\s+)?(info|warning|(?:|fatal |
 
 export class Parser extends RawDiagnosticParser {
     doHandleLine(line: string) {
-        const mat = REGEX.exec(line);
+        // Same reason as in the GHS parser: the pattern is not anchored, so skip lines that lack the `",` and `):`
+        // that every match contains.
+        const mat = line.includes('",') && line.includes('):') ? REGEX.exec(line) : null;
         if (!mat) {
             // Nothing to see on this line of output...
             return FeedLineResult.NotMine;

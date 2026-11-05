@@ -10,7 +10,12 @@ export const REGEX = /\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At 
 
 export class Parser extends RawDiagnosticParser {
     doHandleLine(line: string) {
-        const mat = REGEX.exec(line);
+        // The pattern is not anchored, so on a long line with many quotes (a command line with quoted -D values, say)
+        // the regular expression engine retries it from every quote and the cost grows with the square of the line
+        // length. Skip lines that lack text every match contains: the closing quote and comma, and one of the two
+        // location forms.
+        const mat = line.includes('",') && (line.includes('(col.') || line.includes('At end of source'))
+            ? REGEX.exec(line) : null;
         if (!mat) {
             // Nothing to see on this line of output...
             return FeedLineResult.NotMine;
