@@ -38,7 +38,13 @@ export class Parser extends RawDiagnosticParser {
         // path/to/file: In instantiation of ‘...’:
         // path/to/file:lineno:columnno:   required from here
         // path/to/file:lineno:columnno: severity: message
-        let mat = /(.*): (In instantiation of.+)/.exec(line);
+        //
+        // The two patterns below used to be unanchored. Both start with `(.*)`, so a long line that did not match was
+        // retried from every offset and the cost grew with the square of the line length (xcodebuild and `ninja -v`
+        // echo command lines of many kilobytes). `.` cannot cross a line terminator, so the leftmost match always
+        // starts at the beginning of the line or right after \r, \n, \u2028 or \u2029, which is where `^` matches with
+        // the `m` flag. Anchoring therefore does not change what is matched, it only stops the retries.
+        let mat = /^(.*): (In instantiation of.+)/m.exec(line);
         if (mat) {
             const [, , message] = mat;
             this._pendingTemplateError = {
@@ -48,8 +54,8 @@ export class Parser extends RawDiagnosticParser {
             return FeedLineResult.Ok;
         }
         if (this._pendingTemplateError) {
-            // Detect the second line of a pending C++ template error
-            mat = /(.*):(\d+):(\d+):(  +required from.+)/.exec(line);
+            // Detect the second line of a pending C++ template error (anchored like the pattern above)
+            mat = /^(.*):(\d+):(\d+):(  +required from.+)/m.exec(line);
             if (mat) {
                 const [, file, linestr, column, message] = mat;
                 const lineNo = oneLess(linestr);

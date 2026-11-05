@@ -7,6 +7,7 @@ Features:
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)
+- Reduce the CPU work the extension host does in the GCC, MSVC linker, GHS and Diab build output parsers on very long lines, such as the command lines that `xcodebuild` (Xcode generator) and `ninja -v` print. Related CPU profiles: [#4828](https://github.com/microsoft/vscode-cmake-tools/issues/4828) [#4229](https://github.com/microsoft/vscode-cmake-tools/issues/4229)
 
 ## 1.24
 
