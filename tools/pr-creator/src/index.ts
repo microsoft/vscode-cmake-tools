@@ -274,7 +274,7 @@ export function copyFiles(sourceLocation: string, targetRepo: string, targetLoca
     const absoluteTargetLocation = path.resolve(parentRoot, `${targetRepo}/${targetLocation}`);
     console.log(absoluteSourceLocation);
     console.log(absoluteTargetLocation);
-    cp.execSync(`copy ${absoluteSourceLocation} ${absoluteTargetLocation}`);
+    cp.execFileSync("cmd.exe", ["/c", "copy", absoluteSourceLocation, absoluteTargetLocation], { stdio: "inherit" });
     console.log(`Copying files from ${absoluteSourceLocation} to ${absoluteTargetLocation}`);
 }
 
