@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nСбой теста {1} с {2}. (выходное значение {3}).",
 	"test.failed.with.exit.code": "{0}\nСбой теста {1}. Код выхода: {2}.",
+	"failed.to.parse.test.case.declarations": "Не удалось проанализировать объявления тестовых случаев в {0}: {1}",
 	"test.explorer.not.enabled": "Интеграция ctest отключена. См. параметр `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Тестирование",
 	"running.tests": "Выполняются тесты",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "Запуск CTest отменен",
 	"ctest.run.terminated": "Запуск CTest был прерван.",
 	"ctest.finished.with.code": "CTest завершила работу с кодом возврата {0}.",
-	"failed.to.resolve.doctest.line": "Не удалось разрешить исходную строку doctest для {0}: {1}",
 	"folder.not.found.in.test.explorer": "Папка не найдена в обозревателе тестов: {0}",
 	"test.preset.required": "Выберите предустановку тестирования для обнаружения тестов",
 	"ctest.error": "Произошла ошибка при запуске CTest для определения доступных исполняемых файлов тестов.",
