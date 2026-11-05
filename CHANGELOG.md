@@ -11,7 +11,7 @@ Bug Fixes:
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)
 - Fix CMake syntax highlighting keyword collisions in argument lists. Target names, property values, and filenames whose basename collides with a command/property keyword (for example `add_library(Log ...)`, `target_sources(... test.cpp ...)`, or `my_function(type.cpp value.h)`) are no longer split or colored as those keywords by broad top-level grammar rules. `add_library`/`add_executable` target-type keywords and `set_target_properties` `PROPERTIES`/property-name arguments are also now scoped correctly. [#5083](https://github.com/microsoft/vscode-cmake-tools/issues/5083)
 - Reduce excessive CPU usage in the GCC, MSVC linker, GHS and Diab diagnostic parsers on very long build output lines, such as the command lines that `xcodebuild` (Xcode generator) and `ninja -v` print. [#5144](https://github.com/microsoft/vscode-cmake-tools/pull/5144)
-- Fix dependency restore failures in network-isolated CI builds by resolving packages through the configured Azure Artifacts feed, and update the build/test serializer to address CVE-2026-115897. [#5151](https://github.com/microsoft/vscode-cmake-tools/pull/5151)
+- Fix dependency restore failures in network-isolated CI builds by resolving packages through the configured Azure Artifacts feed, and update the build/test serializer to address CVE-2026-34043 and CVE-2026-115897. [#5151](https://github.com/microsoft/vscode-cmake-tools/pull/5151)
 
 ## 1.24
 
