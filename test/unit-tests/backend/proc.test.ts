@@ -112,14 +112,19 @@ suite('Process argument safety', () => {
         });
 
         test('batch scripts with spaces and metacharacters in their paths still run', async () => {
-            const batchScript = path.join(directory, 'echo %CMT_TEST_LITERAL% script.cmd');
-            fs.writeFileSync(batchScript, '@echo off\r\necho CMT_BATCH_OK\r\n');
-            const result = await execute(batchScript, [], null, {
-                silent: true,
-                environment: { CMT_TEST_LITERAL: 'EXPANDED' }
-            }).result;
-            expect(result.retc, result.stderr).to.equal(0);
-            expect(result.stdout.trim()).to.equal('CMT_BATCH_OK');
+            for (const extension of ['bat', 'cmd']) {
+                const batchScript = path.join(directory, `echo %CMT_TEST_LITERAL% script.${extension}`);
+                fs.writeFileSync(batchScript, '@echo off\r\necho CMT_BATCH_OK\r\n');
+                for (const shell of [undefined, 'cmd']) {
+                    const result = await execute(batchScript, [], null, {
+                        shell,
+                        silent: true,
+                        environment: { CMT_TEST_LITERAL: 'EXPANDED' }
+                    }).result;
+                    expect(result.retc, result.stderr).to.equal(0);
+                    expect(result.stdout.trim()).to.equal('CMT_BATCH_OK');
+                }
+            }
         });
 
         test('npm command shims forward literal arguments through their extra cmd parsing layer', async () => {

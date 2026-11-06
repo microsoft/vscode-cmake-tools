@@ -356,13 +356,13 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
 
     const outputEncoding = await codepages.getWindowsCodepage();
     const execOption: proc.ExecutionOptions = {
-        shell: false,
+        shell: 'cmd',
         silent: true,
         overrideLocale: false,
         outputEncoding: outputEncoding
     };
-    // Script file path will be quoted when passed as args
-    const result = await proc.execute('cmd.exe', ['/c', batPath], null, execOption).result;
+    // Let the shared batch launcher escape the path before cmd.exe interprets it.
+    const result = await proc.execute(batPath, [], null, execOption).result;
     await fs.unlink(batPath);
     const output = (result.stdout) ? result.stdout + (result.stderr || '') : result.stderr;
 
