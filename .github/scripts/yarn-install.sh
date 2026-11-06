@@ -33,7 +33,7 @@ attempts="${YARN_INSTALL_ATTEMPTS:-5}"
 sleep_base="${YARN_INSTALL_RETRY_SLEEP_BASE:-15}"
 
 for attempt in $(seq 1 "$attempts"); do
-  if yarn install "$@"; then
+  if yarn install "$@" --registry "$public_registry"; then
     exit 0
   fi
   if [ "$attempt" -ge "$attempts" ]; then
