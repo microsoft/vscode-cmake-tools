@@ -1,0 +1,19 @@
+{
+  "name": "@cmt/decode-uri-component-cjs",
+  "version": "0.5.1",
+  "private": true,
+  "license": "MIT",
+  "main": "index.cjs",
+  "files": [
+    "index.cjs"
+  ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "test": "node --test test.cjs"
+  },
+  "dependencies": {
+    "decode-uri-component-esm": "npm:decode-uri-component@0.5.1"
+  }
+}
