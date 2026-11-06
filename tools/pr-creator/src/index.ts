@@ -49,7 +49,7 @@ function gitAuthHeader(token: string, redact?: boolean): string {
     const encodedPat = redact
         ? "**********"
         : Buffer.from(`:${token}`).toString("base64");
-    return `http.extraHeader="Authorization: Basic ${encodedPat}"`;
+    return `Authorization: Basic ${encodedPat}`;
 }
 
 export function gitExtraArgs(
@@ -57,12 +57,12 @@ export function gitExtraArgs(
     email: string,
     token?: string,
     redact?: boolean
-): string {
-    const args = [`-c user.email="${email}"`, `-c user.name="${username}"`];
+): string[] {
+    const args = ["-c", `user.email=${email}`, "-c", `user.name=${username}`];
     if (token) {
-        args.push(`-c ${gitAuthHeader(token, redact)}`);
+        args.push("-c", `http.extraHeader=${gitAuthHeader(token, redact)}`);
     }
-    return args.join(" ");
+    return args;
 }
 
 class Session {
@@ -106,25 +106,30 @@ class Session {
         return `${orgUrl}/${project}/_git/${repo}`;
     }
 
-    private runGit(command: string, withAuth: boolean = false): string {
-        const safeCliPreview = `git [git-config-redacted] ${command}`;
+    private runGit(command: string[], withAuth: boolean = false): string {
+        const safeCliPreview = `git [git-config-redacted] ${command.join(" ")}`;
         console.log(safeCliPreview);
 
-        const cliString = `git ${gitExtraArgs(
+        const gitConfigArgs = gitExtraArgs(
             this.settings.username,
             this.settings.email,
             withAuth ? this.settings.token : ""
-        )} ${command}`;
-        const result = cp.execSync(cliString).toString("utf8");
+        );
+        const result = cp
+            .execFileSync("git", [...gitConfigArgs, ...command])
+            .toString("utf8");
         console.log(result);
         return result;
     }
 
     private sourceBranchAlreadyExists(): boolean {
         try {
-            this.runGit(
-                `show-ref --verify --quiet refs/heads/${this.settings.sourceBranch}`
-            );
+            this.runGit([
+                "show-ref",
+                "--verify",
+                "--quiet",
+                `refs/heads/${this.settings.sourceBranch}`
+            ]);
         } catch (error) {
             // --verify returns error code 1 when branch exists
             return (error as { status: number }).status !== 1;
@@ -136,7 +141,7 @@ class Session {
     // https://github.com/microsoft/vscode-cmake-tools/blob/a057e5ceb3ce2f98c01f6eb8117d098101f5f234/translations_auto_pr.js#L56
     private hasStagedChanges(): boolean {
         console.log("Checking if any files have changed");
-        const output = this.runGit("diff --staged --name-only");
+        const output = this.runGit(["diff", "--staged", "--name-only"]);
         const lines = output.toString().split("\n");
         let anyChanges = false;
         lines.forEach((line) => {
@@ -157,13 +162,17 @@ class Session {
         }
 
         // remember original branch
-        const origBranch = this.runGit(`rev-parse --abbrev-ref HEAD`).trim();
+        const origBranch = this.runGit([
+            "rev-parse",
+            "--abbrev-ref",
+            "HEAD"
+        ]).trim();
         try {
             // create source branch
-            this.runGit(`checkout -b ${this.settings.sourceBranch}`);
+            this.runGit(["checkout", "-b", this.settings.sourceBranch]);
 
             // add all modified files in target location
-            this.runGit(`add ${this.settings.targetLocation}`);
+            this.runGit(["add", "--", this.settings.targetLocation]);
 
             // if no changes were detected, then there are no new updates.
             if (!this.hasStagedChanges()) {
@@ -171,16 +180,16 @@ class Session {
             }
 
             // commit changes
-            this.runGit(`commit -m "${this.settings.title}"`);
+            this.runGit(["commit", "-m", this.settings.title]);
 
             // add remote (remove if it already exists)
-            this.runGit(`remote add target ${this.getRemoteUrl()}`);
+            this.runGit(["remote", "add", "target", this.getRemoteUrl()]);
 
             // push source branch to remote
-            this.runGit(`push target ${this.settings.sourceBranch}`, true);
+            this.runGit(["push", "target", this.settings.sourceBranch], true);
         } finally {
             // restore original commit ID
-            this.runGit(`checkout ${origBranch}`);
+            this.runGit(["checkout", origBranch]);
         }
     }
 
@@ -229,13 +238,13 @@ class Session {
     private cleanup(): void {
         try {
             // remove source branch
-            this.runGit(`branch -D ${this.settings.sourceBranch}`);
+            this.runGit(["branch", "-D", this.settings.sourceBranch]);
         } catch (error) {
             // ok if the branch doesn't exist
         }
         try {
             // remove remote
-            this.runGit(`remote remove target`);
+            this.runGit(["remote", "remove", "target"]);
         } catch (error) {
             // ok if the remote doesn't exist
         }
