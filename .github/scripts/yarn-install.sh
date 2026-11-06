@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
 # Run `yarn install` with retries and exponential-ish backoff.
 #
-# CI installs dependencies from the private Azure Artifacts mirror
-# (pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages). Under load that feed
-# intermittently returns "429 Too Many Requests", which fails an otherwise-healthy build. This only
-# happens on a node_modules cache miss (e.g. a lockfile bump), so retrying the install a few times
-# with backoff lets the transient throttle clear instead of failing the whole job.
+# Keep dependency restores on Azure Artifacts; retries allow transient feed throttling to clear.
+# Authentication failures require fixing feed access, not switching to a public registry.
 #
 # Any arguments are forwarded verbatim to `yarn install` (e.g. --frozen-lockfile --ignore-scripts).
 # Invoke as: bash ./.github/scripts/yarn-install.sh [yarn install args...]
 set -uo pipefail
 
+azure_registry="https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/"
+
 attempts="${YARN_INSTALL_ATTEMPTS:-5}"
 sleep_base="${YARN_INSTALL_RETRY_SLEEP_BASE:-15}"
 
 for attempt in $(seq 1 "$attempts"); do
-  if yarn install "$@"; then
+  if yarn install "$@" --registry "$azure_registry"; then
     exit 0
   fi
   if [ "$attempt" -ge "$attempts" ]; then
-    echo "::error::yarn install failed after ${attempt} attempts (transient Azure Artifacts feed throttling?)"
+    echo "::error::yarn install failed after ${attempts} attempts; check the errors above for Azure Artifacts feed access or availability issues."
     exit 1
   fi
   wait_s=$(( attempt * sleep_base ))
