@@ -106,25 +106,33 @@ class Session {
         return `${orgUrl}/${project}/_git/${repo}`;
     }
 
-    private runGit(command: string, withAuth: boolean = false): string {
-        const safeCliPreview = `git [git-config-redacted] ${command}`;
+    private runGit(command: string[], withAuth: boolean = false): string {
+        const safeCliPreview = `git [git-config-redacted] ${command.join(" ")}`;
         console.log(safeCliPreview);
 
-        const cliString = `git ${gitExtraArgs(
+        const gitConfigArgs = gitExtraArgs(
             this.settings.username,
             this.settings.email,
             withAuth ? this.settings.token : ""
-        )} ${command}`;
-        const result = cp.execSync(cliString).toString("utf8");
+        )
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
+        const result = cp
+            .execFileSync("git", [...gitConfigArgs, ...command])
+            .toString("utf8");
         console.log(result);
         return result;
     }
 
     private sourceBranchAlreadyExists(): boolean {
         try {
-            this.runGit(
-                `show-ref --verify --quiet refs/heads/${this.settings.sourceBranch}`
-            );
+            this.runGit([
+                "show-ref",
+                "--verify",
+                "--quiet",
+                `refs/heads/${this.settings.sourceBranch}`
+            ]);
         } catch (error) {
             // --verify returns error code 1 when branch exists
             return (error as { status: number }).status !== 1;
@@ -229,13 +237,13 @@ class Session {
     private cleanup(): void {
         try {
             // remove source branch
-            this.runGit(`branch -D ${this.settings.sourceBranch}`);
+            this.runGit(["branch", "-D", this.settings.sourceBranch]);
         } catch (error) {
             // ok if the branch doesn't exist
         }
         try {
             // remove remote
-            this.runGit(`remote remove target`);
+            this.runGit(["remote", "remove", "target"]);
         } catch (error) {
             // ok if the remote doesn't exist
         }
