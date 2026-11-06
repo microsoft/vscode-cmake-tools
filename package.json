@@ -4506,7 +4506,7 @@
     "endToEndTestsSingleRootCTest-only": "node ./out/test/end-to-end-tests/single-root-ctest/runTest.js",
     "endToEndTestsMultiRoot": "yarn run pretest && node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
     "endToEndTestsMultiRoot-only": "node ./out/test/end-to-end-tests/multi-root-UI/runTest.js",
-    "backendTests": "node ./node_modules/mocha/bin/_mocha -u tdd --timeout 60000 --colors -r ts-node/register -r tsconfig-paths/register -r test/unit-tests/backend/setup-vscode-mock.ts ./test/unit-tests/backend/**/*.test.ts",
+    "backendTests": "node --test ./tools/decode-uri-component-cjs/test.cjs && node ./node_modules/mocha/bin/_mocha -u tdd --timeout 60000 --colors -r ts-node/register -r tsconfig-paths/register -r test/unit-tests/backend/setup-vscode-mock.ts ./test/unit-tests/backend/**/*.test.ts",
     "build-product-icon-font": "yarn --cwd ./tools/product-icon-font-generator/ install && yarn --cwd ./tools/product-icon-font-generator/ build && node ./tools/product-icon-font-generator/dist/index.js --source-directory ./res/product-icons/ --output-directory ./res/ --woff2",
     "generate-docs": "node tools/generate-settings-docs.js"
   },
@@ -4596,12 +4596,14 @@
     "yargs-parser": "^20.2.4",
     "xml2js": "^0.5.0",
     "**/mocha/minimatch": "^3.1.5",
+    "**/mocha/glob": "^14.0.3",
+    "**/@vscode/vsce/glob": "^14.0.3",
+    "decode-uri-component": "file:tools/decode-uri-component-cjs",
     "**/braces": "^3.0.3",
     "js-yaml": "^4.3.2",
     "tmp": "^0.2.7",
     "jws": "^4.0.1",
-    "serialize-javascript": "^7.1.3",
-    "*/**/minimatch/brace-expansion": "^1.1.21"
+    "serialize-javascript": "^7.1.3"
   },
   "packageManager": "yarn@1.22.22"
 }
