@@ -9,6 +9,7 @@ import {
 } from "azure-devops-node-api/interfaces/GitInterfaces";
 import * as cp from "child_process";
 import { randomBytes } from "crypto";
+import * as fs from "fs";
 import * as path from "path";
 import { program } from "commander";
 
@@ -265,11 +266,17 @@ export function createPullRequest(settings: Settings): void {
 
 export function copyFiles(sourceLocation: string, targetRepo: string, targetLocation: string): void {
     // Copy files from source to target location
-    const absoluteSourceLocation = path.resolve(parentRoot, `${sourceRepo}/${sourceLocation}/*`);
-    const absoluteTargetLocation = path.resolve(parentRoot, `${targetRepo}/${targetLocation}`);
+    const absoluteSourceLocation = path.resolve(parentRoot, sourceRepo, sourceLocation);
+    const absoluteTargetLocation = path.resolve(parentRoot, targetRepo, targetLocation);
     console.log(absoluteSourceLocation);
     console.log(absoluteTargetLocation);
-    cp.execSync(`copy ${absoluteSourceLocation} ${absoluteTargetLocation}`);
+    for (const entry of fs.readdirSync(absoluteSourceLocation)) {
+        fs.cpSync(
+            path.join(absoluteSourceLocation, entry),
+            path.join(absoluteTargetLocation, entry),
+            { recursive: true }
+        );
+    }
     console.log(`Copying files from ${absoluteSourceLocation} to ${absoluteTargetLocation}`);
 }
 
