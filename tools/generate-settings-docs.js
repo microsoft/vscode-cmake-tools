@@ -85,7 +85,7 @@ function formatDefault(prop) {
 
 function escapeMarkdown(str) {
     if (typeof str !== 'string') str = String(str || '');
-    return str.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+    return str.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
 // Parse existing markdown to find already-documented settings
