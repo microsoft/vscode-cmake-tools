@@ -1,15 +1,33 @@
 #!/usr/bin/env bash
 # Run `yarn install` with retries and exponential-ish backoff.
 #
-# CI installs dependencies from the private Azure Artifacts mirror
-# (pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages). Under load that feed
-# intermittently returns "429 Too Many Requests", which fails an otherwise-healthy build. This only
-# happens on a node_modules cache miss (e.g. a lockfile bump), so retrying the install a few times
-# with backoff lets the transient throttle clear instead of failing the whole job.
+# yarn.lock points to the Azure Artifacts mirror, which can return "401 Unauthorized" in CI.
+# Rewrite its resolved URLs to the public Yarn registry for the install, then restore the lockfile.
 #
 # Any arguments are forwarded verbatim to `yarn install` (e.g. --frozen-lockfile --ignore-scripts).
 # Invoke as: bash ./.github/scripts/yarn-install.sh [yarn install args...]
 set -uo pipefail
+
+azure_registry="https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/"
+public_registry="https://registry.yarnpkg.com/"
+lockfile_backup=
+
+restore_lockfile() {
+  if [ -n "$lockfile_backup" ]; then
+    cp -p "$lockfile_backup" yarn.lock
+    rm -f "$lockfile_backup"
+  fi
+}
+trap restore_lockfile EXIT
+
+if grep -Fq "$azure_registry" yarn.lock; then
+  lockfile_backup="$(mktemp)"
+  cp -p yarn.lock "$lockfile_backup" || exit 1
+  rewritten_lockfile="$(mktemp)"
+  sed "s|${azure_registry}|${public_registry}|g" yarn.lock > "$rewritten_lockfile" || exit 1
+  cat "$rewritten_lockfile" > yarn.lock || exit 1
+  rm -f "$rewritten_lockfile"
+fi
 
 attempts="${YARN_INSTALL_ATTEMPTS:-5}"
 sleep_base="${YARN_INSTALL_RETRY_SLEEP_BASE:-15}"
