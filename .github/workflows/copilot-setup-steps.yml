@@ -4,10 +4,8 @@
 # prepare the agent's sandbox before it works on tasks in this repository.
 # It does NOT run on push/PR events.
 #
-# Registry patching: The project's .npmrc and yarn.lock reference an Azure
-# Artifacts private feed that requires authentication unavailable in the
-# Copilot sandbox. We swap the registry URL to the public Yarn registry so
-# that `yarn install` succeeds without credentials.
+# Dependency installs use the configured Azure Artifacts feed without a
+# public-registry fallback. The environment must have access to that feed.
 
 name: "Copilot Setup Steps"
 
@@ -30,13 +28,8 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
-      - name: Bypass private Azure Artifacts registry
-        run: |
-          mv .npmrc .npmrc.bak
-          sed -i 's|https://pkgs.dev.azure.com/azure-public/VisualCpp/_packaging/cpp_PublicPackages/npm/registry/|https://registry.yarnpkg.com/|g' yarn.lock
-
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bash ./.github/scripts/yarn-install.sh --frozen-lockfile
 
       - name: Validate – run backend tests
         run: yarn backendTests
