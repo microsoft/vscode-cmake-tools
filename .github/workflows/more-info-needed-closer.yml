@@ -6,6 +6,10 @@ on:
        description: "readonly: Specify true or 1 to prevent changes from being commited to GitHub"
        default: false
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   main:
     runs-on: ubuntu-latest

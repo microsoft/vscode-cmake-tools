@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { isFileInsideFolder, lightNormalizePath, platformNormalizePath, platformNormalizeUri, platformPathEquivalent, quickPick, splitPath } from "@cmt/util";
 import path = require("path");
 import rollbar from "@cmt/rollbar";
-import * as minimatch from 'minimatch';
+import { minimatch } from 'minimatch';
 import { CMakeCache } from "@cmt/cache";
 import { CMakeAST, CMakeParser, CommandInvocationAST, Token } from "@cmt/cmakeParser";
 import * as nls from 'vscode-nls';
@@ -2107,6 +2107,7 @@ export function quoteArgument(s: string): string {
     if (!s.match(/[\s()#"\\]/)) {
         return s;
     }
+    s = s.replace(/\\/g, '\\\\');
     s = s.replace(/\t/g, '\\t');
     s = s.replace(/\r/g, '\\r');
     s = s.replace(/\n/g, '\\n');

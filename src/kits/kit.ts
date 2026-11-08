@@ -750,7 +750,6 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     const environment_path = path.join(tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
 
     let script = '';
-    let run_command = '';
 
     let environmentSetupScript = kit.environmentSetupScript!.trim();
     if (opts) {
@@ -766,22 +765,21 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     if (process.platform === 'win32') { // windows
         script += `call ${environmentSetupScript}\r\n`; // call the user batch script
         script += `set >> "${environment_path}"`; // write env vars to temp file
-        // Quote the script file path before running it, in case there are spaces.
-        run_command = `call "${script_path}"`;
     } else { // non-windows
         // Ensure a failing setup script aborts so we don't silently capture an unmodified environment.
         script += 'set -e\n';
         script += `source ${environmentSetupScript}\n`; // run the user shell script
         // Use an absolute path so PATH modifications in the setup script don't break env capture.
         script += `/usr/bin/printenv > "${environment_path}"`; // write env vars to temp file
-        run_command = `/bin/bash "${script_path}"`;
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists
     } catch (error) {}
     await fs.writeFile(script_path, script); // write batch file
 
-    const res = await proc.execute(run_command, [], null, { shell: true, silent: true }).result; // run script
+    const res = process.platform === 'win32'
+        ? await proc.execute(script_path, [], null, { silent: true }).result
+        : await proc.execute('/bin/bash', [script_path], null, { shell: false, silent: true }).result;
     await fs.unlink(script_path); // delete script file
     const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 

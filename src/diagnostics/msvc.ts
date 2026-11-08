@@ -23,8 +23,10 @@ export const LINKER_REGEX =
 export class Parser extends RawDiagnosticParser {
     doHandleLine(line: string) {
         // Try the linker error regex first (handles LINK prefix, file prefix, or standalone)
-        // Must be checked before compiler regex since linker errors can look similar
-        let res = LINKER_REGEX.exec(line);
+        // Must be checked before compiler regex since linker errors can look similar.
+        // LINKER_REGEX backtracks very heavily on a line that begins with a lot of whitespace (for example the caret
+        // line some compilers print under a diagnostic), so skip it unless the line contains the "LNK" code it needs.
+        let res = line.includes('LNK') ? LINKER_REGEX.exec(line) : null;
         if (res) {
             const [full, _file, severity, code, message] = res;
             return {

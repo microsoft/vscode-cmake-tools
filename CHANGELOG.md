@@ -3,9 +3,19 @@
 Improvements:
 - Honor `cmake.buildBeforeRun` when running tests with **CMake: Run Tests**, the status bar, a test CodeLens, or a workflow test step. When it is `false`, CTest runs against the existing build, as the Test Explorer already does, and the project is only configured if needed. [#2933](https://github.com/microsoft/vscode-cmake-tools/issues/2933)
 
+## 1.25.7
+
+Features:
+- Stop automatically installing the C/C++ DevTools extension with CMake Tools.
+- Suggest C/C++ DevTools at most once per session when a CMake project is open, GitHub Copilot is installed (including bundled Copilot), and C/C++ DevTools is not installed. "Install" installs the extension directly. Dismissing the notification allows it to appear again after reloading or restarting VS Code; "Don't Show Again" disables future suggestions across workspaces and sessions.
+
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)
+- Fix CMake syntax highlighting keyword collisions in argument lists. Target names, property values, and filenames whose basename collides with a command/property keyword (for example `add_library(Log ...)`, `target_sources(... test.cpp ...)`, or `my_function(type.cpp value.h)`) are no longer split or colored as those keywords by broad top-level grammar rules. `add_library`/`add_executable` target-type keywords and `set_target_properties` `PROPERTIES`/property-name arguments are also now scoped correctly. [#5083](https://github.com/microsoft/vscode-cmake-tools/issues/5083)
+- Reduce excessive CPU usage in the GCC, MSVC linker, GHS and Diab diagnostic parsers on very long build output lines, such as the command lines that `xcodebuild` (Xcode generator) and `ninja -v` print. [#5144](https://github.com/microsoft/vscode-cmake-tools/pull/5144)
+- Prevent shell metacharacters in executable paths and arguments from being interpreted as commands when running build tools through a shell, while preserving kit setup scripts and Visual Studio detection. [#5152](https://github.com/microsoft/vscode-cmake-tools/pull/5152)
+- Fix dependency restore failures in network-isolated CI builds by resolving packages through the configured Azure Artifacts feed, and update PostCSS, minimatch, URI decoding, and `serialize-javascript` to address security vulnerabilities. [#5151](https://github.com/microsoft/vscode-cmake-tools/pull/5151)
 
 ## 1.24
 

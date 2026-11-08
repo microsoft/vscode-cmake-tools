@@ -6,6 +6,7 @@
 {
 	"test.failed.with.signal": "{0}\nO teste {1} falhou com {2} (valor de saída {3}).",
 	"test.failed.with.exit.code": "{0}\nO teste {1} falhou com código de saída {2}.",
+	"failed.to.parse.test.case.declarations": "Falha ao analisar as declarações de casos de teste em {0}: {1}",
 	"test.explorer.not.enabled": "Integração do ctest desabilitada. Consulte a configuração `cmake.ctest.testExplorerIntegrationEnabled`.",
 	"ctest.testing.progress.title": "Testes",
 	"running.tests": "Executando testes",
@@ -23,7 +24,6 @@
 	"ctest.run.cancelled": "A execução do teste foi cancelada",
 	"ctest.run.terminated": "A execução do CTest foi terminada",
 	"ctest.finished.with.code": "CTest concluído com código de retorno {0}",
-	"failed.to.resolve.doctest.line": "Falha ao resolver a linha de origem do doctest para {0}: {1}",
 	"folder.not.found.in.test.explorer": "A pasta não foi encontrada no Gerenciador de Testes: {0}",
 	"test.preset.required": "Selecione uma predefinição de teste para descobrir testes",
 	"ctest.error": "Houve um erro ao executar o CTest para determinar os executáveis de teste disponíveis",

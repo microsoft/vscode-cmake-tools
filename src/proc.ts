@@ -147,6 +147,77 @@ export function determineShell(command: string): string | boolean {
     return false;
 }
 
+function escapeCmd(value: string): string {
+    return value.replace(/([()\][%!^"`<>&|;, *?])/g, '^$1');
+}
+
+function quoteWindowsArgument(value: string): string {
+    let quoted = '"';
+    let backslashes = 0;
+    for (const char of value) {
+        if (char === '\\') {
+            backslashes++;
+        } else {
+            quoted += '\\'.repeat(char === '"' ? backslashes * 2 + 1 : backslashes) + char;
+            backslashes = 0;
+        }
+    }
+    return quoted + '\\'.repeat(backslashes * 2) + '"';
+}
+
+function spawnProcess(command: string, args: string[], shell: boolean | string, options: proc.SpawnOptions): proc.ChildProcess {
+    if (!shell) {
+        return proc.spawn(command, args, { ...options, shell: false });
+    }
+    let shellPath = typeof shell === 'string' ? shell
+        : process.platform === 'win32' ? process.env.ComSpec || 'cmd.exe' : '/bin/sh';
+    if (process.platform === 'win32' && /^cmd(?:\.exe)?$/i.test(shellPath)) {
+        shellPath = process.env.ComSpec || shellPath;
+    }
+    if (/(?:^|[\\/])cmd(?:\.exe)?$/i.test(shellPath)) {
+        if ([command, ...args].some(value => /[\r\n]/.test(value))) {
+            throw new Error(localize('cmd.newline.argument', 'Cannot execute a Windows command shell with newline characters in the command or arguments.'));
+        }
+        const isCmdShim = /node_modules[\\/]\.bin[\\/][^\\/]+\.cmd$/i.test(command);
+        const quotedArgs = args.map(value => {
+            const quoted = escapeCmd(quoteWindowsArgument(value));
+            return isCmdShim ? escapeCmd(quoted) : quoted;
+        });
+        const commandLine = [escapeCmd(quoteWindowsArgument(command)), ...quotedArgs].join(' ');
+        return proc.spawn(shellPath, ['/d', '/s', '/c', `"${commandLine}"`], {
+            ...options, shell: false, windowsVerbatimArguments: true, argv0: quoteWindowsArgument(shellPath)
+        });
+    }
+    if (/(?:^|[\\/])(?:powershell|pwsh)(?:\.exe)?$/i.test(shellPath)) {
+        // Keep argument data out of PowerShell source, including subexpressions and quotes.
+        const script = [
+            '$global:LASTEXITCODE = 0',
+            '$commandArgs = ConvertFrom-Json -InputObject $env:CMAKE_TOOLS_EXEC_ARGS',
+            '& $env:CMAKE_TOOLS_EXEC_COMMAND @commandArgs',
+            'if (-not $?) { if ($LASTEXITCODE) { exit $LASTEXITCODE }; exit 1 }',
+            'exit $LASTEXITCODE'
+        ].join('; ');
+        return proc.spawn(shellPath, ['-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], {
+            ...options,
+            shell: false,
+            env: {
+                ...options.env,
+                CMAKE_TOOLS_EXEC_COMMAND: command,
+                CMAKE_TOOLS_EXEC_ARGS: JSON.stringify(args)
+            }
+        });
+    }
+    // Quoted environment expansions keep data out of shell syntax and MSYS argv parsing.
+    const env: NodeJS.ProcessEnv = { ...options.env, CMAKE_TOOLS_EXEC_COMMAND: command };
+    const argumentReferences = args.map((value, index) => {
+        const key = `CMAKE_TOOLS_EXEC_ARG_${index}`;
+        env[key] = value;
+        return `"$${key}"`;
+    });
+    const script = ['"$CMAKE_TOOLS_EXEC_COMMAND"', ...argumentReferences].join(' ');
+    return proc.spawn(shellPath, ['-c', script], { ...options, shell: false, env });
+}
+
 /**
  * Execute a command and return the result
  * @param command The binary to execute
@@ -183,13 +254,10 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         }
     }
 
-    if (process.platform === "win32" && options.shell === undefined) {
-        options.shell = determineShell(command);
-    }
-
+    const shell = options.shell ?? (process.platform === 'win32' ? determineShell(command) : false);
     const spawn_opts: proc.SpawnOptions = {
         env: final_env,
-        shell: options.shell ?? false
+        shell: false
     };
     if (options?.cwd !== undefined) {
         util.createDirIfNotExistsSync(options.cwd);
@@ -200,12 +268,15 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
     }
 
     let child: proc.ChildProcess | undefined;
+    let spawnError = '';
 
     // Since we won't be sending anything to this process, close its stdin.
     spawn_opts.stdio = ['ignore', 'pipe', 'pipe'];
     try {
-        child = proc.spawn(command, args ?? [], spawn_opts);
-    } catch {
+        child = spawnProcess(command, args ?? [], shell, spawn_opts);
+    } catch (error) {
+        spawnError = String(error);
+        log.warning(localize({key: 'process.error', comment: ['The space before and after all placeholders should be preserved.']}, 'The command: {0} failed with error: {1}', cmdstr, spawnError));
         child = undefined;
     }
     if (!child) {
@@ -214,7 +285,7 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
             result: Promise.resolve({
                 retc: -1,
                 stdout: "",
-                stderr: ""
+                stderr: spawnError
             })
         };
     }

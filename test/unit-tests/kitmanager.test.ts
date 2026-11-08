@@ -46,9 +46,9 @@ suite('Kits test', () => {
         expect(kits!.filter(k => k.name === "ToolchainKit 4")[0].toolchainFile).to.eq("test-project-without-cmakelists/Test/toolchain.cmake");
     });
 
-    test('Test load env vars from shell script', async () => {
+    test('Test load env vars from shell script with spaces and shell metacharacters in its path', async () => {
         const fname_extension = process.platform === 'win32' ? 'bat' : 'sh';
-        const fname = `cmake-kit-test-${Math.random().toString()}.${fname_extension}`;
+        const fname = `cmake kit & test-${Math.random().toString()}.${fname_extension}`;
         const script_path = path.join(paths.tmpDir, fname);
         // generate a file with test batch / shell script that sets two env vars
         if (process.platform === 'win32') {
