@@ -810,11 +810,25 @@ export class CMakeProject {
 
     /**
      * Short-lived cache for `prepareLaunchTargetExecutable` results keyed by target name.
-     * Prevents duplicate builds when multiple `${input:...}` variables resolve the same
-     * target within a single launch.json evaluation (typically < 1 s apart).
+     * Prevents duplicate builds when multiple `${command:cmake.launchTarget*}` or `${input:...}`
+     * variables resolve the same target within a single launch.json evaluation (typically < 1 s apart).
+     *
+     * The cache must not outlive the launch it was populated for, otherwise a later launch runs a
+     * stale executable (see #5132). VS Code doesn't tell us which substitutions belong to the same
+     * launch, so on top of the TTL the cache is only consulted by the substitution commands (see
+     * `prepareLaunchTargetExecutable`) and is dropped by `prepareCacheInvalidationSubs`.
      */
     private readonly _prepareCache = new Map<string, { timestamp: number; result: ExecutableTarget }>();
     private static readonly PREPARE_CACHE_TTL_MS = 10_000;
+
+    /**
+     * Drop the `_prepareCache` once the launch that populated it is under way (its debug session
+     * has started) or when its result may be out of date (a document was saved).
+     */
+    private readonly prepareCacheInvalidationSubs: vscode.Disposable[] = [
+        vscode.debug.onDidStartDebugSession(() => this._prepareCache.clear()),
+        vscode.workspace.onDidSaveTextDocument(() => this._prepareCache.clear())
+    ];
 
     /**
      * Whether CTest is enabled
@@ -955,6 +969,7 @@ export class CMakeProject {
         log.debug(localize({key: 'disposing.extension', comment: ["'CMake Tools' shouldn't be localized"]}, 'Disposing CMake Tools extension'));
         this.disposeEmitter.fire();
         this.termCloseSub.dispose();
+        this.prepareCacheInvalidationSubs.forEach(sub => sub.dispose());
         this.launchTerminals.forEach(term => term.dispose());
         for (const sub of [
             this.generatorSub,
@@ -3487,7 +3502,7 @@ export class CMakeProject {
      * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
      */
     async launchTargetPath(name?: string): Promise<string | null> {
-        const executable = await this.prepareLaunchTargetExecutable(name);
+        const executable = await this.prepareLaunchTargetExecutable(name, true);
         if (!executable) {
             log.showChannel();
             log.warning('=======================================================');
@@ -3675,18 +3690,30 @@ export class CMakeProject {
         }
     }
 
-    async prepareLaunchTargetExecutable(name?: string): Promise<ExecutableTarget | null> {
+    /**
+     * Ensure the launch target is ready to run: save, (re)configure if needed and, when
+     * `cmake.buildBeforeRun` is set, build it.
+     * @param name Optional target name. When provided, resolves the named target without changing the active launch target.
+     * @param reuseRecentResult Whether a result prepared moments ago for the same target may be returned
+     * instead of preparing the target again. Only the launch-target substitution commands pass `true`,
+     * because VS Code resolves each of them separately while evaluating a single launch. A command that
+     * is a whole launch on its own (`cmake.launchTarget`, `cmake.debugTarget`) must always prepare the
+     * target, otherwise it would run a stale executable when rerun shortly after a previous launch.
+     */
+    async prepareLaunchTargetExecutable(name?: string, reuseRecentResult: boolean = false): Promise<ExecutableTarget | null> {
         // Short-lived cache to coalesce duplicate builds when several substitutions resolve the same
         // target in quick succession within a single launch (e.g. a launch.json using both
         // ${command:cmake.launchTargetPath} and ${command:cmake.launchTargetDirectory}, or multiple
         // ${input:...} variables). For the active launch target (no explicit name) we resolve its
         // current name so those substitutions share one build too. See #5051.
-        const cacheKey = name ?? (await this.getCurrentLaunchTarget())?.name;
-        if (cacheKey) {
-            const cached = this._prepareCache.get(cacheKey);
-            if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
-                && await fs.exists(cached.result.path)) {
-                return cached.result;
+        if (reuseRecentResult) {
+            const cacheKey = name ?? (await this.getCurrentLaunchTarget())?.name;
+            if (cacheKey) {
+                const cached = this._prepareCache.get(cacheKey);
+                if (cached && (Date.now() - cached.timestamp) < CMakeProject.PREPARE_CACHE_TTL_MS
+                    && await fs.exists(cached.result.path)) {
+                    return cached.result;
+                }
             }
         }
 
