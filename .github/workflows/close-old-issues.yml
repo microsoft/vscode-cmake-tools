@@ -1,4 +1,7 @@
 name: Close Old Issues
+permissions:
+  contents: read
+  issues: write
 on:
   schedule:
     - cron: "0 8 * * *"

@@ -65,10 +65,8 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
     const installs = [] as VSInstallation[];
     const instanceIds = [] as string[];
     const vswhereExe = path.join(thisExtensionPath(), 'res', 'vswhere.exe');
-    const sys32Path = path.join(process.env.WINDIR as string, 'System32');
-
-    const vswhereArgs = ['/c', `${sys32Path}\\chcp 65001>nul && "${vswhereExe}" -all -format json -utf8 -products * -legacy -prerelease`];
-    const vswhereResult = await proc.execute(`${sys32Path}\\cmd.exe`, vswhereArgs, null, { silent: true, encoding: 'utf8', shell: true }).result;
+    const vswhereArgs = ['-all', '-format', 'json', '-utf8', '-products', '*', '-legacy', '-prerelease'];
+    const vswhereResult = await proc.execute(vswhereExe, vswhereArgs, null, { silent: true, encoding: 'utf8', shell: false }).result;
 
     if (vswhereResult.retc !== 0) {
         log.error(localize('failed.to.execute', 'Failed to execute {0}: {1}', "vswhere.exe", vswhereResult.stderr));
@@ -358,13 +356,13 @@ async function collectDevBatVars(hostArch: string, devBat: string, args: string[
 
     const outputEncoding = await codepages.getWindowsCodepage();
     const execOption: proc.ExecutionOptions = {
-        shell: false,
+        shell: 'cmd',
         silent: true,
         overrideLocale: false,
         outputEncoding: outputEncoding
     };
-    // Script file path will be quoted when passed as args
-    const result = await proc.execute('cmd.exe', ['/c', batPath], null, execOption).result;
+    // Let the shared batch launcher escape the path before cmd.exe interprets it.
+    const result = await proc.execute(batPath, [], null, execOption).result;
     await fs.unlink(batPath);
     const output = (result.stdout) ? result.stdout + (result.stderr || '') : result.stderr;
 
