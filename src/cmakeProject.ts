@@ -30,6 +30,7 @@ import { CMakeBuildConsumer } from '@cmt/diagnostics/build';
 import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { addDiagnosticToCollection, diagnosticSeverity, populateCollection } from '@cmt/diagnostics/util';
 import { resolveBuildCompletionLogMethod } from '@cmt/buildLogLevel';
+import { PreTestOperation, shouldBuildBeforeTestOperation } from '@cmt/preTestBuild';
 import { expandStrings, expandString, ExpansionOptions } from '@cmt/expand';
 import { CMakeGenerator, Kit, SpecialKits, effectiveKitEnvironment } from '@cmt/kits/kit';
 import * as logging from '@cmt/logging';
@@ -3130,9 +3131,22 @@ export class CMakeProject {
         return this.cTestController.runCTest(driver, true, testPreset, consumer);
     }
 
-    private async preTest(fromWorkflow: boolean = false, buildTargets?: string[], isAutomatic: boolean = false): Promise<CMakeDriver> {
+    private async preTest(operation: PreTestOperation, fromWorkflow: boolean = false, buildTargets?: string[], isAutomatic: boolean = false): Promise<CMakeDriver> {
         if (extensionManager !== undefined && extensionManager !== null && !fromWorkflow) {
             extensionManager.cleanOutputChannel();
+        }
+        if (!shouldBuildBeforeTestOperation(operation, this.workspaceContext.config.buildBeforeRun)) {
+            // cmake.buildBeforeRun is off: run the tests against the existing build, but still configure
+            // when needed so CTest has a build tree to run in (#2933).
+            const configResult = await this.ensureConfigured();
+            if (configResult === null || configResult.exitCode !== 0) {
+                throw new Error(localize('configure.failed', 'Failed to configure project'));
+            }
+            const drv = await this.getCMakeDriverInstance();
+            if (!drv) {
+                throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
+            }
+            return drv;
         }
         // When buildTargets is undefined, build() resolves the default build target (existing behavior for
         // ctest/cpack/refresh/workflow callers). A single-test run passes the specific test's target instead.
@@ -3151,14 +3165,14 @@ export class CMakeProject {
     }
 
     async ctest(fromWorkflow: boolean = false, commandConsumer?: proc.CommandConsumer, testsToRun?: string[], cancellationToken?: vscode.CancellationToken, buildTargets?: string[], isAutomatic: boolean = false): Promise<CommandResult> {
-        const drv = await this.preTest(fromWorkflow, buildTargets, isAutomatic);
+        const drv = await this.preTest('ctest', fromWorkflow, buildTargets, isAutomatic);
         const retc = await this.cTestController.runCTest(drv, undefined, undefined, commandConsumer, testsToRun, cancellationToken, isAutomatic);
         return retc;
     }
 
     async cpack(fromWorkflow: boolean = false): Promise<number> {
         this.isBusy.set(true);
-        const drv = await this.preTest(fromWorkflow);
+        const drv = await this.preTest('cpack', fromWorkflow);
         const retc = await this.cPackageController.runCPack(drv);
         this.isBusy.set(false);
         return retc;
@@ -3185,7 +3199,7 @@ export class CMakeProject {
     }
 
     async refreshTests(): Promise<number> {
-        const drv = await this.preTest();
+        const drv = await this.preTest('refreshTests');
         return this.cTestController.refreshTests(drv);
     }
 

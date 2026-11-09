@@ -1,5 +1,8 @@
 # What's New?
 
+Improvements:
+- Honor `cmake.buildBeforeRun` when running tests with **CMake: Run Tests**, the status bar, a test CodeLens, or a workflow test step. When it is `false`, CTest runs against the existing build, as the Test Explorer already does, and the project is only configured if needed. [#2933](https://github.com/microsoft/vscode-cmake-tools/issues/2933)
+
 ## 1.25.7
 
 Features:

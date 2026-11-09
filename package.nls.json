@@ -119,7 +119,7 @@
     "cmake-tools.configuration.cmake.sourceDirectory.description": "Path or array of paths to the CMakeLists.txt root directory/directories.",
     "cmake-tools.configuration.cmake.autoDetectSourceDirectory.markdownDescription": "When no `CMakeLists.txt` exists at the workspace root (`#cmake.sourceDirectory#`), automatically detect a single `CMakeLists.txt` in a subdirectory and use its folder as the source directory so CMake Tools activates instead of staying hidden. When several candidates are found, you are prompted to choose. Has no effect when `#cmake.sourceDirectory#` is set explicitly.",
     "cmake-tools.configuration.cmake.saveBeforeBuild.description": "Save open files before building.",
-    "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it.",
+    "cmake-tools.configuration.cmake.buildBeforeRun.description": "Build the target before running it, and build before running tests.",
     "cmake-tools.configuration.cmake.clearOutputBeforeBuild.description": "Clear build output before each build.",
     "cmake-tools.configuration.cmake.configureSettings.description": "CMake variables to set on the command line. This setting is specific to kits and will not be used for CMake Presets.",
     "cmake-tools.configuration.cmake.cacheInit.string.description": "Path to a cache-initializing CMake file.",
