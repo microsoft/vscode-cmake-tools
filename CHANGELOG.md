@@ -1,6 +1,6 @@
 # What's New?
 
-## 1.25.7
+## 1.25.10
 
 Features:
 - Stop automatically installing the C/C++ DevTools extension with CMake Tools.
