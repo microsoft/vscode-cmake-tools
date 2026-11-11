@@ -279,7 +279,7 @@ If your project defines multiple executables (for example, a `client` and a `ser
 }
 ```
 
-When multiple `${input:...}` variables reference the same target (for example, `serverPath` and `serverDir` above), the build is triggered only once — results are cached for 10 seconds to avoid redundant builds.
+When multiple `${input:...}` variables reference the same target (for example, `serverPath` and `serverDir` above), the build is triggered only once — results are cached for up to 10 seconds to avoid redundant builds. The cached result is dropped as soon as the debug session starts or a file is saved, so the next launch builds again.
 
 > **Tip:**
 > For large projects, consider setting `cmake.buildBeforeRun` to `false` and using a `preLaunchTask` instead to keep launch times predictable.

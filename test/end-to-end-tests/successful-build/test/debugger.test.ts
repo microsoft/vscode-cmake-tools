@@ -4,6 +4,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 suite('Debug/Launch interface', () => {
     let cmakeProject: CMakeProject;
@@ -274,6 +275,77 @@ suite('Debug/Launch interface', () => {
 
         // Check that it is compiled as a new file
         expect(fs.existsSync(validPath)).to.be.false;
+    }).timeout(60000);
+
+    test('Test launch target substitutions of a single launch share one build', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: true });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        const buildSpy = testEnv.sandbox.spy(cmakeProject, 'build');
+
+        // VS Code resolves each substitution of a launch.json configuration separately.
+        expect(await cmakeProject.launchTargetPath()).to.be.not.null;
+        expect(await cmakeProject.launchTargetDirectory()).to.be.not.null;
+        expect(await cmakeProject.launchTargetFilename()).to.be.not.null;
+
+        expect(buildSpy.callCount).to.be.eq(1);
+    }).timeout(60000);
+
+    test('Test launching the target again right away builds again', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: true });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        const buildSpy = testEnv.sandbox.spy(cmakeProject, 'build');
+        const terminals: (vscode.Terminal | null)[] = [];
+
+        try {
+            // Every launch has to build, however soon it follows the previous one (#5132).
+            terminals.push(await cmakeProject.launchTarget());
+            expect(terminals[0]).to.be.not.null;
+            expect(buildSpy.callCount).to.be.eq(1);
+
+            terminals.push(await cmakeProject.launchTarget());
+            expect(terminals[1]).to.be.not.null;
+            expect(buildSpy.callCount).to.be.eq(2);
+        } finally {
+            terminals.forEach(terminal => terminal?.dispose());
+
+            // Needed to ensure things get disposed
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+    }).timeout(60000);
+
+    test('Test launch target substitution builds again after a document is saved', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: true });
+
+        const executablesTargets = await cmakeProject.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmakeProject.setLaunchTargetByName(executablesTargets[0].name);
+
+        const buildSpy = testEnv.sandbox.spy(cmakeProject, 'build');
+
+        const launchProgramPath = await cmakeProject.launchTargetPath();
+        expect(launchProgramPath).to.be.not.null;
+        expect(buildSpy.callCount).to.be.eq(1);
+
+        // Save an edit. The file lives in the build directory so the project sources stay untouched.
+        const savedFile = path.join(path.dirname(launchProgramPath!), 'saved-document.txt');
+        fs.writeFileSync(savedFile, '');
+        const document = await vscode.workspace.openTextDocument(savedFile);
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(document.uri, new vscode.Position(0, 0), 'edited');
+        expect(await vscode.workspace.applyEdit(edit)).to.be.true;
+        expect(await document.save()).to.be.true;
+
+        // The saved edit must not be ignored, even though the previous launch was moments ago.
+        expect(await cmakeProject.launchTargetPath()).to.be.eq(launchProgramPath);
+        expect(buildSpy.callCount).to.be.eq(2);
     }).timeout(60000);
 
     test('Test launch target', async () => {
