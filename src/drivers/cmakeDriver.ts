@@ -3,6 +3,7 @@
  */ /** */
 
 import * as path from 'path';
+import * as nodeFs from 'fs';
 import * as vscode from 'vscode';
 import * as lodash from "lodash";
 
@@ -37,6 +38,7 @@ import { CMakeBuildRunner } from '@cmt/cmakeBuildRunner';
 import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
 import { onBuildSettingsChange, onTestSettingsChange, onPackageSettingsChange } from '@cmt/ui/util';
 import { CodeModelKind } from '@cmt/drivers/cmakeFileApi';
+import { BuildDirectoryRefusalReason, isSafeToDeleteBuildDirectoryResolved, withInProgressFlag } from '@cmt/drivers/buildDirectoryGuard';
 import { CommandResult } from 'vscode-cmake-tools';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -640,12 +642,73 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     /**
+     * Every workspace folder we know about, used to make sure a recursive build
+     * directory deletion cannot destroy the user's workspace.
+     */
+    private get knownWorkspaceRoots(): string[] {
+        const roots: string[] = [];
+        if (this.workspaceFolder) {
+            roots.push(this.workspaceFolder);
+        }
+        for (const folder of vscode.workspace.workspaceFolders ?? []) {
+            roots.push(folder.uri.fsPath);
+        }
+        return roots;
+    }
+
+    /**
+     * Verify that recursively deleting the build directory cannot destroy the source
+     * directory, a workspace folder, or an entire drive. Logs a localized error and
+     * returns false when the deletion must be skipped.
+     */
+    private async canSafelyDeleteBuildDirectory(buildDir: string): Promise<boolean> {
+        // The native realpath is what makes this check trustworthy: it collapses Windows 8.3
+        // short names, junctions and symbolic links, extended-length prefixes and casing, so a
+        // build directory that is the source directory under another spelling is still caught.
+        const result = await isSafeToDeleteBuildDirectoryResolved(buildDir, this.sourceDir, this.knownWorkspaceRoots, { realpath: candidate => nodeFs.realpathSync.native(candidate) });
+        if (result.safe) {
+            return true;
+        }
+        let details: string;
+        switch (result.reason) {
+            case BuildDirectoryRefusalReason.FilesystemRoot:
+                details = localize('build.dir.is.filesystem.root', 'it is a filesystem root');
+                break;
+            case BuildDirectoryRefusalReason.SourceDirectory:
+                details = localize('build.dir.is.source.dir', 'it is the source directory {0}', result.conflictingPath ?? this.sourceDir);
+                break;
+            case BuildDirectoryRefusalReason.SourceDirectoryAncestor:
+                details = localize('build.dir.contains.source.dir', 'it contains the source directory {0}', result.conflictingPath ?? this.sourceDir);
+                break;
+            case BuildDirectoryRefusalReason.WorkspaceRoot:
+                details = localize('build.dir.is.workspace.folder', 'it is the workspace folder {0}', result.conflictingPath ?? '');
+                break;
+            case BuildDirectoryRefusalReason.WorkspaceRootAncestor:
+                details = localize('build.dir.contains.workspace.folder', 'it contains the workspace folder {0}', result.conflictingPath ?? '');
+                break;
+            case BuildDirectoryRefusalReason.UnknownSourceDirectory:
+                details = localize('build.dir.source.dir.unknown', 'the source directory is unknown');
+                break;
+            default:
+                details = localize('build.dir.not.an.absolute.path', 'it is not an absolute path');
+                break;
+        }
+        log.error(localize('refusing.to.delete.build.dir', 'Refusing to delete the build directory {0} because {1}. Check the cmake.buildDirectory setting or the binaryDir field of the active configure preset.', buildDir, details));
+        return false;
+    }
+
+    /**
      * Remove the prior CMake configuration files.
      */
     protected async _cleanPriorConfiguration() {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
-        const cmake_files = this.config.deleteBuildDirOnCleanConfigure ? build_dir : path.join(build_dir, 'CMakeFiles');
+        // Deleting the whole build directory is only allowed when it is not the source or a
+        // workspace directory (or an ancestor/filesystem root). When it would be unsafe, fall back
+        // to removing just CMakeCache.txt and CMakeFiles/ - which is never destructive and still
+        // lets a clean configure or generator change recover instead of leaving stale state.
+        const deletingWholeBuildDir = this.config.deleteBuildDirOnCleanConfigure && await this.canSafelyDeleteBuildDirectory(build_dir);
+        const cmake_files = deletingWholeBuildDir ? build_dir : path.join(build_dir, 'CMakeFiles');
         if (await fs.exists(cache)) {
             log.info(localize('removing', 'Removing {0}', encodeURI(cache)));
             try {
@@ -686,6 +749,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     protected async _cleanBuildDirectory() {
         const build_dir = this.binaryDir;
         if (await fs.exists(build_dir)) {
+            if (!await this.canSafelyDeleteBuildDirectory(build_dir)) {
+                return;
+            }
             log.info(localize('removing', 'Removing {0}', encodeURI(build_dir)));
             await fs.rmdir(build_dir);
         }
@@ -1212,9 +1278,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
-        this.isConfigInProgress = true;
-        await this.doPreCleanConfigure();
-        this.isConfigInProgress = false;
+        await withInProgressFlag(inProgress => this.isConfigInProgress = inProgress, () => this.doPreCleanConfigure());
 
         return this.configure(trigger, extra_args, consumer, cancelInformation, debuggerInformation);
     }
@@ -1232,9 +1296,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
             return { exitCode: -1, resultType: ConfigureResultType.ConfigureInProgress };
         }
-        this.isConfigInProgress = true;
-        await this._cleanBuildDirectory();
-        this.isConfigInProgress = false;
+        await withInProgressFlag(inProgress => this.isConfigInProgress = inProgress, () => this._cleanBuildDirectory());
 
         return this.configure(trigger, extra_args, consumer, cancelInformation);
     }
