@@ -7,6 +7,8 @@ import * as proc from '@cmt/proc';
 import { OutputConsumer } from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
+import { BuildColorMode, GlyphStyle, stripAnsi } from '@cmt/colorize';
+import { colorizedBuildSink } from '@cmt/buildOutputTerminal';
 
 import * as gcc from '@cmt/diagnostics/gcc';
 import * as ghs from '@cmt/diagnostics/ghs';
@@ -335,7 +337,9 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     constructor(readonly logger: Logger | null, config: ConfigurationReader) {
         super();
         this.compileConsumer = new CompileOutputConsumer(config);
+        this.colorMode = config.colorizedBuildOutput;
         this.logBySeverity = config.logBuildOutputBySeverity;
+        this.glyphStyle = config.buildOutputGlyphs;
         // Capture the severity of the diagnostic committed while processing the current line so that,
         // when logging by severity, the line can be logged at a matching level. Diagnostic parsing and
         // progress parsing remain independent of logging and fire on every line regardless of setting.
@@ -345,13 +349,19 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     /**
+     * How build output should be decorated in the integrated terminal. Read once
+     * per build (a fresh consumer is constructed for each build).
+     */
+    private readonly colorMode: BuildColorMode;
+
+    /**
      * When true, build output is logged at a level reflecting its severity (errors as `error`,
      * warnings as `warning`, routine output as `debug`) so that `cmake.loggingLevel` can filter it.
      */
     private readonly logBySeverity: boolean;
     private _currentLineSeverity: string | undefined;
     private readonly _diagnosticSub: vscode.Disposable;
-
+    private readonly glyphStyle: GlyphStyle;
     /**
      * Event fired when the progress changes
      */
@@ -377,45 +387,75 @@ export class CMakeBuildConsumer extends proc.CommandConsumer implements vscode.D
     }
 
     /**
-     * Log a build output line, honoring `cmake.logBuildOutputBySeverity`.
+     * Log a build output line, honoring `cmake.logBuildOutputBySeverity` and
+     * optionally mirroring a colorized copy to the integrated terminal.
      *
      * @param line The output line to log.
      * @param isStdErr Whether the line came from standard error.
      */
-    private logLine(line: string, isStdErr: boolean) {
+    private echo(raw: string, clean: string, isStdErr: boolean) {
+        if (this.colorMode !== 'off') {
+            colorizedBuildSink().writeLine(raw, this.colorMode, this.glyphStyle);
+            if (!this.logger) {
+                return;
+            }
+            const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
+            switch (method) {
+                case 'error':
+                    this.logger.errorFileOnly(clean);
+                    break;
+                case 'warning':
+                    this.logger.warningFileOnly(clean);
+                    break;
+                case 'debug':
+                    this.logger.debugFileOnly(clean);
+                    break;
+                default:
+                    this.logger.infoFileOnly(clean);
+                    break;
+            }
+            return;
+        }
         if (!this.logger) {
             return;
         }
         const method = resolveBuildLogMethod(this._currentLineSeverity, isStdErr, this.logBySeverity);
         switch (method) {
             case 'error':
-                this.logger.error(line);
+                this.logger.error(clean);
                 break;
             case 'warning':
-                this.logger.warning(line);
+                this.logger.warning(clean);
                 break;
             case 'debug':
-                this.logger.debug(line);
+                this.logger.debug(clean);
                 break;
             default:
-                this.logger.info(line);
+                this.logger.info(clean);
                 break;
         }
     }
 
     error(line: string) {
         this._currentLineSeverity = undefined;
-        this.compileConsumer.error(line);
-        this.logLine(line, true);
-        super.error(line);
+        // In `off` mode, behave byte-identically to the shipped release: pass the raw line
+        // through to the parser, the Output channel/log, and the captured stdout/stderr. Only
+        // strip ANSI when colorization is enabled (where a tool may emit real colors, e.g.
+        // `compiler` mode forces CLICOLOR_FORCE), so the parser and on-disk log stay clean while
+        // the terminal still receives the raw colored line.
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
+        this.compileConsumer.error(clean);
+        this.echo(line, clean, true);
+        super.error(clean);
     }
 
     output(line: string) {
         this._currentLineSeverity = undefined;
-        this.compileConsumer.output(line);
-        this.logLine(line, false);
-        super.output(line);
-        const progress = this._percent_re.exec(line);
+        const clean = this.colorMode === 'off' ? line : stripAnsi(line);
+        this.compileConsumer.output(clean);
+        this.echo(line, clean, false);
+        super.output(clean);
+        const progress = this._percent_re.exec(clean);
         if (progress) {
             const percent = progress[1];
             this._onProgressEmitter.fire({

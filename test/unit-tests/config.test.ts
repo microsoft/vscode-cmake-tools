@@ -14,6 +14,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
         saveBeforeBuild: true,
         buildBeforeRun: true,
         clearOutputBeforeBuild: true,
+        colorizedBuildOutput: "off",
+        buildOutputGlyphs: "unicode",
         configureSettings: {},
         cacheInit: null,
         preferredGenerators: [],
