@@ -1020,6 +1020,7 @@ export class ExtensionManager implements vscode.Disposable {
 
     async updateStatusBarForActiveProjectChange(): Promise<void> {
         await this.postUpdateActiveProject();
+        await updateFullFeatureSet();
     }
 
     private async postUpdateActiveProject() {
