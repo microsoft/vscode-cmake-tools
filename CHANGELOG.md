@@ -13,6 +13,7 @@ Bug Fixes:
 - Reduce excessive CPU usage in the GCC, MSVC linker, GHS and Diab diagnostic parsers on very long build output lines, such as the command lines that `xcodebuild` (Xcode generator) and `ninja -v` print. [#5144](https://github.com/microsoft/vscode-cmake-tools/pull/5144)
 - Prevent shell metacharacters in executable paths and arguments from being interpreted as commands when running build tools through a shell, while preserving kit setup scripts and Visual Studio detection. [#5152](https://github.com/microsoft/vscode-cmake-tools/pull/5152)
 - Fix dependency restore failures in network-isolated CI builds by resolving packages through the configured Azure Artifacts feed, and update PostCSS, minimatch, URI decoding, and `serialize-javascript` to address security vulnerabilities. [#5151](https://github.com/microsoft/vscode-cmake-tools/pull/5151)
+- Fix tests using CTest's `SKIP_RETURN_CODE` property being shown as errored in the Test Explorer. They are now reported as skipped. [#5117](https://github.com/microsoft/vscode-cmake-tools/issues/5117) [@arghness](https://github.com/arghness)
 
 ## 1.24
 
