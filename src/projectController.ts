@@ -492,12 +492,15 @@ export class ProjectController implements vscode.Disposable {
             }
 
             // Update the map.
-            this.folderToProjectsMap.set(folder, projects);
-            if (multiProjectChange || activeProjectPath !== undefined) {
-                // There's no way to reach into the extension manager and update the status bar, so we exposed a hidden command
-                // to referesh it.
-                void vscode.commands.executeCommand('cmake.statusbar.update');
+            if (!this.activeProject && projects.length > 0) {
+                await this.setActiveProject(projects[0], options);
             }
+            this.folderToProjectsMap.set(folder, projects);
+            // Wire code model/test subscriptions and post-open configure for the new projects.
+            this.afterAcknowledgeFolderEmitter.fire({ isInitial: false, folderProjectType: { folder: folder, projects: projects }});
+            // There's no way to reach into the extension manager, so we exposed a hidden command
+            // to refresh the status bar and the full/partial feature set (activity bar visibility).
+            void vscode.commands.executeCommand('cmake.statusbar.update');
         }
     }
 

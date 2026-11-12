@@ -220,7 +220,7 @@ export class CMakeProject {
      * The name of the folder for this CMakeProject instance
      */
     get folderName(): string {
-        return path.basename(this.folderPath);
+        return path.basename(this.sourceDir || this.folderPath);
     }
 
     /**
