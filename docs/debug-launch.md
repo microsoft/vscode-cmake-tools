@@ -313,6 +313,8 @@ You can also construct launch.json configurations that allow you to debug tests 
 
 > **Note:**
 > These configurations are primarily intended to be used from the Test Explorer UI, where the specific test being debugged is already known. You can also start them directly from the Run and Debug view (F5): because that entry point has no associated test, CMake Tools will prompt you to pick one of the discovered CTest tests and resolve the `cmake.test*` placeholders for it. If you only want these configurations to be launched from the Test Explorer, add `"presentation": { "hidden": true }` (as shown below) so they don't appear in the Run and Debug dropdown.
+>
+> CMake Tools also registers `cmake.testProgram`, `cmake.testArgs`, and `cmake.testWorkingDirectory` as VS Code commands, so `${command:cmake.testProgram}`, `${command:cmake.testArgs}`, and `${command:cmake.testWorkingDirectory}` are available where VS Code requires command variables. The plain `${cmake.test*}` placeholders shown below remain the preferred form for `launch.json`, because CMake Tools can resolve the whole configuration for one selected test in a single step.
 
 The easiest way to do this is to construct the debug configuration using `cmake.testProgram` for the `program` field, `cmake.testArgs` for 
 the `args` field, `cmake.testWorkingDirectory` for the `cwd` field, and `cmake.testEnvironment` for the `environment` field.
@@ -327,7 +329,6 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppdbg",
     "request": "launch",
-    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "cwd": "${cmake.testWorkingDirectory}",
     "program": "${cmake.testProgram}",
@@ -341,7 +342,6 @@ A couple of examples:
     "name": "(ctest) Launch",
     "type": "cppvsdbg",
     "request": "launch",
-    "presentation": { "hidden": true },
     // Resolved by CMake Tools:
     "program": "${cmake.testProgram}",
     "args": [ "${cmake.testArgs}"],

@@ -1980,7 +1980,7 @@ export class CTestDriver implements vscode.Disposable {
         });
     }
 
-    private testProgram(testName: string): string {
+    public testProgram(testName: string): string {
         if (this.tests) {
             for (const test of this.tests.tests) {
                 if (test.name === testName) {
@@ -1997,7 +1997,7 @@ export class CTestDriver implements vscode.Disposable {
         return '';
     }
 
-    private testWorkingDirectory(testName: string): string {
+    public testWorkingDirectory(testName: string): string {
         const property = this.tests?.tests
             .find(test => test.name === testName)?.properties
             ?.find(prop => prop.name === 'WORKING_DIRECTORY');
@@ -2008,7 +2008,7 @@ export class CTestDriver implements vscode.Disposable {
         return '';
     }
 
-    private testArgs(testName: string): string[] {
+    public testArgs(testName: string): string[] {
         if (this.tests) {
             for (const test of this.tests.tests) {
                 if (test.name === testName) {
@@ -2166,11 +2166,14 @@ export class CTestDriver implements vscode.Disposable {
      */
     private applyTestPlaceholderSubstitutions(config: vscode.DebugConfiguration, testName: string): vscode.DebugConfiguration {
         config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testProgram}', this.testProgram(testName));
+        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${command:cmake.testProgram}', this.testProgram(testName));
         config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
+        config = this.replaceAllInObject<vscode.DebugConfiguration>(config, '${command:cmake.testWorkingDirectory}', this.testWorkingDirectory(testName));
 
         // Replace cmake.testArgs wrapped in quotes, like `"${command:cmake.testArgs}"`, without any spaces in between,
         // since we need to replace the quotes as well.
         config = this.replaceArrayItems(config, '${cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
+        config = this.replaceArrayItems(config, '${command:cmake.testArgs}', this.testArgs(testName)) as vscode.DebugConfiguration;
 
         // Replace cmake.testEnvironment with the test's ENVIRONMENT property as an array of { name, value } objects.
         const testEnv = this.testEnvironment(testName);
