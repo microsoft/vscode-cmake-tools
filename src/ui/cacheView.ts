@@ -18,6 +18,8 @@ export interface IOption {
     choices: string[];
     value: string | boolean; // value from the cache file or changed in the UI
     dirty: boolean; // if the variable was edited in the UI
+    advanced: boolean; // marked with the ADVANCED cache property
+    internal: boolean; // has the INTERNAL cache type
     presetSource?: string; // where this variable is defined in presets
     differsFromPresetValue?: boolean; // true if cache value differs from preset value
 }
@@ -238,7 +240,7 @@ export class ConfigurationWebview {
             // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
             // Not useful to show these entries in the list.
             if (entry.type !== CacheEntryType.Static) {
-                options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
+                options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false, advanced: entry.advanced, internal: entry.type === CacheEntryType.Internal });
             }
         }
 
@@ -279,6 +281,8 @@ export class ConfigurationWebview {
     getWebviewMarkup() {
         const key = '%TABLE_ROWS%';
         const searchButtonText = localize("search", "Search");
+        const showAdvancedText = localize("show.advanced", "Show advanced variables");
+        const showInternalText = localize("show.internal", "Show internal variables");
         const saveButtonText = localize("save", "Save");
         const keyColumnText = localize("key", "Key");
         const valueColumnText = localize("value", "Value");
@@ -389,6 +393,17 @@ export class ConfigurationWebview {
           .invisible {
             display: none;
           }
+          .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 10px;
+          }
+          .filters label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
           button#save {
             float: right;
             padding: 10px 25px;
@@ -484,16 +499,22 @@ export class ConfigurationWebview {
           }
           function search() {
             const filter = document.getElementById('search').value.toLowerCase();
+            const showAdvanced = document.getElementById('show-advanced').checked;
+            const showInternal = document.getElementById('show-internal').checked;
+            vscode.setState({ search: document.getElementById('search').value, showAdvanced, showInternal });
             for (const tr of document.querySelectorAll('.content-tr')) {
-              if (!tr.innerHTML.toLowerCase().includes(filter)) {
-                tr.classList.add('invisible');
-              } else {
-                tr.classList.remove('invisible');
-              }
+              const visible = tr.innerHTML.toLowerCase().includes(filter)
+                && (showAdvanced || tr.dataset.advanced !== 'true')
+                && (showInternal || tr.dataset.internal !== 'true');
+              tr.classList.toggle('invisible', !visible);
             }
           }
 
           window.onload = function() {
+            const state = vscode.getState() || {};
+            document.getElementById('search').value = state.search || '';
+            document.getElementById('show-advanced').checked = state.showAdvanced === true;
+            document.getElementById('show-internal').checked = state.showInternal === true;
             document.querySelectorAll('.cmake-input-bool').forEach(checkbox => {
               updateCheckboxState(checkbox);
               checkbox.onclick = () => toggleKey(checkbox);
@@ -505,6 +526,7 @@ export class ConfigurationWebview {
               validateInput(editbox)
               editbox.oninput = () => edit(editbox);
             });
+            search();
             document.querySelector('#search').focus();
           }
         </script>
@@ -514,6 +536,10 @@ export class ConfigurationWebview {
         <button id="save" onclick="save()">${saveButtonText}</button>
         <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
         <input class="search" type="text" id="search" oninput="search()" placeholder="${searchButtonText}">
+        <div class="filters">
+          <label><input type="checkbox" id="show-advanced" onchange="search()">${showAdvancedText}</label>
+          <label><input type="checkbox" id="show-internal" onchange="search()">${showInternalText}</label>
+        </div>
         <table style="width:100%">
           <tr style="height: 25px;">
             <th style="width: 30px"></th>
@@ -565,7 +591,7 @@ export class ConfigurationWebview {
                 sourceText = `${sourceText} | ${option.differsFromPresetValue ? differsFromPresetText : matchesPresetText}`;
             }
 
-            return `<tr class="content-tr">
+            return `<tr class="content-tr${option.advanced || option.internal ? ' invisible' : ''}" data-advanced="${option.advanced}" data-internal="${option.internal}">
       <td></td>
       <td title="${escapeAttribute(option.helpString)}">${escapeHtml(option.key)}</td>
       <td>${editControls}</td>

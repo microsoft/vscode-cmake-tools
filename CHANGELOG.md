@@ -3,6 +3,7 @@
 ## 1.25.10
 
 Features:
+- Add checkbox filters for advanced and internal variables in the CMake Cache Editor, hiding both by default and combining them with text search. [#2676](https://github.com/microsoft/vscode-cmake-tools/issues/2676) [@Trighap52](https://github.com/Trighap52)
 - Stop automatically installing the C/C++ DevTools extension with CMake Tools.
 - Suggest C/C++ DevTools at most once per session when a CMake project is open, GitHub Copilot is installed (including bundled Copilot), and C/C++ DevTools is not installed. "Install" installs the extension directly. Dismissing the notification allows it to appear again after reloading or restarting VS Code; "Don't Show Again" disables future suggestions across workspaces and sessions.
 
