@@ -23,7 +23,7 @@ export class DevToolsNotification {
     }
 
     public async showIfNeeded(hasCMakeProject: boolean, globalState: vscode.Memento): Promise<void> {
-        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !hasCMakeProject) {
+        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !hasCMakeProject || this.areAIFeaturesDisabled()) {
             return;
         }
 
@@ -35,7 +35,7 @@ export class DevToolsNotification {
         const copilotInstalled = await this.isCopilotInstalled();
         log.debug(localize('devtools.copilot.installed', 'C++ DevTools suggestion eligibility: Copilot installed: {0}', copilotInstalled));
         devToolsExtension = vscode.extensions.getExtension(devToolsExtensionId);
-        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !copilotInstalled || devToolsExtension) {
+        if (this.shownThisSession || globalState.get(doNotShowAgainKey, false) || !copilotInstalled || devToolsExtension || this.areAIFeaturesDisabled()) {
             return;
         }
 
@@ -52,6 +52,11 @@ export class DevToolsNotification {
         } else if (selection === doNotShowAgain) {
             await globalState.update(doNotShowAgainKey, true);
         }
+    }
+
+    /** `chat.disableAIFeatures` turns Copilot off, so a suggestion to help Copilot doesn't apply. */
+    private areAIFeaturesDisabled(): boolean {
+        return vscode.workspace.getConfiguration('chat').get<boolean>('disableAIFeatures', false);
     }
 
     private async isCopilotInstalled(): Promise<boolean> {
