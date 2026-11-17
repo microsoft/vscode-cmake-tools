@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.26
+
+Bug Fixes:
+- Fix the C/C++ DevTools suggestion appearing when AI features are disabled with `chat.disableAIFeatures`. [#5163](https://github.com/microsoft/vscode-cmake-tools/issues/5163) [@zuhairkhalid229](https://github.com/zuhairkhalid229)
+
 ## 1.25.10
 
 Features:

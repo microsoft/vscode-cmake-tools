@@ -64,6 +64,20 @@ suite('C++ DevTools notification', () => {
         expect(showInformationMessage.called).to.equal(false);
     });
 
+    test('does not show the toast for bundled Copilot when AI features are disabled', async () => {
+        getExtension.withArgs('GitHub.copilot-chat').returns(undefined);
+        appRoot.value(path.resolve('vscode-test-application-root'));
+        readFile.resolves(Buffer.from(JSON.stringify({ publisher: 'GitHub', name: 'copilot-chat' })));
+        const chatConfig = { get: (key: string, defaultValue?: unknown) => key === 'disableAIFeatures' ? true : defaultValue };
+        sandbox.stub(vscode.workspace, 'getConfiguration').callThrough()
+            .withArgs('chat').returns(chatConfig as unknown as vscode.WorkspaceConfiguration);
+
+        await notification.showIfNeeded(true, globalState);
+
+        expect(readFile.called).to.equal(false);
+        expect(showInformationMessage.called).to.equal(false);
+    });
+
     test('does not show the toast when DevTools is installed', async () => {
         getExtension.withArgs('ms-vscode.cpp-devtools').returns({ id: 'ms-vscode.cpp-devtools' });
 
