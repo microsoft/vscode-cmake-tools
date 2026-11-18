@@ -161,3 +161,41 @@ suite('Process argument safety', () => {
         });
     }
 });
+
+suite('Extension host environment isolation', () => {
+    const printVariable = 'process.stdout.write(String(process.env.ELECTRON_RUN_AS_NODE))';
+    let previous: string | undefined;
+
+    setup(() => {
+        // Simulate the VS Code extension host, which runs with ELECTRON_RUN_AS_NODE=1.
+        previous = process.env.ELECTRON_RUN_AS_NODE;
+        process.env.ELECTRON_RUN_AS_NODE = '1';
+    });
+
+    teardown(() => {
+        if (previous === undefined) {
+            delete process.env.ELECTRON_RUN_AS_NODE;
+        } else {
+            process.env.ELECTRON_RUN_AS_NODE = previous;
+        }
+    });
+
+    async function childValue(options: ExecutionOptions): Promise<string> {
+        const result = await execute(process.execPath, ['-e', printVariable], null, { silent: true, ...options }).result;
+        expect(result.retc, result.stderr).to.equal(0);
+        return result.stdout;
+    }
+
+    test('child processes do not inherit ELECTRON_RUN_AS_NODE from the extension host', async () => {
+        expect(await childValue({})).to.equal('undefined');
+    });
+
+    test('ELECTRON_RUN_AS_NODE is removed when it arrives through a copied environment', async () => {
+        // Kit, preset, and driver environments are built on top of a copy of process.env.
+        expect(await childValue({ environment: { ...process.env } })).to.equal('undefined');
+    });
+
+    test('ELECTRON_RUN_AS_NODE is removed for commands run through a shell', async () => {
+        expect(await childValue({ shell: true })).to.equal('undefined');
+    });
+});
