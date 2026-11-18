@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.26
+
+Bug Fixes:
+- Fix Electron-based tools (for example draw.io) run during a configure or build failing with errors like `bad option`. Processes started by CMake Tools no longer inherit `ELECTRON_RUN_AS_NODE` from the VS Code extension host, which made such tools start as plain Node.js. [#1545](https://github.com/microsoft/vscode-cmake-tools/issues/1545) [@13v13reddy](https://github.com/13v13reddy)
+
 ## 1.25.10
 
 Features:

@@ -240,6 +240,12 @@ export function execute(command: string, args?: string[], outputConsumer?: Outpu
         process.env,
         options.environment,
         options.overrideLocale ? localeOverride : {}]);
+    // The extension host runs with ELECTRON_RUN_AS_NODE=1, and kit, preset and driver
+    // environments all start from a copy of process.env, so the variable reaches every
+    // child process. It makes Electron apps run by a build (e.g. drawio) start as plain
+    // Node.js instead. VS Code strips it from integrated terminal environments for the
+    // same reason. Assigning undefined removes the key case-insensitively on Windows.
+    final_env['ELECTRON_RUN_AS_NODE'] = undefined;
 
     const stackTrace = new Error().stack;
 
