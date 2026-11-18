@@ -15,7 +15,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.automaticReconfigure` | Automatically configure CMake project directories when the kit or the configuration preset is changed. | `true` | no |
 | `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | `true` | no |
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
-| `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
+| `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target, and build before running tests (**CMake: Run Tests**, the Test Explorer, and test CodeLens). If `false`, tests run against the existing build. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
 | `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes |
 | `cmake.buildTask` | If `true`, generate VS Code tasks for building. | `false` | no |
