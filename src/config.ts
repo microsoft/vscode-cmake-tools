@@ -11,6 +11,7 @@ import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { CppDebugConfiguration } from '@cmt/debug/debugger';
+import { LaunchConfig } from '@cmt/launchConfig';
 import { Environment } from '@cmt/environmentVariables';
 import { BuildProblemMatcherConfig } from '@cmt/diagnostics/custom';
 
@@ -209,6 +210,7 @@ export interface ExtensionConfigurationSettings {
     parseBuildDiagnostics: boolean;
     enabledOutputParsers: string[];
     debugConfig: CppDebugConfiguration;
+    launchConfig: LaunchConfig | undefined;
     defaultVariants: object;
     ctestArgs: string[];
     ctestDefaultArgs: string[];
@@ -471,6 +473,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     get debugConfig(): CppDebugConfiguration {
         return this.configData.debugConfig;
+    }
+    get launchConfig(): LaunchConfig | undefined {
+        return this.configData.launchConfig;
     }
     get environment() {
         return this.configData.environment;
@@ -738,6 +743,7 @@ export class ConfigurationReader implements vscode.Disposable {
         parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
         enabledOutputParsers: new vscode.EventEmitter<string[]>(),
         debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
+        launchConfig: new vscode.EventEmitter<LaunchConfig | undefined>(),
         defaultVariants: new vscode.EventEmitter<object>(),
         ctestArgs: new vscode.EventEmitter<string[]>(),
         ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
