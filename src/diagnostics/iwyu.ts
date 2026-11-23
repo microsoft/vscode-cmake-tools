@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { RawDiagnosticParser, RawDiagnostic, FeedLineResult, oneLess } from '@cmt/diagnostics/util';
 
-const HEADER_RE = /^(.*)\s+((should\s+(add|remove))\s+these\slines:)/i;
+const HEADER_RE = /^(.*)\s((should\s+(add|remove))\s+these\slines:)/i;
 const FULL_HEADER_RE = /^\s*(the\s+full\s+include[-\s]+list)\s+for\s+(.*):\s*$/i;
 const REMOVE_RE = /^\s*-\s*(.*?)\s*\/\/\s*lines\s(\d+)-(\d+)/i;
 const SUGGESTION_RE = /^\s*(.*?[^\s].*?)\s*$/;
