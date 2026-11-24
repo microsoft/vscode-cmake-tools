@@ -43,7 +43,7 @@ export class DevToolsNotification {
         const install = localize('devtools.install', 'Install');
         const doNotShowAgain = localize('devtools.dont.show.again', "Don't Show Again");
         const selection = await vscode.window.showInformationMessage(
-            localize('devtools.suggestion', 'Install C++ DevTools extension to give Copilot more accurate code understanding and build workflows'),
+            localize('devtools.suggestion', 'Install the C/C++ DevTools extension to help AI agents better understand your C++ code and assist with builds.'),
             install,
             doNotShowAgain
         );
