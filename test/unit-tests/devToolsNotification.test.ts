@@ -49,7 +49,7 @@ suite('C++ DevTools notification', () => {
             expect(activate.called).to.equal(false);
             expect(showInformationMessage.calledOnce).to.equal(true);
             expect(showInformationMessage.firstCall.args).to.deep.equal([
-                'Install C++ DevTools extension to give Copilot more accurate code understanding and build workflows',
+                'Install the C/C++ DevTools extension to help AI agents better understand your C++ code and assist with builds.',
                 'Install',
                 "Don't Show Again"
             ]);
