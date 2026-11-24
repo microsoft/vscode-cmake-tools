@@ -70,7 +70,7 @@ jobs:
         run: yarn lint
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
         with:
           cmakeVersion: 3.18.3
           ninjaVersion: 1.10.1
@@ -171,7 +171,7 @@ jobs:
         run: tar -xzf build-outputs.tgz
 
       - name: Install CMake/Ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
         with:
           cmakeVersion: 3.18.3
           ninjaVersion: 1.10.1
