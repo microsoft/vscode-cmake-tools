@@ -65,6 +65,7 @@ Listed below are the settings that are available for each configuration based on
     * `scriptPath` - The path to the CMake script to debug.
   * optional
     * `scriptArgs` - Arguments for the CMake script to debug.
+    * `cmakeArgs` - Arguments for CMake itself, such as `-DCMAKE_BUILD_TYPE=Debug`. These are placed before `-P` on the command line, which CMake requires for options like `-D` to take effect in script mode.
     * `scriptEnv` - Environment for the CMake script to use.
     * `pipeName` - Name of the pipe (on Windows) or domain socket (on Unix) to use for debugger communication.
     * `dapLog` - Where the debug adapter protocol (DAP) communication should be logged. If omitted, DAP communication is not logged.
