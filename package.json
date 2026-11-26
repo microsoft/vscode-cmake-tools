@@ -1088,6 +1088,14 @@
                             "default": [],
                             "description": "%cmake-tools.debugger.scriptArgs.description%"
                         },
+                        "cmakeArgs": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "default": [],
+                            "description": "%cmake-tools.debugger.cmakeArgs.description%"
+                        },
                         "scriptEnv": {
                             "type": "array",
                             "items": {
@@ -1155,6 +1163,14 @@
                                     },
                                     "default": [],
                                     "description": "%cmake-tools.debugger.scriptArgs.description%"
+                                },
+                                "cmakeArgs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "default": [],
+                                    "description": "%cmake-tools.debugger.cmakeArgs.description%"
                                 },
                                 "scriptEnv": {
                                     "type": "array",

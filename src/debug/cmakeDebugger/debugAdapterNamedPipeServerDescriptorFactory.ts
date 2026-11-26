@@ -46,9 +46,10 @@ export class DebugAdapterNamedPipeServerDescriptorFactory implements vscode.Debu
                     throw new Error(localize("cmake.debug.scriptPath.does.not.exist", "The script path, \"{0}\", could not be found.", script));
                 }
                 const args: string[] = session.configuration.scriptArgs ?? [];
+                const cmakeArgs: string[] = session.configuration.cmakeArgs ?? [];
                 const env = new Map<string, string>(session.configuration.scriptEnv?.map((e: {name: string; value: string}) => [e.name, e.value])) ?? new Map();
                 logCMakeDebuggerTelemetry(origin, cmakeDebugType);
-                void executeScriptWithDebugger(script, args, env, debuggerInformation);
+                void executeScriptWithDebugger(script, args, env, debuggerInformation, cmakeArgs);
             } else {
                 logCMakeDebuggerTelemetry(origin, cmakeDebugType);
 

@@ -5,6 +5,7 @@
 Features:
 - Stop automatically installing the C/C++ DevTools extension with CMake Tools.
 - Suggest C/C++ DevTools at most once per session when a CMake project is open, GitHub Copilot is installed (including bundled Copilot), and C/C++ DevTools is not installed. "Install" installs the extension directly. Dismissing the notification allows it to appear again after reloading or restarting VS Code; "Don't Show Again" disables future suggestions across workspaces and sessions.
+- Add a `cmakeArgs` option to `cmake` script debug launch configurations for passing arguments such as `-D` definitions to CMake. They are placed before `-P` so CMake applies them in script mode.
 
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)

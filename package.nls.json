@@ -403,6 +403,7 @@
     "cmake-tools.debugger.dapLog.description": "Where the debugger DAP log should be logged.",
     "cmake-tools.debugger.scriptPath.description": "The path to the script to debug.",
     "cmake-tools.debugger.scriptArgs.description": "Arguments for the script to debug.",
+    "cmake-tools.debugger.cmakeArgs.description": "Arguments for CMake itself, such as `-D` variable definitions. These are placed before `-P` so that CMake applies them in script mode.",
     "cmake-tools.debugger.scriptEnv.description": "Environment for the script to use.",
     "cmake-tools.debugger.name": "Name",
     "cmake-tools.debugger.value": "Value",

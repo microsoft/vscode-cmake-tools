@@ -1,6 +1,7 @@
 import { CMakeOutputConsumer, StateMessage } from '@cmt/diagnostics/cmake';
 import * as proc from '@cmt/proc';
 import { DebuggerInformation } from '@cmt/debug/cmakeDebugger/debuggerConfigureDriver';
+import { buildScriptDebuggerArgs } from '@cmt/debug/cmakeDebugger/debuggerScriptArgs';
 import { getCMakeExecutableInformation } from '@cmt/cmakeExecutable';
 import { extensionManager } from '@cmt/extension';
 import * as logging from '@cmt/logging';
@@ -20,10 +21,11 @@ const scriptLogger = logging.createLogger('cmake-script');
  * @param scriptArgs - An array of arguments to pass to the script.
  * @param scriptEnv - A map of environment variables to set for the script.
  * @param debuggerInformation - Information required to set up the debugger.
+ * @param cmakeArgs - An array of arguments to pass to CMake itself, placed before `-P`.
  * @returns A promise that resolves when the script execution is complete.
  * @throws Will throw an error if the script execution fails.
  */
-export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: string[], scriptEnv: Map<string, string>, debuggerInformation: DebuggerInformation): Promise<void> {
+export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: string[], scriptEnv: Map<string, string>, debuggerInformation: DebuggerInformation, cmakeArgs: string[] = []): Promise<void> {
     const outputConsumer: CMakeOutputConsumer = new CMakeOutputConsumer("", scriptLogger);
 
     // This is dependent on there being an active project. This feels reasonable since we're expecting them to be in a CMake project.
@@ -33,15 +35,7 @@ export async function executeScriptWithDebugger(scriptPath: string, scriptArgs: 
     if (cmakeProject && cmakePath) {
         const cmakeExe = await getCMakeExecutableInformation(cmakePath, undefined, cmakeProject.folderPath);
         if (cmakeExe.isDebuggerSupported) {
-            const concreteArgs = ["-P", scriptPath];
-            concreteArgs.push(...scriptArgs);
-            concreteArgs.push("--debugger");
-            concreteArgs.push("--debugger-pipe");
-            concreteArgs.push(`${debuggerInformation.pipeName}`);
-            if (debuggerInformation.dapLog) {
-                concreteArgs.push("--debugger-dap-log");
-                concreteArgs.push(debuggerInformation.dapLog);
-            }
+            const concreteArgs = buildScriptDebuggerArgs(scriptPath, cmakeArgs, scriptArgs, `${debuggerInformation.pipeName}`, debuggerInformation.dapLog);
 
             cmakeLogger.info(localize('run.script', "Executing CMake script: {0}", scriptPath));
 
