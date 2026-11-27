@@ -6,6 +6,9 @@ Features:
 - Stop automatically installing the C/C++ DevTools extension with CMake Tools.
 - Suggest C/C++ DevTools at most once per session when a CMake project is open, GitHub Copilot is installed (including bundled Copilot), and C/C++ DevTools is not installed. "Install" installs the extension directly. Dismissing the notification allows it to appear again after reloading or restarting VS Code; "Don't Show Again" disables future suggestions across workspaces and sessions.
 
+Improvements:
+- Select the configure preset automatically when a folder is opened, no configure preset was selected for it before, and it is the only one that can be selected, instead of asking the user to pick it. [#2711](https://github.com/microsoft/vscode-cmake-tools/issues/2711)
+
 Bug Fixes:
 - Fix test discovery failure if commands or properties are missing in a test (e.g. because its target isn't built yet). [#5095](https://github.com/microsoft/vscode-cmake-tools/pull/5095)
 - Fix running a single test from the Test Explorer failing with "Could not determine the test program" for every project except the one that created the Test Explorer, when a workspace holds more than one CMake project folder. Debugging the same test already worked. [#5097](https://github.com/microsoft/vscode-cmake-tools/issues/5097)

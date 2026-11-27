@@ -1436,7 +1436,7 @@ export class CMakeProject {
         this.kitsController = await KitsController.init(this);
         this.presetsController = await PresetsController.init(this, this.kitsController, this.isMultiProjectFolder);
 
-        await this.doUseCMakePresetsChange();
+        await this.doUseCMakePresetsChange(undefined, true);
 
         // Only initialize the variant manager when not using presets
         if (!this.useCMakePresets) {
@@ -1470,7 +1470,7 @@ export class CMakeProject {
         return false;
     }
 
-    async doUseCMakePresetsChange(useCMakePresets?: string) {
+    async doUseCMakePresetsChange(useCMakePresets?: string, autoSelectSinglePreset: boolean = false) {
         if (useCMakePresets === undefined) {
             useCMakePresets = this.workspaceContext.config.useCMakePresets;
         }
@@ -1479,7 +1479,7 @@ export class CMakeProject {
         if (usingCMakePresets !== this.wasUsingCMakePresets) {
             this.wasUsingCMakePresets = usingCMakePresets;
             await this.setUseCMakePresets(usingCMakePresets);
-            await this.initializeKitOrPresets();
+            await this.initializeKitOrPresets(autoSelectSinglePreset);
             const config = this.workspaceContext.config;
             if (usingCMakePresets) {
                 const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
@@ -1523,15 +1523,24 @@ export class CMakeProject {
         return this.presetsController.onUserPresetsChanged(listener);
     }
 
-    async initializeKitOrPresets() {
+    /**
+     * @param autoSelectSinglePreset When no configure preset is remembered, select the configure preset
+     * automatically if it is the only one that can be selected. Only used when the project is initialized.
+     */
+    async initializeKitOrPresets(autoSelectSinglePreset: boolean = false) {
         if (this.useCMakePresets) {
             const latestConfigPresetName = this.workspaceContext.state.getConfigurePresetName(this.folderName, this.isMultiProjectFolder);
-            if (latestConfigPresetName) {
-                // Check if the latest configurePresetName from the previous session is still valid.
+            if (latestConfigPresetName || autoSelectSinglePreset) {
                 const presets = await this.presetsController.getAllConfigurePresets();
-                const latestConfigPreset: preset.ConfigurePreset | undefined = presets.find(preset => preset.name === latestConfigPresetName);
-                if (latestConfigPreset && !latestConfigPreset.hidden) {
-                    await this.presetsController.setConfigurePreset(latestConfigPresetName);
+                const presetName = preset.getConfigurePresetToSelectOnInit(latestConfigPresetName ?? undefined, presets, this.presetsController.getOsName(), {
+                    autoSelectSinglePreset,
+                    languageServerOnlyMode: this.workspaceContext.config.languageServerOnlyMode
+                });
+                if (presetName) {
+                    if (presetName !== latestConfigPresetName) {
+                        log.info(localize('auto.select.only.config.preset', 'Automatically selecting configure preset {0} because it is the only one available.', presetName));
+                    }
+                    await this.presetsController.setConfigurePreset(presetName);
                 }
             }
         } else {

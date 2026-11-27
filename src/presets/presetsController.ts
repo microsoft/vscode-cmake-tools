@@ -234,7 +234,7 @@ export class PresetsController implements vscode.Disposable {
         return vscode.window.showInputBox({ placeHolder: localize('preset.name', 'Preset name') });
     }
 
-    private getOsName() {
+    getOsName() {
         const platmap = {
             win32: 'Windows',
             darwin: 'macOS',
@@ -897,21 +897,7 @@ export class PresetsController implements vscode.Disposable {
 
     async selectConfigurePreset(quickStart?: boolean, reconfigureAfterSelection: boolean = true): Promise<boolean> {
         const allPresets: preset.ConfigurePreset[] = await this.getAllConfigurePresets();
-        const presets = allPresets.filter(
-            _preset => {
-                const supportedHost = (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
-                const osName = this.getOsName();
-                if (supportedHost) {
-                    if (util.isString(supportedHost)) {
-                        return supportedHost === osName;
-                    } else {
-                        return supportedHost.includes(osName);
-                    }
-                } else {
-                    return true;
-                }
-            }
-        );
+        const presets = allPresets.filter(_preset => preset.isConfigurePresetSupportedOnHost(_preset, this.getOsName()));
 
         log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length));
 
