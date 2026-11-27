@@ -1,8 +1,8 @@
 # What's New?
 
 Bug Fixes:
-- Fix CMake Tools not switching between kits and presets when `CMakePresets.json` or `CMakeUserPresets.json` is created or deleted while a folder is open and `cmake.useCMakePresets` is `auto`.
-- Fix "Use kits and variants" in the prompt for an unsupported presets file version switching every folder of a multi-root workspace to kits instead of only the folder with that presets file.
+- Fix CMake Tools not switching between kits and presets when `CMakePresets.json` or `CMakeUserPresets.json` is created or deleted while a folder is open and `cmake.useCMakePresets` is `auto`. [#5174](https://github.com/microsoft/vscode-cmake-tools/pull/5174)
+- Fix "Use kits and variants" in the prompt for an unsupported presets file version switching every folder of a multi-root workspace to kits instead of only the folder with that presets file. [#5174](https://github.com/microsoft/vscode-cmake-tools/pull/5174)
 
 ## 1.25.10
 
