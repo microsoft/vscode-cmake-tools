@@ -166,6 +166,20 @@ export function heavyNormalizePath(p: string): string {
 }
 
 /**
+ * Finds the project for the folder given to `cmake.selectActiveFolder`.
+ * Folder names are not unique across workspace folders, so the folder path is
+ * accepted as well to tell projects with the same folder name apart (#3538).
+ * @param projects The projects to search.
+ * @param folder The folder name or the folder path of the project.
+ * @returns The matching project, or `undefined` if there is none.
+ */
+export function findProjectByFolder<T extends { folderName: string; folderPath: string }>(projects: T[], folder: string): T | undefined {
+    const normalizedFolder = platformNormalizePath(folder);
+    return projects.find(project => project.folderName === folder)
+        ?? projects.find(project => platformNormalizePath(project.folderPath) === normalizedFolder);
+}
+
+/**
  * Resolves the given path relative to the base path and normalizes it.
  * @param inpath The input path to resolve.
  * @param base The base path to resolve against.

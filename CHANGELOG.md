@@ -1,5 +1,8 @@
 # What's New?
 
+Improvements:
+- Allow `cmake.selectActiveFolder` to select one of several folders with the same name, by passing the folder path that `cmake.activeFolderPath` returns instead of the folder name. [#3538](https://github.com/microsoft/vscode-cmake-tools/issues/3538)
+
 ## 1.25.10
 
 Features:
