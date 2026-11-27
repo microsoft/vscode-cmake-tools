@@ -1,5 +1,8 @@
 # What's New?
 
+Improvements:
+- Select the configure preset automatically when a folder is opened, no configure preset was selected for it before, and it is the only one that can be selected, instead of asking the user to pick it. [#2711](https://github.com/microsoft/vscode-cmake-tools/issues/2711)
+
 ## 1.25.10
 
 Features:

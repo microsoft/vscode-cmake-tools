@@ -231,6 +231,49 @@ export type VendorVsSettings = {
     [key: string]: any;
 };
 
+export function isConfigurePresetSupportedOnHost(preset: ConfigurePreset, osName: OsName): boolean {
+    const supportedHost = (preset.vendor as VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
+    if (supportedHost) {
+        if (util.isString(supportedHost)) {
+            return supportedHost === osName;
+        } else {
+            return supportedHost.includes(osName);
+        }
+    } else {
+        return true;
+    }
+}
+
+/**
+ * Returns the configure preset if it is the only one the configure preset quick pick would offer
+ * (not hidden, condition met, supported on this host), otherwise undefined.
+ */
+export function getOnlySelectableConfigurePreset(presets: ConfigurePreset[], osName: OsName): ConfigurePreset | undefined {
+    const selectable = presets.filter(preset => !preset.hidden && isConfigurePresetSupportedOnHost(preset, osName) && evaluatePresetCondition(preset, presets));
+    return selectable.length === 1 ? selectable[0] : undefined;
+}
+
+/**
+ * Returns the name of the configure preset to activate when a project is initialized: the remembered
+ * preset if it is still valid, otherwise (when nothing is remembered) the only selectable configure preset.
+ */
+export function getConfigurePresetToSelectOnInit(rememberedName: string | undefined, presets: ConfigurePreset[], osName: OsName,
+    options: { autoSelectSinglePreset: boolean; languageServerOnlyMode: boolean }): string | undefined {
+    if (rememberedName) {
+        const remembered = presets.find(preset => preset.name === rememberedName);
+        return remembered && !remembered.hidden ? remembered.name : undefined;
+    }
+    if (!options.autoSelectSinglePreset || options.languageServerOnlyMode) {
+        return undefined;
+    }
+    try {
+        return getOnlySelectableConfigurePreset(presets, osName)?.name;
+    } catch (e) {
+        log.warning(localize('auto.select.config.preset.failed', 'Could not determine whether a configure preset can be selected automatically: {0}', util.errorToString(e)));
+        return undefined;
+    }
+}
+
 export interface ConfigurePreset extends PresetPrivate, api.ConfigurePreset {
     // Private fields
     __developerEnvironmentArchitecture?: string; // Private field to indicate which VS Dev Env architecture we're using, if VS Dev Env is used.
