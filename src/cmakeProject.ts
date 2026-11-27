@@ -174,6 +174,7 @@ export interface ConfigureCancelInformation {
 export class CMakeProject {
     private wasUsingCMakePresets: boolean | undefined;
     private onDidOpenTextDocumentListener: vscode.Disposable | undefined;
+    private _useCMakePresetsChangeInProgress: Promise<void> = Promise.resolve();
     private disposables: vscode.Disposable[] = [];
     private readonly onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
     public projectController: ProjectController | undefined;
@@ -1459,8 +1460,8 @@ export class CMakeProject {
             });
         });
 
-        this.disposables.push(this.onPresetsChanged(() => this.doUseCMakePresetsChange()));
-        this.disposables.push(this.onUserPresetsChanged(() => this.doUseCMakePresetsChange()));
+        this.disposables.push(this.onPresetsChanged(() => rollbar.invokeAsync(localize('updating.use.cmake.presets', 'Updating use of CMake Presets'), () => this.doUseCMakePresetsChange())));
+        this.disposables.push(this.onUserPresetsChanged(() => rollbar.invokeAsync(localize('updating.use.cmake.presets', 'Updating use of CMake Presets'), () => this.doUseCMakePresetsChange())));
     }
 
     public async hasPresetsFiles(): Promise<boolean> {
@@ -1470,44 +1471,50 @@ export class CMakeProject {
         return false;
     }
 
+    // Concurrent calls are serialized so that an awaited call does not return while a change started by
+    // the presets changed listeners is still running. Don't await this from inside a change.
     async doUseCMakePresetsChange(useCMakePresets?: string) {
-        if (useCMakePresets === undefined) {
-            useCMakePresets = this.workspaceContext.config.useCMakePresets;
-        }
-        const usingCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
-
-        if (usingCMakePresets !== this.wasUsingCMakePresets) {
-            this.wasUsingCMakePresets = usingCMakePresets;
-            await this.setUseCMakePresets(usingCMakePresets);
-            await this.initializeKitOrPresets();
-            const config = this.workspaceContext.config;
-            if (usingCMakePresets) {
-                const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
-                    const fileName = path.basename(document.uri.fsPath);
-                    if (util.isFileInsideFolder(document.uri, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
-                        if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
-                            // setTextDocumentLanguage will trigger onDidOpenTextDocument
-                            void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
-                        } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
-                            void vscode.languages.setTextDocumentLanguage(document, 'json');
-                        }
-                    }
-                };
-
-                this.onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
-                    setPresetsFileLanguageMode(document)
-                );
-
-                vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
-            } else {
-                if (this.onDidOpenTextDocumentListener) {
-                    this.onDidOpenTextDocumentListener.dispose();
-                    this.onDidOpenTextDocumentListener = undefined;
-                }
+        const doChange = async () => {
+            if (useCMakePresets === undefined) {
+                useCMakePresets = this.workspaceContext.config.useCMakePresets;
             }
+            const usingCMakePresets = useCMakePresets === 'always' ? true : useCMakePresets === 'never' ? false : await this.hasPresetsFiles();
 
-            this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
-        }
+            if (usingCMakePresets !== this.wasUsingCMakePresets) {
+                this.wasUsingCMakePresets = usingCMakePresets;
+                await this.setUseCMakePresets(usingCMakePresets);
+                await this.initializeKitOrPresets();
+                const config = this.workspaceContext.config;
+                if (usingCMakePresets) {
+                    const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+                        const fileName = path.basename(document.uri.fsPath);
+                        if (util.isFileInsideFolder(document.uri, this.folderPath) && fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+                            if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                                // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+                            } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                                void vscode.languages.setTextDocumentLanguage(document, 'json');
+                            }
+                        }
+                    };
+
+                    this.onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+                        setPresetsFileLanguageMode(document)
+                    );
+
+                    vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
+                } else {
+                    if (this.onDidOpenTextDocumentListener) {
+                        this.onDidOpenTextDocumentListener.dispose();
+                        this.onDidOpenTextDocumentListener = undefined;
+                    }
+                }
+
+                this.onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+            }
+        };
+        this._useCMakePresetsChangeInProgress = this._useCMakePresetsChangeInProgress.then(doChange, doChange);
+        return this._useCMakePresetsChangeInProgress;
     }
     /**
      * Call configurePresets, buildPresets, testPresets, packagePresets or workflowPresets to get the latest presets when the event is fired.

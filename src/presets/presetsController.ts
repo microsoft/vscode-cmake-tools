@@ -63,12 +63,12 @@ export class PresetsController implements vscode.Disposable {
             return util.normalizeAndVerifySourceDir(dir, expansionOpts);
         };
 
-        presetsController._presetsParser = new PresetsParser(project.folderPath, await expandSourceDir(project.sourceDir), project.workspaceFolder.uri.fsPath, presetsController.reportPresetsFileErrors, presetsController.showPresetsFileVersionError, (filePath: string) => {
+        presetsController._presetsParser = new PresetsParser(project.folderPath, await expandSourceDir(project.sourceDir), project.workspaceFolder.uri.fsPath, presetsController.reportPresetsFileErrors, (file: string) => presetsController.showPresetsFileVersionError(file), (filePath: string) => {
             collections.presets.set(
                 vscode.Uri.file(filePath),
                 undefined
             );
-        }, presetsController._presetsChangedEmitter.fire, presetsController._userPresetsChangedEmitter.fire);
+        }, (presets: preset.PresetsFile | undefined) => presetsController._presetsChangedEmitter.fire(presets), (presets: preset.PresetsFile | undefined) => presetsController._userPresetsChangedEmitter.fire(presets));
 
         // Pass cmake.environment and cmake.configureEnvironment settings so that $penv{} in preset
         // include paths can resolve variables defined in VS Code settings.

@@ -3,6 +3,12 @@ import { expect } from 'chai';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as sinon from 'sinon';
+import * as vscode from 'vscode';
+import { CMakeProject } from '@cmt/cmakeProject';
+import { KitsController } from '@cmt/kits/kitsController';
+import { PresetsFile } from '@cmt/presets/preset';
+import { PresetsController } from '@cmt/presets/presetsController';
 
 /**
  * Tests for PresetsController file watcher behavior.
@@ -434,5 +440,75 @@ suite('Preset file path resolution with subdirectory sourceDir (#4727)', () => {
 
         // After sourceDir update, the file should be found
         expect(fs.existsSync(presetsPath)).to.be.true;
+    });
+});
+
+suite('PresetsController callbacks passed to PresetsParser', () => {
+    let tempDir: string;
+    let presetsController: PresetsController | undefined;
+
+    // Only the members PresetsController.init and reapplyPresets use when no preset is selected.
+    const createProject = () => ({
+        folderPath: tempDir,
+        sourceDir: tempDir,
+        workspaceFolder: { uri: vscode.Uri.file(tempDir) },
+        workspaceContext: {
+            config: {
+                environment: {},
+                configureEnvironment: {},
+                allowCommentsInPresetsFile: false,
+                allowUnsupportedPresetsVersions: false,
+                onChange: () => ({ dispose: () => {} })
+            }
+        },
+        configurePreset: undefined
+    } as unknown as CMakeProject);
+
+    setup(() => {
+        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmake-presets-events-test-'));
+        const presets = (name: string) => JSON.stringify({
+            version: 3,
+            configurePresets: [{ name, generator: "Ninja", binaryDir: "${sourceDir}/build" }]
+        });
+        fs.writeFileSync(path.join(tempDir, 'CMakePresets.json'), presets('test-preset'));
+        fs.writeFileSync(path.join(tempDir, 'CMakeUserPresets.json'), presets('user-preset'));
+    });
+
+    teardown(() => {
+        sinon.restore();
+        presetsController?.dispose();
+        if (tempDir && fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    test('onPresetsChanged and onUserPresetsChanged fire when the presets files are re-read', async () => {
+        presetsController = await PresetsController.init(createProject(), {} as KitsController, false);
+
+        const presetNames = (presetsFile?: PresetsFile) => (presetsFile?.configurePresets ?? []).map(p => p.name);
+        const presetsChanged: string[][] = [];
+        const userPresetsChanged: string[][] = [];
+        presetsController.onPresetsChanged((presetsFile?: PresetsFile) => presetsChanged.push(presetNames(presetsFile)));
+        presetsController.onUserPresetsChanged((presetsFile?: PresetsFile) => userPresetsChanged.push(presetNames(presetsFile)));
+
+        await presetsController.reapplyPresets();
+
+        expect(presetsChanged).to.not.be.empty;
+        expect(presetsChanged.every(names => names.includes('test-preset') && !names.includes('user-preset'))).to.be.true;
+        expect(userPresetsChanged.some(names => names.includes('user-preset'))).to.be.true;
+    });
+
+    test('"Use kits and variants" for a version 1 presets file updates the setting of the folder', async () => {
+        fs.writeFileSync(path.join(tempDir, 'CMakePresets.json'), JSON.stringify({ version: 1 }));
+        sinon.stub(vscode.window, 'showErrorMessage').resolves('Use kits and variants' as any);
+        const project = createProject();
+        const configuration = (update: () => Promise<void>) => ({ get: (_section: string, defaultValue?: unknown) => defaultValue, update } as any);
+        const folderUpdate = sinon.stub().resolves();
+        const getConfiguration = sinon.stub(vscode.workspace, 'getConfiguration').returns(configuration(async () => {}));
+        getConfiguration.withArgs('cmake', sinon.match.same(project.workspaceFolder.uri)).returns(configuration(folderUpdate));
+
+        presetsController = await PresetsController.init(project, {} as KitsController, false);
+
+        expect(folderUpdate.calledOnceWithExactly('useCMakePresets', 'never')).to.be.true;
     });
 });
