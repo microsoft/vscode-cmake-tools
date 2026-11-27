@@ -1460,8 +1460,8 @@ export class CMakeProject {
             });
         });
 
-        this.disposables.push(this.onPresetsChanged(() => this.doUseCMakePresetsChange()));
-        this.disposables.push(this.onUserPresetsChanged(() => this.doUseCMakePresetsChange()));
+        this.disposables.push(this.onPresetsChanged(() => rollbar.invokeAsync(localize('updating.use.cmake.presets', 'Updating use of CMake Presets'), () => this.doUseCMakePresetsChange())));
+        this.disposables.push(this.onUserPresetsChanged(() => rollbar.invokeAsync(localize('updating.use.cmake.presets', 'Updating use of CMake Presets'), () => this.doUseCMakePresetsChange())));
     }
 
     public async hasPresetsFiles(): Promise<boolean> {
